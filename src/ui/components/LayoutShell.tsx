@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Wrench, Upload, Menu, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Wrench, Upload, Menu, Users, LogOut, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState } from 'react';
 import { useHasSimulationData, useWarnings, useHasUnsyncedChanges } from '../../ui/hooks/useDomainData';
@@ -18,6 +18,7 @@ export function LayoutShell() {
     const navItems = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/projects', label: 'Projects', icon: FolderKanban },
+        { href: '/readiness', label: 'Readiness', icon: Calendar },
         { href: '/engineers', label: 'Engineers', icon: Users },
         { href: '/tools', label: 'Tools', icon: Wrench },
         { href: '/data-loader', label: 'Data Loader', icon: Upload },

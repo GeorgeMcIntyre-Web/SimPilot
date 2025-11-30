@@ -1,4 +1,4 @@
-import { Project, Area, Cell, Robot, Tool } from './core'
+import { Project, Area, Cell, Robot, Tool, SchedulePhase } from './core'
 
 export type DemoScenarioId = 'STLA_SAMPLE' | 'TINY_SAMPLE'
 
@@ -20,6 +20,15 @@ export const DEMO_SCENARIOS: DemoScenarioSummary[] = [
         description: 'Minimal dataset with 1 project, 1 area, 2 cells and 1 engineer.',
     },
 ]
+
+/**
+ * Generate ISO date string from days offset from now
+ */
+function getDateOffset(days: number): string {
+    const date = new Date()
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split('T')[0]
+}
 
 export function getDemoScenarioData(id: DemoScenarioId): {
     projects: Project[]
@@ -48,7 +57,13 @@ export function getDemoScenarioData(id: DemoScenarioId): {
             id: 'p-tiny-1',
             name: 'Tiny Project',
             customer: 'Tiny OEM',
-            status: 'Running'
+            status: 'Running',
+            schedule: {
+                phase: 'offline',
+                status: 'onTrack',
+                plannedStart: getDateOffset(-30),
+                plannedEnd: getDateOffset(30)
+            }
         }
         projects.push(p1)
 
@@ -70,6 +85,13 @@ export function getDemoScenarioData(id: DemoScenarioId): {
                 hasIssues: false,
                 metrics: { cycleTime: 45.5 },
                 ...dummySource
+            },
+            schedule: {
+                phase: 'offline',
+                status: 'onTrack',
+                plannedStart: getDateOffset(-25),
+                plannedEnd: getDateOffset(5),
+                dueDate: getDateOffset(10)
             }
         }
         const c2: Cell = {
@@ -85,6 +107,13 @@ export function getDemoScenarioData(id: DemoScenarioId): {
                 hasIssues: true,
                 metrics: { cycleTime: 0 },
                 ...dummySource
+            },
+            schedule: {
+                phase: 'offline',
+                status: 'atRisk',
+                plannedStart: getDateOffset(-20),
+                plannedEnd: getDateOffset(8),
+                dueDate: getDateOffset(8)
             }
         }
         cells.push(c1, c2)
@@ -121,7 +150,13 @@ export function getDemoScenarioData(id: DemoScenarioId): {
             id: 'p-stla-1',
             name: 'STLA-S REAR UNIT',
             customer: 'STLA',
-            status: 'Running'
+            status: 'Running',
+            schedule: {
+                phase: 'offline',
+                status: 'atRisk',
+                plannedStart: getDateOffset(-60),
+                plannedEnd: getDateOffset(30)
+            }
         }
         projects.push(p1)
 
@@ -129,10 +164,48 @@ export function getDemoScenarioData(id: DemoScenarioId): {
         const a2: Area = { id: 'a-stla-2', name: 'Wheelhouse', projectId: p1.id }
         areas.push(a1, a2)
 
-        // Cells for Rear Floor
+        // Cells for Rear Floor - with varied schedule states
         for (let i = 1; i <= 5; i++) {
             const hasIssues = i % 3 === 0
             const percent = i * 20 > 100 ? 100 : i * 20
+
+            let plannedStart: string
+            let plannedEnd: string
+            let dueDate: string | undefined
+            let phase: SchedulePhase
+
+            // Create mix of schedule scenarios
+            if (i === 1) {
+                // On track - early phase, good progress
+                plannedStart = getDateOffset(-40)
+                plannedEnd = getDateOffset(20)
+                dueDate = getDateOffset(25)
+                phase = 'presim'
+            } else if (i === 2) {
+                // On track - mid phase, excellent progress (100%)
+                plannedStart = getDateOffset(-35)
+                plannedEnd = getDateOffset(15)
+                dueDate = getDateOffset(20)
+                phase = 'offline'
+            } else if (i === 3) {
+                // At risk - low completion, close to deadline
+                plannedStart = getDateOffset(-30)
+                plannedEnd = getDateOffset(5)
+                dueDate = getDateOffset(5)
+                phase = 'offline'
+            } else if (i === 4) {
+                // Late - past due date, not complete
+                plannedStart = getDateOffset(-45)
+                plannedEnd = getDateOffset(-5)
+                dueDate = getDateOffset(-5)
+                phase = 'onsite'
+            } else {
+                // On track - high completion, plenty of time
+                plannedStart = getDateOffset(-20)
+                plannedEnd = getDateOffset(40)
+                dueDate = getDateOffset(50)
+                phase = 'rampup'
+            }
 
             const cell: Cell = {
                 id: `c-stla-1-${i}`,
@@ -147,6 +220,13 @@ export function getDemoScenarioData(id: DemoScenarioId): {
                     hasIssues,
                     metrics: { cycleTime: 50 + i },
                     ...dummySource
+                },
+                schedule: {
+                    phase,
+                    status: 'unknown', // Will be computed by scheduleMetrics
+                    plannedStart,
+                    plannedEnd,
+                    dueDate
                 }
             }
             cells.push(cell)
@@ -182,19 +262,44 @@ export function getDemoScenarioData(id: DemoScenarioId): {
             })
         }
 
+        // Wheelhouse cells - one with no schedule data
+        const whCell: Cell = {
+            id: 'c-stla-wh-1',
+            name: 'WH10',
+            code: 'WH10',
+            areaId: a2.id,
+            projectId: p1.id,
+            status: 'InProgress',
+            assignedEngineer: 'Dale',
+            simulation: {
+                percentComplete: 75,
+                hasIssues: false,
+                metrics: { cycleTime: 48 },
+                ...dummySource
+            }
+            // NO schedule field - tests graceful degradation
+        }
+        cells.push(whCell)
+
         // Project 2: Underbody
         const p2: Project = {
             id: 'p-stla-2',
             name: 'STLA-S UNDERBODY',
             customer: 'STLA',
-            status: 'Planning'
+            status: 'Planning',
+            schedule: {
+                phase: 'presim',
+                status: 'onTrack',
+                plannedStart: getDateOffset(10),
+                plannedEnd: getDateOffset(90)
+            }
         }
         projects.push(p2)
 
         const a3: Area = { id: 'a-stla-3', name: 'Main Line', projectId: p2.id }
         areas.push(a3)
 
-        // Cells for Underbody
+        // Cells for Underbody - future project
         for (let i = 1; i <= 4; i++) {
             const cell: Cell = {
                 id: `c-stla-2-${i}`,
@@ -209,6 +314,12 @@ export function getDemoScenarioData(id: DemoScenarioId): {
                     hasIssues: false,
                     metrics: {},
                     ...dummySource
+                },
+                schedule: {
+                    phase: 'presim',
+                    status: 'unknown',
+                    plannedStart: getDateOffset(15 + i * 7),
+                    plannedEnd: getDateOffset(45 + i * 7)
                 }
             }
             cells.push(cell)

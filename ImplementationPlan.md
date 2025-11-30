@@ -165,6 +165,14 @@ The system feeds the **same** in-memory store regardless of the source:
   - UI for editing in `CellDetailPage`.
   - Persistence of changes in `StoreSnapshot`.
   - CSV Export and "Unsynced Changes" indicators in Header and Dale Console.
+- **Phase 11: Timeline & Readiness Board** (Completed): Time-based schedule tracking and visualization.
+  - Extended domain model with `ScheduleInfo`, `SchedulePhase`, and `ScheduleStatus` types.
+  - Created `scheduleMetrics.ts` with pure functions for computing schedule status and risk.
+  - Built Readiness Board page (kanban-style, grouped by phase) at `/readiness`.
+  - Built Timeline View page (Gantt-like layout) at `/timeline/:projectId`.
+  - Enhanced demo data with realistic schedule dates covering all states.
+  - Integrated schedule KPIs into Dale Console (Late Cells, Schedule At Risk).
+  - Zero configuration design - gracefully degrades when schedule data is sparse.
 
 ## History (Context)
 

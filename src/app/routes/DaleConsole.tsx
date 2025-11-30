@@ -11,16 +11,23 @@ import {
 } from 'lucide-react'
 import { useAllEngineerMetrics, useCells, useGlobalSimulationMetrics } from '../../ui/hooks/useDomainData'
 import { useChangeLog } from '../../domain/coreStore'
+import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { KpiTile } from '../../ui/components/KpiTile'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { Cell } from '../../domain/core'
+import { Calendar, Clock } from 'lucide-react'
 
 export function DaleConsole() {
     const metrics = useGlobalSimulationMetrics()
     const engineerMetrics = useAllEngineerMetrics()
     const cells = useCells()
     const changes = useChangeLog()
+    const scheduleRisks = getAllCellScheduleRisks()
     const [copied, setCopied] = useState(false)
+
+    // Calculate schedule metrics
+    const lateCellsCount = scheduleRisks.filter(r => r.status === 'late').length
+    const scheduleAtRiskCount = scheduleRisks.filter(r => r.status === 'atRisk').length
 
     // 2. Top At-Risk Cells
     const atRiskCells = cells.filter((c: Cell) => {
@@ -108,6 +115,16 @@ export function DaleConsole() {
                         value={engineerMetrics.filter(e => e.atRiskCellsCount > 0).length}
                         icon={<Users className="h-6 w-6 text-blue-600" />}
                     />
+                    <KpiTile
+                        label="Late Cells"
+                        value={lateCellsCount}
+                        icon={<Clock className="h-6 w-6 text-red-600" />}
+                    />
+                    <KpiTile
+                        label="Schedule At Risk"
+                        value={scheduleAtRiskCount}
+                        icon={<Calendar className="h-6 w-6 text-orange-600" />}
+                    />
                     {changes.length > 0 && (
                         <KpiTile
                             label="Pending Changes"
@@ -117,6 +134,26 @@ export function DaleConsole() {
                     )}
                 </div>
             </section>
+
+            {/* Link to Readiness Board */}
+            {(lateCellsCount > 0 || scheduleAtRiskCount > 0) && (
+                <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                {lateCellsCount + scheduleAtRiskCount} cells need schedule attention
+                            </span>
+                        </div>
+                        <Link
+                            to="/readiness"
+                            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                            View Readiness Board →
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* 2. Top At-Risk Cells */}

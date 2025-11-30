@@ -25,6 +25,21 @@ export interface IngestionWarning {
 }
 
 // ============================================================================
+// SCHEDULE METADATA
+// ============================================================================
+
+export type SchedulePhase = 'unspecified' | 'presim' | 'offline' | 'onsite' | 'rampup' | 'handover'
+export type ScheduleStatus = 'unknown' | 'onTrack' | 'atRisk' | 'late'
+
+export interface ScheduleInfo {
+  plannedStart?: string       // ISO date string
+  plannedEnd?: string         // ISO date string
+  dueDate?: string            // ISO date string (optional hard deadline)
+  phase: SchedulePhase
+  status: ScheduleStatus
+}
+
+// ============================================================================
 // PROJECTS, AREAS, CELLS
 // ============================================================================
 
@@ -40,6 +55,7 @@ export interface Project {
   status: ProjectStatus
   startDate?: string
   sopDate?: string
+  schedule?: ScheduleInfo   // NEW: schedule metadata
 }
 
 export interface Area {
@@ -79,6 +95,7 @@ export interface Cell {
   plannedFinish?: string
   lastUpdated?: string
   simulation?: SimulationStatus
+  schedule?: ScheduleInfo  // NEW: schedule metadata
 }
 
 // ============================================================================

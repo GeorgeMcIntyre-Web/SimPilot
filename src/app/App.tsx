@@ -10,6 +10,8 @@ import { EngineersPage } from './routes/EngineersPage'
 import { DaleConsole } from './routes/DaleConsole'
 import { WarningsPage } from './routes/WarningsPage'
 import { ChangesPage } from './routes/ChangesPage'
+import { ReadinessBoard } from './routes/ReadinessBoard'
+import { TimelineView } from './routes/TimelineView'
 import { MsAuthProvider } from '../integrations/ms/useMsAccount'
 import { GlobalBusyProvider } from '../ui/GlobalBusyContext'
 import { DevDiagnostics } from '../ui/DevDiagnostics'
@@ -29,12 +31,14 @@ function App() {
                             <Route path="warnings" element={<WarningsPage />} />
                             <Route path="projects" element={<ProjectsPage />} />
                             <Route path="projects/:projectId" element={<ProjectDetailPage />} />
+                            <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
                             <Route path="cells/:cellId" element={<CellDetailPage />} />
                             <Route path="engineers" element={<EngineersPage />} />
                             <Route path="tools" element={<ToolsPage />} />
-                            <Route path="tools" element={<ToolsPage />} />
                             <Route path="data-loader" element={<DataLoaderPage />} />
                             <Route path="changes" element={<ChangesPage />} />
+                            <Route path="readiness" element={<ReadinessBoard />} />
+                            <Route path="timeline/:projectId" element={<TimelineView />} />
                         </Route>
                     </Routes>
                     <DevDiagnostics />
