@@ -1,0 +1,50 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: SimPilot
+          - generic "No simulation data loaded" [ref=e9]: No Data
+        - navigation [ref=e10]:
+          - link "Dashboard" [active] [ref=e11] [cursor=pointer]:
+            - /url: /
+            - img [ref=e12]
+            - text: Dashboard
+          - link "Projects" [ref=e17] [cursor=pointer]:
+            - /url: /projects
+            - img [ref=e18]
+            - text: Projects
+          - link "Engineers" [ref=e20] [cursor=pointer]:
+            - /url: /engineers
+            - img [ref=e21]
+            - text: Engineers
+          - link "Tools" [ref=e26] [cursor=pointer]:
+            - /url: /tools
+            - img [ref=e27]
+            - text: Tools
+          - link "Data Loader" [ref=e29] [cursor=pointer]:
+            - /url: /data-loader
+            - img [ref=e30]
+            - text: Data Loader
+      - generic [ref=e33]:
+        - link "5" [ref=e34] [cursor=pointer]:
+          - /url: /warnings
+          - img [ref=e35]
+          - text: "5"
+        - button "Open main menu" [ref=e39]:
+          - text: Open main menu
+          - img [ref=e40]
+  - main [ref=e41]:
+    - generic [ref=e43]:
+      - generic [ref=e45]:
+        - heading "Dashboard" [level=2] [ref=e46]
+        - paragraph [ref=e47]: Overview of simulation progress
+      - generic [ref=e48]:
+        - heading "Welcome to SimPilot" [level=3] [ref=e49]
+        - paragraph [ref=e50]: No data loaded yet. Go to Data Loader and upload the Simulation Status Excel files.
+        - link "Go to Data Loader" [ref=e51] [cursor=pointer]:
+          - /url: /data-loader
+```

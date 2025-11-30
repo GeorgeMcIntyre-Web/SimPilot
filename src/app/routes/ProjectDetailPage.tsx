@@ -1,0 +1,103 @@
+import { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { PageHeader } from '../../ui/components/PageHeader';
+import { DataTable, Column } from '../../ui/components/DataTable';
+import { StatusPill } from '../../ui/components/StatusPill';
+import { useProjectById, useAreas, useCells } from '../../ui/hooks/useDomainData';
+import { Cell, Area } from '../../domain/core';
+
+export function ProjectDetailPage() {
+    const { projectId } = useParams<{ projectId: string }>();
+    const project = useProjectById(projectId || '');
+    const areas = useAreas(projectId);
+    const cells = useCells(projectId);
+    const [selectedAreaId, setSelectedAreaId] = useState<string>('ALL');
+
+    if (!project) {
+        return (
+            <div>
+                <PageHeader title="Project Not Found" />
+                <p className="text-gray-500">The project you are looking for does not exist.</p>
+            </div>
+        );
+    }
+
+    // Filter cells by area
+    const filteredCells = selectedAreaId === 'ALL'
+        ? cells
+        : cells.filter((c: Cell) => c.areaId === selectedAreaId);
+
+    const columns: Column<Cell>[] = [
+        { header: 'Area', accessor: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '-' },
+        { header: 'Line', accessor: (c) => c.lineCode || '-' },
+        { header: 'Station', accessor: (c) => c.code },
+        { header: 'Cell Name', accessor: (c) => <Link to={`/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link> },
+        { header: 'Engineer', accessor: (c) => c.assignedEngineer || '-' },
+        { header: '% Complete', accessor: (c) => c.simulation ? `${c.simulation.percentComplete}%` : '-' },
+        { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },
+    ];
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div>
+                <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                    <Link to="/projects" className="hover:text-blue-600">Projects</Link>
+                    <span>/</span>
+                    <span className="text-gray-900 dark:text-white font-medium">{project.name}</span>
+                </div>
+                <PageHeader
+                    title={project.name}
+                    subtitle={`${project.customer} - ${project.status}`}
+                    actions={<StatusPill status={project.status} />}
+                />
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-6">
+                {/* Left Sidebar: Areas */}
+                <div className="w-full md:w-64 flex-shrink-0">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                        <h3 className="font-medium text-gray-900 dark:text-white mb-3">Areas</h3>
+                        <div className="space-y-1">
+                            <button
+                                onClick={() => setSelectedAreaId('ALL')}
+                                className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === 'ALL'
+                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    }`}
+                            >
+                                All Areas
+                            </button>
+                            {areas.map((area: Area) => (
+                                <button
+                                    key={area.id}
+                                    onClick={() => setSelectedAreaId(area.id)}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === area.id
+                                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                        }`}
+                                >
+                                    {area.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Content: Cells Table */}
+                <div className="flex-1">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                            Cells ({filteredCells.length})
+                        </h3>
+                        <DataTable
+                            data={filteredCells}
+                            columns={columns}
+                            emptyMessage="No cells found for this area."
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

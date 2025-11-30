@@ -14,6 +14,7 @@ export default function Sidebar() {
                 <NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink>
                 <NavLink to="/projects" className={linkClass}>Projects</NavLink>
                 <NavLink to="/equipment" className={linkClass}>Equipment</NavLink>
+                <NavLink to="/data-loader" className={linkClass}>Data Loader</NavLink>
             </nav>
             <div className="p-4 border-t border-gray-800 text-xs text-gray-500">
                 v0.1.0 MVP

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node analyze_excel.js:*)",
+      "Bash(node analyze_excel.cjs:*)",
+      "Bash(node analyze_excel_detailed.cjs:*)",
+      "Bash(del analyze_excel.js analyze_excel.cjs analyze_excel_detailed.cjs)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(npx vitest run)",
+      "Bash(npx vitest:*)",
+      "Bash(del \"c:\\Users\\George\\source\\repos\\SimPilot\\src\\simple.test.ts\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

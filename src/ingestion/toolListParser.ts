@@ -1,0 +1,268 @@
+// Tool List Parser
+// Parses Excel tool/equipment files into generic Tool entities
+// Handles spot weld guns (pneumatic/servo), sealers, grippers, etc.
+
+import * as XLSX from 'xlsx'
+import { Tool, ToolType, ToolMountType, SpotWeldSubType, generateId, IngestionWarning } from '../domain/core'
+import {
+  sheetToMatrix,
+  findHeaderRow,
+  buildColumnMap,
+  getCellString,
+  isEmptyRow,
+  isTotalRow
+} from './excelUtils'
+import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ToolListResult {
+  tools: Tool[]
+  warnings: IngestionWarning[]
+}
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const POSSIBLE_HEADERS = [
+  ['GUN', 'TYPE', 'LINE'],
+  ['TOOL', 'TYPE', 'AREA'],
+  ['ID', 'TYPE', 'STATION'],
+  ['EQUIPMENT', 'AREA', 'LINE']
+]
+
+// ============================================================================
+// MAIN PARSER
+// ============================================================================
+
+/**
+ * Parse a Tool List Excel file (weld guns, sealers, etc.) into Tool entities
+ */
+export async function parseToolList(
+  workbook: XLSX.WorkBook,
+  fileName: string
+): Promise<ToolListResult> {
+  const warnings: IngestionWarning[] = []
+
+  // Use the first sheet (usually the main data sheet)
+  const sheetName = workbook.SheetNames[0]
+  if (!sheetName) {
+    throw new Error(`No sheets found in ${fileName}`)
+  }
+
+  // Convert to matrix
+  const rows = sheetToMatrix(workbook, sheetName)
+  if (rows.length < 2) {
+    throw new Error(`Sheet "${sheetName}" has too few rows (${rows.length}). Expected at least 2 rows.`)
+  }
+
+  // Try to find header row
+  let headerRowIndex: number | null = null
+
+  for (const headerSet of POSSIBLE_HEADERS) {
+    headerRowIndex = findHeaderRow(rows, headerSet)
+    if (headerRowIndex !== null) break
+  }
+
+  if (headerRowIndex === null) {
+    throw new Error(`Could not find header row in ${fileName}. Tried combinations: ${POSSIBLE_HEADERS.map(h => h.join(', ')).join(' | ')}`)
+  }
+
+  // Build column map with all possible column names
+  const headerRow = rows[headerRowIndex]
+  const columnMap = buildColumnMap(headerRow, [
+    'GUN',
+    'GUN ID',
+    'GUN NUMBER',
+    'TOOL',
+    'TOOL ID',
+    'TOOL NAME',
+    'ID',
+    'NAME',
+    'EQUIPMENT',
+    'EQUIPMENT ID',
+    'TYPE',
+    'TOOL TYPE',
+    'GUN TYPE',
+    'SUBTYPE',
+    'MODEL',
+    'OEM MODEL',
+    'MANUFACTURER',
+    'SUPPLIER',
+    'AREA',
+    'AREA NAME',
+    'LINE',
+    'LINE CODE',
+    'ASSEMBLY LINE',
+    'STATION',
+    'STATION CODE',
+    'CELL',
+    'REUSE',
+    'REUSE STATUS',
+    'STATUS'
+  ])
+
+  // Detect tool type from filename
+  const defaultToolType = detectToolTypeFromFilename(fileName)
+
+  // Parse data rows
+  const dataStartIndex = headerRowIndex + 1
+  const tools: Tool[] = []
+
+  for (let i = dataStartIndex; i < rows.length; i++) {
+    const row = rows[i]
+
+    // Skip empty or total rows
+    if (isEmptyRow(row) || isTotalRow(row)) continue
+
+    // Extract tool identifier (try multiple column names)
+    const toolId = getCellString(row, columnMap, 'GUN ID')
+      || getCellString(row, columnMap, 'GUN NUMBER')
+      || getCellString(row, columnMap, 'GUN')
+      || getCellString(row, columnMap, 'TOOL ID')
+      || getCellString(row, columnMap, 'TOOL')
+      || getCellString(row, columnMap, 'TOOL NAME')
+      || getCellString(row, columnMap, 'EQUIPMENT ID')
+      || getCellString(row, columnMap, 'EQUIPMENT')
+      || getCellString(row, columnMap, 'ID')
+      || getCellString(row, columnMap, 'NAME')
+
+    if (!toolId) {
+      warnings.push(createRowSkippedWarning({
+        fileName,
+        sheetName,
+        rowIndex: i + 1,
+        reason: 'No tool ID found in any expected columns'
+      }))
+      continue
+    }
+
+    // Extract type information
+    const typeStr = getCellString(row, columnMap, 'TYPE')
+      || getCellString(row, columnMap, 'TOOL TYPE')
+      || getCellString(row, columnMap, 'GUN TYPE')
+
+    const subtypeStr = getCellString(row, columnMap, 'SUBTYPE')
+
+    // Determine tool type and subtype
+    const toolType = detectToolType(typeStr, fileName, defaultToolType)
+    const subType = detectSpotWeldSubType(typeStr, subtypeStr)
+
+    // Extract optional fields
+    const oemModel = getCellString(row, columnMap, 'MODEL')
+      || getCellString(row, columnMap, 'OEM MODEL')
+      || getCellString(row, columnMap, 'MANUFACTURER')
+      || getCellString(row, columnMap, 'SUPPLIER')
+
+    const areaName = getCellString(row, columnMap, 'AREA')
+      || getCellString(row, columnMap, 'AREA NAME')
+
+    const lineCode = getCellString(row, columnMap, 'LINE')
+      || getCellString(row, columnMap, 'LINE CODE')
+      || getCellString(row, columnMap, 'ASSEMBLY LINE')
+
+    const stationCode = getCellString(row, columnMap, 'STATION')
+      || getCellString(row, columnMap, 'STATION CODE')
+      || getCellString(row, columnMap, 'CELL')
+
+    const reuseStatus = getCellString(row, columnMap, 'REUSE')
+      || getCellString(row, columnMap, 'REUSE STATUS')
+      || getCellString(row, columnMap, 'STATUS')
+
+    // Detect mount type (default to UNKNOWN)
+    const mountType: ToolMountType = 'UNKNOWN'
+
+    // Build tool entity
+    const tool: Tool = {
+      id: generateId('tool', toolId),
+      name: toolId,
+      toolType,
+      subType: toolType === 'SPOT_WELD' ? subType : undefined,
+      oemModel: oemModel || undefined,
+      mountType,
+      areaName: areaName || undefined,
+      lineCode: lineCode || undefined,
+      stationCode: stationCode || undefined,
+      reuseStatus: reuseStatus || undefined,
+      sourceFile: fileName,
+      sheetName,
+      rowIndex: i
+    }
+
+    tools.push(tool)
+  }
+
+  if (tools.length === 0) {
+    warnings.push(createParserErrorWarning({
+      fileName,
+      sheetName,
+      error: 'No valid tool rows found after parsing'
+    }))
+  }
+
+  return {
+    tools,
+    warnings
+  }
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Detect tool type from filename
+ */
+function detectToolTypeFromFilename(fileName: string): ToolType {
+  const lower = fileName.toLowerCase()
+
+  if (lower.includes('wg') || lower.includes('weld') || lower.includes('gun')) {
+    return 'SPOT_WELD'
+  }
+
+  if (lower.includes('sealer') || lower.includes('seal')) {
+    return 'SEALER'
+  }
+
+  if (lower.includes('stud')) {
+    return 'STUD_WELD'
+  }
+
+  if (lower.includes('gripper') || lower.includes('grip')) {
+    return 'GRIPPER'
+  }
+
+  return 'OTHER'
+}
+
+/**
+ * Detect tool type from type string or filename
+ */
+function detectToolType(typeStr: string, _fileName: string, defaultType: ToolType): ToolType {
+  if (!typeStr) return defaultType
+
+  const lower = typeStr.toLowerCase()
+
+  // Check for explicit type strings
+  if (lower.includes('weld') || lower.includes('gun')) return 'SPOT_WELD'
+  if (lower.includes('sealer') || lower.includes('seal')) return 'SEALER'
+  if (lower.includes('stud')) return 'STUD_WELD'
+  if (lower.includes('gripper') || lower.includes('grip')) return 'GRIPPER'
+
+  return defaultType
+}
+
+/**
+ * Detect spot weld gun subtype (pneumatic vs servo)
+ */
+function detectSpotWeldSubType(typeStr: string, subtypeStr: string): SpotWeldSubType {
+  const combined = `${typeStr} ${subtypeStr}`.toLowerCase()
+
+  if (combined.includes('servo')) return 'SERVO'
+  if (combined.includes('pneumatic') || combined.includes('pneu')) return 'PNEUMATIC'
+
+  return 'UNKNOWN'
+}
