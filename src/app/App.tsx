@@ -9,6 +9,7 @@ import { DataLoaderPage } from './routes/DataLoaderPage'
 import { EngineersPage } from './routes/EngineersPage'
 import { DaleConsole } from './routes/DaleConsole'
 import { WarningsPage } from './routes/WarningsPage'
+import { ChangesPage } from './routes/ChangesPage'
 import { MsAuthProvider } from '../integrations/ms/useMsAccount'
 import { GlobalBusyProvider } from '../ui/GlobalBusyContext'
 import { DevDiagnostics } from '../ui/DevDiagnostics'
@@ -31,7 +32,9 @@ function App() {
                             <Route path="cells/:cellId" element={<CellDetailPage />} />
                             <Route path="engineers" element={<EngineersPage />} />
                             <Route path="tools" element={<ToolsPage />} />
+                            <Route path="tools" element={<ToolsPage />} />
                             <Route path="data-loader" element={<DataLoaderPage />} />
+                            <Route path="changes" element={<ChangesPage />} />
                         </Route>
                     </Routes>
                     <DevDiagnostics />

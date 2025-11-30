@@ -10,6 +10,7 @@ import {
     Factory
 } from 'lucide-react'
 import { useAllEngineerMetrics, useCells, useGlobalSimulationMetrics } from '../../ui/hooks/useDomainData'
+import { useChangeLog } from '../../domain/coreStore'
 import { KpiTile } from '../../ui/components/KpiTile'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { Cell } from '../../domain/core'
@@ -18,6 +19,7 @@ export function DaleConsole() {
     const metrics = useGlobalSimulationMetrics()
     const engineerMetrics = useAllEngineerMetrics()
     const cells = useCells()
+    const changes = useChangeLog()
     const [copied, setCopied] = useState(false)
 
     // 2. Top At-Risk Cells
@@ -106,6 +108,13 @@ export function DaleConsole() {
                         value={engineerMetrics.filter(e => e.atRiskCellsCount > 0).length}
                         icon={<Users className="h-6 w-6 text-blue-600" />}
                     />
+                    {changes.length > 0 && (
+                        <KpiTile
+                            label="Pending Changes"
+                            value={changes.length}
+                            icon={<Copy className="h-6 w-6 text-orange-600" />}
+                        />
+                    )}
                 </div>
             </section>
 

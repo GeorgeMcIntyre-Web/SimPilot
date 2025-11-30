@@ -1,17 +1,23 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { Tag } from '../../ui/components/Tag';
-import { useCellById, useRobotsByCell, useToolsByCell } from '../../ui/hooks/useDomainData';
+import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics, coreStore } from '../../domain/coreStore';
 import { Robot, Tool } from '../../domain/core';
-import { FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { createCellEngineerAssignmentChange } from '../../domain/changeLog';
+import { FileSpreadsheet, AlertTriangle, User, Edit2, Check, X } from 'lucide-react';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
     const cell = useCellById(cellId);
     const robots = useRobotsByCell(cellId || '');
     const tools = useToolsByCell(cellId || '');
+    const allEngineers = useAllEngineerMetrics();
+
+    const [isEditingEngineer, setIsEditingEngineer] = useState(false);
+    const [selectedEngineer, setSelectedEngineer] = useState<string>('');
 
     if (!cell) {
         return (
@@ -23,6 +29,26 @@ export function CellDetailPage() {
     }
 
     const isAtRisk = cell.simulation?.hasIssues || (cell.simulation?.percentComplete && cell.simulation.percentComplete > 0 && cell.simulation.percentComplete < 100 && cell.status === 'Blocked');
+
+    const handleEditEngineer = () => {
+        setSelectedEngineer(cell.assignedEngineer || '');
+        setIsEditingEngineer(true);
+    };
+
+    const handleSaveEngineer = () => {
+        if (selectedEngineer !== cell.assignedEngineer) {
+            const change = createCellEngineerAssignmentChange(
+                cell.id,
+                cell.assignedEngineer,
+                selectedEngineer,
+                cell.projectId,
+                cell.areaId
+            );
+            coreStore.addChange(change);
+            coreStore.updateCellEngineer(cell.id, selectedEngineer);
+        }
+        setIsEditingEngineer(false);
+    };
 
     const robotColumns: Column<Robot>[] = [
         { header: 'Name', accessor: (r) => r.name },
@@ -60,6 +86,60 @@ export function CellDetailPage() {
                         <div className="flex items-center bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-4 py-2 rounded-md border border-red-200 dark:border-red-800">
                             <AlertTriangle className="h-5 w-5 mr-2" />
                             <span className="font-medium">At Risk</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Engineer Assignment */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                    <User className="h-5 w-5 mr-2 text-blue-500" />
+                    Assigned Engineer
+                </h3>
+                <div className="flex items-center space-x-4">
+                    {isEditingEngineer ? (
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="text"
+                                list="engineers-list"
+                                value={selectedEngineer}
+                                onChange={(e) => setSelectedEngineer(e.target.value)}
+                                className="border rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Enter engineer name..."
+                            />
+                            <datalist id="engineers-list">
+                                {allEngineers.map(e => (
+                                    <option key={e.engineerName} value={e.engineerName} />
+                                ))}
+                            </datalist>
+                            <button
+                                onClick={handleSaveEngineer}
+                                className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                                title="Save"
+                            >
+                                <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                                onClick={() => setIsEditingEngineer(false)}
+                                className="p-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                                title="Cancel"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center space-x-2">
+                            <span className="text-gray-900 dark:text-white font-medium">
+                                {cell.assignedEngineer || 'Unassigned'}
+                            </span>
+                            <button
+                                onClick={handleEditEngineer}
+                                className="p-1 text-gray-400 hover:text-blue-500"
+                                title="Edit Engineer"
+                            >
+                                <Edit2 className="h-4 w-4" />
+                            </button>
                         </div>
                     )}
                 </div>

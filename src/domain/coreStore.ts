@@ -15,6 +15,7 @@ import {
 } from './derivedMetrics'
 import { getDemoScenarioData, DemoScenarioId, DEMO_SCENARIOS } from './demoData'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from './storeSnapshot'
+import { ChangeRecord } from './changeLog'
 
 export { DEMO_SCENARIOS }
 export type { DemoScenarioId, DemoScenarioSummary } from './demoData'
@@ -35,6 +36,7 @@ export interface CoreStoreState {
   robots: Robot[]
   tools: Tool[]
   warnings: string[]
+  changeLog: ChangeRecord[]
   lastUpdated: string | null
 }
 
@@ -45,6 +47,7 @@ let storeState: CoreStoreState = {
   robots: [],
   tools: [],
   warnings: [],
+  changeLog: [],
   lastUpdated: null
 }
 
@@ -80,6 +83,9 @@ export const coreStore = {
   }): void {
     storeState = {
       ...data,
+      changeLog: [], // Reset change log on new data load? Or keep it? 
+      // Spec says "Do NOT automatically clear changeLog unless the snapshot explicitly says so."
+      // But setData is usually for fresh ingestion. Let's keep it empty for fresh ingestion.
       lastUpdated: new Date().toISOString()
     }
     notifySubscribers()
@@ -96,7 +102,46 @@ export const coreStore = {
       robots: [],
       tools: [],
       warnings: [],
+      changeLog: [],
       lastUpdated: null
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add a change record to the log
+   */
+  addChange(change: ChangeRecord): void {
+    storeState = {
+      ...storeState,
+      changeLog: [...storeState.changeLog, change],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Clear the change log
+   */
+  clearChangeLog(): void {
+    storeState = {
+      ...storeState,
+      changeLog: [],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Update a cell's engineer assignment
+   */
+  updateCellEngineer(cellId: string, newEngineer: string | undefined): void {
+    storeState = {
+      ...storeState,
+      cells: storeState.cells.map(c =>
+        c.id === cellId ? { ...c, assignedEngineer: newEngineer } : c
+      ),
+      lastUpdated: new Date().toISOString()
     }
     notifySubscribers()
   },
@@ -228,6 +273,22 @@ export function useTools(cellId?: string): Tool[] {
 export function useWarnings(): string[] {
   const state = useCoreStore()
   return state.warnings
+}
+
+/**
+ * Hook to access the change log
+ */
+export function useChangeLog(): ChangeRecord[] {
+  const state = useCoreStore()
+  return state.changeLog
+}
+
+/**
+ * Hook to check for unsynced changes
+ */
+export function useHasUnsyncedChanges(): boolean {
+  const state = useCoreStore()
+  return state.changeLog.length > 0
 }
 
 /**

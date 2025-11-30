@@ -1,5 +1,6 @@
 import { Project, Area, Cell, Robot, Tool } from './core'
 import { CoreStoreState } from './coreStore'
+import { ChangeRecord } from './changeLog'
 
 export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 1
 
@@ -20,6 +21,7 @@ export interface StoreSnapshot {
     robots: Robot[]
     tools: Tool[]
     warnings: string[] // Note: coreStore uses string[] for warnings, not IngestionWarning[]
+    changeLog: ChangeRecord[]
 }
 
 /**
@@ -41,7 +43,8 @@ export function createSnapshotFromState(
         cells: state.cells,
         robots: state.robots,
         tools: state.tools,
-        warnings: state.warnings
+        warnings: state.warnings,
+        changeLog: state.changeLog
     }
 }
 
@@ -56,6 +59,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         robots: snapshot.robots,
         tools: snapshot.tools,
         warnings: snapshot.warnings,
+        changeLog: snapshot.changeLog,
         lastUpdated: snapshot.meta.lastSavedAt
     }
 }

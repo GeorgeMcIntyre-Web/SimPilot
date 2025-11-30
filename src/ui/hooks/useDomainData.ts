@@ -6,7 +6,8 @@ import {
     useCell as useRealCell,
     useRobots as useRealRobots,
     useTools as useRealTools,
-    useWarnings as useRealWarnings
+    useWarnings as useRealWarnings,
+    useHasUnsyncedChanges as useRealHasUnsyncedChanges
 } from '../../domain/coreStore';
 import { Project, Area, Cell, Robot, Tool, ToolType, SpotWeldSubType } from '../../domain/core';
 
@@ -69,6 +70,10 @@ export function useToolsFiltered(filter: { type?: ToolType; subType?: SpotWeldSu
 
 export function useWarnings(): string[] {
     return useRealWarnings();
+}
+
+export function useHasUnsyncedChanges(): boolean {
+    return useRealHasUnsyncedChanges();
 }
 
 // --- Derived Metrics Hooks ---
@@ -174,7 +179,7 @@ export function useAllEngineerMetrics() {
         const projectNames = projectIds.map(id => projects.find(p => p.id === id)?.name || id).join(', ');
 
         return {
-            name,
+            name, // Keeping 'name' here as this hook returns a locally defined object structure, NOT EngineerMetrics from derivedMetrics
             cellCount: engineerCells.length,
             avgCompletion,
             atRiskCellsCount,

@@ -160,7 +160,11 @@ The system feeds the **same** in-memory store regardless of the source:
   - `StoreSnapshot` schema defined.
   - `PersistenceService` abstraction and `IndexedDbService` implementation.
   - Auto-save on change (debounced) / Auto-load on startup.
-- **Phase 10: Write-Back**: Allow Dale to edit data (e.g., assign engineers) and export/sync back to source.
+- **Phase 10: Write-Back** (Completed): Controlled engineer assignment editing.
+  - `ChangeLog` domain model and `coreStore` integration.
+  - UI for editing in `CellDetailPage`.
+  - Persistence of changes in `StoreSnapshot`.
+  - CSV Export and "Unsynced Changes" indicators in Header and Dale Console.
 
 ## History (Context)
 
