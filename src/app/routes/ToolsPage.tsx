@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { Tag } from '../../ui/components/Tag';
 import { useToolsFiltered, ToolType, SpotWeldSubType, Tool } from '../../ui/hooks/useDomainData';
 import { Search, ArrowUpDown } from 'lucide-react';
+import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
 
 type SortKey = 'name' | 'stationCode' | 'toolType' | 'oemModel';
 type SortDirection = 'asc' | 'desc';
@@ -86,19 +87,18 @@ export function ToolsPage() {
         { header: 'Source', accessor: (t) => t.sourceFile ? <span className="text-xs text-gray-500" title={t.sourceFile}>{t.sourceFile.split('/').pop()}</span> : '-' },
     ];
 
+    const navigate = useNavigate();
+
     if (tools.length === 0 && typeFilter === 'ALL' && subTypeFilter === 'ALL' && !searchTerm) {
         return (
             <div className="space-y-8">
                 <PageHeader title="Tools & Equipment" subtitle="Manage all tools across projects" />
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
-                    <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">No Tools Found</h3>
-                    <p className="text-blue-700 dark:text-blue-300 mb-4">
-                        Please go to the Data Loader to import your equipment lists.
-                    </p>
-                    <Link to="/data-loader" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                        Go to Data Loader
-                    </Link>
-                </div>
+                <FlowerEmptyState
+                    title="No Tools Found"
+                    message="Please go to the Data Loader to import your equipment lists."
+                    ctaLabel="Go to Data Loader"
+                    onCtaClick={() => navigate('/data-loader')}
+                />
             </div>
         );
     }

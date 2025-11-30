@@ -8,6 +8,7 @@ import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics, co
 import { Robot, Tool } from '../../domain/core';
 import { createCellEngineerAssignmentChange } from '../../domain/changeLog';
 import { FileSpreadsheet, AlertTriangle, User, Edit2, Check, X } from 'lucide-react';
+import { CellChaosHint } from '../../ui/components/CellChaosHint';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
@@ -77,11 +78,14 @@ export function CellDetailPage() {
                     <span className="text-gray-900 dark:text-white font-medium">{cell.name}</span>
                 </div>
                 <div className="flex items-start justify-between">
-                    <PageHeader
-                        title={cell.name}
-                        subtitle={`Station: ${cell.code || '-'}`}
-                        actions={<StatusPill status={cell.status} />}
-                    />
+                    <div>
+                        <PageHeader
+                            title={cell.name}
+                            subtitle={`Station: ${cell.code || '-'}`}
+                            actions={<StatusPill status={cell.status} />}
+                        />
+                        <CellChaosHint cell={cell} />
+                    </div>
                     {isAtRisk && (
                         <div className="flex items-center bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-4 py-2 rounded-md border border-red-200 dark:border-red-800">
                             <AlertTriangle className="h-5 w-5 mr-2" />

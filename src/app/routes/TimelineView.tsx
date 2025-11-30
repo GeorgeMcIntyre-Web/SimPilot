@@ -3,6 +3,7 @@ import { PageHeader } from '../../ui/components/PageHeader'
 import { useProject, useCells } from '../../domain/coreStore'
 import { getCellScheduleRisk } from '../../domain/scheduleMetrics'
 import { ArrowLeft, Calendar, AlertCircle } from 'lucide-react'
+import { PageHint } from '../../ui/components/PageHint'
 
 export function TimelineView() {
     const { projectId } = useParams<{ projectId: string }>()
@@ -67,9 +68,17 @@ export function TimelineView() {
                 </Link>
                 <PageHeader
                     title={`Timeline: ${project.name}`}
-                    subtitle={minDate && maxDate
-                        ? `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()} (${totalDays} days)`
-                        : 'No schedule data available'
+                    subtitle={
+                        <PageHint
+                            standardText={minDate && maxDate
+                                ? `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()} (${totalDays} days)`
+                                : 'No schedule data available'
+                            }
+                            flowerText={minDate && maxDate
+                                ? `Are we late, at risk, or safe across time? (${totalDays} days)`
+                                : 'No schedule data available yet.'
+                            }
+                        />
                     }
                 />
             </div>
@@ -88,9 +97,9 @@ export function TimelineView() {
                     <div className="mb-4 flex items-center justify-between text-sm text-gray-500">
                         <div>Cell</div>
                         <div className="flex items-center space-x-2">
-                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">On Track</span>
-                            <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs">At Risk</span>
-                            <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">Late</span>
+                            <span className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-xs">On Track</span>
+                            <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">At Risk</span>
+                            <span className="px-2 py-1 bg-rose-100 text-rose-800 rounded text-xs">Late</span>
                         </div>
                     </div>
 
@@ -105,9 +114,9 @@ export function TimelineView() {
                                 : 0
 
                             const barColor =
-                                risk.status === 'late' ? 'bg-red-500' :
-                                    risk.status === 'atRisk' ? 'bg-orange-500' :
-                                        risk.status === 'onTrack' ? 'bg-green-500' : 'bg-gray-400'
+                                risk.status === 'late' ? 'bg-rose-400' :
+                                    risk.status === 'atRisk' ? 'bg-amber-400' :
+                                        risk.status === 'onTrack' ? 'bg-emerald-400' : 'bg-gray-400'
 
                             return (
                                 <div key={cell.id} className="relative">

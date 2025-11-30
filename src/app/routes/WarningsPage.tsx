@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useWarnings } from '../../ui/hooks/useDomainData'
 import { AlertTriangle, FileText, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react'
+import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
+import { PageHint } from '../../ui/components/PageHint'
 
 export function WarningsPage() {
     const warnings = useWarnings()
@@ -48,7 +50,15 @@ export function WarningsPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
-                <PageHeader title="Ingestion Warnings" subtitle="Review issues found during data loading" />
+                <PageHeader
+                    title="Ingestion Warnings"
+                    subtitle={
+                        <PageHint
+                            standardText="Review issues found during data loading"
+                            flowerText="No major thorns detected – data looks clean."
+                        />
+                    }
+                />
                 <button
                     onClick={handleCopy}
                     disabled={warnings.length === 0}
@@ -70,10 +80,10 @@ export function WarningsPage() {
             {/* List */}
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
                 {Object.keys(grouped).length === 0 ? (
-                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                        <Check className="h-12 w-12 mx-auto text-green-500 mb-3" />
-                        <p>No warnings found. Great job!</p>
-                    </div>
+                    <FlowerEmptyState
+                        title="Garden is Healthy"
+                        message="No warnings found"
+                    />
                 ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {Object.entries(grouped).map(([file, fileWarnings]) => (

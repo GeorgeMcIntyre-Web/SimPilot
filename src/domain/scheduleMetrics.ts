@@ -17,6 +17,8 @@ export interface CellScheduleRisk {
     completion: number | null
     daysLate?: number
     hasDueDate: boolean
+    plannedStart?: string
+    plannedEnd?: string
 }
 
 export interface ProjectScheduleSummary {
@@ -124,7 +126,9 @@ export function getCellScheduleRisk(cell: Cell): CellScheduleRisk {
         status,
         completion,
         daysLate,
-        hasDueDate
+        hasDueDate,
+        plannedStart: schedule?.plannedStart,
+        plannedEnd: schedule?.plannedEnd
     }
 }
 

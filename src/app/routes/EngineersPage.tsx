@@ -4,8 +4,10 @@ import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { useAllEngineerMetrics, useCells } from '../../ui/hooks/useDomainData';
-import { Search, ArrowUpDown, Copy, Check, User, AlertTriangle } from 'lucide-react';
+import { Search, ArrowUpDown, Copy, Check, AlertTriangle } from 'lucide-react';
 import { Cell } from '../../domain/core';
+import { useNavigate } from 'react-router-dom';
+import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
 
 type SortKey = 'name' | 'cellCount' | 'atRiskCellsCount' | 'avgCompletion';
 type SortDirection = 'asc' | 'desc';
@@ -113,17 +115,18 @@ export function EngineersPage() {
         { header: 'Issues', accessor: (c) => c.simulation?.hasIssues ? <AlertTriangle className="h-4 w-4 text-red-500" /> : '-' },
     ];
 
+    const navigate = useNavigate();
+
     if (metrics.length === 0) {
         return (
             <div className="space-y-8">
                 <PageHeader title="Engineers" subtitle="Workload & risk overview" />
-                <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center">
-                    <User className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No Engineers Found</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Ensure "PERSONS RESPONSIBLE" is filled in the Simulation Status Excel files.
-                    </p>
-                </div>
+                <FlowerEmptyState
+                    title="No Engineers Found"
+                    message="Ensure 'PERSONS RESPONSIBLE' is filled in the Simulation Status Excel files."
+                    ctaLabel="Go to Data Loader"
+                    onCtaClick={() => navigate('/data-loader')}
+                />
             </div>
         );
     }

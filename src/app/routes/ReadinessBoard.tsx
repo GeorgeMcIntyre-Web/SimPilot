@@ -5,20 +5,21 @@ import { useCells, useProjects } from '../../domain/coreStore'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { SchedulePhase, Cell } from '../../domain/core'
 import { Filter, Calendar, User } from 'lucide-react'
+import { PageHint } from '../../ui/components/PageHint'
 
 const PHASE_LABELS: Record<SchedulePhase, string> = {
     unspecified: 'Unspecified',
-    presim: 'Pre-Simulation',
-    offline: 'Offline Programming',
-    onsite: 'On-Site',
-    rampup: 'Ramp-Up',
-    handover: 'Handover'
+    presim: '🌱 Pre-Simulation',
+    offline: '🌿 Offline Programming',
+    onsite: '🌷 On-Site',
+    rampup: '🌻 Ramp-Up',
+    handover: '💐 Handover'
 }
 
 const STATUS_COLORS = {
-    onTrack: 'bg-green-100 text-green-800 border-green-200',
-    atRisk: 'bg-orange-100 text-orange-800 border-orange-200',
-    late: 'bg-red-100 text-red-800 border-red-200',
+    onTrack: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    atRisk: 'bg-amber-100 text-amber-800 border-amber-200',
+    late: 'bg-rose-100 text-rose-800 border-rose-200',
     unknown: 'bg-gray-100 text-gray-600 border-gray-200'
 }
 
@@ -49,7 +50,12 @@ export function ReadinessBoard() {
         <div className="space-y-6">
             <PageHeader
                 title="Readiness Board"
-                subtitle="Track cells by schedule phase and status"
+                subtitle={
+                    <PageHint
+                        standardText="Track cells by schedule phase and status"
+                        flowerText="Where every cell lives in the presim → handover journey."
+                    />
+                }
             />
 
             {/* Filters */}

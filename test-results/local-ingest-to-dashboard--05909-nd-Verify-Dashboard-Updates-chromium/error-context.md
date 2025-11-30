@@ -6,45 +6,83 @@
     - generic [ref=e6]:
       - generic [ref=e7]:
         - generic [ref=e8]:
-          - text: SimPilot
-          - generic "No simulation data loaded" [ref=e9]: No Data
-        - navigation [ref=e10]:
-          - link "Dashboard" [active] [ref=e11] [cursor=pointer]:
+          - generic [ref=e9]:
+            - img [ref=e10]
+            - text: SimPilot
+          - generic "No simulation data loaded" [ref=e14]: No Data
+        - navigation [ref=e15]:
+          - link "Dashboard" [active] [ref=e16] [cursor=pointer]:
             - /url: /
-            - img [ref=e12]
+            - img [ref=e17]
             - text: Dashboard
-          - link "Projects" [ref=e17] [cursor=pointer]:
+          - link "Projects" [ref=e22] [cursor=pointer]:
             - /url: /projects
-            - img [ref=e18]
+            - img [ref=e23]
             - text: Projects
-          - link "Engineers" [ref=e20] [cursor=pointer]:
+          - link "Readiness" [ref=e25] [cursor=pointer]:
+            - /url: /readiness
+            - img [ref=e26]
+            - text: Readiness
+          - link "Engineers" [ref=e28] [cursor=pointer]:
             - /url: /engineers
-            - img [ref=e21]
+            - img [ref=e29]
             - text: Engineers
-          - link "Tools" [ref=e26] [cursor=pointer]:
+          - link "Tools" [ref=e34] [cursor=pointer]:
             - /url: /tools
-            - img [ref=e27]
+            - img [ref=e35]
             - text: Tools
-          - link "Data Loader" [ref=e29] [cursor=pointer]:
+          - link "Data Loader" [ref=e37] [cursor=pointer]:
             - /url: /data-loader
-            - img [ref=e30]
+            - img [ref=e38]
             - text: Data Loader
-      - generic [ref=e33]:
-        - link "5" [ref=e34] [cursor=pointer]:
+      - generic [ref=e41]:
+        - button "Toggle theme mode" [ref=e43]:
+          - text: Switch to Standard Mode
+          - img [ref=e45]
+          - text: Dale's GardenStandard
+        - link "5" [ref=e49] [cursor=pointer]:
           - /url: /warnings
-          - img [ref=e35]
+          - img [ref=e50]
           - text: "5"
-        - button "Open main menu" [ref=e39]:
+        - button "Open main menu" [ref=e54]:
           - text: Open main menu
-          - img [ref=e40]
-  - main [ref=e41]:
-    - generic [ref=e43]:
-      - generic [ref=e45]:
-        - heading "Dashboard" [level=2] [ref=e46]
-        - paragraph [ref=e47]: Overview of simulation progress
-      - generic [ref=e48]:
-        - heading "Welcome to SimPilot" [level=3] [ref=e49]
-        - paragraph [ref=e50]: No data loaded yet. Go to Data Loader and upload the Simulation Status Excel files.
-        - link "Go to Data Loader" [ref=e51] [cursor=pointer]:
-          - /url: /data-loader
+          - img [ref=e55]
+  - main [ref=e56]:
+    - generic [ref=e58]:
+      - generic [ref=e60]:
+        - heading "Dashboard" [level=2] [ref=e61]
+        - paragraph [ref=e63]:
+          - img [ref=e64]
+          - text: Load the demo from Data Loader to see a full, realistic example.
+      - generic [ref=e67]:
+        - button "Dismiss banner" [ref=e68]:
+          - img [ref=e69]
+        - generic [ref=e72]:
+          - img [ref=e75]
+          - generic [ref=e79]:
+            - heading "Hi Dale 🌸 – this is your Cloudflare cockpit." [level=2] [ref=e80]
+            - paragraph [ref=e81]: Tap 'Load STLA Sample' to see how your garden looks on a good day.
+            - generic [ref=e82]:
+              - link "Load Demo Scenario" [ref=e83] [cursor=pointer]:
+                - /url: /data-loader
+              - button "Dismiss" [ref=e84]
+      - generic [ref=e85]:
+        - button "Dismiss welcome message" [ref=e86]:
+          - img [ref=e87]
+        - generic [ref=e90]:
+          - img [ref=e93]
+          - generic [ref=e97]:
+            - heading "Hi Dale 🌸, this is your simulation cockpit." [level=3] [ref=e98]
+            - paragraph [ref=e99]: Start by loading a sample day via the Data Loader, or ask George to point it at your real Excel sheets.
+            - generic [ref=e100]:
+              - link "Go to Data Loader" [ref=e101] [cursor=pointer]:
+                - /url: /data-loader
+              - button "Dismiss" [ref=e102]
+      - generic [ref=e103]:
+        - generic [ref=e105]:
+          - img [ref=e106]: 🌸
+          - img [ref=e107]
+        - heading "Welcome to SimPilot" [level=3] [ref=e111]
+        - paragraph [ref=e112]: No data loaded yet. Plant some data by loading files in the Data Loader.
+        - button "Go to Data Loader" [ref=e113]
 ```

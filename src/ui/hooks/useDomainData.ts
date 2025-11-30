@@ -78,9 +78,14 @@ export function useHasUnsyncedChanges(): boolean {
 
 // --- Derived Metrics Hooks ---
 
+import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics';
+
+// ...
+
 export function useGlobalSimulationMetrics() {
     const projects = useRealProjects();
     const cells = useRealCells();
+    const scheduleRisks = getAllCellScheduleRisks();
 
     const cellsWithSimulation = cells.filter(c => c.simulation && c.simulation.percentComplete > 0);
     const avgCompletion = cellsWithSimulation.length > 0
@@ -92,11 +97,14 @@ export function useGlobalSimulationMetrics() {
         return c.simulation.hasIssues || (c.simulation.percentComplete > 0 && c.simulation.percentComplete < 100 && c.status === 'Blocked');
     }).length;
 
+    const lateCellsCount = scheduleRisks.filter(r => r.status === 'late').length;
+
     return {
         totalProjects: projects.length,
         totalCells: cells.length,
         avgCompletion,
-        atRiskCellsCount
+        atRiskCellsCount,
+        lateCellsCount
     };
 }
 

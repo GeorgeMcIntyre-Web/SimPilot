@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 
 interface PageHeaderProps {
-    title: string;
-    subtitle?: string;
+    title: ReactNode;
+    subtitle?: ReactNode;
     actions?: ReactNode;
 }
 
@@ -14,9 +14,9 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
                     {title}
                 </h2>
                 {subtitle && (
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {subtitle}
-                    </p>
+                    </div>
                 )}
             </div>
             {actions && (

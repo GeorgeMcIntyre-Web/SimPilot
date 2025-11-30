@@ -17,32 +17,36 @@ import { GlobalBusyProvider } from '../ui/GlobalBusyContext'
 import { DevDiagnostics } from '../ui/DevDiagnostics'
 import { PersistenceManager } from '../persistence/PersistenceManager'
 
+import { ThemeProvider } from '../ui/ThemeContext'
+
 function App() {
     return (
         <MsAuthProvider>
             <GlobalBusyProvider>
-                <PersistenceManager />
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/" element={<LayoutShell />}>
-                            <Route index element={<Navigate to="/dashboard" replace />} />
-                            <Route path="dashboard" element={<DashboardPage />} />
-                            <Route path="dale-console" element={<DaleConsole />} />
-                            <Route path="warnings" element={<WarningsPage />} />
-                            <Route path="projects" element={<ProjectsPage />} />
-                            <Route path="projects/:projectId" element={<ProjectDetailPage />} />
-                            <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
-                            <Route path="cells/:cellId" element={<CellDetailPage />} />
-                            <Route path="engineers" element={<EngineersPage />} />
-                            <Route path="tools" element={<ToolsPage />} />
-                            <Route path="data-loader" element={<DataLoaderPage />} />
-                            <Route path="changes" element={<ChangesPage />} />
-                            <Route path="readiness" element={<ReadinessBoard />} />
-                            <Route path="timeline/:projectId" element={<TimelineView />} />
-                        </Route>
-                    </Routes>
-                    <DevDiagnostics />
-                </BrowserRouter>
+                <ThemeProvider>
+                    <PersistenceManager />
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/" element={<LayoutShell />}>
+                                <Route index element={<Navigate to="/dashboard" replace />} />
+                                <Route path="dashboard" element={<DashboardPage />} />
+                                <Route path="dale-console" element={<DaleConsole />} />
+                                <Route path="warnings" element={<WarningsPage />} />
+                                <Route path="projects" element={<ProjectsPage />} />
+                                <Route path="projects/:projectId" element={<ProjectDetailPage />} />
+                                <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
+                                <Route path="cells/:cellId" element={<CellDetailPage />} />
+                                <Route path="engineers" element={<EngineersPage />} />
+                                <Route path="tools" element={<ToolsPage />} />
+                                <Route path="data-loader" element={<DataLoaderPage />} />
+                                <Route path="changes" element={<ChangesPage />} />
+                                <Route path="readiness" element={<ReadinessBoard />} />
+                                <Route path="timeline/:projectId" element={<TimelineView />} />
+                            </Route>
+                        </Routes>
+                        <DevDiagnostics />
+                    </BrowserRouter>
+                </ThemeProvider>
             </GlobalBusyProvider>
         </MsAuthProvider>
     )
