@@ -32,9 +32,11 @@ describe('toolListParser - Real-World Resilience', () => {
             const firstTool = result.tools[0]
 
             // Assert: Unknown columns should be in metadata
+            // Note: 'Refresment OK' is now a KNOWN column (explicitly handled), so not in metadata
+            // Only truly unknown columns get vacuumed
             expect(firstTool.metadata).toBeDefined()
-            expect(firstTool.metadata['Refresment OK']).toBe('Yes')  // Typo column
-            expect(firstTool.metadata['Coments']).toBe('Issues with tip dresser')  // Typo column
+            expect(firstTool.metadata['Zone']).toBe('P1Mx')  // Unknown column
+            expect(firstTool.metadata['Coments']).toBe('Issues with tip dresser')  // Typo column (not in consumed list)
             expect(firstTool.metadata['Supplier 2']).toBe('ACME Corp')  // Unknown column
             expect(firstTool.metadata['Robot Standard (Confirm)']).toBe('R-2000i/210F')  // Unknown column
             expect(firstTool.metadata['Asset description']).toBe('Pneumatic spot weld gun with extended arm')  // Unknown column
@@ -42,8 +44,9 @@ describe('toolListParser - Real-World Resilience', () => {
 
         it('should vacuum columns even if they have special characters', async () => {
             // Arrange: Create a sheet with special character headers
+            // Note: Don't use headers that match known columns (e.g., 'Status' matches STATUS)
             const specialSheet = [
-                ['GUN ID', 'TYPE', 'Cost ($)', 'Weight (kg)', 'Status [2024]'],
+                ['GUN ID', 'TYPE', 'Cost ($)', 'Weight (kg)', 'Condition [2024]'],
                 ['G-100', 'Spot Weld', '25000', '150', 'Active']
             ]
             const workbook = createWorkbookFromArray(specialSheet)
@@ -51,10 +54,10 @@ describe('toolListParser - Real-World Resilience', () => {
             // Act
             const result = await parseToolList(workbook, 'special.xlsx')
 
-            // Assert
+            // Assert: Unknown columns with special characters should be vacuumed
             expect(result.tools[0].metadata['Cost ($)']).toBe('25000')
             expect(result.tools[0].metadata['Weight (kg)']).toBe('150')
-            expect(result.tools[0].metadata['Status [2024]']).toBe('Active')
+            expect(result.tools[0].metadata['Condition [2024]']).toBe('Active')
         })
     })
 
@@ -341,10 +344,12 @@ describe('toolListParser - Real-World Resilience', () => {
         })
 
         it('should warn when no valid tools found', async () => {
+            // Use rows with null values to ensure they have content that creates cells
+            // Empty arrays [] don't create cells in xlsx, so we need explicit nulls
             const emptyDataSheet = [
                 ['GUN ID', 'TYPE'],
-                [],
-                []
+                [null, null],   // Row with nulls (no tool ID = skipped)
+                ['', '']        // Row with empty strings (no tool ID = skipped)
             ]
             const workbook = createWorkbookFromArray(emptyDataSheet)
             const result = await parseToolList(workbook, 'test.xlsx')
