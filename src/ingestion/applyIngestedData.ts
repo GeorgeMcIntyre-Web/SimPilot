@@ -6,6 +6,7 @@ import { SimulationStatusResult } from './simulationStatusParser'
 import { RobotListResult } from './robotListParser'
 import { ToolListResult } from './toolListParser'
 import { createLinkingMissingTargetWarning, createParserErrorWarning } from './warningUtils'
+import { linkAssetsToSimulation } from './relationshipLinker'
 
 // ============================================================================
 // TYPES
@@ -24,6 +25,7 @@ export interface ApplyResult {
   robots: Robot[]
   tools: Tool[]
   warnings: IngestionWarning[]
+  linkCount?: number  // NEW: Number of successful asset→cell links for feedback
 }
 
 // ============================================================================
@@ -72,6 +74,22 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     return { projects, areas, cells, robots, tools, warnings }
   }
 
+  // NEW: Link assets to simulation cells (relational engine)
+  // This enriches cells with sourcing, OEM model, and metadata from asset files
+  let linkCount = 0
+  if (cells.length > 0 && (robots.length > 0 || tools.length > 0)) {
+    const allAssets = [...robots, ...tools]
+    const linkResult = linkAssetsToSimulation(cells, allAssets)
+
+    // Replace cells with enriched versions
+    cells.length = 0
+    cells.push(...linkResult.linkedCells)
+
+    linkCount = linkResult.linkCount
+
+    console.log(`[Relational Linker] Linked ${linkCount}/${linkResult.totalCells} cells to assets`)
+  }
+
   // Link robots to cells and areas
   linkRobotsToCells(robots, cells, areas, projects, warnings)
 
@@ -87,7 +105,8 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     cells,
     robots,
     tools,
-    warnings
+    warnings,
+    linkCount  // Return for user feedback
   }
 }
 

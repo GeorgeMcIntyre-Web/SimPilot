@@ -2,7 +2,7 @@
 // Simple in-memory store for new domain entities (Project, Area, Cell, Robot, Tool)
 
 import { useState, useEffect } from 'react'
-import { Project, Area, Cell, Robot, Tool, UnifiedAsset } from './core'
+import { Project, Area, Cell, Robot, Tool, UnifiedAsset, EmployeeRecord, SupplierRecord } from './core'
 import {
   getProjectMetrics,
   getAllProjectMetrics,
@@ -38,6 +38,10 @@ export interface CoreStoreState {
   changeLog: ChangeRecord[]
   lastUpdated: string | null
   dataSource: 'Demo' | 'Local' | 'MS365' | null  // Track where data came from
+  referenceData: {
+    employees: EmployeeRecord[]
+    suppliers: SupplierRecord[]
+  }
 }
 
 let storeState: CoreStoreState = {
@@ -48,7 +52,11 @@ let storeState: CoreStoreState = {
   warnings: [],
   changeLog: [],
   lastUpdated: null,
-  dataSource: null
+  dataSource: null,
+  referenceData: {
+    employees: [],
+    suppliers: []
+  }
 }
 
 // Subscribers for reactive updates
@@ -80,6 +88,10 @@ export const coreStore = {
     robots: Robot[]
     tools: Tool[]
     warnings: string[]
+    referenceData?: {
+      employees: EmployeeRecord[]
+      suppliers: SupplierRecord[]
+    }
   }, source?: 'Demo' | 'Local' | 'MS365'): void {
     storeState = {
       projects: data.projects,
@@ -89,7 +101,8 @@ export const coreStore = {
       warnings: data.warnings,
       changeLog: [], // Reset change log on new data load
       lastUpdated: new Date().toISOString(),
-      dataSource: source || null
+      dataSource: source || null,
+      referenceData: data.referenceData || { employees: [], suppliers: [] }
     }
     notifySubscribers()
   },
@@ -106,7 +119,11 @@ export const coreStore = {
       warnings: [],
       changeLog: [],
       lastUpdated: null,
-      dataSource: null
+      dataSource: null,
+      referenceData: {
+        employees: [],
+        suppliers: []
+      }
     }
     notifySubscribers()
   },
@@ -399,4 +416,12 @@ export function useLastUpdated(): string | null {
 export function useDataSource(): 'Demo' | 'Local' | 'MS365' | null {
   const state = useCoreStore()
   return state.dataSource
+}
+
+/**
+ * Hook to access reference data (employees, suppliers)
+ */
+export function useReferenceData() {
+  const state = useCoreStore()
+  return state.referenceData
 }

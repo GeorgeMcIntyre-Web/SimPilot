@@ -24,6 +24,10 @@ export interface StoreSnapshot {
     tools?: Tool[]
     warnings: string[] // Note: coreStore uses string[] for warnings, not IngestionWarning[]
     changeLog: ChangeRecord[]
+    referenceData?: {
+        employees: { id: string; name: string; role?: string; department?: string }[]
+        suppliers: { id: string; name: string; contact?: string }[]
+    }
 }
 
 /**
@@ -74,6 +78,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         warnings: snapshot.warnings,
         changeLog: snapshot.changeLog,
         lastUpdated: snapshot.meta.lastSavedAt,
-        dataSource
+        dataSource,
+        referenceData: snapshot.referenceData || { employees: [], suppliers: [] }
     }
 }

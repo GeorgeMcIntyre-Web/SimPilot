@@ -70,10 +70,17 @@ export function DaleConsole() {
     const lateCellsCount = scheduleRisks.filter(r => r.status === 'late').length
     const scheduleAtRiskCount = scheduleRisks.filter(r => r.status === 'atRisk').length
 
-    // 2. Top At-Risk Cells
+    // 2. Top At-Risk Cells (filtered by Zen Mode)
     const atRiskCells = cells.filter((c: Cell) => {
         if (!c.simulation) return false
-        return c.simulation.hasIssues || (c.simulation.percentComplete > 0 && c.simulation.percentComplete < 100 && c.status === 'Blocked')
+        const isAtRisk = c.simulation.hasIssues || (c.simulation.percentComplete > 0 && c.simulation.percentComplete < 100 && c.status === 'Blocked')
+
+        // In Zen Mode, only show cells that actually have problems
+        if (zenMode && !c.simulation.hasIssues && c.status !== 'Blocked') {
+            return false
+        }
+
+        return isAtRisk
     }).sort((a, b) => (a.simulation?.percentComplete || 0) - (b.simulation?.percentComplete || 0))
         .slice(0, 10)
 
@@ -231,8 +238,10 @@ export function DaleConsole() {
                     <KpiTile
                         label="At Risk (Sim)"
                         value={metrics.atRiskCellsCount}
-                        icon={<AlertTriangle className="h-6 w-6 text-red-600" />}
+                        icon={<AlertTriangle className="h-6 w-6" />}
                         description="Blocked or stalled < 100%"
+                        progress={metrics.atRiskCellsCount > 0 ? Math.min(100, (metrics.atRiskCellsCount / metrics.totalCells) * 100) : 0}
+                        status={metrics.atRiskCellsCount === 0 ? 'success' : metrics.atRiskCellsCount > 5 ? 'danger' : 'warning'}
                         data-testid="dale-kpi-at-risk-sim"
                     />
                     {!zenMode && (
@@ -246,15 +255,19 @@ export function DaleConsole() {
                     <KpiTile
                         label="Late Cells"
                         value={lateCellsCount}
-                        icon={<Clock className="h-6 w-6 text-red-600" />}
+                        icon={<Clock className="h-6 w-6" />}
                         description="Past due date"
+                        progress={lateCellsCount > 0 ? Math.min(100, (lateCellsCount / metrics.totalCells) * 100) : 0}
+                        status={lateCellsCount === 0 ? 'success' : lateCellsCount > 3 ? 'danger' : 'warning'}
                         data-testid="dale-kpi-late-cells"
                     />
                     <KpiTile
                         label="At Risk (Schedule)"
                         value={scheduleAtRiskCount}
-                        icon={<Calendar className="h-6 w-6 text-orange-600" />}
+                        icon={<Calendar className="h-6 w-6" />}
                         description="Approaching deadline"
+                        progress={scheduleAtRiskCount > 0 ? Math.min(100, (scheduleAtRiskCount / metrics.totalCells) * 100) : 0}
+                        status={scheduleAtRiskCount === 0 ? 'success' : scheduleAtRiskCount > 3 ? 'danger' : 'warning'}
                     />
                     {changes.length > 0 && (
                         <KpiTile
@@ -304,12 +317,12 @@ export function DaleConsole() {
                 <section className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
                         <Users className="h-5 w-5 text-indigo-500 mr-2" />
-                        Engineers Summary
+                        Engineers Summary {zenMode && <span className="ml-2 text-xs text-gray-500">(At Risk Only)</span>}
                     </h3>
                     <DataTable
-                        data={engineerMetrics}
+                        data={zenMode ? engineerMetrics.filter(e => e.atRiskCellsCount > 0) : engineerMetrics}
                         columns={engineerColumns}
-                        emptyMessage="No engineer data available."
+                        emptyMessage={zenMode ? "No engineers with at-risk cells." : "No engineer data available."}
                     />
                 </section>
             </div>

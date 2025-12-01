@@ -44,7 +44,7 @@ export interface IngestFilesResult {
 // INTERNAL TYPES
 // ============================================================================
 
-type FileKind = 'SimulationStatus' | 'RobotList' | 'ToolList' | 'Unknown'
+type FileKind = 'SimulationStatus' | 'RobotList' | 'ToolList' | 'Metadata' | 'Unknown'
 
 // ============================================================================
 // FILE CLASSIFICATION
@@ -66,6 +66,17 @@ function detectFileType(workbook: XLSX.WorkBook, fileName: string): FileKind {
       row.map(cell => String(cell || '').toLowerCase().trim()).join(' ')
     ).join(' ')
 
+    // Metadata Files (HIGHEST PRIORITY - check first)
+    // Check for EmployeeList, SupplierList, or Reference Data sheets
+    if (
+      content.includes('employeelist') ||
+      content.includes('supplierlist') ||
+      content.includes('supplier name') ||
+      (content.includes('employee') && content.includes('id'))
+    ) {
+      return 'Metadata'
+    }
+
     // Simulation Status
     if (
       (content.includes('robot') && content.includes('reach')) ||
@@ -81,7 +92,20 @@ function detectFileType(workbook: XLSX.WorkBook, fileName: string): FileKind {
       return 'RobotList'
     }
 
-    // Tool/Equipment List
+    // Zangenpool (detailed gun specs)
+    if (content.includes('gun force') && content.includes('gun number')) {
+      return 'ToolList'
+    }
+
+    // Reuse Lists (Device Name + CARRY OVER)
+    if (
+      (content.includes('device name') || content.includes('device id')) &&
+      (content.includes('carry over') || content.includes('proyect') || content.includes('project'))
+    ) {
+      return 'ToolList'
+    }
+
+    // Tool/Equipment List (general)
     if (
       (content.includes('force') && content.includes('gun')) ||
       content.includes('gun force') ||

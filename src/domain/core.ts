@@ -1,7 +1,7 @@
 // SimPilot Core Domain Types
 // Clean, future-proof type system following guard-clause architecture
 
-import { UnifiedAsset } from './UnifiedModel'
+import { UnifiedAsset, EquipmentSourcing } from './UnifiedModel'
 export * from './UnifiedModel'
 
 // ============================================================================
@@ -100,6 +100,8 @@ export interface Cell {
   lastUpdated?: string
   simulation?: SimulationStatus
   schedule?: ScheduleInfo  // NEW: schedule metadata
+  sourcing?: EquipmentSourcing  // NEW: sourcing status from linked assets (REUSE, NEW_BUY, etc.)
+  metadata?: Record<string, any>  // NEW: additional metadata from linked assets (Gun Force, Supplier, etc.)
 }
 
 // ============================================================================
@@ -147,6 +149,23 @@ export interface Tool extends UnifiedAsset {
   projectId?: string
   robotId?: string
   reuseStatus?: string
+}
+
+// ============================================================================
+// REFERENCE DATA (METADATA)
+// ============================================================================
+
+export interface EmployeeRecord {
+  id: string
+  name: string
+  role?: string
+  department?: string
+}
+
+export interface SupplierRecord {
+  id: string
+  name: string
+  contact?: string
 }
 
 // ============================================================================
