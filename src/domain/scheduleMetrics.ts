@@ -52,7 +52,7 @@ export function computeScheduleStatus(
 ): ScheduleStatus {
     const targetDate = dueDate || plannedEnd
 
-    if (!targetDate) {
+    if (targetDate === undefined || targetDate === '') {
         return 'unknown'
     }
 
@@ -92,7 +92,7 @@ export function computeScheduleStatus(
  * Calculate days late (negative if not yet late)
  */
 export function calculateDaysLate(dueDate: string | undefined): number | undefined {
-    if (!dueDate) return undefined
+    if (dueDate === undefined || dueDate === '') return undefined
 
     const now = new Date()
     const target = new Date(dueDate)

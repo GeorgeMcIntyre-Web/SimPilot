@@ -91,7 +91,7 @@ export function DaleConsole() {
             ? `Worst cell: ${worstCell.name} – ${worstCell.simulation?.percentComplete}% complete.`
             : 'No critical cells.'
 
-        return `Projects: ${metrics.totalProjects}. Cells: ${metrics.totalCells}. At risk: ${metrics.atRiskCellsCount} (${Math.round((metrics.atRiskCellsCount / metrics.totalCells) * 100) || 0}%). Engineers with at-risk cells: ${topRiskEngineers || 'None'}. ${worstCellText}`
+        return `Projects: ${metrics.totalProjects}. Cells: ${metrics.totalCells}. At risk (Sim): ${metrics.atRiskCellsCount}. Late: ${lateCellsCount}. At risk (Schedule): ${scheduleAtRiskCount}. Engineers with at-risk cells: ${topRiskEngineers || 'None'}. ${worstCellText}`
     }
 
     const handleCopy = async () => {
@@ -142,7 +142,7 @@ export function DaleConsole() {
     };
 
     return (
-        <div data-testid="dale-console" className="space-y-8 pb-12 bg-[radial-gradient(circle_at_top,_#ffe4e6_0,_#ffffff_45%)] -m-6 p-6 min-h-screen">
+        <div data-testid="dale-console-root" className="space-y-8 pb-12 bg-[radial-gradient(circle_at_top,_#ffe4e6_0,_#ffffff_45%)] -m-6 p-6 min-h-screen">
 
             {/* Dale Welcome Strip (First Time) */}
             {themeMode === 'flower' && !hasSeenIntro && (
@@ -214,24 +214,30 @@ export function DaleConsole() {
                         icon={<Factory className="h-6 w-6 text-emerald-600" />}
                     />
                     <KpiTile
-                        label="At Risk Cells"
+                        label="At Risk (Sim)"
                         value={metrics.atRiskCellsCount}
-                        icon={<AlertTriangle className="h-6 w-6 text-red-500" />}
+                        icon={<AlertTriangle className="h-6 w-6 text-red-600" />}
+                        description="Blocked or stalled < 100%"
+                        data-testid="dale-kpi-at-risk-sim"
                     />
                     <KpiTile
                         label="Engineers w/ Risk"
                         value={engineerMetrics.filter(e => e.atRiskCellsCount > 0).length}
-                        icon={<Users className="h-6 w-6 text-indigo-500" />}
+                        icon={<Users className="h-6 w-6 text-blue-600" />}
+                        description="Engineers with critical cells"
                     />
                     <KpiTile
                         label="Late Cells"
                         value={lateCellsCount}
                         icon={<Clock className="h-6 w-6 text-red-600" />}
+                        description="Past due date"
+                        data-testid="dale-kpi-late-cells"
                     />
                     <KpiTile
-                        label="Schedule At Risk"
+                        label="At Risk (Schedule)"
                         value={scheduleAtRiskCount}
                         icon={<Calendar className="h-6 w-6 text-orange-600" />}
+                        description="Approaching deadline"
                     />
                     {changes.length > 0 && (
                         <KpiTile

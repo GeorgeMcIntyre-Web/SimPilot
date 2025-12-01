@@ -7,7 +7,9 @@ import {
     useRobots as useRealRobots,
     useTools as useRealTools,
     useWarnings as useRealWarnings,
-    useHasUnsyncedChanges as useRealHasUnsyncedChanges
+    useHasUnsyncedChanges as useRealHasUnsyncedChanges,
+    useLastUpdated as useRealLastUpdated,
+    useDataSource as useRealDataSource
 } from '../../domain/coreStore';
 import { Project, Area, Cell, Robot, Tool, ToolType, SpotWeldSubType } from '../../domain/core';
 
@@ -74,6 +76,14 @@ export function useWarnings(): string[] {
 
 export function useHasUnsyncedChanges(): boolean {
     return useRealHasUnsyncedChanges();
+}
+
+export function useLastUpdated() {
+    return useRealLastUpdated();
+}
+
+export function useDataSource() {
+    return useRealDataSource();
 }
 
 // --- Derived Metrics Hooks ---

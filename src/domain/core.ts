@@ -79,6 +79,7 @@ export interface SimulationStatus {
   sourceFile: string
   sheetName: string
   rowIndex: number
+  studyPath?: string // Path to the .psz study file
 }
 
 export interface Cell {

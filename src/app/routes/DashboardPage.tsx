@@ -154,7 +154,7 @@ export function DashboardPage() {
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="dashboard-root">
             <div className="flex justify-between items-start">
                 <PageHeader
                     title={
@@ -220,11 +220,13 @@ export function DashboardPage() {
                     label="Total Projects"
                     value={metrics.totalProjects}
                     icon={<FolderKanban className="h-6 w-6 text-indigo-500" />}
+                    data-testid="kpi-total-projects"
                 />
                 <KpiTile
                     label="Total Cells"
                     value={metrics.totalCells}
                     icon={<Factory className="h-6 w-6 text-emerald-600" />}
+                    data-testid="kpi-total-cells"
                 />
                 <KpiTile
                     label="Avg Completion"
@@ -237,6 +239,7 @@ export function DashboardPage() {
                     value={metrics.atRiskCellsCount}
                     description="Blocked or with issues"
                     icon={<AlertTriangle className="h-6 w-6 text-red-500" />}
+                    data-testid="kpi-at-risk-cells"
                 />
             </div>
 

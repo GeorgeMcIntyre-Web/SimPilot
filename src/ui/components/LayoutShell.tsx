@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, Wrench, Upload, Menu, Users, LogOut, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState } from 'react';
-import { useHasSimulationData, useWarnings, useHasUnsyncedChanges } from '../../ui/hooks/useDomainData';
+import { useHasSimulationData, useWarnings, useHasUnsyncedChanges, useLastUpdated, useDataSource } from '../../ui/hooks/useDomainData';
 import { useMsAccount } from '../../integrations/ms/useMsAccount';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { AlertTriangle, Loader2 } from 'lucide-react';
@@ -18,6 +18,8 @@ export function LayoutShell() {
     const { state: busyState } = useGlobalBusy();
     const warnings = useWarnings();
     const { themeMode } = useTheme();
+    const lastUpdated = useLastUpdated();
+    const dataSource = useDataSource();
 
     const navItems = [
         { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -95,6 +97,14 @@ export function LayoutShell() {
                                 <div className="flex items-center text-blue-600 dark:text-blue-400 animate-pulse">
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                     <span className="text-xs font-medium">{busyState.label || 'Processing...'}</span>
+                                </div>
+                            )}
+
+                            {/* Last Updated Indicator */}
+                            {lastUpdated && dataSource && (
+                                <div className="hidden md:flex flex-col items-end mr-4 text-xs text-gray-500 dark:text-gray-400" title={`Last updated: ${new Date(lastUpdated).toLocaleString()}`}>
+                                    <span className="font-medium">{dataSource}</span>
+                                    <span className="text-[10px]">{new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                             )}
 

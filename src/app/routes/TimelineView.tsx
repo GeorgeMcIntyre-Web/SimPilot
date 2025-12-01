@@ -92,7 +92,7 @@ export function TimelineView() {
                     </p>
                 </div>
             ) : (
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 relative">
                     {/* Timeline Header */}
                     <div className="mb-4 flex items-center justify-between text-sm text-gray-500">
                         <div>Cell</div>

@@ -134,6 +134,15 @@ The system feeds the **same** in-memory store regardless of the source:
   - `VITE_MSAL_CLIENT_ID`: Optional MS Client ID.
   - `VITE_MSAL_TENANT_ID`: Optional MS Tenant ID.
   - `VITE_MSAL_REDIRECT_URI`: Redirect URI (default localhost).
+  - `VITE_SIMBRIDGE_URL`: URL for the SimBridge API Gateway (default http://localhost:5000).
+
+### SimBridge Integration (`src/integrations/simbridge`)
+- **Client**: `SimBridgeClient.ts` handles communication with the SimBridge API Gateway.
+- **Features**:
+  - Connection status check.
+  - Loading studies (.psz files).
+  - Getting/Setting signal values.
+- **UI**: Integrated into `DataLoaderPage.tsx` as a new tab.
 
 ### CI Pipeline (`.github/workflows/ci.yml`)
 - **Triggers**: Push/PR to `main`.
@@ -330,6 +339,20 @@ The system feeds the **same** in-memory store regardless of the source:
 - [x] Phase 16: Flower Theme Phase 5 (Cloudflare First Run & Value Prop) - **Completed**
 - [x] Phase 17: Polish & Fixes (First Run Banner, Fast Path Hint, Lint Cleanup) - **Completed**
   - Extended domain model with `ScheduleInfo`, `SchedulePhase`, and `ScheduleStatus` types.
+  - Created `scheduleMetrics.ts` with pure functions for computing schedule status and risk.
+  - Built Readiness Board page (kanban-style, grouped by phase) at `/readiness`.
+  - Built Timeline View page (Gantt-like layout) at `/timeline/:projectId`.
+  - Enhanced demo data with realistic schedule dates covering all states.
+  - Integrated schedule KPIs into Dale Console (Late Cells, Schedule At Risk).
+  - Zero configuration design - gracefully degrades when schedule data is sparse.
+- **Phase 12: SimBridge Service & Diagnostics**: Implemented core service layer for SimBridge integration.
+  - `SimBridgeService` with state management and error mapping.
+  - `useSimBridge` hook for React components.
+  - `simBridgeDiagnostics` for in-memory event logging.
+  - Basic domain mapping heuristics (Study Path -> Project/Cell).
+  - UI integration is currently optional/partial (Data Loader tab, Cell Detail button).
+
+## History (Context)
 
 *Historical notes for context only.*
 - *Initial plan assumed a backend-first approach; shifted to client-side for speed and simplicity.*

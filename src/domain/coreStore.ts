@@ -22,7 +22,7 @@ export type { DemoScenarioId, DemoScenarioSummary } from './demoData'
 
 export function loadDemoScenario(id: DemoScenarioId): void {
   const data = getDemoScenarioData(id)
-  coreStore.setData(data)
+  coreStore.setData(data, 'Demo')
 }
 
 // ============================================================================
@@ -38,6 +38,7 @@ export interface CoreStoreState {
   warnings: string[]
   changeLog: ChangeRecord[]
   lastUpdated: string | null
+  dataSource: 'Demo' | 'Local' | 'MS365' | null  // Track where data came from
 }
 
 let storeState: CoreStoreState = {
@@ -48,7 +49,8 @@ let storeState: CoreStoreState = {
   tools: [],
   warnings: [],
   changeLog: [],
-  lastUpdated: null
+  lastUpdated: null,
+  dataSource: null
 }
 
 // Subscribers for reactive updates
@@ -80,13 +82,14 @@ export const coreStore = {
     robots: Robot[]
     tools: Tool[]
     warnings: string[]
-  }): void {
+  }, source?: 'Demo' | 'Local' | 'MS365'): void {
     storeState = {
       ...data,
       changeLog: [], // Reset change log on new data load? Or keep it? 
       // Spec says "Do NOT automatically clear changeLog unless the snapshot explicitly says so."
       // But setData is usually for fresh ingestion. Let's keep it empty for fresh ingestion.
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      dataSource: source || null
     }
     notifySubscribers()
   },
@@ -103,7 +106,8 @@ export const coreStore = {
       tools: [],
       warnings: [],
       changeLog: [],
-      lastUpdated: null
+      lastUpdated: null,
+      dataSource: null
     }
     notifySubscribers()
   },
@@ -377,4 +381,20 @@ export function useHasSimulationData(): boolean {
   }
 
   return false
+}
+
+/**
+ * Hook to get last updated timestamp
+ */
+export function useLastUpdated(): string | null {
+  const state = useCoreStore()
+  return state.lastUpdated
+}
+
+/**
+ * Hook to get data source
+ */
+export function useDataSource(): 'Demo' | 'Local' | 'MS365' | null {
+  const state = useCoreStore()
+  return state.dataSource
 }

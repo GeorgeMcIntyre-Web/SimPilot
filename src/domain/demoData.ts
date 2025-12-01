@@ -219,7 +219,8 @@ export function getDemoScenarioData(id: DemoScenarioId): {
                     percentComplete: percent,
                     hasIssues,
                     metrics: { cycleTime: 50 + i },
-                    ...dummySource
+                    ...dummySource,
+                    studyPath: `C:\\Simulations\\STLA\\OP${i}0.psz`
                 },
                 schedule: {
                     phase,
