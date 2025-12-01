@@ -17,13 +17,10 @@ export function LayoutShell() {
     const { enabled: msEnabled, isSignedIn, account, login, logout } = useMsAccount();
     const { state: busyState } = useGlobalBusy();
     const warnings = useWarnings();
-<<<<<<< HEAD
-    console.log('LayoutShell render. hasData:', hasData);
-=======
     const { themeMode } = useTheme();
     const lastUpdated = useLastUpdated();
     const dataSource = useDataSource();
->>>>>>> e8f80e52b305ebc464fdbc6771816f8939146f49
+    console.log('LayoutShell render. hasData:', hasData);
 
     const navItems = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
