@@ -1,0 +1,288 @@
+// Dashboard Page Tests
+// Integration tests for the Dashboard page component
+
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
+import { DashboardPage } from '../../../app/routes/DashboardPage'
+import { setCrossRefData, clearCrossRefData } from '../../../hooks/useCrossRefData'
+import { CellSnapshot, CrossRefFlag, CrossRefResult } from '../../../domain/crossRef/CrossRefTypes'
+import { ThemeProvider } from '../../../ui/ThemeContext'
+
+// ============================================================================
+// TEST HELPERS
+// ============================================================================
+
+const makeCell = (partial: Partial<CellSnapshot>): CellSnapshot => ({
+  stationKey: partial.stationKey ?? 'ST_010',
+  areaKey: partial.areaKey,
+  simulationStatus: partial.simulationStatus,
+  tools: partial.tools ?? [],
+  robots: partial.robots ?? [],
+  weldGuns: partial.weldGuns ?? [],
+  gunForces: partial.gunForces ?? [],
+  risers: partial.risers ?? [],
+  flags: partial.flags ?? []
+})
+
+const makeWarningFlag = (type: string, stationKey: string): CrossRefFlag => ({
+  type: type as CrossRefFlag['type'],
+  stationKey,
+  message: `Warning: ${type}`,
+  severity: 'WARNING'
+})
+
+const makeCrossRefResult = (cells: CellSnapshot[]): CrossRefResult => ({
+  cells,
+  globalFlags: [],
+  stats: {
+    totalCells: cells.length,
+    cellsWithRisks: cells.filter(c => c.flags.length > 0).length,
+    totalFlags: cells.reduce((sum, c) => sum + c.flags.length, 0),
+    robotCount: cells.reduce((sum, c) => sum + c.robots.length, 0),
+    toolCount: cells.reduce((sum, c) => sum + c.tools.length, 0),
+    weldGunCount: cells.reduce((sum, c) => sum + c.weldGuns.length, 0),
+    riserCount: cells.reduce((sum, c) => sum + c.risers.length, 0)
+  },
+  cellHealthSummaries: []
+})
+
+const renderDashboard = () => {
+  return render(
+    <ThemeProvider>
+      <BrowserRouter>
+        <DashboardPage />
+      </BrowserRouter>
+    </ThemeProvider>
+  )
+}
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
+describe('DashboardPage', () => {
+  beforeEach(() => {
+    clearCrossRefData()
+  })
+
+  afterEach(() => {
+    clearCrossRefData()
+  })
+
+  describe('Empty state', () => {
+    it('shows empty state when no data is loaded', () => {
+      renderDashboard()
+
+      expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument()
+      expect(screen.getByText('Welcome to SimPilot')).toBeInTheDocument()
+      expect(screen.getByText('Go to Data Loader')).toBeInTheDocument()
+    })
+  })
+
+  describe('With data', () => {
+    const testCells: CellSnapshot[] = [
+      makeCell({ stationKey: 'ST_001', areaKey: 'UB', flags: [] }),
+      makeCell({ stationKey: 'ST_002', areaKey: 'UB', flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_002')] }),
+      makeCell({ stationKey: 'ST_003', areaKey: 'MB', flags: [] }),
+      makeCell({ stationKey: 'ST_004', areaKey: 'MB', flags: [makeWarningFlag('MISSING_GUN_FORCE_FOR_WELD_GUN', 'ST_004')] })
+    ]
+
+    beforeEach(() => {
+      setCrossRefData(makeCrossRefResult(testCells))
+    })
+
+    it('renders the dashboard root when data is present', () => {
+      renderDashboard()
+
+      expect(screen.getByTestId('dashboard-root')).toBeInTheDocument()
+    })
+
+    it('renders area cards from provided cells', () => {
+      renderDashboard()
+
+      // Should have area cards section
+      expect(screen.getByText('Areas Overview')).toBeInTheDocument()
+
+      // Should have area cards for UB and MB (using getAllByText since area appears in multiple places)
+      const ubElements = screen.getAllByText('UB')
+      expect(ubElements.length).toBeGreaterThan(0)
+
+      const mbElements = screen.getAllByText('MB')
+      expect(mbElements.length).toBeGreaterThan(0)
+    })
+
+    it('shows correct station count per area', () => {
+      renderDashboard()
+
+      // Both areas should show "2 stations" in their cards
+      const stationTexts = screen.getAllByText('2 stations')
+      expect(stationTexts.length).toBe(2)
+    })
+
+    it('filters station table by area when card is clicked', () => {
+      renderDashboard()
+
+      // Find area cards by looking for elements with role button that contain area text
+      const areaCards = screen.getAllByRole('button')
+      const ubCard = areaCards.find(card => card.textContent?.includes('UB') && card.textContent?.includes('stations'))
+
+      expect(ubCard).toBeDefined()
+      fireEvent.click(ubCard!)
+
+      // Should show filtered label
+      expect(screen.getByText('Stations in UB')).toBeInTheDocument()
+
+      // Should show area filter badge
+      expect(screen.getByText('Area: UB')).toBeInTheDocument()
+    })
+
+    it('shows counts of flagged vs non-flagged stations', () => {
+      renderDashboard()
+
+      // Should show "need attention" text somewhere (the count may be in a different element)
+      expect(screen.getByText(/need attention/)).toBeInTheDocument()
+
+      // Should show "on track" percentage
+      expect(screen.getByText(/on track/)).toBeInTheDocument()
+    })
+
+    it('shows "Today for Dale" section with focus items when risks exist', () => {
+      renderDashboard()
+
+      // Should show Today for Dale header
+      expect(screen.getByText('Today for Dale')).toBeInTheDocument()
+
+      // Should have at least one focus tile for the issues we created
+      // (guns without force or tools without owner)
+      const focusTiles = screen.getAllByText(/without/i)
+      expect(focusTiles.length).toBeGreaterThan(0)
+    })
+
+    it('renders stations table with all stations', () => {
+      renderDashboard()
+
+      // All 4 stations should be visible in the table
+      expect(screen.getByText('ST_001')).toBeInTheDocument()
+      expect(screen.getByText('ST_002')).toBeInTheDocument()
+      expect(screen.getByText('ST_003')).toBeInTheDocument()
+      expect(screen.getByText('ST_004')).toBeInTheDocument()
+    })
+
+    it('can search stations by key', () => {
+      renderDashboard()
+
+      const searchInput = screen.getByPlaceholderText('Search stations...')
+      fireEvent.change(searchInput, { target: { value: '003' } })
+
+      // Only ST_003 should match
+      expect(screen.getByText('ST_003')).toBeInTheDocument()
+      expect(screen.queryByText('ST_001')).not.toBeInTheDocument()
+    })
+
+    it('can filter by severity', () => {
+      renderDashboard()
+
+      const filterSelect = screen.getByRole('combobox')
+      fireEvent.change(filterSelect, { target: { value: 'warning' } })
+
+      // Only stations with warnings should be shown
+      expect(screen.getByText('ST_002')).toBeInTheDocument()
+      expect(screen.getByText('ST_004')).toBeInTheDocument()
+      expect(screen.queryByText('ST_001')).not.toBeInTheDocument()
+    })
+
+    it('shows result count when filtering', () => {
+      renderDashboard()
+
+      // Should show "Showing 4 of 4" initially
+      expect(screen.getByText('Showing 4 of 4')).toBeInTheDocument()
+
+      // Filter to warnings only
+      const filterSelect = screen.getByRole('combobox')
+      fireEvent.change(filterSelect, { target: { value: 'warning' } })
+
+      // Should show "Showing 2 of 4"
+      expect(screen.getByText('Showing 2 of 4')).toBeInTheDocument()
+    })
+  })
+
+  describe('All healthy stations', () => {
+    const healthyCells: CellSnapshot[] = [
+      makeCell({
+        stationKey: 'ST_001',
+        areaKey: 'UB',
+        simulationStatus: {
+          stationKey: 'ST_001',
+          areaKey: 'UB',
+          firstStageCompletion: 100,
+          raw: {}
+        },
+        flags: []
+      }),
+      makeCell({
+        stationKey: 'ST_002',
+        areaKey: 'UB',
+        simulationStatus: {
+          stationKey: 'ST_002',
+          areaKey: 'UB',
+          firstStageCompletion: 95,
+          raw: {}
+        },
+        flags: []
+      })
+    ]
+
+    beforeEach(() => {
+      setCrossRefData(makeCrossRefResult(healthyCells))
+    })
+
+    it('shows all clear message when no issues', () => {
+      renderDashboard()
+
+      expect(screen.getByText('All clear! No issues requiring immediate attention.')).toBeInTheDocument()
+    })
+
+    it('shows 100% on track', () => {
+      renderDashboard()
+
+      // Should show "on track" text
+      expect(screen.getByText(/on track/)).toBeInTheDocument()
+
+      // With all healthy stations, 100% should appear in the dashboard
+      // Find it by looking at the entire dashboard content
+      const dashboardRoot = screen.getByTestId('dashboard-root')
+      expect(dashboardRoot.textContent).toContain('100%')
+    })
+  })
+
+  describe('View mode toggle', () => {
+    const testCells: CellSnapshot[] = [
+      makeCell({ stationKey: 'ST_001', areaKey: 'UB', flags: [] }),
+      makeCell({ stationKey: 'ST_002', areaKey: 'MB', flags: [] })
+    ]
+
+    beforeEach(() => {
+      setCrossRefData(makeCrossRefResult(testCells))
+    })
+
+    it('shows overview mode by default with area cards', () => {
+      renderDashboard()
+
+      expect(screen.getByText('Areas Overview')).toBeInTheDocument()
+    })
+
+    it('can switch to table-only mode', () => {
+      renderDashboard()
+
+      const tableButton = screen.getByRole('button', { name: /table/i })
+      fireEvent.click(tableButton)
+
+      // Areas Overview section should not be present
+      expect(screen.queryByText('Areas Overview')).not.toBeInTheDocument()
+
+      // But table should still be visible
+      expect(screen.getByText('ST_001')).toBeInTheDocument()
+    })
+  })
+})

@@ -1,6 +1,8 @@
 // Test setup file for Vitest
 // Polyfills for File/Blob APIs that may be missing in jsdom
 
+import '@testing-library/jest-dom/vitest'
+
 // Polyfill File.prototype.arrayBuffer if not available
 if (typeof File !== 'undefined' && !File.prototype.arrayBuffer) {
     File.prototype.arrayBuffer = function (): Promise<ArrayBuffer> {
