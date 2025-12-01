@@ -6,6 +6,7 @@ import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { useGlobalSimulationMetrics, useCells, useAllEngineerMetrics, useAllProjectMetrics, useHasSimulationData } from '../../ui/hooks/useDomainData';
 import { Cell } from '../../domain/core';
+import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes';
 import { FolderKanban, AlertTriangle, ArrowUpDown, Users, Copy, Check } from 'lucide-react';
 import { FlowerAccent } from '../../ui/components/FlowerAccent';
 import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
@@ -14,6 +15,8 @@ import { DaleDashboardIntro } from '../../ui/components/DaleDashboardIntro';
 import { useDaleDayMood } from '../../ui/hooks/useDaleDayMood';
 import { FirstRunBanner } from '../../ui/components/FirstRunBanner';
 import { ZenFocusHeader } from '../../ui/components/ZenFocusHeader';
+import { StationDetailPanel } from '../../features/station/StationDetailPanel';
+import { cellToCellSnapshot } from '../../features/station/cellToCellSnapshot';
 
 type SortKey = 'percentComplete' | 'name' | 'status';
 type SortDirection = 'asc' | 'desc';
@@ -29,6 +32,7 @@ export function DashboardPage() {
     const mood = useDaleDayMood();
 
     const [isDaleMode, setIsDaleMode] = useState(() => getUserPreference('simpilot.dashboard.mode', true));
+    const [selectedStation, setSelectedStation] = useState<CellSnapshot | null>(null);
 
     useEffect(() => {
         setUserPreference('simpilot.dashboard.mode', isDaleMode);
@@ -36,6 +40,15 @@ export function DashboardPage() {
     const [sortKey, setSortKey] = useState<SortKey>('percentComplete');
     const [sortDir, setSortDir] = useState<SortDirection>('asc');
     const [copied, setCopied] = useState(false);
+
+    const handleSelectStation = (cell: Cell) => {
+        const snapshot = cellToCellSnapshot(cell);
+        setSelectedStation(snapshot);
+    };
+
+    const handleCloseDrawer = () => {
+        setSelectedStation(null);
+    };
 
     // Guard clause for empty state
     if (!hasData) {
@@ -226,6 +239,7 @@ export function DashboardPage() {
                             data={atRiskCells.sort((a: Cell, b: Cell) => (a.simulation?.percentComplete || 0) - (b.simulation?.percentComplete || 0)).slice(0, 10)}
                             columns={atRiskColumns}
                             emptyMessage="No cells currently at risk."
+                            onRowClick={handleSelectStation}
                         />
                     </div>
 
@@ -270,9 +284,13 @@ export function DashboardPage() {
                         data={getSortedCells()}
                         columns={atRiskColumns}
                         emptyMessage="No cells currently at risk."
+                        onRowClick={handleSelectStation}
                     />
                 </div>
             )}
+
+            {/* Station Detail Drawer */}
+            <StationDetailPanel cell={selectedStation} onClose={handleCloseDrawer} />
         </div>
     );
 }
