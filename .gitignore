@@ -26,9 +26,10 @@ dist-ssr
 # User Data (Large files)
 user_data/
 
-# Env
+# Env (allow .env.example for documentation)
 .env
 .env.*
+!.env.example
 
 # Testing
 coverage/

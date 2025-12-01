@@ -1,4 +1,7 @@
 // Test setup file for Vitest
+// Includes jest-dom matchers for DOM assertions
+import '@testing-library/jest-dom'
+
 // Polyfills for File/Blob APIs that may be missing in jsdom
 
 import '@testing-library/jest-dom/vitest'

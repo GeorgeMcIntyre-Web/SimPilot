@@ -4,6 +4,7 @@ import { cn } from '../lib/utils';
 import { useState } from 'react';
 import { useHasSimulationData, useWarnings, useHasUnsyncedChanges, useLastUpdated, useDataSource } from '../../ui/hooks/useDomainData';
 import { useMsAccount } from '../../integrations/ms/useMsAccount';
+import { useAuth } from '../../auth';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { FlowerAccent } from './FlowerAccent';
@@ -15,6 +16,7 @@ export function LayoutShell() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const hasData = useHasSimulationData();
     const { enabled: msEnabled, isSignedIn, account, login, logout } = useMsAccount();
+    const { user: googleUser, logout: googleLogout } = useAuth();
     const { state: busyState } = useGlobalBusy();
     const warnings = useWarnings();
     const { themeMode } = useTheme();
@@ -139,6 +141,34 @@ export function LayoutShell() {
                             )}
 
                             <div className="flex items-center">
+                                {/* Google Auth User Display */}
+                                {googleUser && (
+                                    <div className="hidden sm:flex items-center ml-4 border-l border-gray-200 dark:border-gray-700 pl-4">
+                                        <div className="flex items-center space-x-3">
+                                            {googleUser.picture && (
+                                                <img
+                                                    src={googleUser.picture}
+                                                    alt={googleUser.name || 'User'}
+                                                    className="w-7 h-7 rounded-full border-2 border-rose-200 dark:border-rose-700"
+                                                />
+                                            )}
+                                            <span
+                                                className="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[150px] truncate"
+                                                title={googleUser.email}
+                                            >
+                                                {googleUser.name || googleUser.email || 'User'}
+                                            </span>
+                                            <button
+                                                onClick={googleLogout}
+                                                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                                title="Sign out"
+                                            >
+                                                <LogOut className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Microsoft Auth UI */}
                                 {msEnabled && (
                                     <div className="hidden sm:flex items-center ml-4 border-l border-gray-200 dark:border-gray-700 pl-4">
@@ -211,7 +241,41 @@ export function LayoutShell() {
                                 );
                             })}
 
-                            {/* Mobile Auth */}
+                            {/* Mobile Google Auth */}
+                            {googleUser && (
+                                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 pb-3">
+                                    <div className="px-4 space-y-1">
+                                        <div className="flex items-center space-x-3">
+                                            {googleUser.picture && (
+                                                <img
+                                                    src={googleUser.picture}
+                                                    alt={googleUser.name || 'User'}
+                                                    className="w-8 h-8 rounded-full border-2 border-rose-200 dark:border-rose-700"
+                                                />
+                                            )}
+                                            <div>
+                                                <div className="text-base font-medium text-gray-800 dark:text-gray-200">
+                                                    {googleUser.name || 'User'}
+                                                </div>
+                                                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                    {googleUser.email}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                googleLogout();
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className="block w-full text-left mt-2 text-base font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                                        >
+                                            Sign out
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Mobile MS Auth */}
                             {msEnabled && (
                                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 pb-3">
                                     {!isSignedIn ? (
