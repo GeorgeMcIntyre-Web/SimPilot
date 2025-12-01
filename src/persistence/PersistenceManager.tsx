@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { coreStore } from '../domain/coreStore'
 import { persistenceService } from './indexedDbService'
+import { initializeSnapshotPersistence } from './snapshotPersistence'
 import { useGlobalBusy } from '../ui/GlobalBusyContext'
 
 const SAVE_DEBOUNCE_MS = 2000
@@ -17,12 +18,17 @@ export function PersistenceManager() {
 
             try {
                 pushBusy('Restoring session...')
+                
+                // Load core store snapshot
                 const result = await persistenceService.load()
 
                 if (result.success && result.snapshot) {
                     console.log('Restoring snapshot from', result.snapshot.meta.lastSavedAt)
                     coreStore.loadSnapshot(result.snapshot)
                 }
+                
+                // Load history snapshots
+                await initializeSnapshotPersistence()
             } catch (err) {
                 console.error('Failed to load persistence:', err)
             } finally {

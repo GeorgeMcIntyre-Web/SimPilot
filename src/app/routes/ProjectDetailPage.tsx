@@ -52,6 +52,12 @@ export function ProjectDetailPage() {
                     actions={
                         <div className="flex items-center space-x-3">
                             <Link
+                                to={`/history/${project.id}`}
+                                className="inline-flex items-center px-3 py-2 border border-indigo-300 shadow-sm text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-700 dark:hover:bg-indigo-900/30"
+                            >
+                                View History
+                            </Link>
+                            <Link
                                 to={`/timeline/${project.id}`}
                                 className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
                             >
