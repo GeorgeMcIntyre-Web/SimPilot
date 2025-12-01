@@ -72,17 +72,27 @@ const WEAK_KEYWORDS = [
 
 /**
  * Parse a Tool List Excel file (weld guns, sealers, etc.) into Tool entities
+ * 
+ * @param workbook - The Excel workbook to parse
+ * @param fileName - Name of the file (for warnings and metadata)
+ * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
  */
 export async function parseToolList(
   workbook: XLSX.WorkBook,
-  fileName: string
+  fileName: string,
+  targetSheetName?: string
 ): Promise<ToolListResult> {
   const warnings: IngestionWarning[] = []
 
-  // Use the first sheet (usually the main data sheet)
-  const sheetName = workbook.SheetNames[0]
+  // Use provided sheet name or default to first sheet
+  const sheetName = targetSheetName ?? workbook.SheetNames[0]
   if (!sheetName) {
     throw new Error(`No sheets found in ${fileName}`)
+  }
+
+  // Validate that the target sheet exists
+  if (workbook.SheetNames.includes(sheetName) === false) {
+    throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
 
   // Convert to matrix

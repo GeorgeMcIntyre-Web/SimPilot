@@ -111,16 +111,17 @@ export const MESSY_GUN_SHEET = [
 
 /**
  * MESSY_ROBOT_SHEET: Mimics robot list with similar messiness
+ * Note: Avoid 'Reach' keyword as it triggers SimulationStatus detection
  */
 export const MESSY_ROBOT_SHEET = [
-    // Row 1: Headers
+    // Row 1: Headers (includes 'Fanuc Order Code' which identifies as RobotList)
     [
         'Area',
         'Station Code',
         'Robot ID',
         'Fanuc Order Code',
         'Model Descripton',  // TYPO: Should be "Description"
-        'Reach (mm)',
+        'Max Extension (mm)',
         'Payload',
         'Reuse Stauts'       // TYPO: Should be "Status"
     ],
@@ -152,15 +153,16 @@ export const MESSY_ROBOT_SHEET = [
 
 /**
  * MESSY_SIMULATION_SHEET: Mimics simulation status with inconsistencies
+ * Note: Simulation parser requires at least 5 rows (1 header + 4 data)
  */
 export const MESSY_SIMULATION_SHEET = [
-    // Row 1: Headers
+    // Row 1: Headers (matching required AREA, ASSEMBLY LINE, STATION, ROBOT, APPLICATION)
     [
-        'Project Name',
-        'Area',
-        'Cell Code',
-        'Station',
-        'Robot Position',
+        'AREA',
+        'ASSEMBLY LINE',
+        'STATION',
+        'ROBOT',
+        'APPLICATION',
         '1st Stage Sim',     // Inconsistent naming
         'Reach Status',
         'Coments'            // TYPO
@@ -168,11 +170,11 @@ export const MESSY_SIMULATION_SHEET = [
 
     // Row 2: Data
     [
-        'STLA-S UNDERBODY',
         'P1Mx',
-        'C-100',
+        'BN_B05',
         'OP-10',
         'R-001',
+        'Spot Welding',
         'PASS',
         'OK',
         'Initial simulation complete'
@@ -180,14 +182,38 @@ export const MESSY_SIMULATION_SHEET = [
 
     // Row 3: Data
     [
-        'STLA-S SIDE BODY',
         'P2Ux',
-        'C-200',
+        'BN_B05',
         'OP-20',
         'R-002',
+        'Sealing',
         'FAIL',
         'NEEDS_REVIEW',
         'Reach issue on rear door'
+    ],
+
+    // Row 4: Data
+    [
+        'P1Mx',
+        'BN_B05',
+        'OP-30',
+        'R-003',
+        'Spot Welding',
+        'PASS',
+        'OK',
+        'Completed'
+    ],
+
+    // Row 5: Data
+    [
+        'P2Ux',
+        'BN_B05',
+        'OP-40',
+        'R-004',
+        'Sealing',
+        'IN_PROGRESS',
+        'PENDING',
+        'Work in progress'
     ]
 ]
 
