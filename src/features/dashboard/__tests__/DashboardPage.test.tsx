@@ -143,8 +143,9 @@ describe('DashboardPage', () => {
       // Should show "need attention" text somewhere (the count may be in a different element)
       expect(screen.getByText(/need attention/)).toBeInTheDocument()
 
-      // Should show "on track" percentage
-      expect(screen.getByText(/on track/)).toBeInTheDocument()
+      // Should show "on track" text (may appear multiple times in different components)
+      const onTrackElements = screen.getAllByText(/on track/i)
+      expect(onTrackElements.length).toBeGreaterThan(0)
     })
 
     it('shows "Today for Dale" section with focus items when risks exist', () => {
@@ -246,8 +247,9 @@ describe('DashboardPage', () => {
     it('shows 100% on track', () => {
       renderDashboard()
 
-      // Should show "on track" text
-      expect(screen.getByText(/on track/)).toBeInTheDocument()
+      // Should show "on track" text (may appear multiple times in different components)
+      const onTrackElements = screen.getAllByText(/on track/i)
+      expect(onTrackElements.length).toBeGreaterThan(0)
 
       // With all healthy stations, 100% should appear in the dashboard
       // Find it by looking at the entire dashboard content

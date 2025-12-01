@@ -4,12 +4,14 @@
 
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LayoutGrid, Table2 } from 'lucide-react'
+import { LayoutGrid, Table2, Bot, Wrench, Zap, ArrowUpFromLine } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { FlowerAccent } from '../../ui/components/FlowerAccent'
 import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
 import { FirstRunBanner } from '../../ui/components/FirstRunBanner'
+import { SummaryCard, SummaryCardsGrid } from '../../ui/components/SummaryCard'
+import { StationDetailDrawer } from '../../ui/components/StationDetailDrawer'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { useHasSimulationData } from '../../ui/hooks/useDomainData'
 import { cn } from '../../ui/lib/utils'
@@ -74,9 +76,11 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const [viewMode, setViewMode] = useState<ViewMode>('overview')
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
+  const [selectedStation, setSelectedStation] = useState<CellSnapshot | null>(null)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   // Data from CrossRef
-  const { cells, byArea, hasData: hasCrossRefData } = useCrossRefData()
+  const { cells, byArea, stats: crossRefStats, hasData: hasCrossRefData } = useCrossRefData()
 
   // Fallback to check if simulation data exists (legacy)
   const hasLegacyData = useHasSimulationData()
@@ -95,15 +99,18 @@ export function DashboardPage() {
   const stats = useMemo(() => {
     const withFlags = cells.filter(c => c.flags.length > 0).length
     const healthy = cells.filter(c => getRiskLevel(c.flags) === 'OK').length
-    return { withFlags, healthy, total: cells.length }
+    const critical = cells.filter(c => getRiskLevel(c.flags) === 'CRITICAL').length
+    return { withFlags, healthy, critical, total: cells.length }
   }, [cells])
 
   // Handlers
   const handleSelectStation = (cell: CellSnapshot) => {
-    // Navigate to cell detail page
-    // For now, just log - Agent 2 will implement the detail view
-    console.log('Selected station:', cell.stationKey)
-    // TODO: navigate to station detail when Agent 2 implements it
+    setSelectedStation(cell)
+    setIsDrawerOpen(true)
+  }
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false)
   }
 
   const handleClearAreaFilter = () => {
@@ -156,6 +163,40 @@ export function DashboardPage() {
         <ViewModeToggle mode={viewMode} onModeChange={setViewMode} />
       </div>
 
+      {/* Asset Summary Cards */}
+      <SummaryCardsGrid columns={5}>
+        <SummaryCard
+          title="Total Stations"
+          value={stats.total}
+          subtitle={`${stats.healthy} on track`}
+          data-testid="kpi-total-stations"
+        />
+        <SummaryCard
+          title="Robots"
+          value={crossRefStats.robotCount}
+          icon={<Bot className="h-5 w-5" />}
+          data-testid="kpi-robots"
+        />
+        <SummaryCard
+          title="Tools"
+          value={crossRefStats.toolCount}
+          icon={<Wrench className="h-5 w-5" />}
+          data-testid="kpi-tools"
+        />
+        <SummaryCard
+          title="Weld Guns"
+          value={crossRefStats.weldGunCount}
+          icon={<Zap className="h-5 w-5" />}
+          data-testid="kpi-weld-guns"
+        />
+        <SummaryCard
+          title="Risers"
+          value={crossRefStats.riserCount}
+          icon={<ArrowUpFromLine className="h-5 w-5" />}
+          data-testid="kpi-risers"
+        />
+      </SummaryCardsGrid>
+
       {/* Today for Dale Strip */}
       <TodayForDaleStrip
         focusItems={focusItems}
@@ -202,6 +243,13 @@ export function DashboardPage() {
           />
         </section>
       )}
+
+      {/* Station Detail Drawer */}
+      <StationDetailDrawer
+        station={selectedStation}
+        isOpen={isDrawerOpen}
+        onClose={handleCloseDrawer}
+      />
     </div>
   )
 }

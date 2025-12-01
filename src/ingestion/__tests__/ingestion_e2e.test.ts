@@ -5,22 +5,16 @@ import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
 import {
   loadWorkbookFromBuffer,
-  analyzeWorkbook,
-  type NormalizedWorkbook
+  analyzeWorkbook
 } from '../workbookLoader'
 import {
   scanNormalizedWorkbook,
-  pickBestDetectionForCategory,
-  type SheetDetection
+  pickBestDetectionForCategory
 } from '../sheetSniffer'
 import {
   parseSimulationStatus,
-  vacuumParseSimulationSheet,
-  type VacuumParsedRow,
-  type SimulationMetric
+  vacuumParseSimulationSheet
 } from '../simulationStatusParser'
-import { parseToolList } from '../toolListParser'
-import { parseRobotList } from '../robotListParser'
 import { ingestFiles } from '../ingestionCoordinator'
 
 // ============================================================================
@@ -268,7 +262,8 @@ describe('E2E: Sheet Sniffer', () => {
 
 describe('E2E: Vacuum Parser', () => {
   it('vacuums all metric columns from simulation sheet', () => {
-    const workbook = createXlsxWorkbook({
+    // workbook used for consistency; vacuumParseSimulationSheet uses raw matrix
+    createXlsxWorkbook({
       'SIMULATION': REALISTIC_SIMULATION_SHEET
     })
 
@@ -299,7 +294,8 @@ describe('E2E: Vacuum Parser', () => {
   })
 
   it('correctly parses percentage values', () => {
-    const workbook = createXlsxWorkbook({
+    // workbook created for consistency; vacuumParseSimulationSheet uses raw matrix
+    createXlsxWorkbook({
       'SIMULATION': REALISTIC_SIMULATION_SHEET
     })
 

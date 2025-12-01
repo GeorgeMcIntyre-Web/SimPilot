@@ -4,7 +4,7 @@
 
 import * as XLSX from 'xlsx'
 import { sheetToMatrix, CellValue } from './excelUtils'
-import { NormalizedWorkbook, AnalyzedSheet, toAnalyzedSheet } from './workbookLoader'
+import { NormalizedWorkbook } from './workbookLoader'
 
 // ============================================================================
 // TYPES
