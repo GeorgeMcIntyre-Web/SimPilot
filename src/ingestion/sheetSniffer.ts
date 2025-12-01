@@ -608,3 +608,187 @@ export function categoryToFileKind(category: SheetCategory): FileKind {
       return 'Unknown'
   }
 }
+
+// ============================================================================
+// CONFIG-AWARE SCANNING (V2)
+// ============================================================================
+
+import {
+  SnifferConfig,
+  getActiveConfig,
+  getFileOverride,
+  shouldSkipSheet as configShouldSkip,
+  meetsScoreThreshold,
+  isLowScore
+} from './snifferConfig'
+
+/**
+ * Extended scan result with config-aware metadata
+ */
+export interface ConfigAwareScanResult extends SheetScanResult {
+  appliedOverrides: { category: SheetCategory; sheetName: string }[]
+  lowScoreWarning: boolean
+  belowThreshold: boolean
+  configUsed: boolean
+}
+
+/**
+ * Scan a workbook with configuration support.
+ * 
+ * This version:
+ * - Applies per-file overrides
+ * - Respects score thresholds
+ * - Skips configured sheets
+ * - Provides richer diagnostics
+ */
+export function scanWorkbookWithConfig(
+  workbook: XLSX.WorkBook,
+  fileName: string,
+  config?: SnifferConfig,
+  maxRowsToScan: number = 10
+): ConfigAwareScanResult {
+  const activeConfig = config ?? getActiveConfig()
+  const appliedOverrides: { category: SheetCategory; sheetName: string }[] = []
+
+  // First, do a normal scan
+  const allDetections: SheetDetection[] = []
+  const byCategory: Record<SheetCategory, SheetDetection | null> = {
+    SIMULATION_STATUS: null,
+    IN_HOUSE_TOOLING: null,
+    ROBOT_SPECS: null,
+    REUSE_WELD_GUNS: null,
+    GUN_FORCE: null,
+    REUSE_RISERS: null,
+    METADATA: null,
+    UNKNOWN: null
+  }
+
+  let bestOverall: SheetDetection | null = null
+
+  for (const sheetName of workbook.SheetNames) {
+    // Check if sheet should be skipped via config
+    if (configShouldSkip(activeConfig, fileName, sheetName)) {
+      continue
+    }
+
+    const detection = sniffSheet(workbook, sheetName, maxRowsToScan)
+
+    if (detection.category === 'UNKNOWN') {
+      continue
+    }
+
+    allDetections.push(detection)
+
+    const currentBest = byCategory[detection.category]
+    if (currentBest === null || detection.score > currentBest.score) {
+      byCategory[detection.category] = detection
+    }
+
+    if (bestOverall === null || detection.score > bestOverall.score) {
+      bestOverall = detection
+    }
+  }
+
+  // Apply file-specific overrides
+  const categories: Array<Exclude<SheetCategory, 'UNKNOWN'>> = [
+    'SIMULATION_STATUS',
+    'IN_HOUSE_TOOLING',
+    'ROBOT_SPECS',
+    'REUSE_WELD_GUNS',
+    'GUN_FORCE',
+    'REUSE_RISERS',
+    'METADATA'
+  ]
+
+  for (const category of categories) {
+    const override = getFileOverride(activeConfig, fileName, category)
+
+    if (override === null) {
+      continue
+    }
+
+    // Validate override sheet exists
+    if (workbook.SheetNames.includes(override) === false) {
+      console.warn(`[Sniffer] Override sheet "${override}" not found in ${fileName}`)
+      continue
+    }
+
+    // Create/update detection for this category with override
+    const overrideDetection: SheetDetection = {
+      sheetName: override,
+      category,
+      score: 100, // Override always wins
+      matchedKeywords: ['[OVERRIDE]']
+    }
+
+    byCategory[category] = overrideDetection
+    appliedOverrides.push({ category, sheetName: override })
+
+    // Update best overall if this is the primary category
+    if (bestOverall === null || overrideDetection.score > bestOverall.score) {
+      bestOverall = overrideDetection
+    }
+  }
+
+  // Check score thresholds
+  const belowThreshold = bestOverall !== null && 
+    meetsScoreThreshold(activeConfig, bestOverall.score) === false &&
+    appliedOverrides.length === 0
+
+  const lowScoreWarning = bestOverall !== null &&
+    isLowScore(activeConfig, bestOverall.score) &&
+    appliedOverrides.length === 0
+
+  // If below threshold and no overrides, treat as UNKNOWN
+  if (belowThreshold) {
+    bestOverall = null
+  }
+
+  return {
+    bestOverall,
+    byCategory,
+    allDetections,
+    appliedOverrides,
+    lowScoreWarning,
+    belowThreshold,
+    configUsed: appliedOverrides.length > 0
+  }
+}
+
+/**
+ * Get a human-readable explanation of the scan result
+ */
+export function explainScanResult(result: ConfigAwareScanResult, fileName: string): string {
+  const lines: string[] = []
+
+  lines.push(`File: ${fileName}`)
+  lines.push(`Sheets analyzed: ${result.allDetections.length}`)
+
+  if (result.bestOverall === null) {
+    lines.push('Result: UNKNOWN (no category matched)')
+
+    if (result.belowThreshold) {
+      lines.push('Reason: Best score was below minimum threshold')
+    }
+
+    return lines.join('\n')
+  }
+
+  lines.push(`Best match: ${result.bestOverall.category}`)
+  lines.push(`Sheet: ${result.bestOverall.sheetName}`)
+  lines.push(`Score: ${result.bestOverall.score}`)
+  lines.push(`Matched: ${result.bestOverall.matchedKeywords.join(', ')}`)
+
+  if (result.appliedOverrides.length > 0) {
+    lines.push('Overrides applied:')
+    for (const override of result.appliedOverrides) {
+      lines.push(`  - ${override.category} → ${override.sheetName}`)
+    }
+  }
+
+  if (result.lowScoreWarning) {
+    lines.push('⚠️ Low confidence match - consider adding an override')
+  }
+
+  return lines.join('\n')
+}
