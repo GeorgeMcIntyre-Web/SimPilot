@@ -4,6 +4,7 @@
 
 import * as XLSX from 'xlsx'
 import { sheetToMatrix, CellValue } from './excelUtils'
+import { NormalizedWorkbook, AnalyzedSheet, toAnalyzedSheet } from './workbookLoader'
 
 // ============================================================================
 // TYPES
@@ -19,10 +20,18 @@ export type SheetCategory =
   | 'METADATA'
   | 'UNKNOWN'
 
+/**
+ * Detection result for a single sheet.
+ * Includes scoring details for debugging and confidence assessment.
+ */
 export interface SheetDetection {
+  fileName: string
   sheetName: string
   category: SheetCategory
   score: number
+  strongMatches: string[]
+  weakMatches: string[]
+  /** @deprecated Use strongMatches and weakMatches instead */
   matchedKeywords: string[]
 }
 
@@ -33,23 +42,22 @@ export interface SheetScanResult {
 }
 
 // ============================================================================
-// CATEGORY KEYWORDS
+// CATEGORY SIGNATURES
 // ============================================================================
 // Ground-truth signatures for each category.
 // DO NOT "fix" spelling - these match real-world headers exactly.
 
 /**
  * Keywords that uniquely identify each sheet category.
- * Each category has:
- * - strong: High-value keywords that strongly indicate this category (+3 points each)
- * - medium: Domain-specific keywords that help confirm the category (+2 points each)
- * - weak: Common keywords that might appear in multiple categories (+1 point each)
+ * 
+ * Scoring:
+ * - Strong keyword match: +5 points
+ * - Weak keyword match: +1 point
+ * - Minimum score of 5 required for a match (at least 1 strong OR 5 weak)
  */
-export const CATEGORY_KEYWORDS: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
+export const CATEGORY_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
   strong: string[]
-  medium: string[]
   weak: string[]
-  minScore: number
 }> = {
   // -------------------------------------------------------------------------
   // SIMULATION_STATUS
@@ -61,46 +69,54 @@ export const CATEGORY_KEYWORDS: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
       '1st STAGE SIM COMPLETION',
       'FINAL DELIVERABLES',
       'ROBOT POSITION - STAGE 1',
-      'DCS CONFIGURED'
-    ],
-    medium: [
-      'PERSONS RESPONSIBLE',
-      'ASSEMBLY LINE',
-      '1st STAGE',
-      'STAGE 1',
-      'ROBOT POSITION'
+      '1st STAGE SIM',
+      '1st Stage Sim'
     ],
     weak: [
+      'PERSONS RESPONSIBLE',
+      'DCS CONFIGURED',
+      'APPLICATION',
+      'ASSEMBLY LINE',
+      'STAGE 1',
+      'ROBOT POSITION',
       'AREA',
       'STATION',
       'ROBOT',
-      'APPLICATION'
-    ],
-    minScore: 6 // At least 2 strong keywords
+      'Reach Status',
+      'REACH'
+    ]
   },
 
   // -------------------------------------------------------------------------
   // IN_HOUSE_TOOLING
   // File: STLA_S_ZAR Tool List.xlsx
   // Sheet: ToolList
+  // Also handles generic tool/equipment files
   // -------------------------------------------------------------------------
   IN_HOUSE_TOOLING: {
     strong: [
       'Sim. Leader',
       'Sim. Employee',
-      'Sim. Due Date (yyyy/MM/dd)'
-    ],
-    medium: [
       'Team Leader',
-      'Due Date',
-      'Employee'
+      'Sim. Due Date',
+      'TOOL ID',
+      'Tool ID',
+      'EQUIPMENT ID',
+      'Equipment ID'
     ],
     weak: [
+      'SUB Area Name',
+      'Designer',
+      'Station',
+      'Due Date',
+      'Employee',
       'Tool',
+      'Equipment',
       'Status',
-      'Date'
-    ],
-    minScore: 5
+      'TYPE',
+      'AREA',
+      'LINE'
+    ]
   },
 
   // -------------------------------------------------------------------------
@@ -112,22 +128,19 @@ export const CATEGORY_KEYWORDS: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
     strong: [
       'Robotnumber',
       'Robot caption',
-      'Robotnumber (E-Number)',
-      'Robot w/ J1-J3 Dress Pack (order code)'
-    ],
-    medium: [
-      'Fanuc Order Code',
-      'E-Number',
       'Dress Pack',
-      'Robot Type'
+      'Fanuc order code'
     ],
     weak: [
-      'Robot',
+      'Station Number',
+      'Assembly line',
+      'Position',
+      'E-Number',
+      'Robot Type',
       'Model',
       'Payload',
       'Reach'
-    ],
-    minScore: 5
+    ]
   },
 
   // -------------------------------------------------------------------------
@@ -137,48 +150,49 @@ export const CATEGORY_KEYWORDS: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
   // -------------------------------------------------------------------------
   REUSE_WELD_GUNS: {
     strong: [
-      'Device Name',
-      'Refresment OK',           // Keep typo
+      'Refresment OK',           // Keep typo exactly
       'Serial Number Complete WG',
-      'Asset description'
+      'Device Name'
     ],
-    medium: [
+    weak: [
+      'Asset description',
+      'Application robot',
+      'Cabinet',
       'Serial Number',
       'WG',
       'Welding Gun',
-      'Weld Gun'
-    ],
-    weak: [
+      'Weld Gun',
       'Device',
-      'Asset',
-      'Status'
-    ],
-    minScore: 5
+      'Asset'
+    ]
   },
 
   // -------------------------------------------------------------------------
   // GUN_FORCE
   // File: Zangenpool_TMS...xls
   // Sheet: Zaragoza Allocation
+  // Also handles generic weld gun files
   // -------------------------------------------------------------------------
   GUN_FORCE: {
     strong: [
-      'Gun Force [N]',
+      'Gun Force',
       'Gun Number',
-      'Gun Force'
-    ],
-    medium: [
-      'Quantity',
-      'Reserve',
-      'Old Line',
-      'Robot Number'
+      'GUN ID',
+      'Gun ID'
     ],
     weak: [
+      'Required Force',
+      'Old Line',
+      'Quantity',
+      'Reserve',
+      'Robot Number',
       'Area',
       'Gun',
-      'Force'
-    ],
-    minScore: 5
+      'Force',
+      'TYPE',
+      'STATION',
+      'Spot Weld'
+    ]
   },
 
   // -------------------------------------------------------------------------
@@ -188,25 +202,22 @@ export const CATEGORY_KEYWORDS: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
   // -------------------------------------------------------------------------
   REUSE_RISERS: {
     strong: [
-      'Proyect',                  // Keep typo
-      'New station',
-      'Coments'                   // Keep typo
-    ],
-    medium: [
-      'Height',
-      'Brand',
-      'Standard',
-      'New Line',
-      'Riser',
-      'Raiser'
+      'Proyect',                  // Keep typo exactly
+      'Coments'                   // Keep typo exactly
     ],
     weak: [
+      'Brand',
+      'Height',
+      'New Line',
+      'New station',
+      'Riser',
+      'Raiser',
+      'Standard',
       'Area',
       'Location',
       'Type',
       'Project'
-    ],
-    minScore: 4
+    ]
   },
 
   // -------------------------------------------------------------------------
@@ -216,45 +227,24 @@ export const CATEGORY_KEYWORDS: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
   METADATA: {
     strong: [
       'EmployeeList',
-      'SupplierName',
-      'BranchName'
-    ],
-    medium: [
-      'Employee ID',
-      'Supplier ID',
-      'Contact Info'
+      'SupplierName'
     ],
     weak: [
+      'BranchName',
+      'Employee ID',
+      'Supplier ID',
+      'Contact Info',
       'Employee',
       'Supplier',
       'Branch',
       'ID',
       'Name'
-    ],
-    minScore: 3
+    ]
   }
 }
 
-// ============================================================================
-// SHEET NAME HINTS
-// ============================================================================
-// Bonus points for matching expected sheet names
-
-const SHEET_NAME_HINTS: Record<string, SheetCategory> = {
-  'simulation': 'SIMULATION_STATUS',
-  'toollist': 'IN_HOUSE_TOOLING',
-  'tool list': 'IN_HOUSE_TOOLING',
-  'stla-s': 'ROBOT_SPECS',
-  'welding guns': 'REUSE_WELD_GUNS',
-  'weld guns': 'REUSE_WELD_GUNS',
-  'zaragoza allocation': 'GUN_FORCE',
-  'raisers': 'REUSE_RISERS',
-  'risers': 'REUSE_RISERS',
-  'employees': 'METADATA',
-  'suppliers': 'METADATA'
-}
-
-const SHEET_NAME_BONUS = 2
+// Backward compatibility: export old name
+export const CATEGORY_KEYWORDS = CATEGORY_SIGNATURES
 
 // ============================================================================
 // SKIP PATTERNS
@@ -272,11 +262,16 @@ const SKIP_SHEET_PATTERNS = [
   /^sheet\d+$/i,
   /^blank$/i,
   /^template$/i,
-  /^instructions$/i
+  /^instructions$/i,
+  /^readme$/i,
+  /^change\s*index$/i,
+  /^change\s*log$/i,
+  /^revision$/i,
+  /^history$/i
 ]
 
 // ============================================================================
-// MAIN FUNCTIONS
+// HELPER FUNCTIONS
 // ============================================================================
 
 /**
@@ -322,56 +317,40 @@ function containsKeyword(rowText: string[], keyword: string): boolean {
 
 /**
  * Calculate score for a category based on matched keywords
+ * Strong match: +5 points
+ * Weak match: +1 point
  */
 function calculateCategoryScore(
   rowText: string[],
   category: Exclude<SheetCategory, 'UNKNOWN'>
-): { score: number; matchedKeywords: string[] } {
-  const keywords = CATEGORY_KEYWORDS[category]
-  const matchedKeywords: string[] = []
+): { score: number; strongMatches: string[]; weakMatches: string[] } {
+  const signatures = CATEGORY_SIGNATURES[category]
+  const strongMatches: string[] = []
+  const weakMatches: string[] = []
   let score = 0
 
-  // Check strong keywords (+3 each)
-  for (const keyword of keywords.strong) {
+  // Check strong keywords (+5 each)
+  for (const keyword of signatures.strong) {
     if (containsKeyword(rowText, keyword)) {
-      score += 3
-      matchedKeywords.push(keyword)
-    }
-  }
-
-  // Check medium keywords (+2 each)
-  for (const keyword of keywords.medium) {
-    if (containsKeyword(rowText, keyword)) {
-      score += 2
-      matchedKeywords.push(keyword)
+      score += 5
+      strongMatches.push(keyword)
     }
   }
 
   // Check weak keywords (+1 each)
-  for (const keyword of keywords.weak) {
+  for (const keyword of signatures.weak) {
     if (containsKeyword(rowText, keyword)) {
       score += 1
-      matchedKeywords.push(keyword)
+      weakMatches.push(keyword)
     }
   }
 
-  return { score, matchedKeywords }
+  return { score, strongMatches, weakMatches }
 }
 
-/**
- * Get sheet name bonus for matching expected sheet names
- */
-function getSheetNameBonus(sheetName: string): { category: SheetCategory | null; bonus: number } {
-  const normalized = normalizeText(sheetName)
-
-  for (const [hint, category] of Object.entries(SHEET_NAME_HINTS)) {
-    if (normalized === hint || normalized.includes(hint)) {
-      return { category, bonus: SHEET_NAME_BONUS }
-    }
-  }
-
-  return { category: null, bonus: 0 }
-}
+// ============================================================================
+// MAIN FUNCTIONS
+// ============================================================================
 
 /**
  * Sniff a single sheet to detect its category.
@@ -379,21 +358,26 @@ function getSheetNameBonus(sheetName: string): { category: SheetCategory | null;
  * Scans the first few rows (default: 10) looking for header keywords
  * that identify the sheet type.
  * 
- * @param workbook - The Excel workbook
+ * @param workbook - The Excel workbook (XLSX.WorkBook)
  * @param sheetName - Name of the sheet to sniff
+ * @param fileName - Name of the source file
  * @param maxRowsToScan - Maximum rows to scan for headers (default: 10)
  * @returns SheetDetection with category, score, and matched keywords
  */
 export function sniffSheet(
   workbook: XLSX.WorkBook,
   sheetName: string,
+  fileName: string = 'unknown.xlsx',
   maxRowsToScan: number = 10
 ): SheetDetection {
   // Default result for unknown sheets
   const unknownResult: SheetDetection = {
+    fileName,
     sheetName,
     category: 'UNKNOWN',
     score: 0,
+    strongMatches: [],
+    weakMatches: [],
     matchedKeywords: []
   }
 
@@ -434,13 +418,11 @@ export function sniffSheet(
     return unknownResult
   }
 
-  // Get sheet name bonus
-  const sheetNameBonus = getSheetNameBonus(sheetName)
-
   // Score each category
   let bestCategory: SheetCategory = 'UNKNOWN'
   let bestScore = 0
-  let bestMatchedKeywords: string[] = []
+  let bestStrongMatches: string[] = []
+  let bestWeakMatches: string[] = []
 
   const categories: Array<Exclude<SheetCategory, 'UNKNOWN'>> = [
     'SIMULATION_STATUS',
@@ -453,28 +435,39 @@ export function sniffSheet(
   ]
 
   for (const category of categories) {
-    const { score, matchedKeywords } = calculateCategoryScore(allRowText, category)
-    const minScore = CATEGORY_KEYWORDS[category].minScore
+    const { score, strongMatches, weakMatches } = calculateCategoryScore(allRowText, category)
 
-    // Add sheet name bonus if it matches this category
-    let totalScore = score
-    if (sheetNameBonus.category === category) {
-      totalScore += sheetNameBonus.bonus
+    // Minimum score of 5 required (1 strong OR 5 weak)
+    if (score < 5) {
+      continue
     }
 
-    // Check if this category meets minimum threshold and beats the current best
-    if (totalScore >= minScore && totalScore > bestScore) {
+    // Check if this category beats the current best
+    if (score > bestScore) {
       bestCategory = category
-      bestScore = totalScore
-      bestMatchedKeywords = matchedKeywords
+      bestScore = score
+      bestStrongMatches = strongMatches
+      bestWeakMatches = weakMatches
+      continue
+    }
+
+    // Tie-breaker: prefer more strong matches
+    if (score === bestScore && strongMatches.length > bestStrongMatches.length) {
+      bestCategory = category
+      bestScore = score
+      bestStrongMatches = strongMatches
+      bestWeakMatches = weakMatches
     }
   }
 
   return {
+    fileName,
     sheetName,
     category: bestCategory,
     score: bestScore,
-    matchedKeywords: bestMatchedKeywords
+    strongMatches: bestStrongMatches,
+    weakMatches: bestWeakMatches,
+    matchedKeywords: [...bestStrongMatches, ...bestWeakMatches]
   }
 }
 
@@ -486,12 +479,14 @@ export function sniffSheet(
  * - byCategory: Best detection for each category (useful for multi-file ingestion)
  * - allDetections: All non-UNKNOWN detections (for debugging/inspection)
  * 
- * @param workbook - The Excel workbook to scan
+ * @param workbook - The Excel workbook to scan (XLSX.WorkBook)
+ * @param fileName - Name of the source file
  * @param maxRowsToScan - Maximum rows to scan per sheet (default: 10)
  * @returns SheetScanResult with best detections
  */
 export function scanWorkbook(
   workbook: XLSX.WorkBook,
+  fileName: string = 'unknown.xlsx',
   maxRowsToScan: number = 10
 ): SheetScanResult {
   const allDetections: SheetDetection[] = []
@@ -512,7 +507,7 @@ export function scanWorkbook(
 
   // Scan each sheet
   for (const sheetName of workbook.SheetNames) {
-    const detection = sniffSheet(workbook, sheetName, maxRowsToScan)
+    const detection = sniffSheet(workbook, sheetName, fileName, maxRowsToScan)
 
     // Skip UNKNOWN detections for best tracking
     if (detection.category === 'UNKNOWN') {
@@ -538,6 +533,147 @@ export function scanWorkbook(
     byCategory,
     allDetections
   }
+}
+
+/**
+ * Scan a NormalizedWorkbook to get SheetDetection array.
+ * 
+ * This version works with the new NormalizedWorkbook type from workbookLoader.
+ * 
+ * @param workbook - The normalized workbook
+ * @param maxRowsToScan - Maximum rows to scan per sheet (default: 10)
+ * @returns Array of SheetDetection for all detected sheets
+ */
+export function scanNormalizedWorkbook(
+  workbook: NormalizedWorkbook,
+  maxRowsToScan: number = 10
+): SheetDetection[] {
+  const allDetections: SheetDetection[] = []
+
+  for (const sheet of workbook.sheets) {
+    // Skip sheets that match skip patterns
+    if (shouldSkipSheet(sheet.sheetName)) {
+      continue
+    }
+
+    // Flatten all rows to a single searchable text array
+    const allRowText: string[] = []
+    const scanLimit = Math.min(maxRowsToScan, sheet.rows.length)
+
+    for (let i = 0; i < scanLimit; i++) {
+      const row = sheet.rows[i]
+
+      if (!row) {
+        continue
+      }
+
+      for (const cell of row) {
+        const normalized = normalizeText(cell as string)
+        if (normalized.length > 0) {
+          allRowText.push(normalized)
+        }
+      }
+    }
+
+    if (allRowText.length === 0) {
+      continue
+    }
+
+    // Score each category
+    let bestCategory: SheetCategory = 'UNKNOWN'
+    let bestScore = 0
+    let bestStrongMatches: string[] = []
+    let bestWeakMatches: string[] = []
+
+    const categories: Array<Exclude<SheetCategory, 'UNKNOWN'>> = [
+      'SIMULATION_STATUS',
+      'IN_HOUSE_TOOLING',
+      'ROBOT_SPECS',
+      'REUSE_WELD_GUNS',
+      'GUN_FORCE',
+      'REUSE_RISERS',
+      'METADATA'
+    ]
+
+    for (const category of categories) {
+      const { score, strongMatches, weakMatches } = calculateCategoryScore(allRowText, category)
+
+      // Minimum score of 5 required
+      if (score < 5) {
+        continue
+      }
+
+      // Check if this category beats the current best
+      if (score > bestScore) {
+        bestCategory = category
+        bestScore = score
+        bestStrongMatches = strongMatches
+        bestWeakMatches = weakMatches
+        continue
+      }
+
+      // Tie-breaker: prefer more strong matches
+      if (score === bestScore && strongMatches.length > bestStrongMatches.length) {
+        bestCategory = category
+        bestScore = score
+        bestStrongMatches = strongMatches
+        bestWeakMatches = weakMatches
+      }
+    }
+
+    // Only include non-UNKNOWN detections
+    if (bestCategory !== 'UNKNOWN') {
+      allDetections.push({
+        fileName: workbook.fileName,
+        sheetName: sheet.sheetName,
+        category: bestCategory,
+        score: bestScore,
+        strongMatches: bestStrongMatches,
+        weakMatches: bestWeakMatches,
+        matchedKeywords: [...bestStrongMatches, ...bestWeakMatches]
+      })
+    }
+  }
+
+  return allDetections
+}
+
+/**
+ * Pick the best detection for a specific category from a list of detections.
+ * 
+ * @param detections - Array of SheetDetection
+ * @param category - The category to find
+ * @returns Best SheetDetection for that category, or null
+ */
+export function pickBestDetectionForCategory(
+  detections: SheetDetection[],
+  category: SheetCategory
+): SheetDetection | null {
+  let best: SheetDetection | null = null
+
+  for (const detection of detections) {
+    if (detection.category !== category) {
+      continue
+    }
+
+    if (best === null) {
+      best = detection
+      continue
+    }
+
+    // Higher score wins
+    if (detection.score > best.score) {
+      best = detection
+      continue
+    }
+
+    // Tie-breaker: more strong matches
+    if (detection.score === best.score && detection.strongMatches.length > best.strongMatches.length) {
+      best = detection
+    }
+  }
+
+  return best
 }
 
 /**
@@ -671,7 +807,7 @@ export function scanWorkbookWithConfig(
       continue
     }
 
-    const detection = sniffSheet(workbook, sheetName, maxRowsToScan)
+    const detection = sniffSheet(workbook, sheetName, fileName, maxRowsToScan)
 
     if (detection.category === 'UNKNOWN') {
       continue
@@ -715,9 +851,12 @@ export function scanWorkbookWithConfig(
 
     // Create/update detection for this category with override
     const overrideDetection: SheetDetection = {
+      fileName,
       sheetName: override,
       category,
       score: 100, // Override always wins
+      strongMatches: ['[OVERRIDE]'],
+      weakMatches: [],
       matchedKeywords: ['[OVERRIDE]']
     }
 
@@ -777,7 +916,8 @@ export function explainScanResult(result: ConfigAwareScanResult, fileName: strin
   lines.push(`Best match: ${result.bestOverall.category}`)
   lines.push(`Sheet: ${result.bestOverall.sheetName}`)
   lines.push(`Score: ${result.bestOverall.score}`)
-  lines.push(`Matched: ${result.bestOverall.matchedKeywords.join(', ')}`)
+  lines.push(`Strong: ${result.bestOverall.strongMatches.join(', ')}`)
+  lines.push(`Weak: ${result.bestOverall.weakMatches.join(', ')}`)
 
   if (result.appliedOverrides.length > 0) {
     lines.push('Overrides applied:')

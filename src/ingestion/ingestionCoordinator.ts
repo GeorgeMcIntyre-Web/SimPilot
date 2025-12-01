@@ -3,12 +3,20 @@
 
 import { IngestionWarning } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
-import { readWorkbook, sheetToMatrix } from './excelUtils'
+import { readWorkbook } from './excelUtils'
 import { parseSimulationStatus } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { applyIngestedData, IngestedData } from './applyIngestedData'
 import { createUnknownFileTypeWarning, createParserErrorWarning } from './warningUtils'
+import {
+  scanWorkbook,
+  SheetDetection,
+  SheetCategory,
+  categoryToFileKind,
+  FileKind,
+  pickBestDetectionForCategory
+} from './sheetSniffer'
 import * as XLSX from 'xlsx'
 
 // ============================================================================
@@ -41,97 +49,98 @@ export interface IngestFilesResult {
 }
 
 // ============================================================================
-// INTERNAL TYPES
-// ============================================================================
-
-type FileKind = 'SimulationStatus' | 'RobotList' | 'ToolList' | 'Metadata' | 'Unknown'
-
-// ============================================================================
-// FILE CLASSIFICATION
+// FILE CLASSIFICATION (using Sheet Sniffer)
 // ============================================================================
 
 /**
- * Detect file type from content (Header Sniffing)
+ * Detect file type and best sheet using the Sheet Sniffer.
+ * Returns the FileKind and the best sheet name for that kind.
  */
-function detectFileType(workbook: XLSX.WorkBook, fileName: string): FileKind {
-  const sheetName = workbook.SheetNames[0]
-  if (!sheetName) return 'Unknown'
+function detectFileTypeAndSheet(
+  workbook: XLSX.WorkBook,
+  fileName: string
+): { kind: FileKind; sheetName: string | null; detection: SheetDetection | null } {
+  // Scan all sheets in the workbook
+  const scanResult = scanWorkbook(workbook, fileName)
 
-  try {
-    // Read first 5 rows for sniffing
-    const rows = sheetToMatrix(workbook, sheetName, 5)
-
-    // Flatten rows to string for easy searching
-    const content = rows.map(row =>
-      row.map(cell => String(cell || '').toLowerCase().trim()).join(' ')
-    ).join(' ')
-
-    // Metadata Files (HIGHEST PRIORITY - check first)
-    // Check for EmployeeList, SupplierList, or Reference Data sheets
-    if (
-      content.includes('employeelist') ||
-      content.includes('supplierlist') ||
-      content.includes('supplier name') ||
-      (content.includes('employee') && content.includes('id'))
-    ) {
-      return 'Metadata'
-    }
-
-    // Simulation Status
-    if (
-      (content.includes('robot') && content.includes('reach')) ||
-      content.includes('robot position') ||
-      content.includes('1st stage sim') ||
-      content.includes('1st stage')
-    ) {
-      return 'SimulationStatus'
-    }
-
-    // Robot List
-    if (content.includes('fanuc order code') || (content.includes('robot') && content.includes('list'))) {
-      return 'RobotList'
-    }
-
-    // Zangenpool (detailed gun specs)
-    if (content.includes('gun force') && content.includes('gun number')) {
-      return 'ToolList'
-    }
-
-    // Reuse Lists (Device Name + CARRY OVER)
-    if (
-      (content.includes('device name') || content.includes('device id')) &&
-      (content.includes('carry over') || content.includes('proyect') || content.includes('project'))
-    ) {
-      return 'ToolList'
-    }
-
-    // Tool/Equipment List (general)
-    if (
-      (content.includes('force') && content.includes('gun')) ||
-      content.includes('gun force') ||
-      content.includes('tip dresser') ||
-      content.includes('riser') ||
-      content.includes('height') ||
-      content.includes('weld gun') ||
-      content.includes('gun') ||
-      content.includes('tool') ||
-      content.includes('equipment')
-    ) {
-      return 'ToolList'
-    }
-
-  } catch (e) {
-    console.warn(`Failed to sniff file content for ${fileName}:`, e)
+  // If no sheets detected, fall back to filename-based detection
+  if (scanResult.bestOverall === null) {
+    const fallbackKind = detectFileTypeFromFilename(fileName)
+    return { kind: fallbackKind, sheetName: workbook.SheetNames[0] || null, detection: null }
   }
 
-  // Fallback to filename
+  // Convert category to FileKind
+  const kind = categoryToFileKind(scanResult.bestOverall.category)
+  return {
+    kind,
+    sheetName: scanResult.bestOverall.sheetName,
+    detection: scanResult.bestOverall
+  }
+}
+
+/**
+ * Fallback file type detection from filename (when header sniffing fails)
+ */
+function detectFileTypeFromFilename(fileName: string): FileKind {
   const name = fileName.toLowerCase()
-  if (name.includes('simulation') && name.includes('status')) return 'SimulationStatus'
-  if (name.includes('robot') && name.includes('list')) return 'RobotList'
-  if (name.includes('wg') || name.includes('weld') || name.includes('gun')) return 'ToolList'
-  if (name.includes('tool') || name.includes('equipment')) return 'ToolList'
+
+  if (name.includes('simulation') && name.includes('status')) {
+    return 'SimulationStatus'
+  }
+
+  if (name.includes('robot') && name.includes('list')) {
+    return 'RobotList'
+  }
+
+  if (name.includes('wg') || name.includes('weld') || name.includes('gun')) {
+    return 'ToolList'
+  }
+
+  if (name.includes('tool') || name.includes('equipment')) {
+    return 'ToolList'
+  }
+
+  if (name.includes('riser') || name.includes('raiser')) {
+    return 'ToolList'
+  }
 
   return 'Unknown'
+}
+
+/**
+ * Get all detected sheets for a workbook, grouped by category.
+ * 
+ * This enables processing multiple sheet types from a single workbook.
+ */
+function getAllDetectedSheets(
+  workbook: XLSX.WorkBook,
+  fileName: string
+): Map<SheetCategory, SheetDetection> {
+  const scanResult = scanWorkbook(workbook, fileName)
+  const result = new Map<SheetCategory, SheetDetection>()
+
+  // Pick the best detection for each category
+  const categories: SheetCategory[] = [
+    'SIMULATION_STATUS',
+    'IN_HOUSE_TOOLING',
+    'ROBOT_SPECS',
+    'REUSE_WELD_GUNS',
+    'GUN_FORCE',
+    'REUSE_RISERS',
+    'METADATA'
+  ]
+
+  for (const category of categories) {
+    const best = pickBestDetectionForCategory(scanResult.allDetections, category)
+
+    if (best === null) {
+      continue
+    }
+
+    result.set(category, best)
+  }
+
+  return result
 }
 
 // ============================================================================
@@ -180,8 +189,8 @@ export async function ingestFiles(
       // Read workbook first
       const workbook = await readWorkbook(file)
 
-      // Detect type
-      const kind = detectFileType(workbook, file.name)
+      // Detect type and best sheet using Sheet Sniffer
+      const { kind, sheetName } = detectFileTypeAndSheet(workbook, file.name)
 
       if (kind === 'Unknown') {
         allWarnings.push(createUnknownFileTypeWarning({
@@ -190,9 +199,9 @@ export async function ingestFiles(
         continue
       }
 
-      // Route to appropriate parser
+      // Route to appropriate parser, passing the detected sheet name
       if (kind === 'SimulationStatus') {
-        const result = await parseSimulationStatus(workbook, file.name)
+        const result = await parseSimulationStatus(workbook, file.name, sheetName || undefined)
 
         if (!ingestedData.simulation) {
           ingestedData.simulation = result
@@ -205,7 +214,7 @@ export async function ingestFiles(
       }
 
       if (kind === 'RobotList') {
-        const result = await parseRobotList(workbook, file.name)
+        const result = await parseRobotList(workbook, file.name, sheetName || undefined)
 
         if (!ingestedData.robots) {
           ingestedData.robots = result
@@ -216,7 +225,7 @@ export async function ingestFiles(
       }
 
       if (kind === 'ToolList') {
-        const result = await parseToolList(workbook, file.name)
+        const result = await parseToolList(workbook, file.name, sheetName || undefined)
 
         if (!ingestedData.tools) {
           ingestedData.tools = result
@@ -224,6 +233,11 @@ export async function ingestFiles(
           ingestedData.tools.tools.push(...result.tools)
           ingestedData.tools.warnings.push(...result.warnings)
         }
+      }
+
+      // Note: Metadata files are currently logged and skipped
+      if (kind === 'Metadata') {
+        console.log(`[Ingestion] Detected Metadata file: ${file.name} (sheet: ${sheetName}). Skipping for now.`)
       }
     } catch (error) {
       console.error(`[Ingestion] Error processing file ${file.name}:`, error)
@@ -262,4 +276,103 @@ export async function ingestFiles(
     toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
     warnings: allWarnings
   }
+}
+
+// ============================================================================
+// ADVANCED INGESTION API (Multi-Sheet Processing)
+// ============================================================================
+
+/**
+ * Process a single workbook and extract all detected data types.
+ * 
+ * This function detects ALL sheet types in a workbook and processes each one.
+ * For example, a workbook with both a ToolList sheet and a Robot sheet
+ * will have both parsed.
+ */
+export async function processWorkbook(
+  workbook: XLSX.WorkBook,
+  fileName: string
+): Promise<{
+  ingestedData: IngestedData
+  warnings: IngestionWarning[]
+  detections: Map<SheetCategory, SheetDetection>
+}> {
+  const ingestedData: IngestedData = {
+    simulation: undefined,
+    robots: undefined,
+    tools: undefined
+  }
+  const warnings: IngestionWarning[] = []
+
+  // Get all detected sheets
+  const detections = getAllDetectedSheets(workbook, fileName)
+
+  // Process SIMULATION_STATUS
+  const simDetection = detections.get('SIMULATION_STATUS')
+  if (simDetection) {
+    try {
+      const result = await parseSimulationStatus(workbook, fileName, simDetection.sheetName)
+      ingestedData.simulation = result
+      warnings.push(...result.warnings)
+    } catch (error) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName: simDetection.sheetName,
+        error: String(error)
+      }))
+    }
+  }
+
+  // Process ROBOT_SPECS
+  const robotDetection = detections.get('ROBOT_SPECS')
+  if (robotDetection) {
+    try {
+      const result = await parseRobotList(workbook, fileName, robotDetection.sheetName)
+      ingestedData.robots = result
+      warnings.push(...result.warnings)
+    } catch (error) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName: robotDetection.sheetName,
+        error: String(error)
+      }))
+    }
+  }
+
+  // Process tool-related categories
+  const toolCategories: SheetCategory[] = [
+    'IN_HOUSE_TOOLING',
+    'REUSE_WELD_GUNS',
+    'GUN_FORCE',
+    'REUSE_RISERS'
+  ]
+
+  for (const category of toolCategories) {
+    const toolDetection = detections.get(category)
+
+    if (!toolDetection) {
+      continue
+    }
+
+    try {
+      const result = await parseToolList(workbook, fileName, toolDetection.sheetName)
+
+      if (!ingestedData.tools) {
+        ingestedData.tools = result
+      } else {
+        ingestedData.tools.tools.push(...result.tools)
+        ingestedData.tools.warnings.push(...result.warnings)
+      }
+
+      warnings.push(...result.warnings)
+    } catch (error) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName: toolDetection.sheetName,
+        error: String(error)
+      }))
+    }
+  }
+
+  return { ingestedData, warnings, detections }
 }

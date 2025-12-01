@@ -51,7 +51,8 @@ describe('CATEGORY_KEYWORDS', () => {
     expect(simKeywords).toContain('1st STAGE SIM COMPLETION')
     expect(simKeywords).toContain('FINAL DELIVERABLES')
     expect(simKeywords).toContain('ROBOT POSITION - STAGE 1')
-    expect(simKeywords).toContain('DCS CONFIGURED')
+    // DCS CONFIGURED is now a weak keyword per updated spec
+    expect(CATEGORY_KEYWORDS.SIMULATION_STATUS.weak).toContain('DCS CONFIGURED')
   })
 
   it('has IN_HOUSE_TOOLING with Sim. Leader pattern', () => {
@@ -60,9 +61,10 @@ describe('CATEGORY_KEYWORDS', () => {
     expect(toolingKeywords).toContain('Sim. Employee')
   })
 
-  it('has GUN_FORCE with Gun Force [N] pattern', () => {
+  it('has GUN_FORCE with Gun Force pattern', () => {
     const gunForceKeywords = CATEGORY_KEYWORDS.GUN_FORCE.strong
-    expect(gunForceKeywords).toContain('Gun Force [N]')
+    // 'Gun Force' matches both 'Gun Force' and 'Gun Force [N]' via substring match
+    expect(gunForceKeywords).toContain('Gun Force')
     expect(gunForceKeywords).toContain('Gun Number')
   })
 })
@@ -127,7 +129,8 @@ describe('sniffSheet', () => {
     const result = sniffSheet(workbook, 'Zaragoza Allocation')
 
     expect(result.category).toBe('GUN_FORCE')
-    expect(result.matchedKeywords).toContain('Gun Force [N]')
+    // 'Gun Force' signature matches the 'Gun Force [N]' header via substring
+    expect(result.matchedKeywords).toContain('Gun Force')
     expect(result.matchedKeywords).toContain('Gun Number')
   })
 
