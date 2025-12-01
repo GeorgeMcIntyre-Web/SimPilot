@@ -13,19 +13,22 @@ export interface AppEnvConfig {
 
 let envConfigInstance: AppEnvConfig | undefined
 
+function resolveAppEnv(rawEnv: string | undefined): AppEnvConfig['appEnv'] {
+    if (rawEnv === 'production') {
+        return 'production'
+    }
+    if (rawEnv === 'preview') {
+        return 'preview'
+    }
+    return 'local'
+}
+
 export function getEnvConfig(): AppEnvConfig {
     if (envConfigInstance) {
         return envConfigInstance
     }
 
-    const rawEnv = import.meta.env.VITE_APP_ENV
-    let appEnv: AppEnvConfig['appEnv'] = 'local'
-
-    if (rawEnv === 'production') {
-        appEnv = 'production'
-    } else if (rawEnv === 'preview') {
-        appEnv = 'preview'
-    }
+    const appEnv = resolveAppEnv(import.meta.env.VITE_APP_ENV)
 
     // Optional MS Integration values
     // If these are missing, MS integration is simply disabled in msConfig.ts
