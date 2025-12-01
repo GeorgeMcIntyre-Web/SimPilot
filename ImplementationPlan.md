@@ -355,6 +355,10 @@ The system feeds the **same** in-memory store regardless of the source:
 ## History (Context)
 
 *Historical notes for context only.*
-- *Initial plan assumed a backend-first approach; shifted to client-side for speed and simplicity.*
-- *Ingestion was originally separate; now integrated into the core app flow.*
 - *Microsoft integration was a "stretch goal" that became a core (but optional) feature.*
+
+## Current Status (Agent 3 Sync)
+- **Repo Synced**: `main` is up to date.
+- **Build**: Passing (`npm run build`).
+- **E2E**: Hardened `local-ingest-to-dashboard.spec.ts` with stable selectors. Known issue with ingestion state in test environment documented in `TECH_DEBT_NOTES.md`.
+- **Refactoring**: Cleaned up `DashboardPage` and `ProjectsPage` logic.
