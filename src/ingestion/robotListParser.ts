@@ -9,7 +9,8 @@ import {
   buildColumnMap,
   getCellString,
   isEmptyRow,
-  isTotalRow
+  isTotalRow,
+  CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 
@@ -39,19 +40,34 @@ const POSSIBLE_HEADERS = [
 
 /**
  * Parse a Robot List Excel file into Robot entities
+ * 
+ * @param workbook - The Excel workbook to parse
+ * @param fileName - Name of the file (for warnings and metadata)
+ * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
  */
 export async function parseRobotList(
   workbook: XLSX.WorkBook,
-  fileName: string
+  fileName: string,
+  targetSheetName?: string
 ): Promise<RobotListResult> {
   const warnings: IngestionWarning[] = []
 
-  // Try to find header row in any sheet
+  // Try to find header row in specified sheet or any sheet
   let headerRowIndex: number | null = null
   let sheetName: string | null = null
-  let rows: any[][] = []
+  let rows: CellValue[][] = []
 
-  for (const name of workbook.SheetNames) {
+  // If target sheet is specified, only search that sheet
+  const sheetsToSearch = targetSheetName 
+    ? [targetSheetName] 
+    : workbook.SheetNames
+
+  // Validate target sheet exists
+  if (targetSheetName && workbook.SheetNames.includes(targetSheetName) === false) {
+    throw new Error(`Sheet "${targetSheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+  }
+
+  for (const name of sheetsToSearch) {
     const sheetRows = sheetToMatrix(workbook, name)
     if (sheetRows.length < 2) continue
 
@@ -68,7 +84,7 @@ export async function parseRobotList(
     if (headerRowIndex !== null) break
   }
 
-  if (headerRowIndex === null || !sheetName) {
+  if (headerRowIndex === null || sheetName === null) {
     throw new Error(`Could not find header row in any sheet of ${fileName}. Tried combinations: ${POSSIBLE_HEADERS.map(h => h.join(', ')).join(' | ')}`)
   }
 

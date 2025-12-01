@@ -71,17 +71,27 @@ const KEY_STAGE_COLUMNS = [
 
 /**
  * Parse a Simulation Status Excel file into domain entities
+ * 
+ * @param workbook - The Excel workbook to parse
+ * @param fileName - Name of the file (for warnings and metadata)
+ * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
  */
 export async function parseSimulationStatus(
   workbook: XLSX.WorkBook,
-  fileName: string
+  fileName: string,
+  targetSheetName?: string
 ): Promise<SimulationStatusResult> {
   const warnings: IngestionWarning[] = []
 
-  // Try to find the SIMULATION sheet
-  const sheetName = findSimulationSheet(workbook)
+  // Use provided sheet name or auto-detect
+  const sheetName = targetSheetName ?? findSimulationSheet(workbook)
   if (!sheetName) {
     throw new Error(`No SIMULATION sheet found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+  }
+
+  // Validate that the target sheet exists
+  if (workbook.SheetNames.includes(sheetName) === false) {
+    throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
 
   // Convert to matrix
