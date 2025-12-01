@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { EquipmentLibraryData } from '../../hooks/useEquipmentLibrary'
 import { AssetKind } from '../../domain/types'
 import { SourcingBadge } from './SourcingBadge'
-import { Search, Bot, Zap, Box, Wrench, Filter } from 'lucide-react'
+import { Search, Bot, Zap, Box, Wrench, Filter, Leaf, Sparkles } from 'lucide-react'
+import { FlowerArt } from '../../ui/components/FlowerArt'
 
 export default function EquipmentList({ data }: { data: EquipmentLibraryData }) {
     const [search, setSearch] = useState('')
@@ -12,7 +13,7 @@ export default function EquipmentList({ data }: { data: EquipmentLibraryData }) 
     const allAssets = useMemo(() => {
         const robots = data.robots.map(r => ({ ...r, kind: 'ROBOT' as AssetKind }))
         const guns = data.weldGuns.map(g => ({ ...g, kind: 'GUN' as AssetKind }))
-        const stands = data.stands.map(s => ({ ...s, kind: 'STAND' as AssetKind }))
+        const stands = data.stands.map(s => ({ ...s, kind: 'OTHER' as AssetKind }))
         return [...robots, ...guns, ...stands]
     }, [data])
 
@@ -50,7 +51,7 @@ export default function EquipmentList({ data }: { data: EquipmentLibraryData }) 
         switch (kind) {
             case 'ROBOT': return <Bot className="w-4 h-4 text-purple-500" />
             case 'GUN': return <Zap className="w-4 h-4 text-yellow-500" />
-            case 'STAND': return <Box className="w-4 h-4 text-blue-500" />
+            case 'OTHER': return <Box className="w-4 h-4 text-blue-500" />
             default: return <Wrench className="w-4 h-4 text-gray-500" />
         }
     }
@@ -61,7 +62,10 @@ export default function EquipmentList({ data }: { data: EquipmentLibraryData }) 
             <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Unified Equipment Library</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            Unified Equipment Library
+                            <FlowerArt className="h-8 w-32 text-emerald-500/20" />
+                        </h2>
                         <p className="text-sm text-gray-500">
                             {allAssets.length} total assets across {data.robots.length} robots, {data.weldGuns.length} guns, {data.stands.length} stands
                         </p>
@@ -70,12 +74,16 @@ export default function EquipmentList({ data }: { data: EquipmentLibraryData }) 
                     {/* Sourcing Strategy Tile (Mini Dashboard) */}
                     <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                         <div className="flex -space-x-2">
-                            <div className="w-6 h-6 rounded-full bg-green-100 border-2 border-white flex items-center justify-center text-[10px] text-green-700 font-bold">R</div>
-                            <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-[10px] text-blue-700 font-bold">N</div>
+                            <div className="w-6 h-6 rounded-full bg-green-100 border-2 border-white flex items-center justify-center text-green-700">
+                                <Leaf className="w-3 h-3" />
+                            </div>
+                            <div className="w-6 h-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-blue-700">
+                                <Sparkles className="w-3 h-3" />
+                            </div>
                         </div>
                         <div className="text-xs">
                             <span className="font-medium text-gray-700">Sourcing Strategy</span>
-                            <div className="text-gray-500">Reuse vs New Buy</div>
+                            <div className="text-gray-500">Growing vs New</div>
                         </div>
                     </div>
                 </div>
@@ -94,7 +102,7 @@ export default function EquipmentList({ data }: { data: EquipmentLibraryData }) 
                     </div>
 
                     <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-                        {(['ALL', 'ROBOT', 'GUN', 'STAND'] as const).map((k) => (
+                        {(['ALL', 'ROBOT', 'GUN', 'OTHER'] as const).map((k) => (
                             <button
                                 key={k}
                                 onClick={() => setKindFilter(k)}

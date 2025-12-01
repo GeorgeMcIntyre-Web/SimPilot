@@ -14,11 +14,11 @@ export function ThemeToggle() {
                     ? "bg-rose-100 dark:bg-rose-900/30 hover:shadow-[0_0_10px_rgba(251,113,133,0.4)] hover:scale-[1.02]"
                     : "bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600"
             )}
-            title={themeMode === 'flower' ? "Switch to Standard Mode" : "Switch to Dale's Garden"}
+            title={themeMode === 'flower' ? "Switch to Standard Mode" : "Switch to Dale's Flow State"}
             aria-label="Toggle theme mode"
         >
             <span className="sr-only">
-                {themeMode === 'flower' ? "Switch to Standard Mode" : "Switch to Dale's Garden"}
+                {themeMode === 'flower' ? "Switch to Standard Mode" : "Switch to Dale's Flow State"}
             </span>
 
             {/* Slider */}
@@ -42,7 +42,7 @@ export function ThemeToggle() {
                     ? "left-3 text-rose-700 dark:text-rose-300 opacity-100"
                     : "left-3 text-gray-500 opacity-0"
             )}>
-                Dale's Garden
+                Dale's Flow State
             </span>
             <span className={cn(
                 "absolute text-xs font-medium transition-opacity duration-200",

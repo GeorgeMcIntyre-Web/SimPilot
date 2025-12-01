@@ -50,7 +50,7 @@ export function FirstRunBanner() {
                 <div className="flex-1">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                         {isFlower
-                            ? "Hi Dale 🌸 – this is your Cloudflare cockpit."
+                            ? "Hi Dale 🌸 – this is your SimPilot cockpit."
                             : "Welcome to SimPilot."}
                     </h2>
                     <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl">

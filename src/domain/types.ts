@@ -123,7 +123,7 @@ export type Robot = UnifiedAsset & {
     toolIds: string[]
 }
 export type WeldGun = UnifiedAsset & { kind: 'GUN' }
-export type Stand = UnifiedAsset & { kind: 'STAND' }
+export type Stand = UnifiedAsset & { kind: 'OTHER' } // Mapped to OTHER in Phase 2
 
 export type RobotGunAssignment = {
     id: string

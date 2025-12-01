@@ -67,7 +67,12 @@ function detectFileType(workbook: XLSX.WorkBook, fileName: string): FileKind {
     ).join(' ')
 
     // Simulation Status
-    if (content.includes('robot position') || content.includes('1st stage sim') || content.includes('1st stage')) {
+    if (
+      (content.includes('robot') && content.includes('reach')) ||
+      content.includes('robot position') ||
+      content.includes('1st stage sim') ||
+      content.includes('1st stage')
+    ) {
       return 'SimulationStatus'
     }
 
@@ -78,6 +83,7 @@ function detectFileType(workbook: XLSX.WorkBook, fileName: string): FileKind {
 
     // Tool/Equipment List
     if (
+      (content.includes('force') && content.includes('gun')) ||
       content.includes('gun force') ||
       content.includes('tip dresser') ||
       content.includes('riser') ||
@@ -228,8 +234,8 @@ export async function ingestFiles(
     projectsCount: state.projects.length,
     areasCount: state.areas.length,
     cellsCount: state.cells.length,
-    robotsCount: state.robots.length,
-    toolsCount: state.tools.length,
+    robotsCount: state.assets.filter(a => a.kind === 'ROBOT').length,
+    toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
     warnings: allWarnings
   }
 }

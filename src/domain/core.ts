@@ -1,7 +1,7 @@
 // SimPilot Core Domain Types
 // Clean, future-proof type system following guard-clause architecture
 
-import { UnifiedAsset, EquipmentSourcing } from './UnifiedModel'
+import { UnifiedAsset } from './UnifiedModel'
 export * from './UnifiedModel'
 
 // ============================================================================
@@ -106,21 +106,16 @@ export interface Cell {
 // ROBOTS
 // ============================================================================
 
-export interface Robot {
-  id: string
-  name: string                // or robot ID from sheet, e.g. "R01"
-  oemModel?: string
-  lineCode?: string
-  areaName?: string
-  stationCode?: string
-  projectId?: string
-  areaId?: string
-  cellId?: string
+export interface Robot extends UnifiedAsset {
   toolIds: string[]
-  sourcing?: EquipmentSourcing
-  sourceFile: string
-  sheetName: string
-  rowIndex: number
+  // Redundant fields removed or kept if they are specific overrides?
+  // UnifiedAsset has: id, name, kind, sourcing, metadata, areaId, areaName, cellId, stationNumber, oemModel, description, sourceFile, sheetName, rowIndex
+  // Robot had: id, name, oemModel, lineCode, areaName, stationCode, projectId, areaId, cellId, toolIds, sourcing, sourceFile, sheetName, rowIndex
+
+  // Specific fields not in UnifiedAsset (or different name):
+  lineCode?: string
+  stationCode?: string // UnifiedAsset has stationNumber
+  projectId?: string
 }
 
 // ============================================================================

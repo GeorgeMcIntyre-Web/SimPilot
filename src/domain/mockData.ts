@@ -161,11 +161,11 @@ export const gunCheckStatuses: GunCheckStatus[] = [
 
 export const stands: Stand[] = [
     {
-        id: 's1', kind: 'STAND', name: 'STD-01', standNumber: 'STD-01', areaId: 'a1', stationNumber: 'ST-10', type: 'TIP_DRESSER', referenceNumber: 'TD-K-01', notes: 'Kyokutoh Dresser',
+        id: 's1', kind: 'OTHER', name: 'STD-01', standNumber: 'STD-01', areaId: 'a1', stationNumber: 'ST-10', type: 'TIP_DRESSER', referenceNumber: 'TD-K-01', notes: 'Kyokutoh Dresser',
         sourcing: 'REUSE', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 0
     },
     {
-        id: 's2', kind: 'STAND', name: 'STD-02', standNumber: 'STD-02', areaId: 'a1', stationNumber: 'ST-10', type: 'GUN_STAND', referenceNumber: 'GS-01', notes: 'Parking stand for G01',
+        id: 's2', kind: 'OTHER', name: 'STD-02', standNumber: 'STD-02', areaId: 'a1', stationNumber: 'ST-10', type: 'GUN_STAND', referenceNumber: 'GS-01', notes: 'Parking stand for G01',
         sourcing: 'NEW_BUY', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 1
     }
 ]

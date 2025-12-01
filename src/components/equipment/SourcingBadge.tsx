@@ -1,5 +1,5 @@
 import { EquipmentSourcing } from '../../domain/types'
-import { Recycle, ShoppingBag, Wrench, Package, HelpCircle } from 'lucide-react'
+import { Leaf, Sparkles, Wrench, Package, HelpCircle } from 'lucide-react'
 
 interface SourcingBadgeProps {
     sourcing?: EquipmentSourcing
@@ -18,13 +18,13 @@ export function SourcingBadge({ sourcing }: SourcingBadgeProps) {
     const config = {
         'REUSE': {
             color: 'bg-green-100 text-green-800',
-            icon: Recycle,
-            label: 'Reuse'
+            icon: Leaf,
+            label: 'Growing (Reuse)'
         },
         'NEW_BUY': {
             color: 'bg-blue-100 text-blue-800',
-            icon: ShoppingBag,
-            label: 'New'
+            icon: Sparkles,
+            label: 'New (Buy)'
         },
         'MAKE': {
             color: 'bg-purple-100 text-purple-800',

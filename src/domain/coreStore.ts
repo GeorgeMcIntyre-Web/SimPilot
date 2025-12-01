@@ -2,7 +2,7 @@
 // Simple in-memory store for new domain entities (Project, Area, Cell, Robot, Tool)
 
 import { useState, useEffect } from 'react'
-import { Project, Area, Cell, Robot, Tool } from './core'
+import { Project, Area, Cell, Robot, Tool, UnifiedAsset } from './core'
 import {
   getProjectMetrics,
   getAllProjectMetrics,
@@ -33,8 +33,7 @@ export interface CoreStoreState {
   projects: Project[]
   areas: Area[]
   cells: Cell[]
-  robots: Robot[]
-  tools: Tool[]
+  assets: UnifiedAsset[] // Unified Asset Storage
   warnings: string[]
   changeLog: ChangeRecord[]
   lastUpdated: string | null
@@ -45,8 +44,7 @@ let storeState: CoreStoreState = {
   projects: [],
   areas: [],
   cells: [],
-  robots: [],
-  tools: [],
+  assets: [],
   warnings: [],
   changeLog: [],
   lastUpdated: null,
@@ -84,10 +82,12 @@ export const coreStore = {
     warnings: string[]
   }, source?: 'Demo' | 'Local' | 'MS365'): void {
     storeState = {
-      ...data,
-      changeLog: [], // Reset change log on new data load? Or keep it? 
-      // Spec says "Do NOT automatically clear changeLog unless the snapshot explicitly says so."
-      // But setData is usually for fresh ingestion. Let's keep it empty for fresh ingestion.
+      projects: data.projects,
+      areas: data.areas,
+      cells: data.cells,
+      assets: [...data.robots, ...data.tools], // Merge into Unified Assets
+      warnings: data.warnings,
+      changeLog: [], // Reset change log on new data load
       lastUpdated: new Date().toISOString(),
       dataSource: source || null
     }
@@ -102,8 +102,7 @@ export const coreStore = {
       projects: [],
       areas: [],
       cells: [],
-      robots: [],
-      tools: [],
+      assets: [],
       warnings: [],
       changeLog: [],
       lastUpdated: null,
@@ -258,8 +257,9 @@ export function useCell(cellId: string): Cell | undefined {
  */
 export function useRobots(cellId?: string): Robot[] {
   const state = useCoreStore()
-  if (!cellId) return state.robots
-  return state.robots.filter(r => r.cellId === cellId)
+  const robots = state.assets.filter(a => a.kind === 'ROBOT') as unknown as Robot[]
+  if (!cellId) return robots
+  return robots.filter(r => r.cellId === cellId)
 }
 
 /**
@@ -267,8 +267,10 @@ export function useRobots(cellId?: string): Robot[] {
  */
 export function useTools(cellId?: string): Tool[] {
   const state = useCoreStore()
-  if (!cellId) return state.tools
-  return state.tools.filter(t => t.cellId === cellId)
+  // Tools are everything that is NOT a robot (Guns, Tools, Others)
+  const tools = state.assets.filter(a => a.kind !== 'ROBOT') as unknown as Tool[]
+  if (!cellId) return tools
+  return tools.filter(t => t.cellId === cellId)
 }
 
 /**

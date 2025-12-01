@@ -1,0 +1,383 @@
+
+> simpilot-mvp@0.0.0 test
+> vitest src/ingestion/__tests__/toolListParser.test.ts --run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.14 [39m[90mC:/Users/georgem/source/repos/SimPilot[39m
+
+ [31mΓ¥»[39m src/ingestion/__tests__/toolListParser.test.ts [2m([22m[2m35 tests[22m[2m | [22m[31m25 failed[39m[2m)[22m[32m 18[2mms[22m[39m
+[31m       [31m├ù[31m should vacuum unknown columns into metadata[39m[32m 7[2mms[22m[39m
+[31m       [31m├ù[31m should vacuum columns even if they have special characters[39m[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should map "CARRY OVER" to REUSE[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should map "Existing" to REUSE[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should map "Retain" to REUSE[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should map "NEW" to NEW_BUY[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should default to UNKNOWN when sourcing is ambiguous[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should detect sourcing from comments field[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should detect SPOT_WELD from filename with "wg"[39m[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should detect SPOT_WELD from type string[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should detect SEALER from filename[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should detect GRIPPER from type string[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should default to OTHER for unknown tool types[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should detect SERVO subtype[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should detect PNEUMATIC subtype[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should default to UNKNOWN subtype when unclear[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should not set subtype for non-spot-weld tools[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should find tool ID from "GUN ID" header[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should find tool ID from "TOOL NAME" header[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should find tool ID from "EQUIPMENT ID" header[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should parse area/line/station from various header names[39m[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should parse partial data without crashing[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should skip rows with no tool ID[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should skip empty rows[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should skip total rows[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should handle null and undefined values gracefully[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should warn when no valid tools found[39m[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should throw error for workbook with no sheets[32m 1[2mms[22m[39m
+       [32mΓ£ô[39m should throw error when no valid headers found[32m 0[2mms[22m[39m
+       [32mΓ£ô[39m should throw error for sheets with too few rows[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should extract OEM model from various column names[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should try MANUFACTURER column if MODEL not found[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should try SUPPLIER column if MODEL and MANUFACTURER not found[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should capture source file name and sheet name[39m[32m 0[2mms[22m[39m
+[31m       [31m├ù[31m should capture row index for debugging[39m[32m 0[2mms[22m[39m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 25 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Vacuum Logic: Unknown Columns > should vacuum unknown columns into metadata
+AssertionError: expected undefined to be 'Yes' // Object.is equality
+
+- Expected: 
+"Yes"
+
++ Received: 
+undefined
+
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:36:57
+     34|             // Assert: Unknown columns should be in metadata
+     35|             expect(firstTool.metadata).toBeDefined()
+     36|             expect(firstTool.metadata['Refresment OK']).toBe('Yes')  /ΓÇª
+       |                                                         ^
+     37|             expect(firstTool.metadata['Coments']).toBe('Issues with tiΓÇª
+     38|             expect(firstTool.metadata['Supplier 2']).toBe('ACME Corp')ΓÇª
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Vacuum Logic: Unknown Columns > should vacuum columns even if they have special characters
+Error: Could not find header row in special.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:52:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Fuzzy Sourcing Detection > should detect sourcing from comments field
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:114:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Tool Type Detection > should detect SPOT_WELD from filename with "wg"
+Error: Could not find header row in GLOBAL_ZA_REUSE_LIST_TMS_WG.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:128:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Tool Type Detection > should detect SEALER from filename
+Error: Could not find header row in Sealer_List.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:148:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Tool Type Detection > should detect GRIPPER from type string
+Error: Could not find header row in tools.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:160:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Tool Type Detection > should default to OTHER for unknown tool types
+Error: Could not find header row in equipment.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:172:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Spot Weld Subtype Detection > should detect SERVO subtype
+Error: Could not find header row in guns.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:187:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Spot Weld Subtype Detection > should detect PNEUMATIC subtype
+Error: Could not find header row in guns.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:200:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[9/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Spot Weld Subtype Detection > should default to UNKNOWN subtype when unclear
+Error: Could not find header row in guns.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:212:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[10/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Spot Weld Subtype Detection > should not set subtype for non-spot-weld tools
+Error: Could not find header row in tools.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:223:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[11/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Header Variations > should find tool ID from "GUN ID" header
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:236:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[12/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Header Variations > should find tool ID from "TOOL NAME" header
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:247:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[13/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Header Variations > should find tool ID from "EQUIPMENT ID" header
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:258:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[14/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Header Variations > should parse area/line/station from various header names
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:269:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[15/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Resilience: Partial & Garbage Data > should skip rows with no tool ID
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:297:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[16/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Resilience: Partial & Garbage Data > should skip empty rows
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:312:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[17/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Resilience: Partial & Garbage Data > should skip total rows
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:325:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[18/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Resilience: Partial & Garbage Data > should handle null and undefined values gracefully
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:337:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[19/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Resilience: Partial & Garbage Data > should warn when no valid tools found
+Error: Sheet "Sheet1" has too few rows (1). Expected at least 2 rows.
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:59:11
+     57|   const rows = sheetToMatrix(workbook, sheetName)
+     58|   if (rows.length < 2) {
+     59|     throw new Error(`Sheet "${sheetName}" has too few rows (${rows.lenΓÇª
+       |           ^
+     60|   }
+     61| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:350:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[20/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > OEM Model Detection > should extract OEM model from various column names
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:384:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[21/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > OEM Model Detection > should try MANUFACTURER column if MODEL not found
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:395:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[22/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > OEM Model Detection > should try SUPPLIER column if MODEL and MANUFACTURER not found
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:406:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[23/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Source Metadata > should capture source file name and sheet name
+Error: Could not find header row in GLOBAL_ZA_REUSE_LIST_TMS_WG.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:419:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[24/25]ΓÄ»
+
+ FAIL  src/ingestion/__tests__/toolListParser.test.ts > toolListParser - Real-World Resilience > Source Metadata > should capture row index for debugging
+Error: Could not find header row in test.xlsx. Tried combinations: GUN, TYPE, LINE | TOOL, TYPE, AREA | ID, TYPE, STATION | EQUIPMENT, AREA, LINE
+ Γ¥» parseToolList src/ingestion/toolListParser.ts:71:11
+     69| 
+     70|   if (headerRowIndex === null) {
+     71|     throw new Error(`Could not find header row in ${fileName}. Tried cΓÇª
+       |           ^
+     72|   }
+     73| 
+ Γ¥» src/ingestion/__tests__/toolListParser.test.ts:432:34
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[25/25]ΓÄ»
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m25 failed[39m[22m[2m | [22m[1m[32m10 passed[39m[22m[90m (35)[39m
+[2m   Start at [22m 11:10:52
+[2m   Duration [22m 1.06s[2m (transform 91ms, setup 24ms, import 203ms, tests 18ms, environment 647ms)[22m
+

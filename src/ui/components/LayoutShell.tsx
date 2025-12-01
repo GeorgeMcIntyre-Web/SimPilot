@@ -32,7 +32,7 @@ export function LayoutShell() {
     ];
 
     return (
-        <div data-testid="app-shell" className="min-h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+        <div data-testid="app-shell" className="min-h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col relative overflow-hidden">
             {/* Header */}
             <header className={cn(
                 "border-b sticky top-0 z-10 transition-colors duration-500",

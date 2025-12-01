@@ -136,15 +136,47 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'STATION CODE')
       || getCellString(row, columnMap, 'CELL')
 
+    // Vacuum Parser: Collect all other columns into metadata
+    const metadata: Record<string, string | number | boolean | null> = {}
+    const consumedHeaders = [
+      'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
+      'MODEL', 'OEM MODEL', 'TYPE',
+      'AREA', 'AREA NAME',
+      'LINE', 'LINE CODE', 'ASSEMBLY LINE',
+      'STATION', 'STATION CODE', 'CELL'
+    ]
+
+    // Create a set of consumed indices based on the column map and consumed headers
+    const consumedIndices = new Set<number>()
+    consumedHeaders.forEach(h => {
+      const idx = columnMap[h]
+      if (idx !== null && idx !== undefined) consumedIndices.add(idx)
+    })
+
+    // Iterate over the row to find unconsumed data
+    row.forEach((cell, index) => {
+      if (index >= headerRow.length) return // Skip if no header
+      if (consumedIndices.has(index)) return // Skip consumed columns
+
+      const header = String(headerRow[index] || '').trim()
+      if (!header) return // Skip empty headers
+
+      // Add to metadata
+      metadata[header] = cell
+    })
+
     // Build robot entity
     const robot: Robot = {
       id: generateId('robot', robotId),
+      kind: 'ROBOT',
       name: robotId,
       oemModel: oemModel || undefined,
       areaName: areaName || undefined,
       lineCode: lineCode || undefined,
       stationCode: stationCode || undefined,
       toolIds: [],
+      sourcing: 'UNKNOWN', // Default for now
+      metadata,
       sourceFile: fileName,
       sheetName,
       rowIndex: i

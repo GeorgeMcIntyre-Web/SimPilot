@@ -282,8 +282,8 @@ export function DataLoaderPage() {
         projectsCount: state.projects.length,
         areasCount: state.areas.length,
         cellsCount: state.cells.length,
-        robotsCount: state.robots.length,
-        toolsCount: state.tools.length,
+        robotsCount: state.assets.filter(a => a.kind === 'ROBOT').length,
+        toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
         warnings: []
       })
 

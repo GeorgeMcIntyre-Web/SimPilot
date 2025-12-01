@@ -62,11 +62,11 @@ export function DevDiagnostics() {
                         </div>
                         <div className="flex justify-between">
                             <span>Robots:</span>
-                            <span className="font-bold">{store.robots.length}</span>
+                            <span className="font-bold">{store.assets.filter(a => a.kind === 'ROBOT').length}</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Tools:</span>
-                            <span className="font-bold">{store.tools.length}</span>
+                            <span className="font-bold">{store.assets.filter(a => a.kind !== 'ROBOT').length}</span>
                         </div>
                     </div>
                 </div>

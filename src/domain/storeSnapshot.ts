@@ -1,8 +1,8 @@
-import { Project, Area, Cell, Robot, Tool } from './core'
+import { Project, Area, Cell, Robot, Tool, UnifiedAsset } from './core'
 import { CoreStoreState } from './coreStore'
 import { ChangeRecord } from './changeLog'
 
-export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 1
+export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 2
 
 export interface StoreSnapshotMeta {
     lastSavedAt: string // ISO string
@@ -18,8 +18,10 @@ export interface StoreSnapshot {
     projects: Project[]
     areas: Area[]
     cells: Cell[]
-    robots: Robot[]
-    tools: Tool[]
+    assets: UnifiedAsset[]
+    // Legacy fields for backward compatibility
+    robots?: Robot[]
+    tools?: Tool[]
     warnings: string[] // Note: coreStore uses string[] for warnings, not IngestionWarning[]
     changeLog: ChangeRecord[]
 }
@@ -41,8 +43,7 @@ export function createSnapshotFromState(
         projects: state.projects,
         areas: state.areas,
         cells: state.cells,
-        robots: state.robots,
-        tools: state.tools,
+        assets: state.assets,
         warnings: state.warnings,
         changeLog: state.changeLog
     }
@@ -59,12 +60,17 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
                 snapshot.meta.sourceKind === 'ms365' ? 'MS365' :
                     null
 
+    // Handle legacy snapshots that have robots/tools but no assets
+    const assets = snapshot.assets || [
+        ...(snapshot.robots || []),
+        ...(snapshot.tools || [])
+    ]
+
     return {
         projects: snapshot.projects,
         areas: snapshot.areas,
         cells: snapshot.cells,
-        robots: snapshot.robots,
-        tools: snapshot.tools,
+        assets,
         warnings: snapshot.warnings,
         changeLog: snapshot.changeLog,
         lastUpdated: snapshot.meta.lastSavedAt,

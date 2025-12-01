@@ -1,35 +1,33 @@
 // Unified Asset Model
 // Extracted to separate file to resolve circular dependencies and build issues
 
-export type EquipmentSourcing = 'NEW_BUY' | 'REUSE' | 'MAKE' | 'FREE_ISSUE' | 'UNKNOWN'
+export type EquipmentSourcing = 'NEW_BUY' | 'REUSE' | 'MAKE' | 'UNKNOWN'
 
-export type AssetKind = 'ROBOT' | 'GUN' | 'TOOL' | 'STAND' | 'OTHER'
+export type AssetKind = 'ROBOT' | 'GUN' | 'TOOL' | 'OTHER'
 
 export interface UnifiedAsset {
     id: string
-    kind: AssetKind
     name: string
+    kind: AssetKind
+    sourcing: EquipmentSourcing
+    metadata: Record<string, string | number | boolean | null> // The Catch-All
 
     // Core Logic Fields
     areaId?: string
     areaName?: string
     cellId?: string | null
     stationNumber?: string
-    sourcing: EquipmentSourcing
 
-    // Specific Fields (Optional based on Kind)
-    oemModel?: string       // Robot/Tool
-    description?: string    // Robot
-    gunNumber?: string      // Gun
-    supplier?: string       // Gun
-    type?: string           // Gun/Stand
-    maxForce?: number | null // Gun
-    payloadClass?: string   // Gun
-    standNumber?: string    // Stand
-    referenceNumber?: string // Stand
-
-    // The "Catch-All" Bucket for future-proofing
-    metadata: Record<string, string | number | boolean | null>
+    // Specific Fields (Optional - kept for convenience, but could be in metadata)
+    oemModel?: string
+    description?: string
+    gunNumber?: string
+    supplier?: string
+    type?: string
+    maxForce?: number | null
+    payloadClass?: string
+    standNumber?: string
+    referenceNumber?: string
 
     // Source tracking
     sourceFile: string
