@@ -1,13 +1,12 @@
 // Sheet Sniffer Unit Tests
 // Tests the Smart Recon system for detecting sheet categories
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
 import {
   sniffSheet,
   scanWorkbook,
   categoryToFileKind,
-  SheetCategory,
   CATEGORY_KEYWORDS
 } from '../sheetSniffer'
 
@@ -277,14 +276,15 @@ describe('scanWorkbook', () => {
   })
 
   it('prefers higher-scoring sheets when multiple match same category', () => {
-    // Sheet1 has only weak keywords (below minScore)
-    // Sheet2 has strong + medium keywords (above minScore)
+    // LowScoreSheet has only weak keywords (below minScore)
+    // GunForceData has strong + medium keywords (above minScore)
+    // Note: Don't use names like "Sheet1", "Sheet2" as they match skip patterns
     const workbook = createMockWorkbook({
-      'Sheet1': [
+      'LowScoreSheet': [
         // Only weak keywords: Gun (+1), Area (+1) = 2, below minScore of 5
         ['Gun', 'Area', 'Force']
       ],
-      'Sheet2': [
+      'GunForceData': [
         // Strong: Gun Number (+3), Gun Force [N] (+3)
         // Medium: Quantity (+2), Reserve (+2), Robot Number (+2)
         // Total = 12, above minScore of 5
@@ -294,9 +294,9 @@ describe('scanWorkbook', () => {
 
     const result = scanWorkbook(workbook)
 
-    // Sheet1 doesn't meet minScore (5), so only Sheet2 should be detected
+    // LowScoreSheet doesn't meet minScore (5), so only GunForceData should be detected
     expect(result.bestOverall).not.toBeNull()
-    expect(result.bestOverall?.sheetName).toBe('Sheet2')
+    expect(result.bestOverall?.sheetName).toBe('GunForceData')
     expect(result.bestOverall?.category).toBe('GUN_FORCE')
     expect(result.bestOverall?.score).toBeGreaterThanOrEqual(5)
   })

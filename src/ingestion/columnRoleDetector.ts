@@ -127,6 +127,21 @@ interface RolePattern {
  */
 const ROLE_PATTERNS: RolePattern[] = [
   // -------------------------------------------------------------------------
+  // Technical Columns (checked first to avoid 'gun' matching before 'gun force')
+  // -------------------------------------------------------------------------
+  {
+    role: 'GUN_FORCE',
+    patterns: [
+      'gun force [n]',
+      'gun force',
+      'force [n]',
+      'max force'
+      // Note: 'force' alone is too generic - removed to avoid false matches
+    ],
+    confidence: 'HIGH'
+  },
+  
+  // -------------------------------------------------------------------------
   // Identity Columns (HIGH priority)
   // -------------------------------------------------------------------------
   {
@@ -192,6 +207,39 @@ const ROLE_PATTERNS: RolePattern[] = [
       'robot'
     ],
     confidence: 'HIGH'
+  },
+
+  // -------------------------------------------------------------------------
+  // Date Columns (before Location to prevent 'deadline' matching 'line')
+  // -------------------------------------------------------------------------
+  {
+    role: 'DUE_DATE',
+    patterns: [
+      'sim. due date (yyyy/mm/dd)',
+      'sim. due date',
+      'due date',
+      'deadline',
+      'target date'
+    ],
+    confidence: 'HIGH'
+  },
+  {
+    role: 'START_DATE',
+    patterns: [
+      'start date',
+      'begin date'
+      // Note: 'start' alone is too generic
+    ],
+    confidence: 'MEDIUM'
+  },
+  {
+    role: 'END_DATE',
+    patterns: [
+      'end date',
+      'finish date',
+      'completion date'
+    ],
+    confidence: 'MEDIUM'
   },
 
   // -------------------------------------------------------------------------
@@ -286,19 +334,9 @@ const ROLE_PATTERNS: RolePattern[] = [
   },
 
   // -------------------------------------------------------------------------
-  // Technical Columns
+  // Technical Columns (OEM, Payload, Reach, etc.)
+  // Note: GUN_FORCE is defined at top of list for pattern priority
   // -------------------------------------------------------------------------
-  {
-    role: 'GUN_FORCE',
-    patterns: [
-      'gun force [n]',
-      'gun force',
-      'force [n]',
-      'force',
-      'max force'
-    ],
-    confidence: 'HIGH'
-  },
   {
     role: 'OEM_MODEL',
     patterns: [
@@ -386,39 +424,6 @@ const ROLE_PATTERNS: RolePattern[] = [
       'team leader',
       'lead',
       'manager'
-    ],
-    confidence: 'MEDIUM'
-  },
-
-  // -------------------------------------------------------------------------
-  // Date Columns
-  // -------------------------------------------------------------------------
-  {
-    role: 'DUE_DATE',
-    patterns: [
-      'sim. due date (yyyy/mm/dd)',
-      'sim. due date',
-      'due date',
-      'deadline',
-      'target date'
-    ],
-    confidence: 'HIGH'
-  },
-  {
-    role: 'START_DATE',
-    patterns: [
-      'start date',
-      'begin date',
-      'start'
-    ],
-    confidence: 'MEDIUM'
-  },
-  {
-    role: 'END_DATE',
-    patterns: [
-      'end date',
-      'finish date',
-      'completion date'
     ],
     confidence: 'MEDIUM'
   },

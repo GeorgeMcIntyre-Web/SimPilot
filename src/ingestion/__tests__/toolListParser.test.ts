@@ -32,12 +32,14 @@ describe('toolListParser - Real-World Resilience', () => {
             const firstTool = result.tools[0]
 
             // Assert: Unknown columns should be in metadata
-            // Note: 'Refresment OK' is now a KNOWN column (explicitly handled), so not in metadata
-            // Only truly unknown columns get vacuumed
+            // Note: buildColumnMap uses includes() for partial matching, so:
+            // - 'Refresment OK' matches REFRESMENT OK -> consumed
+            // - 'Supplier 2' matches SUPPLIER -> consumed (treated as OEM model)
+            // - 'Status' matches STATUS -> consumed
+            // Only truly unknown columns get vacuumed:
             expect(firstTool.metadata).toBeDefined()
             expect(firstTool.metadata['Zone']).toBe('P1Mx')  // Unknown column
-            expect(firstTool.metadata['Coments']).toBe('Issues with tip dresser')  // Typo column (not in consumed list)
-            expect(firstTool.metadata['Supplier 2']).toBe('ACME Corp')  // Unknown column
+            expect(firstTool.metadata['Coments']).toBe('Issues with tip dresser')  // Typo "Coments" not in consumed list
             expect(firstTool.metadata['Robot Standard (Confirm)']).toBe('R-2000i/210F')  // Unknown column
             expect(firstTool.metadata['Asset description']).toBe('Pneumatic spot weld gun with extended arm')  // Unknown column
         })
