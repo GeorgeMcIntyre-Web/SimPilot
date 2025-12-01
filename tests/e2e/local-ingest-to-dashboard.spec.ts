@@ -11,11 +11,6 @@ const __dirname = dirname(__filename);
 
 test.describe('Local Ingest to Dashboard Flow', () => {
     test('Ingest Local Excel Files and Verify Dashboard Updates', async ({ page }) => {
-        page.on('console', msg => {
-            const text = msg.text();
-            console.log('PAGE LOG:', text);
-            try { fs.appendFileSync('debug_log.txt', text + '\n'); } catch (e) { }
-        });
         // 1. Start at app root
         await gotoApp(page);
 
@@ -48,8 +43,8 @@ test.describe('Local Ingest to Dashboard Flow', () => {
         await openDashboardInDaleMode(page);
 
         // 7. Assert Project Data
-        // Our fixture has project "P_TEST".
-        await expect(page.getByText('P_TEST')).toBeVisible();
+        // Our fixture has project "SimulationStatus TEST".
+        await expect(page.getByText('SimulationStatus TEST').first()).toBeVisible();
 
         // 8. Assert Metrics
         // We have 3 robots in the fixture.
@@ -57,7 +52,7 @@ test.describe('Local Ingest to Dashboard Flow', () => {
         // "Avg Completion" should be visible.
         await expect(page.getByText('Avg Completion')).toBeVisible();
 
-        // Check for "P_TEST" again in the table
-        await expect(page.getByText('P_TEST')).toBeVisible();
+        // Check for "SimulationStatus TEST" again in the table
+        await expect(page.getByText('SimulationStatus TEST').first()).toBeVisible();
     });
 });

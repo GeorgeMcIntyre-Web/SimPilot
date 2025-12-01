@@ -13,6 +13,7 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/jsdom": "^27.0.0",
+    "@vitest/coverage-v8": "^4.0.14",
     "@vitest/ui": "^4.0.14",
     "autoprefixer": "^10.4.22",
     "jsdom": "^27.2.0",

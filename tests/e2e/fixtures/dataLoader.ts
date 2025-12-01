@@ -26,12 +26,21 @@ export async function ingestLocalFixture(page: Page, simulationPath: string, equ
     });
 
     await page.getByTestId('local-simulation-input').setInputFiles(simulationPath);
-    await page.getByTestId('local-simulation-input').dispatchEvent('change');
+    // await page.getByTestId('local-simulation-input').dispatchEvent('change');
 
     await page.getByTestId('local-equipment-input').setInputFiles(equipmentPath);
-    await page.getByTestId('local-equipment-input').dispatchEvent('change');
+    // await page.getByTestId('local-equipment-input').dispatchEvent('change');
+
+    // Wait for state update
+    await page.waitForTimeout(500);
 
     const ingestBtn = page.getByTestId('local-ingest-button');
+    const isDisabled = await ingestBtn.isDisabled();
+    console.log(`[Test] Ingest button disabled: ${isDisabled}`);
+    if (isDisabled) {
+        const simFiles = await page.getByTestId('local-simulation-input').evaluate((el: HTMLInputElement) => el.files?.length);
+        console.log(`[Test] Sim input files: ${simFiles}`);
+    }
     await expect(ingestBtn).toBeEnabled({ timeout: 5000 });
     await ingestBtn.click();
 
@@ -39,9 +48,13 @@ export async function ingestLocalFixture(page: Page, simulationPath: string, equ
     await expect(page.getByTestId('data-loaded-indicator')).toHaveText(/complete/i, { timeout: 10000 });
 
     // Verify we actually loaded something
-    const projectCountText = await page.getByTestId('result-projects-count').textContent();
-    const cellCountText = await page.getByTestId('result-cells-count').textContent();
+    await expect(async () => {
+        const projectCountText = await page.getByTestId('result-projects-count').textContent();
+        const cellCountText = await page.getByTestId('result-cells-count').textContent();
 
-    expect(parseInt(projectCountText || '0')).toBeGreaterThan(0);
-    expect(parseInt(cellCountText || '0')).toBeGreaterThan(0);
+        console.log(`Verifying counts - Projects: ${projectCountText}, Cells: ${cellCountText}`);
+
+        expect(parseInt(projectCountText || '0')).toBeGreaterThan(0);
+        expect(parseInt(cellCountText || '0')).toBeGreaterThan(0);
+    }).toPass({ timeout: 10000 });
 }

@@ -206,7 +206,14 @@ export function getCellNumber(
  */
 export function isEmptyRow(row: CellValue[]): boolean {
   if (!row || row.length === 0) return true
-  return row.every(cell => !cell || String(cell).trim() === '')
+  return row.every(cell => {
+    // Handle null/undefined
+    if (cell === null || cell === undefined) return true
+    // Handle empty strings (including whitespace)
+    if (typeof cell === 'string' && cell.trim() === '') return true
+    // Everything else (numbers, booleans, non-empty strings) is data
+    return false
+  })
 }
 
 /**
@@ -217,3 +224,4 @@ export function isTotalRow(row: CellValue[]): boolean {
   const firstCell = String(row[0] || '').toLowerCase().trim()
   return firstCell === 'total' || firstCell === 'totals' || firstCell === 'sum'
 }
+

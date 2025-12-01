@@ -284,6 +284,7 @@ export async function ingestFiles(
         }
       }
     } catch (error) {
+      console.error(`[Ingestion] Error processing file ${file.name}:`, error)
       allWarnings.push(createParserErrorWarning({
         fileName: file.name,
         error: String(error)

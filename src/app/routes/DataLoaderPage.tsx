@@ -105,6 +105,7 @@ export function DataLoaderPage() {
   // ============================================================================
 
   const onDropSimulation = useCallback((acceptedFiles: File[]) => {
+    console.log('Dropped simulation files:', acceptedFiles.length)
     setSimulationFiles(prev => [...prev, ...acceptedFiles])
     setResult(null)
     setError(null)
@@ -115,7 +116,6 @@ export function DataLoaderPage() {
     setResult(null)
     setError(null)
   }, [])
-
   const { getRootProps: getSimProps, getInputProps: getSimInputProps, isDragActive: isSimActive } = useDropzone({
     onDrop: onDropSimulation,
     accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] }
@@ -299,22 +299,22 @@ export function DataLoaderPage() {
         title="Data Loader"
         subtitle="Import simulation status and equipment lists from Excel files."
       />
-
-      {/* Fast Path Hint */}
-      {!hasData && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <span className="text-xl">💡</span>
+      {
+        !hasData && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <span className="text-xl">💡</span>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">New here? Try the Fast Path</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                To see SimPilot in action immediately, use the <strong>Load Demo Scenario</strong> button below (select <em>STLA_SAMPLE</em>).
+                For real projects, upload your Excel status files in the "Local Files" tab.
+              </p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">New here? Try the Fast Path</h4>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              To see SimPilot in action immediately, use the <strong>Load Demo Scenario</strong> button below (select <em>STLA_SAMPLE</em>).
-              For real projects, upload your Excel status files in the "Local Files" tab.
-            </p>
-          </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Demo Mode Section */}
       <div className="bg-gradient-to-r from-rose-50 to-white dark:from-gray-800 dark:to-gray-800 shadow rounded-lg p-6 border border-rose-100 dark:border-indigo-900/30">
@@ -673,55 +673,57 @@ export function DataLoaderPage() {
       </div>
 
       {/* Results Section */}
-      {result && (
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-          <div className="flex items-center mb-4" data-testid="data-loaded-indicator">
-            <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Ingestion Complete</h3>
-          </div>
+      {
+        result && (
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <div className="flex items-center mb-4" data-testid="data-loaded-indicator">
+              <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Ingestion Complete</h3>
+            </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-projects-count">{result.projectsCount}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Projects</div>
-            </div>
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-areas-count">{result.areasCount}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Areas</div>
-            </div>
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-cells-count">{result.cellsCount}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cells</div>
-            </div>
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-robots-count">{result.robotsCount}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Robots</div>
-            </div>
-            <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-tools-count">{result.toolsCount}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tools</div>
-            </div>
-          </div>
-
-          {result.warnings.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-2 flex items-center">
-                <AlertTriangle className="w-4 h-4 mr-1" />
-                Warnings ({result.warnings.length})
-              </h4>
-              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-md p-4 max-h-60 overflow-y-auto">
-                <ul className="space-y-2">
-                  {result.warnings.map((w, i) => (
-                    <li key={i} className="text-sm text-orange-800 dark:text-orange-200">
-                      <span className="font-semibold">{w.fileName}:</span> {w.message}
-                    </li>
-                  ))}
-                </ul>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-projects-count">{result.projectsCount}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Projects</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-areas-count">{result.areasCount}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Areas</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-cells-count">{result.cellsCount}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cells</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-robots-count">{result.robotsCount}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Robots</div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-tools-count">{result.toolsCount}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tools</div>
               </div>
             </div>
-          )}
-        </div>
-      )}
-    </div>
+
+            {result.warnings.length > 0 && (
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <h4 className="text-sm font-medium text-orange-600 dark:text-orange-400 mb-2 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  Warnings ({result.warnings.length})
+                </h4>
+                <div className="bg-orange-50 dark:bg-orange-900/20 rounded-md p-4 max-h-60 overflow-y-auto">
+                  <ul className="space-y-2">
+                    {result.warnings.map((w, i) => (
+                      <li key={i} className="text-sm text-orange-800 dark:text-orange-200">
+                        <span className="font-semibold">{w.fileName}:</span> {w.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      }
+    </div >
   )
 }

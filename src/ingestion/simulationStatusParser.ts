@@ -92,12 +92,14 @@ export async function parseSimulationStatus(
 
   // Find header row
   const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
+  console.log(`[Parser] Header row index: ${headerRowIndex}`)
   if (headerRowIndex === null) {
     throw new Error(`Could not find header row with required columns: ${REQUIRED_HEADERS.join(', ')}`)
   }
 
   // Build column map
   const headerRow = rows[headerRowIndex]
+  console.log(`[Parser] Header row content: ${JSON.stringify(headerRow)}`)
   const columnMap = buildColumnMap(headerRow, [
     'PERSONS RESPONSIBLE',
     'AREA',
