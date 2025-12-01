@@ -17,6 +17,7 @@ import {
   RiserSnapshot
 } from './CrossRefTypes'
 import { normalizeStationId, normalizeGunKey } from './CrossRefUtils'
+import { buildCellHealthSummaries } from './CellHealthSummary'
 
 // ============================================================================
 // INTERNAL TYPES
@@ -51,8 +52,9 @@ export const buildCrossRef = (input: CrossRefInput): CrossRefResult => {
   const globalFlags = validateCells(cells)
 
   const stats = calculateStats(cells, globalFlags)
+  const cellHealthSummaries = buildCellHealthSummaries(cells)
 
-  return { cells, globalFlags, stats }
+  return { cells, globalFlags, stats, cellHealthSummaries }
 }
 
 // ============================================================================

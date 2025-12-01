@@ -27,6 +27,7 @@ export interface SimulationStatusSnapshot {
   application?: string
   firstStageCompletion?: number
   finalDeliverablesCompletion?: number
+  dcsConfigured?: boolean
   engineer?: string
   raw: ParsedSimulationRow | Cell | Record<string, unknown>
 }
@@ -179,4 +180,43 @@ export interface CrossRefResult {
     weldGunCount: number
     riserCount: number
   }
+  /** Ready-made summaries for UI consumption */
+  cellHealthSummaries: CellHealthSummary[]
+}
+
+// ============================================================================
+// HEALTH SUMMARY TYPES
+// ============================================================================
+
+/**
+ * Risk level for a cell
+ */
+export type CellRiskLevel = 'OK' | 'AT_RISK' | 'CRITICAL'
+
+/**
+ * UI-ready health summary for a cell
+ */
+export interface CellHealthSummary {
+  stationKey: StationKey
+  areaKey?: AreaKey
+
+  hasSimulationStatus: boolean
+
+  // Progress & config from SimulationStatusSnapshot
+  firstStageCompletion?: number
+  finalDeliverablesCompletion?: number
+  dcsConfigured?: boolean
+
+  // Asset counts
+  robotCount: number
+  toolCount: number
+  weldGunCount: number
+  gunForceCount: number
+  riserCount: number
+
+  // Risk / flags
+  riskLevel: CellRiskLevel
+  flags: CrossRefFlag[]
+  criticalReasons: string[]
+  warningReasons: string[]
 }

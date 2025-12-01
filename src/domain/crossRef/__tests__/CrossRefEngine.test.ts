@@ -269,7 +269,8 @@ describe('CrossRefEngine', () => {
 
       const flag = cell?.flags.find(f => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO')
       expect(flag).toBeDefined()
-      expect(flag?.robotKey).toBe('R_002')
+      // Flag stores the original robotKey from the snapshot, not normalized
+      expect(flag?.robotKey).toBe('R-002')
     })
 
     it('should not flag robot with dress pack info', () => {

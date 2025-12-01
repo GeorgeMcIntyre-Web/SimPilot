@@ -4,3 +4,4 @@
 export * from './CrossRefTypes'
 export * from './CrossRefUtils'
 export { buildCrossRef } from './CrossRefEngine'
+export { summarizeCellHealth, buildCellHealthSummaries } from './CellHealthSummary'
