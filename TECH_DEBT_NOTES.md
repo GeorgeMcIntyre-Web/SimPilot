@@ -30,6 +30,8 @@
 - **`DataLoaderPage.tsx`**: Added `data-testid` attributes for reliable selectors.
 - **`CellDetailPage.tsx`**: Added `data-testid` attributes for engineer editing flow.
 - **`DaleConsole.tsx`**: Added `data-testid` attributes.
+- **`DashboardPage.tsx`**: Refactored `getSortedCells` to remove `else if` chains.
+- **`ProjectsPage.tsx`**: Refactored `getSortedProjects` to remove `else if` chains.
 
 ## Known Issues / Next Steps
 - **Persistence Test**: `engineer-persistence.spec.ts` fails on reload. Needs investigation into `PersistenceManager` flush timing or Playwright context behavior.
