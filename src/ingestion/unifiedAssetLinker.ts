@@ -163,7 +163,7 @@ function normalizeAssetName(name: string | undefined): string {
 
 let linkIdCounter = 0
 
-function generateLinkId(type: LinkType, sourceId: string, targetId: string): string {
+function generateLinkId(type: LinkType): string {
   linkIdCounter += 1
   return `link-${type}-${linkIdCounter}-${Date.now().toString(36)}`
 }
@@ -214,7 +214,7 @@ export function linkAssets(
   for (const robot of robots) {
     const matchResult = findCellForAsset(robot, cellIndex)
 
-    if (matchResult.cell === null) {
+    if (matchResult.match === null) {
       warnings.push(createLinkingMissingTargetWarning({
         entityType: 'ROBOT',
         entityId: robot.id,
@@ -239,11 +239,11 @@ export function linkAssets(
 
     // Create link
     const link: AssetLink = {
-      id: generateLinkId('ROBOT_TO_CELL', robot.id, matchResult.cell.id),
+      id: generateLinkId('ROBOT_TO_CELL'),
       type: 'ROBOT_TO_CELL',
       sourceId: robot.id,
       sourceKind: 'ROBOT',
-      targetId: matchResult.cell.id,
+      targetId: matchResult.match.id,
       targetKind: 'CELL',
       confidence: matchResult.confidence,
       matchMethod: matchResult.method,
@@ -252,12 +252,12 @@ export function linkAssets(
     links.push(link)
 
     // Update robot with cell reference
-    robot.cellId = matchResult.cell.id
-    robot.areaId = matchResult.cell.areaId
-    robot.projectId = matchResult.cell.projectId
+    robot.cellId = matchResult.match.id
+    robot.areaId = matchResult.match.areaId
+    robot.projectId = matchResult.match.projectId
 
     linkedRobotIds.add(robot.id)
-    cellsWithRobots.add(matchResult.cell.id)
+    cellsWithRobots.add(matchResult.match.id)
   }
 
   // -------------------------------------------------------------------------
@@ -266,18 +266,18 @@ export function linkAssets(
   for (const tool of tools) {
     const matchResult = findCellForAsset(tool, cellIndex)
 
-    if (matchResult.cell === null) {
+    if (matchResult.match === null) {
       // Try linking via robot instead
       const robotMatch = findRobotForTool(tool, robotIndex)
 
-      if (robotMatch.robot !== null) {
+      if (robotMatch.match !== null) {
         // Link tool to robot
         const toolRobotLink: AssetLink = {
-          id: generateLinkId('TOOL_TO_ROBOT', tool.id, robotMatch.robot.id),
+          id: generateLinkId('TOOL_TO_ROBOT'),
           type: 'TOOL_TO_ROBOT',
           sourceId: tool.id,
           sourceKind: 'TOOL',
-          targetId: robotMatch.robot.id,
+          targetId: robotMatch.match.id,
           targetKind: 'ROBOT',
           confidence: robotMatch.confidence,
           matchMethod: robotMatch.method,
@@ -286,17 +286,17 @@ export function linkAssets(
         links.push(toolRobotLink)
 
         // Update tool with robot's cell
-        tool.robotId = robotMatch.robot.id
-        if (robotMatch.robot.cellId) {
-          tool.cellId = robotMatch.robot.cellId
-          tool.areaId = robotMatch.robot.areaId
-          tool.projectId = robotMatch.robot.projectId
-          cellsWithTools.add(robotMatch.robot.cellId)
+        tool.robotId = robotMatch.match.id
+        if (robotMatch.match.cellId) {
+          tool.cellId = robotMatch.match.cellId
+          tool.areaId = robotMatch.match.areaId
+          tool.projectId = robotMatch.match.projectId
+          cellsWithTools.add(robotMatch.match.cellId)
         }
 
         // Update robot's toolIds
-        if (robotMatch.robot.toolIds.includes(tool.id) === false) {
-          robotMatch.robot.toolIds.push(tool.id)
+        if (robotMatch.match.toolIds.includes(tool.id) === false) {
+          robotMatch.match.toolIds.push(tool.id)
         }
 
         linkedToolIds.add(tool.id)
@@ -328,11 +328,11 @@ export function linkAssets(
 
     // Create link
     const link: AssetLink = {
-      id: generateLinkId('TOOL_TO_CELL', tool.id, matchResult.cell.id),
+      id: generateLinkId('TOOL_TO_CELL'),
       type: 'TOOL_TO_CELL',
       sourceId: tool.id,
       sourceKind: 'TOOL',
-      targetId: matchResult.cell.id,
+      targetId: matchResult.match.id,
       targetKind: 'CELL',
       confidence: matchResult.confidence,
       matchMethod: matchResult.method,
@@ -341,12 +341,12 @@ export function linkAssets(
     links.push(link)
 
     // Update tool with cell reference
-    tool.cellId = matchResult.cell.id
-    tool.areaId = matchResult.cell.areaId
-    tool.projectId = matchResult.cell.projectId
+    tool.cellId = matchResult.match.id
+    tool.areaId = matchResult.match.areaId
+    tool.projectId = matchResult.match.projectId
 
     linkedToolIds.add(tool.id)
-    cellsWithTools.add(matchResult.cell.id)
+    cellsWithTools.add(matchResult.match.id)
   }
 
   // -------------------------------------------------------------------------
@@ -481,7 +481,7 @@ function buildRobotIndex(robots: Robot[]): RobotIndex {
 // ============================================================================
 
 interface MatchResult<T> {
-  cell: T | null
+  match: T | null
   confidence: LinkConfidence
   method: string
   key: string
@@ -505,7 +505,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
   // No station code = no match
   if (normalizedStation === '') {
     return {
-      cell: null,
+      match: null,
       confidence: 'LOW',
       method: 'none',
       key: '',
@@ -521,7 +521,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
     if (areaMatches.length === 1) {
       return {
-        cell: areaMatches[0],
+        match: areaMatches[0],
         confidence: 'HIGH',
         method: 'area+station',
         key: areaKey,
@@ -532,7 +532,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
     if (areaMatches.length > 1) {
       return {
-        cell: areaMatches[0],
+        match: areaMatches[0],
         confidence: 'MEDIUM',
         method: 'area+station',
         key: areaKey,
@@ -549,7 +549,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
     if (lineMatches.length === 1) {
       return {
-        cell: lineMatches[0],
+        match: lineMatches[0],
         confidence: 'HIGH',
         method: 'line+station',
         key: lineKey,
@@ -560,7 +560,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
     if (lineMatches.length > 1) {
       return {
-        cell: lineMatches[0],
+        match: lineMatches[0],
         confidence: 'MEDIUM',
         method: 'line+station',
         key: lineKey,
@@ -575,7 +575,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
   if (stationMatches.length === 1) {
     return {
-      cell: stationMatches[0],
+      match: stationMatches[0],
       confidence: 'MEDIUM',
       method: 'station',
       key: normalizedStation,
@@ -586,7 +586,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
   if (stationMatches.length > 1) {
     return {
-      cell: stationMatches[0],
+      match: stationMatches[0],
       confidence: 'LOW',
       method: 'station',
       key: normalizedStation,
@@ -596,7 +596,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
   }
 
   return {
-    cell: null,
+    match: null,
     confidence: 'LOW',
     method: 'none',
     key: normalizedStation,
@@ -617,7 +617,7 @@ function findRobotForTool(tool: Tool, index: RobotIndex): MatchResult<Robot> {
 
     if (stationRobots.length === 1) {
       return {
-        cell: stationRobots[0],
+        match: stationRobots[0],
         confidence: 'MEDIUM',
         method: 'station',
         key: normalizedStation,
@@ -629,7 +629,7 @@ function findRobotForTool(tool: Tool, index: RobotIndex): MatchResult<Robot> {
     if (stationRobots.length > 1) {
       // Ambiguous - multiple robots at same station
       return {
-        cell: stationRobots[0],
+        match: stationRobots[0],
         confidence: 'LOW',
         method: 'station',
         key: normalizedStation,
@@ -642,7 +642,7 @@ function findRobotForTool(tool: Tool, index: RobotIndex): MatchResult<Robot> {
   // TODO: Could also try matching by robot name hints in tool metadata
 
   return {
-    cell: null,
+    match: null,
     confidence: 'LOW',
     method: 'none',
     key: '',

@@ -9,10 +9,9 @@ import { parseSimulationStatus } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { applyIngestedData, IngestedData } from './applyIngestedData'
-import { scanWorkbook, categoryToFileKind, SheetCategory } from './sheetSniffer'
+import { SheetCategory } from './sheetSniffer'
 import {
   IngestionStage,
-  IngestionStatus,
   FileIngestionResult,
   FileIngestionWarning,
   IngestionRunResult,
@@ -259,7 +258,11 @@ export async function ingestFilesV2(
 
   return {
     runResult,
-    ...aggregateCounts,
+    projectsCount: aggregateCounts.projects,
+    areasCount: aggregateCounts.areas,
+    cellsCount: aggregateCounts.cells,
+    robotsCount: aggregateCounts.robots,
+    toolsCount: aggregateCounts.tools,
     warnings: legacyWarnings
   }
 }
@@ -436,23 +439,23 @@ async function routeToParser(
 function mergeParserResult(
   ingestedData: IngestedData,
   result: ParserResult,
-  category: SheetCategory
+  _category: SheetCategory
 ): void {
   // Simulation data
   if (result.projects && result.areas && result.cells) {
     if (ingestedData.simulation === undefined) {
       ingestedData.simulation = {
-        projects: result.projects as IngestedData['simulation']['projects'],
-        areas: result.areas as IngestedData['simulation']['areas'],
-        cells: result.cells as IngestedData['simulation']['cells'],
+        projects: result.projects as NonNullable<IngestedData['simulation']>['projects'],
+        areas: result.areas as NonNullable<IngestedData['simulation']>['areas'],
+        cells: result.cells as NonNullable<IngestedData['simulation']>['cells'],
         warnings: result.warnings
       }
       return
     }
 
-    ingestedData.simulation.projects.push(...(result.projects as IngestedData['simulation']['projects']))
-    ingestedData.simulation.areas.push(...(result.areas as IngestedData['simulation']['areas']))
-    ingestedData.simulation.cells.push(...(result.cells as IngestedData['simulation']['cells']))
+    ingestedData.simulation.projects.push(...(result.projects as NonNullable<IngestedData['simulation']>['projects']))
+    ingestedData.simulation.areas.push(...(result.areas as NonNullable<IngestedData['simulation']>['areas']))
+    ingestedData.simulation.cells.push(...(result.cells as NonNullable<IngestedData['simulation']>['cells']))
     ingestedData.simulation.warnings.push(...result.warnings)
     return
   }
@@ -461,13 +464,13 @@ function mergeParserResult(
   if (result.robots) {
     if (ingestedData.robots === undefined) {
       ingestedData.robots = {
-        robots: result.robots as IngestedData['robots']['robots'],
+        robots: result.robots as NonNullable<IngestedData['robots']>['robots'],
         warnings: result.warnings
       }
       return
     }
 
-    ingestedData.robots.robots.push(...(result.robots as IngestedData['robots']['robots']))
+    ingestedData.robots.robots.push(...(result.robots as NonNullable<IngestedData['robots']>['robots']))
     ingestedData.robots.warnings.push(...result.warnings)
     return
   }
@@ -476,13 +479,13 @@ function mergeParserResult(
   if (result.tools) {
     if (ingestedData.tools === undefined) {
       ingestedData.tools = {
-        tools: result.tools as IngestedData['tools']['tools'],
+        tools: result.tools as NonNullable<IngestedData['tools']>['tools'],
         warnings: result.warnings
       }
       return
     }
 
-    ingestedData.tools.tools.push(...(result.tools as IngestedData['tools']['tools']))
+    ingestedData.tools.tools.push(...(result.tools as NonNullable<IngestedData['tools']>['tools']))
     ingestedData.tools.warnings.push(...result.warnings)
   }
 }

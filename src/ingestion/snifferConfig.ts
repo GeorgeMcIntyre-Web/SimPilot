@@ -22,7 +22,7 @@ export interface SheetOverride {
  */
 export interface FileConfig {
   fileName: string
-  sheetOverrides?: Record<SheetCategory, string>
+  sheetOverrides?: Partial<Record<SheetCategory, string>>
   skipSheets?: string[]
   notes?: string
 }
@@ -125,12 +125,15 @@ export class SnifferConfigBuilder {
     sheetName: string,
     notes?: string
   ): SnifferConfigBuilder {
-    const existing = this.config.fileConfigs.get(fileName) ?? {
+    const existing: FileConfig = this.config.fileConfigs.get(fileName) ?? {
       fileName,
       sheetOverrides: {}
     }
 
-    existing.sheetOverrides = existing.sheetOverrides ?? {}
+    if (existing.sheetOverrides === undefined) {
+      existing.sheetOverrides = {}
+    }
+
     existing.sheetOverrides[category] = sheetName
 
     if (notes) {
@@ -258,9 +261,10 @@ export function createDefaultConfigWithOverrides(): SnifferConfig {
   for (const fileConfig of KNOWN_FILE_OVERRIDES) {
     if (fileConfig.sheetOverrides) {
       for (const [category, sheetName] of Object.entries(fileConfig.sheetOverrides)) {
+        if (category === 'UNKNOWN') continue
         builder.withFileOverride(
           fileConfig.fileName,
-          category as SheetCategory,
+          category as Exclude<SheetCategory, 'UNKNOWN'>,
           sheetName,
           fileConfig.notes
         )
