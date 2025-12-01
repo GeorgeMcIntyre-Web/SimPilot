@@ -27,7 +27,7 @@ export function ChangesPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" data-testid="changes-root">
             <PageHeader
                 title="Pending Changes"
                 subtitle="Review and export changes before they are synced to the master source."
@@ -63,6 +63,7 @@ export function ChangesPage() {
                         <button
                             onClick={handleExport}
                             disabled={changes.length === 0}
+                            data-testid="changes-export-csv"
                             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Download className="h-4 w-4 mr-2" />

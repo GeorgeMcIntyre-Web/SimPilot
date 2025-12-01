@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, HTMLAttributes } from 'react';
 import { cn } from '../lib/utils';
 
-interface KpiTileProps {
+interface KpiTileProps extends HTMLAttributes<HTMLDivElement> {
     label: string;
     value: string | number;
     description?: string;
@@ -10,9 +10,9 @@ interface KpiTileProps {
     className?: string;
 }
 
-export function KpiTile({ label, value, description, icon, className }: KpiTileProps) {
+export function KpiTile({ label, value, description, icon, className, ...props }: KpiTileProps) {
     return (
-        <div className={cn("bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow", className)}>
+        <div className={cn("bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow", className)} {...props}>
             <div className="p-5">
                 <div className="flex items-center">
                     <div className="flex-shrink-0">

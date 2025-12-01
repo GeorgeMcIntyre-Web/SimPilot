@@ -8,6 +8,7 @@ export interface AppEnvConfig {
     msSharePointSiteId?: string
     msSharePointDriveId?: string
     msSharePointRootPath?: string
+    simBridgeUrl?: string
 }
 
 let envConfigInstance: AppEnvConfig | undefined
@@ -42,7 +43,8 @@ export function getEnvConfig(): AppEnvConfig {
         msRedirectUri,
         msSharePointSiteId,
         msSharePointDriveId,
-        msSharePointRootPath
+        msSharePointRootPath,
+        simBridgeUrl: import.meta.env.VITE_SIMBRIDGE_URL
     }
 
     return envConfigInstance

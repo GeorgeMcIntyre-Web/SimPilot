@@ -71,6 +71,12 @@ export interface IngestFilesInput {
    * }
    */
   fileSources?: Record<string, 'local' | 'remote'>
+
+  /**
+   * Optional data source indicator (Local, MS365)
+   * Used to track where the data came from for display in UI
+   */
+  dataSource?: 'Local' | 'MS365'
 }
 
 /**
@@ -300,7 +306,7 @@ export async function ingestFiles(
     robots: applyResult.robots,
     tools: applyResult.tools,
     warnings: warningStrings
-  })
+  }, input.dataSource)
 
   // Get counts from store
   const state = coreStore.getState()

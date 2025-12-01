@@ -7,7 +7,10 @@ import { Tag } from '../../ui/components/Tag';
 import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics, coreStore } from '../../domain/coreStore';
 import { Robot, Tool } from '../../domain/core';
 import { createCellEngineerAssignmentChange } from '../../domain/changeLog';
-import { FileSpreadsheet, AlertTriangle, User, Edit2, Check, X } from 'lucide-react';
+import { FileSpreadsheet, AlertTriangle, User, Edit2, Check, X, MonitorPlay } from 'lucide-react';
+import { CellChaosHint } from '../../ui/components/CellChaosHint';
+import { simBridgeClient } from '../../integrations/simbridge/SimBridgeClient';
+import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
@@ -15,9 +18,23 @@ export function CellDetailPage() {
     const robots = useRobotsByCell(cellId || '');
     const tools = useToolsByCell(cellId || '');
     const allEngineers = useAllEngineerMetrics();
+    const { pushBusy, popBusy } = useGlobalBusy();
 
     const [isEditingEngineer, setIsEditingEngineer] = useState(false);
     const [selectedEngineer, setSelectedEngineer] = useState<string>('');
+    const [simStatus, setSimStatus] = useState<'unknown' | 'linked' | 'online' | 'offline'>('unknown');
+
+    // Check sim status on mount
+    useState(() => {
+        if (cell?.simulation?.studyPath) {
+            setSimStatus('linked');
+            // Optimistically check if we can reach SimBridge
+            simBridgeClient.getStatus().then(s => {
+                if (s.isConnected) setSimStatus('online');
+                else setSimStatus('offline');
+            });
+        }
+    });
 
     if (!cell) {
         return (
@@ -50,6 +67,32 @@ export function CellDetailPage() {
         setIsEditingEngineer(false);
     };
 
+    const handleOpenSimulation = async () => {
+        if (!cell.simulation?.studyPath) return;
+
+        pushBusy('Opening simulation in Tecnomatix...');
+        try {
+            const connected = await simBridgeClient.connect();
+            if (!connected) {
+                alert("We couldn't reach the simulation server right now. It's safe to continue your planning – the data in SimPilot is still valid.");
+                setSimStatus('offline');
+                return;
+            }
+
+            const success = await simBridgeClient.loadStudy(cell.simulation.studyPath);
+            if (success) {
+                setSimStatus('online');
+            } else {
+                alert("Failed to load the study. Please check if the file exists on the server.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("An error occurred while trying to open the simulation.");
+        } finally {
+            popBusy();
+        }
+    };
+
     const robotColumns: Column<Robot>[] = [
         { header: 'Name', accessor: (r) => r.name },
         { header: 'Model', accessor: (r) => r.oemModel || '-' },
@@ -66,7 +109,7 @@ export function CellDetailPage() {
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="cell-detail-root">
             {/* Header */}
             <div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
@@ -77,11 +120,14 @@ export function CellDetailPage() {
                     <span className="text-gray-900 dark:text-white font-medium">{cell.name}</span>
                 </div>
                 <div className="flex items-start justify-between">
-                    <PageHeader
-                        title={cell.name}
-                        subtitle={`Station: ${cell.code || '-'}`}
-                        actions={<StatusPill status={cell.status} />}
-                    />
+                    <div>
+                        <PageHeader
+                            title={cell.name}
+                            subtitle={`Station: ${cell.code || '-'}`}
+                            actions={<StatusPill status={cell.status} />}
+                        />
+                        <CellChaosHint cell={cell} />
+                    </div>
                     {isAtRisk && (
                         <div className="flex items-center bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 px-4 py-2 rounded-md border border-red-200 dark:border-red-800">
                             <AlertTriangle className="h-5 w-5 mr-2" />
@@ -117,6 +163,7 @@ export function CellDetailPage() {
                                 onClick={handleSaveEngineer}
                                 className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200"
                                 title="Save"
+                                data-testid="save-engineer-button"
                             >
                                 <Check className="h-4 w-4" />
                             </button>
@@ -137,6 +184,7 @@ export function CellDetailPage() {
                                 onClick={handleEditEngineer}
                                 className="p-1 text-gray-400 hover:text-blue-500"
                                 title="Edit Engineer"
+                                data-testid="edit-engineer-button"
                             >
                                 <Edit2 className="h-4 w-4" />
                             </button>
@@ -148,7 +196,28 @@ export function CellDetailPage() {
             {/* Simulation Status & Lineage */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Simulation Status</h3>
+                    <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Simulation Status</h3>
+                        {cell.simulation?.studyPath && (
+                            <div className="flex items-center space-x-2">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${simStatus === 'online' ? 'bg-green-100 text-green-800' :
+                                    simStatus === 'offline' ? 'bg-gray-100 text-gray-800' :
+                                        'bg-blue-100 text-blue-800'
+                                    }`}>
+                                    {simStatus === 'online' ? 'Simulation: Online' :
+                                        simStatus === 'offline' ? 'Simulation: Offline' :
+                                            'Simulation: Linked'}
+                                </span>
+                                <button
+                                    onClick={handleOpenSimulation}
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                >
+                                    <MonitorPlay className="h-4 w-4 mr-1.5" />
+                                    Open in Simulation
+                                </button>
+                            </div>
+                        )}
+                    </div>
                     {cell.simulation ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>

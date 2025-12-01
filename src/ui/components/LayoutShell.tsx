@@ -2,10 +2,13 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, Wrench, Upload, Menu, Users, LogOut, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState } from 'react';
-import { useHasSimulationData, useWarnings, useHasUnsyncedChanges } from '../../ui/hooks/useDomainData';
+import { useHasSimulationData, useWarnings, useHasUnsyncedChanges, useLastUpdated, useDataSource } from '../../ui/hooks/useDomainData';
 import { useMsAccount } from '../../integrations/ms/useMsAccount';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { AlertTriangle, Loader2 } from 'lucide-react';
+import { FlowerAccent } from './FlowerAccent';
+import { useTheme } from '../ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export function LayoutShell() {
     const location = useLocation();
@@ -14,7 +17,13 @@ export function LayoutShell() {
     const { enabled: msEnabled, isSignedIn, account, login, logout } = useMsAccount();
     const { state: busyState } = useGlobalBusy();
     const warnings = useWarnings();
+<<<<<<< HEAD
     console.log('LayoutShell render. hasData:', hasData);
+=======
+    const { themeMode } = useTheme();
+    const lastUpdated = useLastUpdated();
+    const dataSource = useDataSource();
+>>>>>>> e8f80e52b305ebc464fdbc6771816f8939146f49
 
     const navItems = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -26,16 +35,24 @@ export function LayoutShell() {
     ];
 
     return (
-        <div data-testid="app-shell" className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
+        <div data-testid="app-shell" className="min-h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col">
             {/* Header */}
-            <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+            <header className={cn(
+                "border-b sticky top-0 z-10 transition-colors duration-500",
+                themeMode === 'flower'
+                    ? "bg-gradient-to-r from-rose-50 via-white to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-rose-100 dark:border-gray-700"
+                    : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            )}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-16">
                         <div className="flex">
                             <div className="flex-shrink-0 flex items-center space-x-3">
-                                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                                    SimPilot
-                                </span>
+                                <div className="flex items-center">
+                                    <FlowerAccent className="w-6 h-6 text-rose-400 mr-2 hover:rotate-12 transition-transform duration-300" />
+                                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-rose-500 to-emerald-600">
+                                        SimPilot
+                                    </span>
+                                </div>
                                 <div
                                     data-testid="data-status-indicator"
                                     data-status={hasData ? 'loaded' : 'empty'}
@@ -61,8 +78,11 @@ export function LayoutShell() {
                                             className={cn(
                                                 "inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200",
                                                 isActive
-                                                    ? "border-blue-500 text-gray-900 dark:text-white"
-                                                    : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300"
+                                                    ? (themeMode === 'flower' ? "border-rose-500 text-gray-900 dark:text-white" : "border-blue-500 text-gray-900 dark:text-white")
+                                                    : (themeMode === 'flower'
+                                                        ? "border-transparent text-gray-500 dark:text-gray-400 hover:border-rose-300 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-rose-50/50"
+                                                        : "border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50"
+                                                    )
                                             )}
                                         >
                                             <Icon className="w-4 h-4 mr-2" />
@@ -74,11 +94,23 @@ export function LayoutShell() {
                         </div>
 
                         <div className="flex items-center space-x-4">
+                            <div className="hidden md:block">
+                                <ThemeToggle />
+                            </div>
+
                             {/* Busy Indicator */}
                             {busyState.isBusy && (
                                 <div className="flex items-center text-blue-600 dark:text-blue-400 animate-pulse">
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                     <span className="text-xs font-medium">{busyState.label || 'Processing...'}</span>
+                                </div>
+                            )}
+
+                            {/* Last Updated Indicator */}
+                            {lastUpdated && dataSource && (
+                                <div className="hidden md:flex flex-col items-end mr-4 text-xs text-gray-500 dark:text-gray-400" title={`Last updated: ${new Date(lastUpdated).toLocaleString()}`}>
+                                    <span className="font-medium">{dataSource}</span>
+                                    <span className="text-[10px]">{new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                             )}
 

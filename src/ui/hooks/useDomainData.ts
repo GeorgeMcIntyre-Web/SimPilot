@@ -7,7 +7,9 @@ import {
     useRobots as useRealRobots,
     useTools as useRealTools,
     useWarnings as useRealWarnings,
-    useHasUnsyncedChanges as useRealHasUnsyncedChanges
+    useHasUnsyncedChanges as useRealHasUnsyncedChanges,
+    useLastUpdated as useRealLastUpdated,
+    useDataSource as useRealDataSource
 } from '../../domain/coreStore';
 import { Project, Area, Cell, Robot, Tool, ToolType, SpotWeldSubType } from '../../domain/core';
 
@@ -76,11 +78,24 @@ export function useHasUnsyncedChanges(): boolean {
     return useRealHasUnsyncedChanges();
 }
 
+export function useLastUpdated() {
+    return useRealLastUpdated();
+}
+
+export function useDataSource() {
+    return useRealDataSource();
+}
+
 // --- Derived Metrics Hooks ---
+
+import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics';
+
+// ...
 
 export function useGlobalSimulationMetrics() {
     const projects = useRealProjects();
     const cells = useRealCells();
+    const scheduleRisks = getAllCellScheduleRisks();
 
     const cellsWithSimulation = cells.filter(c => c.simulation && c.simulation.percentComplete > 0);
     const avgCompletion = cellsWithSimulation.length > 0
@@ -92,11 +107,14 @@ export function useGlobalSimulationMetrics() {
         return c.simulation.hasIssues || (c.simulation.percentComplete > 0 && c.simulation.percentComplete < 100 && c.status === 'Blocked');
     }).length;
 
+    const lateCellsCount = scheduleRisks.filter(r => r.status === 'late').length;
+
     return {
         totalProjects: projects.length,
         totalCells: cells.length,
         avgCompletion,
-        atRiskCellsCount
+        atRiskCellsCount,
+        lateCellsCount
     };
 }
 

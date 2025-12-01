@@ -52,6 +52,13 @@ export function createSnapshotFromState(
  * Converts a snapshot back into a store state object.
  */
 export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
+    // Map sourceKind to dataSource format
+    const dataSource: CoreStoreState['dataSource'] =
+        snapshot.meta.sourceKind === 'demo' ? 'Demo' :
+            snapshot.meta.sourceKind === 'local' ? 'Local' :
+                snapshot.meta.sourceKind === 'ms365' ? 'MS365' :
+                    null
+
     return {
         projects: snapshot.projects,
         areas: snapshot.areas,
@@ -60,6 +67,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         tools: snapshot.tools,
         warnings: snapshot.warnings,
         changeLog: snapshot.changeLog,
-        lastUpdated: snapshot.meta.lastSavedAt
+        lastUpdated: snapshot.meta.lastSavedAt,
+        dataSource
     }
 }

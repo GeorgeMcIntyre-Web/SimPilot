@@ -8,6 +8,12 @@ import { StatusPill } from '../../ui/components/StatusPill';
 import { useGlobalSimulationMetrics, useCells, useAllEngineerMetrics, useAllProjectMetrics, useHasSimulationData } from '../../ui/hooks/useDomainData';
 import { Cell } from '../../domain/core';
 import { LayoutDashboard, FolderKanban, Factory, AlertTriangle, ArrowUpDown, Users, Copy, Check } from 'lucide-react';
+import { FlowerAccent } from '../../ui/components/FlowerAccent';
+import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
+import { PageHint } from '../../ui/components/PageHint';
+import { DaleDashboardIntro } from '../../ui/components/DaleDashboardIntro';
+import { useDaleDayMood } from '../../ui/hooks/useDaleDayMood';
+import { FirstRunBanner } from '../../ui/components/FirstRunBanner';
 
 type SortKey = 'percentComplete' | 'name' | 'status';
 type SortDirection = 'asc' | 'desc';
@@ -20,6 +26,7 @@ export function DashboardPage() {
     const hasData = useHasSimulationData();
     console.log('DashboardPage render. hasData:', hasData);
     const navigate = useNavigate();
+    const mood = useDaleDayMood();
 
     const [isDaleMode, setIsDaleMode] = useState(() => getUserPreference('simpilot.dashboard.mode', true));
 
@@ -34,16 +41,26 @@ export function DashboardPage() {
     if (!hasData) {
         return (
             <div className="space-y-8">
-                <PageHeader title="Dashboard" subtitle="Overview of simulation progress" />
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
-                    <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">Welcome to SimPilot</h3>
-                    <p className="text-blue-700 dark:text-blue-300 mb-4">
-                        No data loaded yet. Go to Data Loader and upload the Simulation Status Excel files.
-                    </p>
-                    <Link to="/data-loader" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                        Go to Data Loader
-                    </Link>
-                </div>
+                <PageHeader
+                    title="Dashboard"
+                    subtitle={
+                        <PageHint
+                            standardText="Overview of simulation progress"
+                            flowerText="Load the demo from Data Loader to see a full, realistic example."
+                        />
+                    }
+                />
+
+                <FirstRunBanner />
+
+                {isDaleMode && <DaleDashboardIntro />}
+
+                <FlowerEmptyState
+                    title="Welcome to SimPilot"
+                    message="No data loaded yet. Plant some data by loading files in the Data Loader."
+                    ctaLabel="Go to Data Loader"
+                    onCtaClick={() => navigate('/data-loader')}
+                />
             </div>
         );
     }
@@ -134,9 +151,27 @@ export function DashboardPage() {
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-testid="dashboard-root">
             <div className="flex justify-between items-start">
-                <PageHeader title="Dashboard" subtitle="Overview of simulation progress" />
+                <PageHeader
+                    title={
+                        <span className="flex items-center">
+                            Dashboard <FlowerAccent className="ml-2 h-6 w-6 text-rose-400" />
+                        </span>
+                    }
+                    subtitle={
+                        <PageHint
+                            standardText="Overview of simulation progress"
+                            flowerText={
+                                mood === 'calm'
+                                    ? "Garden status: mostly calm today 🌿"
+                                    : mood === 'spiky' || mood === 'stormy'
+                                        ? "Garden has a few thorns today – I’ve highlighted the worst cells for you."
+                                        : "Quick health check of all projects and cells."
+                            }
+                        />
+                    }
+                />
                 <div className="flex items-center space-x-4">
                     {isDaleMode && (
                         <>
@@ -176,29 +211,34 @@ export function DashboardPage() {
                 </div>
             </div>
 
+            <FirstRunBanner />
+
             {/* KPI Tiles (Global) */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KpiTile
                     label="Total Projects"
                     value={metrics.totalProjects}
-                    icon={<FolderKanban className="h-6 w-6 text-blue-600" />}
+                    icon={<FolderKanban className="h-6 w-6 text-indigo-500" />}
+                    data-testid="kpi-total-projects"
                 />
                 <KpiTile
                     label="Total Cells"
                     value={metrics.totalCells}
-                    icon={<Factory className="h-6 w-6 text-green-600" />}
+                    icon={<Factory className="h-6 w-6 text-emerald-600" />}
+                    data-testid="kpi-total-cells"
                 />
                 <KpiTile
                     label="Avg Completion"
                     value={`${metrics.avgCompletion}%`}
                     description="Across all active cells"
-                    icon={<LayoutDashboard className="h-6 w-6 text-purple-600" />}
+                    icon={<LayoutDashboard className="h-6 w-6 text-rose-500" />}
                 />
                 <KpiTile
                     label="At Risk Cells"
                     value={metrics.atRiskCellsCount}
                     description="Blocked or with issues"
-                    icon={<AlertTriangle className="h-6 w-6 text-red-600" />}
+                    icon={<AlertTriangle className="h-6 w-6 text-red-500" />}
+                    data-testid="kpi-at-risk-cells"
                 />
             </div>
 

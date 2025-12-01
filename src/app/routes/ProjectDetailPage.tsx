@@ -49,7 +49,17 @@ export function ProjectDetailPage() {
                 <PageHeader
                     title={project.name}
                     subtitle={`${project.customer} - ${project.status}`}
-                    actions={<StatusPill status={project.status} />}
+                    actions={
+                        <div className="flex items-center space-x-3">
+                            <Link
+                                to={`/timeline/${project.id}`}
+                                className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+                            >
+                                View Timeline
+                            </Link>
+                            <StatusPill status={project.status} />
+                        </div>
+                    }
                 />
             </div>
 
@@ -62,8 +72,8 @@ export function ProjectDetailPage() {
                             <button
                                 onClick={() => setSelectedAreaId('ALL')}
                                 className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === 'ALL'
-                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
-                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 All Areas
@@ -73,8 +83,8 @@ export function ProjectDetailPage() {
                                     key={area.id}
                                     onClick={() => setSelectedAreaId(area.id)}
                                     className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === area.id
-                                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
-                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                                         }`}
                                 >
                                     {area.name}
