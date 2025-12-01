@@ -9,6 +9,7 @@ import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { applyIngestedData, IngestedData } from './applyIngestedData'
 import { createUnknownFileTypeWarning, createParserErrorWarning } from './warningUtils'
+import { captureAllProjectSnapshots } from '../domain/history/captureSnapshot'
 import * as XLSX from 'xlsx'
 
 // ============================================================================
@@ -253,6 +254,16 @@ export async function ingestFiles(
 
   // Get counts from store
   const state = coreStore.getState()
+
+  // Capture daily snapshot for all imported projects (Git-style history)
+  const sourceFileNames = allFiles.map(f => f.name)
+  captureAllProjectSnapshots({
+    capturedBy: 'ingestion',
+    sourceFiles: sourceFileNames,
+    description: `Import from ${sourceFileNames.length} file(s)`
+  }).catch(err => {
+    console.error('[Ingestion] Failed to capture snapshot:', err)
+  })
 
   return {
     projectsCount: state.projects.length,

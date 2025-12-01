@@ -23,6 +23,7 @@ import {
   deriveIngestionStatus,
   generateRunId
 } from './ingestionTelemetry'
+import { captureAllProjectSnapshots } from '../domain/history/captureSnapshot'
 import * as XLSX from 'xlsx'
 
 // ============================================================================
@@ -217,6 +218,16 @@ export async function ingestFilesV2(
         targetFile.warnings.push(telemetryWarning)
       }
     }
+    
+    // Capture daily snapshot for all imported projects (Git-style history)
+    const sourceFileNames = input.files.map(f => f.name)
+    captureAllProjectSnapshots({
+      capturedBy: 'ingestion',
+      sourceFiles: sourceFileNames,
+      description: `Import from ${sourceFileNames.length} file(s)`
+    }).catch(err => {
+      console.error('[IngestionV2] Failed to capture snapshot:', err)
+    })
   }
 
   // Calculate status counts
