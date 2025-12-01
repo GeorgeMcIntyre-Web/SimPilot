@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getUserPreference, setUserPreference } from '../../utils/prefsStorage';
 import { PageHeader } from '../../ui/components/PageHeader';
-import { KpiTile } from '../../ui/components/KpiTile';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { useGlobalSimulationMetrics, useCells, useAllEngineerMetrics, useAllProjectMetrics, useHasSimulationData } from '../../ui/hooks/useDomainData';
 import { Cell } from '../../domain/core';
-import { LayoutDashboard, FolderKanban, Factory, AlertTriangle, ArrowUpDown, Users, Copy, Check } from 'lucide-react';
+import { FolderKanban, AlertTriangle, ArrowUpDown, Users, Copy, Check } from 'lucide-react';
 import { FlowerAccent } from '../../ui/components/FlowerAccent';
 import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
 import { PageHint } from '../../ui/components/PageHint';
 import { DaleDashboardIntro } from '../../ui/components/DaleDashboardIntro';
 import { useDaleDayMood } from '../../ui/hooks/useDaleDayMood';
 import { FirstRunBanner } from '../../ui/components/FirstRunBanner';
+import { ZenFocusHeader } from '../../ui/components/ZenFocusHeader';
 
 type SortKey = 'percentComplete' | 'name' | 'status';
 type SortDirection = 'asc' | 'desc';
@@ -211,36 +211,8 @@ export function DashboardPage() {
                 </div>
             </div>
 
-            <FirstRunBanner />
-
-            {/* KPI Tiles (Global) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KpiTile
-                    label="Total Projects"
-                    value={metrics.totalProjects}
-                    icon={<FolderKanban className="h-6 w-6 text-indigo-500" />}
-                    data-testid="kpi-total-projects"
-                />
-                <KpiTile
-                    label="Total Cells"
-                    value={metrics.totalCells}
-                    icon={<Factory className="h-6 w-6 text-emerald-600" />}
-                    data-testid="kpi-total-cells"
-                />
-                <KpiTile
-                    label="Avg Completion"
-                    value={`${metrics.avgCompletion}%`}
-                    description="Across all active cells"
-                    icon={<LayoutDashboard className="h-6 w-6 text-rose-500" />}
-                />
-                <KpiTile
-                    label="At Risk Cells"
-                    value={metrics.atRiskCellsCount}
-                    description="Blocked or with issues"
-                    icon={<AlertTriangle className="h-6 w-6 text-red-500" />}
-                    data-testid="kpi-at-risk-cells"
-                />
-            </div>
+            {/* Zen Focus Header: Pro Landing Page */}
+            <ZenFocusHeader />
 
             {isDaleMode ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

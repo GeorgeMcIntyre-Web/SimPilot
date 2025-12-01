@@ -24,10 +24,9 @@ import { useTheme } from '../../ui/ThemeContext'
 import { PageHint } from '../../ui/components/PageHint'
 import { useDaleDayMood } from '../../ui/hooks/useDaleDayMood'
 import { DaleWelcomeStrip } from '../../ui/components/DaleWelcomeStrip'
-import { DaleValuePropPanel } from '../../ui/components/DaleValuePropPanel'
 import { getUserPreference, setUserPreference } from '../../utils/prefsStorage'
-import { DaleTodayPanel } from '../../ui/components/DaleTodayPanel'
 import { useDaleSummary } from '../../ui/hooks/useDaleSummary'
+import { ZenFocusHeader } from '../../ui/components/ZenFocusHeader'
 
 export function DaleConsole() {
     const metrics = useGlobalSimulationMetrics()
@@ -40,6 +39,7 @@ export function DaleConsole() {
     const navigate = useNavigate()
     const { themeMode } = useTheme()
     const daleSummary = useDaleSummary()
+    const [zenMode, setZenMode] = useState(false)
 
     if (metrics.totalCells === 0) {
         return (
@@ -190,29 +190,44 @@ export function DaleConsole() {
                 </div>
             </div>
 
-            {/* Value Prop Panel */}
-            {themeMode === 'flower' && <DaleValuePropPanel />}
-
-            {/* Today's Three Moves */}
-            {themeMode === 'flower' && <DaleTodayPanel />}
+            {/* Zen Focus Header: Clean, Pro Landing */}
+            {themeMode === 'flower' && <ZenFocusHeader />}
 
             {/* 1. Today's Snapshot */}
             <section>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                    <FlowerAccent className="w-5 h-5 text-rose-400 mr-2" />
-                    Today's Snapshot
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                        <FlowerAccent className="w-5 h-5 text-rose-400 mr-2" />
+                        Today's Snapshot
+                    </h2>
+                    {/* Zen Mode Toggle */}
+                    <button
+                        onClick={() => setZenMode(!zenMode)}
+                        className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${zenMode
+                                ? 'bg-rose-100 text-rose-700 border border-rose-300 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600'
+                            } hover:opacity-80`}
+                    >
+                        {zenMode ? '🧘 Zen Mode: ON' : '🧘 Zen Mode: OFF'}
+                    </button>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <KpiTile
-                        label="Global Completion"
-                        value={`${metrics.avgCompletion}%`}
-                        icon={<LayoutDashboard className="h-6 w-6 text-rose-500" />}
-                    />
-                    <KpiTile
-                        label="Total Cells"
-                        value={metrics.totalCells}
-                        icon={<Factory className="h-6 w-6 text-emerald-600" />}
-                    />
+                    {/* Zen Mode: Hide healthy/green KPIs */}
+                    {!zenMode && (
+                        <>
+                            <KpiTile
+                                label="Global Completion"
+                                value={`${metrics.avgCompletion}%`}
+                                icon={<LayoutDashboard className="h-6 w-6 text-rose-500" />}
+                            />
+                            <KpiTile
+                                label="Total Cells"
+                                value={metrics.totalCells}
+                                icon={<Factory className="h-6 w-6 text-emerald-600" />}
+                            />
+                        </>
+                    )}
+                    {/* Always show: At-Risk and Problems */}
                     <KpiTile
                         label="At Risk (Sim)"
                         value={metrics.atRiskCellsCount}
@@ -220,12 +235,14 @@ export function DaleConsole() {
                         description="Blocked or stalled < 100%"
                         data-testid="dale-kpi-at-risk-sim"
                     />
-                    <KpiTile
-                        label="Engineers w/ Risk"
-                        value={engineerMetrics.filter(e => e.atRiskCellsCount > 0).length}
-                        icon={<Users className="h-6 w-6 text-blue-600" />}
-                        description="Engineers with critical cells"
-                    />
+                    {!zenMode && (
+                        <KpiTile
+                            label="Engineers w/ Risk"
+                            value={engineerMetrics.filter(e => e.atRiskCellsCount > 0).length}
+                            icon={<Users className="h-6 w-6 text-blue-600" />}
+                            description="Engineers with critical cells"
+                        />
+                    )}
                     <KpiTile
                         label="Late Cells"
                         value={lateCellsCount}

@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx'
 import { Tool, ToolType, ToolMountType, SpotWeldSubType, generateId, IngestionWarning, EquipmentSourcing, AssetKind } from '../domain/core'
 import {
   sheetToMatrix,
-  findHeaderRow,
+  findBestHeaderRow,
   buildColumnMap,
   getCellString,
   isEmptyRow,
@@ -27,11 +27,43 @@ export interface ToolListResult {
 // CONSTANTS
 // ============================================================================
 
-const POSSIBLE_HEADERS = [
-  ['GUN', 'TYPE', 'LINE'],
-  ['TOOL', 'TYPE', 'AREA'],
-  ['ID', 'TYPE', 'STATION'],
-  ['EQUIPMENT', 'AREA', 'LINE']
+/**
+ * Strong keywords for tool/equipment identification
+ * These are domain-specific terms that strongly indicate aheader row for tool lists.
+ * Score: +2 points per match
+ */
+const STRONG_KEYWORDS = [
+  'gun',
+  'tool',
+  'device',
+  'riser',
+  'tip dresser',
+  'dresser',
+  'stand',
+  'equipment',
+  'sealer',
+  'gripper'
+]
+
+/**
+ * Weak keywords for general column identification
+ * These are common terms that appear in many types of sheets.
+ * Score: +1 point per match
+ */
+const WEAK_KEYWORDS = [
+  'id',
+  'name',
+  'type',
+  'area',
+  'station',
+  'zone',
+  'line',
+  'cell',
+  'qty',
+  'quantity',
+  'model',
+  'oem',
+  'robot'
 ]
 
 // ============================================================================
@@ -59,16 +91,24 @@ export async function parseToolList(
     throw new Error(`Sheet "${sheetName}" has too few rows (${rows.length}). Expected at least 2 rows.`)
   }
 
-  // Try to find header row
-  let headerRowIndex: number | null = null
-
-  for (const headerSet of POSSIBLE_HEADERS) {
-    headerRowIndex = findHeaderRow(rows, headerSet)
-    if (headerRowIndex !== null) break
-  }
+  // Find header row using confidence-based scoring
+  // This approach is more resilient than strict pattern matching:
+  // - Handles varied header names ("Device Name" vs "Gun" vs "Equipment")
+  // - Tolerates typos and extra columns
+  // - Doesn't require exact 3-header combinations
+  const headerRowIndex = findBestHeaderRow(
+    rows,
+    STRONG_KEYWORDS,
+    WEAK_KEYWORDS,
+    2  // Minimum score: 1 strong keyword OR 2 weak keywords
+  )
 
   if (headerRowIndex === null) {
-    throw new Error(`Could not find header row in ${fileName}. Tried combinations: ${POSSIBLE_HEADERS.map(h => h.join(', ')).join(' | ')}`)
+    throw new Error(
+      `Could not find header row in ${fileName}. ` +
+      `Expected at least one strong keyword (${STRONG_KEYWORDS.slice(0, 5).join(', ')}, etc.) ` +
+      `or multiple weak keywords (${WEAK_KEYWORDS.slice(0, 5).join(', ')}, etc.)`
+    )
   }
 
   // Build column map with all possible column names
@@ -335,6 +375,10 @@ function detectSourcing(
 
   if (combined.includes('new') || combined.includes('new line') || combined.includes('new station')) {
     return 'NEW_BUY'
+  }
+
+  if (combined.includes('make') || combined.includes('in-house') || combined.includes('fabricate')) {
+    return 'MAKE'
   }
 
   return 'UNKNOWN'

@@ -41,8 +41,8 @@ async function readWorkbookFromExcelInput(
     // Use ArrayBuffer for reliable reading from any source
     const arrayBuffer = await input.arrayBuffer()
 
-    if (!arrayBuffer) {
-      throw new Error('Failed to read file data')
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error('File is empty or could not be read')
     }
 
     const workbook = XLSX.read(arrayBuffer, {
@@ -58,6 +58,15 @@ async function readWorkbookFromExcelInput(
 
     return workbook
   } catch (error) {
+    // Re-throw our own errors as-is
+    if (error instanceof Error && (
+      error.message.includes('empty') ||
+      error.message.includes('invalid') ||
+      error.message.includes('File is empty')
+    )) {
+      throw error
+    }
+    // Wrap other errors
     throw new Error(`Failed to parse Excel file: ${error}`)
   }
 }
@@ -154,6 +163,103 @@ export function findHeaderRow(
 
   return null
 }
+
+/**
+ * Find the best header row using confidence-based keyword scoring.
+ * 
+ * This function is more resilient than strict matching - it scores each row
+ * based on presence of domain-specific keywords, returning the row with the highest score.
+ * 
+ * **Scoring Algorithm**:
+ * - Strong keyword match: +2 points (e.g., "gun", "device", "tool", "riser")
+ * - Weak keyword match: +1 point (e.g., "id", "type", "area", "station")
+ * - Scans first 10 rows by default
+ * - Returns row with highest score, or null if no row meets minimum threshold
+ * 
+ * **Why This Works**:
+ * - Handles varied real-world headers ("Device Name", "Gun ID", "Riser Type")
+ * - Doesn't require exact 3-header combinations
+ * - Tolerates typos and extra columns
+ * 
+ * @param rows - All rows from the Excel sheet
+ * @param strongKeywords - High-value domain keywords (e.g., ["gun", "tool", "device"])
+ * @param weakKeywords - Common generic keywords (e.g., ["id", "type", "area"])
+ * @param minScore - Minimum score threshold (default: 2, equivalent to 1 strong OR 2 weak keywords)
+ * @param maxRowsToScan - Maximum rows to check (default: 10)
+ * @returns Index of the most likely header row, or null if no row meets threshold
+ * 
+ * @example
+ * ```typescript
+ * // Real-world example: GLOBAL_ZA_REUSE_LIST_TMS_WG.xlsx
+ * // Row 5: ['Zone', 'Station', 'Device Name', 'Type', 'Comments']
+ * // Score: device(2) + type(1) + station(1) = 4 ✅
+ * 
+ * const strongKW = ['gun', 'tool', 'device', 'riser']
+ * const weakKW = ['id', 'type', 'area', 'station', 'zone']
+ * const headerIdx = findBestHeaderRow(rows, strongKW, weakKW, 2)
+ * // Returns: 5
+ * ```
+ */
+export function findBestHeaderRow(
+  rows: CellValue[][],
+  strongKeywords: string[],
+  weakKeywords: string[],
+  minScore: number = 2,
+  maxRowsToScan: number = 10
+): number | null {
+  if (!rows || rows.length === 0) return null
+
+  let bestRowIndex: number | null = null
+  let bestScore = 0
+
+  // Normalize keywords once (case-insensitive)
+  const strongKWLower = strongKeywords.map(kw => kw.toLowerCase().trim())
+  const weakKWLower = weakKeywords.map(kw => kw.toLowerCase().trim())
+
+  // Scan first N rows
+  const scanLimit = Math.min(maxRowsToScan, rows.length)
+
+  for (let i = 0; i < scanLimit; i++) {
+    const row = rows[i]
+    if (!row || row.length === 0) continue
+
+    // Flatten row to searchable text
+    const rowText = row
+      .map(cell => String(cell || '').toLowerCase().trim())
+      .filter(text => text.length > 0)
+
+    if (rowText.length === 0) continue
+
+    // Calculate score
+    let score = 0
+
+    // Check strong keywords (+2 each)
+    for (const keyword of strongKWLower) {
+      const hasMatch = rowText.some(cellText => cellText.includes(keyword))
+      if (hasMatch) score += 2
+    }
+
+    // Check weak keywords (+1 each)
+    for (const keyword of weakKWLower) {
+      const hasMatch = rowText.some(cellText => cellText.includes(keyword))
+      if (hasMatch) score += 1
+    }
+
+    // Track best row
+    if (score > bestScore) {
+      bestScore = score
+      bestRowIndex = i
+    }
+  }
+
+  // Return best row if it meets threshold
+  if (bestScore >= minScore) {
+    return bestRowIndex
+  }
+
+  return null
+}
+
 
 /**
  * Build a column map from a header row
