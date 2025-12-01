@@ -3,12 +3,13 @@
 
 import { IngestionWarning } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
-import { readWorkbook } from './excelUtils'
+import { readWorkbook, sheetToMatrix } from './excelUtils'
 import { parseSimulationStatus } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { applyIngestedData, IngestedData } from './applyIngestedData'
 import { createUnknownFileTypeWarning, createParserErrorWarning } from './warningUtils'
+import * as XLSX from 'xlsx'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -19,89 +20,23 @@ export type { IngestionWarning } from '../domain/core'
 
 /**
  * Input for the ingestion API.
- *
- * File objects can originate from any source: local disk uploads via <input type="file">,
- * downloaded blobs from HTTP APIs, cloud storage providers (SharePoint, OneDrive, S3, etc.),
- * or any other mechanism that produces valid JavaScript File objects.
- *
- * The ingestion layer is intentionally storage- and auth-agnostic. It has no dependencies
- * on authentication libraries (MSAL, OAuth, etc.) or cloud provider SDKs (Microsoft Graph,
- * AWS SDK, etc.). The caller is responsible for:
- *
- * - Obtaining valid Excel workbooks (.xlsx, .xlsm) as File objects
- * - Deciding which files are simulation status vs equipment lists
- * - Handling any authentication or authorization required to access those files
- *
- * @example
- * // Local file upload
- * const files = Array.from(input.files)
- * await ingestFiles({ simulationFiles: files, equipmentFiles: [] })
- *
- * @example
- * // Remote file downloaded as blob
- * const blob = await fetch(url).then(r => r.blob())
- * const file = new File([blob], 'Simulation_Status.xlsx', {
- *   type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
- * })
- * await ingestFiles({ simulationFiles: [file], equipmentFiles: [] })
  */
 export interface IngestFilesInput {
-  /**
-   * Array of File objects containing simulation status data.
-   * These files typically contain Projects, Areas, and Cells with simulation progress.
-   * At least one simulation file is required for successful ingestion.
-   */
   simulationFiles: File[]
-
-  /**
-   * Array of File objects containing equipment data (robots, tools, etc.).
-   * These files are optional and will be linked to cells when provided.
-   */
   equipmentFiles: File[]
-
-  /**
-   * Optional metadata about file sources.
-   * This is for informational/diagnostic purposes only and does not affect ingestion logic.
-   * Keys should match File.name values.
-   *
-   * @example
-   * fileSources: {
-   *   'Simulation_Status.xlsx': 'remote',
-   *   'Robot_List.xlsx': 'local'
-   * }
-   */
   fileSources?: Record<string, 'local' | 'remote'>
-
-  /**
-   * Optional data source indicator (Local, MS365)
-   * Used to track where the data came from for display in UI
-   */
   dataSource?: 'Local' | 'MS365'
 }
 
 /**
  * Result of ingestion operation.
- *
- * Contains counts of entities created and any warnings encountered during parsing.
- * The core store is automatically updated with the parsed entities.
  */
 export interface IngestFilesResult {
-  /** Number of projects created */
   projectsCount: number
-
-  /** Number of areas created */
   areasCount: number
-
-  /** Number of cells created */
   cellsCount: number
-
-  /** Number of robots created */
   robotsCount: number
-
-  /** Number of tools created */
   toolsCount: number
-
-  /** Structured warnings with file context and diagnostic information */
   warnings: IngestionWarning[]
 }
 
@@ -111,42 +46,62 @@ export interface IngestFilesResult {
 
 type FileKind = 'SimulationStatus' | 'RobotList' | 'ToolList' | 'Unknown'
 
-interface ClassifiedFile {
-  file: File
-  kind: FileKind
-}
-
 // ============================================================================
 // FILE CLASSIFICATION
 // ============================================================================
 
 /**
- * Detect file type from filename
+ * Detect file type from content (Header Sniffing)
  */
-function classifyFile(file: File): ClassifiedFile {
-  const name = file.name.toLowerCase()
+function detectFileType(workbook: XLSX.WorkBook, fileName: string): FileKind {
+  const sheetName = workbook.SheetNames[0]
+  if (!sheetName) return 'Unknown'
 
-  // Simulation Status files
-  if (name.includes('simulation') && name.includes('status')) {
-    return { file, kind: 'SimulationStatus' }
+  try {
+    // Read first 5 rows for sniffing
+    const rows = sheetToMatrix(workbook, sheetName, 5)
+
+    // Flatten rows to string for easy searching
+    const content = rows.map(row =>
+      row.map(cell => String(cell || '').toLowerCase().trim()).join(' ')
+    ).join(' ')
+
+    // Simulation Status
+    if (content.includes('robot position') || content.includes('1st stage sim') || content.includes('1st stage')) {
+      return 'SimulationStatus'
+    }
+
+    // Robot List
+    if (content.includes('fanuc order code') || (content.includes('robot') && content.includes('list'))) {
+      return 'RobotList'
+    }
+
+    // Tool/Equipment List
+    if (
+      content.includes('gun force') ||
+      content.includes('tip dresser') ||
+      content.includes('riser') ||
+      content.includes('height') ||
+      content.includes('weld gun') ||
+      content.includes('gun') ||
+      content.includes('tool') ||
+      content.includes('equipment')
+    ) {
+      return 'ToolList'
+    }
+
+  } catch (e) {
+    console.warn(`Failed to sniff file content for ${fileName}:`, e)
   }
 
-  // Robot List files
-  if (name.includes('robot') && name.includes('list')) {
-    return { file, kind: 'RobotList' }
-  }
+  // Fallback to filename
+  const name = fileName.toLowerCase()
+  if (name.includes('simulation') && name.includes('status')) return 'SimulationStatus'
+  if (name.includes('robot') && name.includes('list')) return 'RobotList'
+  if (name.includes('wg') || name.includes('weld') || name.includes('gun')) return 'ToolList'
+  if (name.includes('tool') || name.includes('equipment')) return 'ToolList'
 
-  // Tool/Weld Gun List files
-  if (name.includes('wg') || name.includes('weld') || name.includes('gun')) {
-    return { file, kind: 'ToolList' }
-  }
-
-  // Generic tool lists
-  if (name.includes('tool') || name.includes('equipment')) {
-    return { file, kind: 'ToolList' }
-  }
-
-  return { file, kind: 'Unknown' }
+  return 'Unknown'
 }
 
 // ============================================================================
@@ -155,50 +110,6 @@ function classifyFile(file: File): ClassifiedFile {
 
 /**
  * High-level ingestion entry point.
- *
- * Accepts File objects from any source (local upload, downloaded blobs, cloud storage, etc.)
- * and parses them into Projects, Areas, Cells, Robots, and Tools. The parsed entities are
- * automatically stored in the core store and made available via React hooks.
- *
- * This function is intentionally UI- and auth-agnostic. It has no dependencies on:
- * - Authentication libraries (MSAL, OAuth providers, etc.)
- * - Cloud storage SDKs (Microsoft Graph, AWS SDK, Google Drive API, etc.)
- * - Specific UI frameworks or file input mechanisms
- *
- * The caller is free to obtain File objects from any mechanism as long as they are
- * valid Excel workbooks (.xlsx, .xlsm). This includes:
- * - Browser file inputs (<input type="file">)
- * - HTTP downloads (fetch, axios, etc.)
- * - Cloud storage APIs (SharePoint, OneDrive, S3, etc.)
- * - Blob storage or any other source
- *
- * Requirements:
- * - At least one simulation file must be provided
- * - Files must be valid Excel workbooks
- * - Caller handles all authentication and authorization
- *
- * @param input - Configuration specifying which files to ingest
- * @returns Summary of ingestion results including entity counts and any warnings
- *
- * @throws {Error} If file reading fails or Excel format is invalid
- *
- * @example
- * // Local file upload
- * const result = await ingestFiles({
- *   simulationFiles: selectedFiles,
- *   equipmentFiles: []
- * })
- * console.log(`Loaded ${result.projectsCount} projects`)
- *
- * @example
- * // Remote file from cloud storage
- * const blob = await downloadFromSharePoint(fileUrl)
- * const file = new File([blob], 'Simulation_Status.xlsx')
- * const result = await ingestFiles({
- *   simulationFiles: [file],
- *   equipmentFiles: [],
- *   fileSources: { 'Simulation_Status.xlsx': 'remote' }
- * })
  */
 export async function ingestFiles(
   input: IngestFilesInput
@@ -236,20 +147,21 @@ export async function ingestFiles(
   // Process each file
   for (const file of allFiles) {
     try {
-      const classified = classifyFile(file)
+      // Read workbook first
+      const workbook = await readWorkbook(file)
 
-      if (classified.kind === 'Unknown') {
+      // Detect type
+      const kind = detectFileType(workbook, file.name)
+
+      if (kind === 'Unknown') {
         allWarnings.push(createUnknownFileTypeWarning({
           fileName: file.name
         }))
         continue
       }
 
-      // Read workbook
-      const workbook = await readWorkbook(file)
-
       // Route to appropriate parser
-      if (classified.kind === 'SimulationStatus') {
+      if (kind === 'SimulationStatus') {
         const result = await parseSimulationStatus(workbook, file.name)
 
         if (!ingestedData.simulation) {
@@ -262,7 +174,7 @@ export async function ingestFiles(
         }
       }
 
-      if (classified.kind === 'RobotList') {
+      if (kind === 'RobotList') {
         const result = await parseRobotList(workbook, file.name)
 
         if (!ingestedData.robots) {
@@ -273,7 +185,7 @@ export async function ingestFiles(
         }
       }
 
-      if (classified.kind === 'ToolList') {
+      if (kind === 'ToolList') {
         const result = await parseToolList(workbook, file.name)
 
         if (!ingestedData.tools) {

@@ -84,7 +84,15 @@ export async function readWorkbook(file: File): Promise<XLSX.WorkBook> {
  * Convert a worksheet to a 2D array (matrix) of cell values
  * Returns rows with columns, normalizing to null for empty cells
  */
-export function sheetToMatrix(workbook: XLSX.WorkBook, sheetName: string): CellValue[][] {
+/**
+ * Convert a worksheet to a 2D array (matrix) of cell values
+ * Returns rows with columns, normalizing to null for empty cells
+ */
+export function sheetToMatrix(
+  workbook: XLSX.WorkBook,
+  sheetName: string,
+  maxRows?: number
+): CellValue[][] {
   if (!workbook.Sheets[sheetName]) {
     throw new Error(`Sheet "${sheetName}" not found in workbook. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
@@ -94,13 +102,28 @@ export function sheetToMatrix(workbook: XLSX.WorkBook, sheetName: string): CellV
   // Convert to JSON format that gives us row arrays
   // Use header: 1 to get array of arrays instead of objects
   // defval: null ensures empty cells are represented as null
-  const rows = XLSX.utils.sheet_to_json<CellValue[]>(sheet, {
+  const opts: XLSX.Sheet2JSONOpts = {
     header: 1,
     defval: null,
     raw: false  // Get formatted text values, not raw numbers
-  })
+  }
+
+  // Apply row limit if specified
+  if (maxRows !== undefined) {
+    // If sheet has !ref, we can parse it to limit the range
+    if (sheet['!ref']) {
+      const range = XLSX.utils.decode_range(sheet['!ref'])
+      range.e.r = Math.min(range.e.r, range.s.r + maxRows - 1)
+      opts.range = XLSX.utils.encode_range(range)
+    }
+  }
+
+  const rows = XLSX.utils.sheet_to_json<CellValue[]>(sheet, opts)
 
   if (rows.length === 0) {
+    // Don't throw if we just wanted to sniff and it's empty, but usually empty sheet is bad
+    // For sniffing, an empty sheet is just empty data
+    if (maxRows) return []
     throw new Error(`Sheet "${sheetName}" is empty`)
   }
 
@@ -223,5 +246,28 @@ export function isTotalRow(row: CellValue[]): boolean {
   if (!row || row.length === 0) return false
   const firstCell = String(row[0] || '').toLowerCase().trim()
   return firstCell === 'total' || firstCell === 'totals' || firstCell === 'sum'
+}
+
+/**
+ * Find the index of a column matching any of the possible names (case-insensitive)
+ */
+export function findColumnIndex(
+  headerRow: CellValue[],
+  possibleNames: string[]
+): number | null {
+  if (!headerRow || headerRow.length === 0) return null
+
+  for (let i = 0; i < headerRow.length; i++) {
+    const cellText = String(headerRow[i] || '').toLowerCase().trim()
+
+    for (const name of possibleNames) {
+      const nameLower = name.toLowerCase().trim()
+      if (cellText === nameLower || cellText.includes(nameLower)) {
+        return i
+      }
+    }
+  }
+
+  return null
 }
 

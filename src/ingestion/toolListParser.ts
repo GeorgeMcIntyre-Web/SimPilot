@@ -3,7 +3,7 @@
 // Handles spot weld guns (pneumatic/servo), sealers, grippers, etc.
 
 import * as XLSX from 'xlsx'
-import { Tool, ToolType, ToolMountType, SpotWeldSubType, generateId, IngestionWarning } from '../domain/core'
+import { Tool, ToolType, ToolMountType, SpotWeldSubType, generateId, IngestionWarning, EquipmentSourcing, AssetKind } from '../domain/core'
 import {
   sheetToMatrix,
   findHeaderRow,
@@ -102,7 +102,11 @@ export async function parseToolList(
     'CELL',
     'REUSE',
     'REUSE STATUS',
-    'STATUS'
+    'STATUS',
+    'COMMENTS',
+    'COMMENT',
+    'SUPPLY',
+    'REFRESMENT OK'
   ])
 
   // Detect tool type from filename
@@ -172,12 +176,57 @@ export async function parseToolList(
       || getCellString(row, columnMap, 'REUSE STATUS')
       || getCellString(row, columnMap, 'STATUS')
 
+    const comments = getCellString(row, columnMap, 'COMMENTS')
+      || getCellString(row, columnMap, 'COMMENT')
+
+    const supply = getCellString(row, columnMap, 'SUPPLY')
+    const refreshment = getCellString(row, columnMap, 'REFRESMENT OK')
+
+    // Detect sourcing
+    const sourcing = detectSourcing(reuseStatus, comments, supply, refreshment)
+
     // Detect mount type (default to UNKNOWN)
     const mountType: ToolMountType = 'UNKNOWN'
+
+    // Detect Kind
+    const kind = detectKind(toolType)
+
+    // Vacuum Parser: Collect all other columns into metadata
+    const metadata: Record<string, string | number | boolean | null> = {}
+    const consumedHeaders = [
+      'GUN', 'GUN ID', 'GUN NUMBER', 'TOOL', 'TOOL ID', 'TOOL NAME', 'EQUIPMENT ID', 'EQUIPMENT', 'ID', 'NAME',
+      'TYPE', 'TOOL TYPE', 'GUN TYPE', 'SUBTYPE',
+      'MODEL', 'OEM MODEL', 'MANUFACTURER', 'SUPPLIER',
+      'AREA', 'AREA NAME',
+      'LINE', 'LINE CODE', 'ASSEMBLY LINE',
+      'STATION', 'STATION CODE', 'CELL',
+      'REUSE', 'REUSE STATUS', 'STATUS',
+      'COMMENTS', 'COMMENT', 'SUPPLY', 'REFRESMENT OK'
+    ]
+
+    // Create a set of consumed indices based on the column map and consumed headers
+    const consumedIndices = new Set<number>()
+    consumedHeaders.forEach(h => {
+      const idx = columnMap[h]
+      if (idx !== null && idx !== undefined) consumedIndices.add(idx)
+    })
+
+    // Iterate over the row to find unconsumed data
+    row.forEach((cell, index) => {
+      if (index >= headerRow.length) return // Skip if no header
+      if (consumedIndices.has(index)) return // Skip consumed columns
+
+      const header = String(headerRow[index] || '').trim()
+      if (!header) return // Skip empty headers
+
+      // Add to metadata
+      metadata[header] = cell
+    })
 
     // Build tool entity
     const tool: Tool = {
       id: generateId('tool', toolId),
+      kind,
       name: toolId,
       toolType,
       subType: toolType === 'SPOT_WELD' ? subType : undefined,
@@ -187,6 +236,8 @@ export async function parseToolList(
       lineCode: lineCode || undefined,
       stationCode: stationCode || undefined,
       reuseStatus: reuseStatus || undefined,
+      sourcing,
+      metadata,
       sourceFile: fileName,
       sheetName,
       rowIndex: i
@@ -265,4 +316,42 @@ function detectSpotWeldSubType(typeStr: string, subtypeStr: string): SpotWeldSub
   if (combined.includes('pneumatic') || combined.includes('pneu')) return 'PNEUMATIC'
 
   return 'UNKNOWN'
+}
+
+/**
+ * Detect sourcing status from various columns
+ */
+function detectSourcing(
+  reuseStatus: string,
+  comments: string,
+  supply: string,
+  refreshment: string
+): EquipmentSourcing {
+  const combined = `${reuseStatus} ${comments} ${supply} ${refreshment}`.toLowerCase()
+
+  if (combined.includes('carry over') || combined.includes('existing') || combined.includes('retain')) {
+    return 'REUSE'
+  }
+
+  if (combined.includes('new') || combined.includes('new line') || combined.includes('new station')) {
+    return 'NEW_BUY'
+  }
+
+  return 'UNKNOWN'
+}
+
+/**
+ * Detect asset kind from tool type
+ */
+function detectKind(toolType: ToolType): AssetKind {
+  switch (toolType) {
+    case 'SPOT_WELD':
+      return 'GUN'
+    case 'SEALER':
+    case 'STUD_WELD':
+    case 'GRIPPER':
+      return 'TOOL'
+    default:
+      return 'OTHER'
+  }
 }

@@ -1,6 +1,9 @@
 // SimPilot Core Domain Types
 // Clean, future-proof type system following guard-clause architecture
 
+import { UnifiedAsset, EquipmentSourcing } from './UnifiedModel'
+export * from './UnifiedModel'
+
 // ============================================================================
 // INGESTION WARNINGS
 // ============================================================================
@@ -114,6 +117,7 @@ export interface Robot {
   areaId?: string
   cellId?: string
   toolIds: string[]
+  sourcing?: EquipmentSourcing
   sourceFile: string
   sheetName: string
   rowIndex: number
@@ -138,24 +142,16 @@ export type ToolMountType =
 
 export type SpotWeldSubType = "PNEUMATIC" | "SERVO" | "UNKNOWN"
 
-export interface Tool {
-  id: string
-  name: string
+export interface Tool extends UnifiedAsset {
   toolType: ToolType
   subType?: SpotWeldSubType
-  oemModel?: string
   mountType: ToolMountType
   lineCode?: string
   areaName?: string
   stationCode?: string
   projectId?: string
-  areaId?: string
-  cellId?: string
   robotId?: string
   reuseStatus?: string
-  sourceFile: string
-  sheetName: string
-  rowIndex: number
 }
 
 // ============================================================================

@@ -113,25 +113,17 @@ export type ChangeLogEntry = {
 
 // --- PHASE 2: EQUIPMENT & WELD MANAGEMENT ---
 
-export type Robot = {
-    id: string
-    name: string           // e.g. "R1"
-    oemModel: string       // e.g. "KUKA KR 60-3"
-    areaId: string
-    cellId: string | null
-    stationNumber: string  // e.g. "8C-7330"
-    description: string
-}
+export * from './UnifiedModel'
 
-export type WeldGun = {
-    id: string
-    gunNumber: string      // e.g. "070ZF099D_20021724_E01"
-    supplier: string       // e.g. "Bosch", "Obara"
-    type: string           // e.g. "C-gun", "X-gun"
-    maxForce: number | null
-    payloadClass: string   // e.g. "Class 3"
-    notes: string
+import { UnifiedAsset } from './UnifiedModel'
+
+// Legacy types for backward compatibility (mapped to UnifiedAsset)
+export type Robot = UnifiedAsset & {
+    kind: 'ROBOT'
+    toolIds: string[]
 }
+export type WeldGun = UnifiedAsset & { kind: 'GUN' }
+export type Stand = UnifiedAsset & { kind: 'STAND' }
 
 export type RobotGunAssignment = {
     id: string
@@ -157,16 +149,6 @@ export type GunCheckStatus = {
 }
 
 export type StandType = 'GUN_STAND' | 'TIP_DRESSER'
-
-export type Stand = {
-    id: string
-    standNumber: string       // e.g. "STD-01"
-    areaId: string
-    stationNumber: string
-    type: StandType
-    referenceNumber: string   // e.g. "Ref-1234"
-    notes: string
-}
 
 export type SpotWeldRef = {
     id: string

@@ -112,14 +112,29 @@ export const changeLogEntries: ChangeLogEntry[] = [
 // --- PHASE 2: EQUIPMENT ---
 
 export const robots: Robot[] = [
-    { id: 'r1', name: 'R1', oemModel: 'KUKA KR 210 R2700', areaId: 'a1', cellId: 'c1', stationNumber: 'ST-10', description: 'Handling Robot' },
-    { id: 'r2', name: 'R2', oemModel: 'KUKA KR 210 R2700', areaId: 'a1', cellId: 'c1', stationNumber: 'ST-10', description: 'Welding Robot' },
-    { id: 'r3', name: 'R1', oemModel: 'Fanuc R-2000iC', areaId: 'a2', cellId: 'c3', stationNumber: 'ST-20', description: 'Geo Welder' }
+    {
+        id: 'r1', kind: 'ROBOT', name: 'R1', oemModel: 'KUKA KR 210 R2700', areaId: 'a1', cellId: 'c1', stationNumber: 'ST-10', description: 'Handling Robot',
+        sourcing: 'REUSE', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 0, toolIds: []
+    },
+    {
+        id: 'r2', kind: 'ROBOT', name: 'R2', oemModel: 'KUKA KR 210 R2700', areaId: 'a1', cellId: 'c1', stationNumber: 'ST-10', description: 'Welding Robot',
+        sourcing: 'NEW_BUY', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 1, toolIds: ['wg1']
+    },
+    {
+        id: 'r3', kind: 'ROBOT', name: 'R1', oemModel: 'Fanuc R-2000iC', areaId: 'a2', cellId: 'c3', stationNumber: 'ST-20', description: 'Geo Welder',
+        sourcing: 'UNKNOWN', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 2, toolIds: ['wg2']
+    }
 ]
 
 export const weldGuns: WeldGun[] = [
-    { id: 'wg1', gunNumber: 'G01_X_300', supplier: 'Obara', type: 'X-Gun', maxForce: 3.5, payloadClass: 'Class 3', notes: 'Standard X Gun' },
-    { id: 'wg2', gunNumber: 'G02_C_450', supplier: 'Obara', type: 'C-Gun', maxForce: 4.0, payloadClass: 'Class 4', notes: 'Heavy C Gun' }
+    {
+        id: 'wg1', kind: 'GUN', name: 'G01', gunNumber: 'G01_X_300', supplier: 'Obara', type: 'X-Gun', maxForce: 3.5, payloadClass: 'Class 3', notes: 'Standard X Gun',
+        sourcing: 'REUSE', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 0
+    },
+    {
+        id: 'wg2', kind: 'GUN', name: 'G02', gunNumber: 'G02_C_450', supplier: 'Obara', type: 'C-Gun', maxForce: 4.0, payloadClass: 'Class 4', notes: 'Heavy C Gun',
+        sourcing: 'NEW_BUY', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 1
+    }
 ]
 
 export const robotGunAssignments: RobotGunAssignment[] = [
@@ -145,8 +160,14 @@ export const gunCheckStatuses: GunCheckStatus[] = [
 ]
 
 export const stands: Stand[] = [
-    { id: 's1', standNumber: 'STD-01', areaId: 'a1', stationNumber: 'ST-10', type: 'TIP_DRESSER', referenceNumber: 'TD-K-01', notes: 'Kyokutoh Dresser' },
-    { id: 's2', standNumber: 'STD-02', areaId: 'a1', stationNumber: 'ST-10', type: 'GUN_STAND', referenceNumber: 'GS-01', notes: 'Parking stand for G01' }
+    {
+        id: 's1', kind: 'STAND', name: 'STD-01', standNumber: 'STD-01', areaId: 'a1', stationNumber: 'ST-10', type: 'TIP_DRESSER', referenceNumber: 'TD-K-01', notes: 'Kyokutoh Dresser',
+        sourcing: 'REUSE', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 0
+    },
+    {
+        id: 's2', kind: 'STAND', name: 'STD-02', standNumber: 'STD-02', areaId: 'a1', stationNumber: 'ST-10', type: 'GUN_STAND', referenceNumber: 'GS-01', notes: 'Parking stand for G01',
+        sourcing: 'NEW_BUY', metadata: {}, sourceFile: 'mock', sheetName: 'mock', rowIndex: 1
+    }
 ]
 
 export const spotWeldRefs: SpotWeldRef[] = [
