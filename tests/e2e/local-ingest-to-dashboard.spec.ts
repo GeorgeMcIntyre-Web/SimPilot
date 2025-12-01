@@ -11,6 +11,11 @@ const __dirname = dirname(__filename);
 
 test.describe('Local Ingest to Dashboard Flow', () => {
     test('Ingest Local Excel Files and Verify Dashboard Updates', async ({ page }) => {
+        page.on('console', msg => {
+            const text = msg.text();
+            console.log('PAGE LOG:', text);
+            try { fs.appendFileSync('debug_log.txt', text + '\n'); } catch (e) { }
+        });
         // 1. Start at app root
         await gotoApp(page);
 
@@ -36,17 +41,15 @@ test.describe('Local Ingest to Dashboard Flow', () => {
         await page.getByTestId('nav-dashboard').click();
 
         // 5. Assert Global Indicator
-        // The indicator in the header should say "Data Loaded"
-        // We added data-testid="app-shell" but not specifically to the indicator text.
-        // However, the indicator text is "Data Loaded".
-        await expect(page.getByText('Data Loaded')).toBeVisible();
+        // Use the stable data-testid we added to LayoutShell
+        await expect(page.getByTestId('data-status-indicator')).toHaveAttribute('data-status', 'loaded', { timeout: 15000 });
 
-        // 6. Assert Project Data
+        // 6. Toggle Dale Mode to ensure we see the project list (Standard mode only shows At Risk)
+        await openDashboardInDaleMode(page);
+
+        // 7. Assert Project Data
         // Our fixture has project "P_TEST".
         await expect(page.getByText('P_TEST')).toBeVisible();
-
-        // 7. Toggle Dale Mode
-        await openDashboardInDaleMode(page);
 
         // 8. Assert Metrics
         // We have 3 robots in the fixture.

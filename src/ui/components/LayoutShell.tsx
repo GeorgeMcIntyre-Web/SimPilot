@@ -14,9 +14,10 @@ export function LayoutShell() {
     const { enabled: msEnabled, isSignedIn, account, login, logout } = useMsAccount();
     const { state: busyState } = useGlobalBusy();
     const warnings = useWarnings();
+    console.log('LayoutShell render. hasData:', hasData);
 
     const navItems = [
-        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/projects', label: 'Projects', icon: FolderKanban },
         { href: '/readiness', label: 'Readiness', icon: Calendar },
         { href: '/engineers', label: 'Engineers', icon: Users },
@@ -36,6 +37,8 @@ export function LayoutShell() {
                                     SimPilot
                                 </span>
                                 <div
+                                    data-testid="data-status-indicator"
+                                    data-status={hasData ? 'loaded' : 'empty'}
                                     className={`flex items-center px-2 py-0.5 rounded-full border ${hasData ? 'bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}
                                     title={hasData ? "Simulation data loaded" : "No simulation data loaded"}
                                 >

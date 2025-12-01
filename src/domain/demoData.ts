@@ -52,279 +52,320 @@ export function getDemoScenarioData(id: DemoScenarioId): {
     }
 
     if (id === 'TINY_SAMPLE') {
-        // Project
-        const p1: Project = {
-            id: 'p-tiny-1',
-            name: 'Tiny Project',
-            customer: 'Tiny OEM',
-            status: 'Running',
-            schedule: {
-                phase: 'offline',
-                status: 'onTrack',
-                plannedStart: getDateOffset(-30),
-                plannedEnd: getDateOffset(30)
-            }
+        return getTinySampleData(dummySource)
+    }
+
+    if (id === 'STLA_SAMPLE') {
+        return getStlaSampleData(dummySource)
+    }
+
+    return { projects, areas, cells, robots, tools, warnings }
+}
+
+function getTinySampleData(dummySource: any) {
+    const projects: Project[] = []
+    const areas: Area[] = []
+    const cells: Cell[] = []
+    const robots: Robot[] = []
+    const tools: Tool[] = []
+    const warnings: string[] = []
+
+    // Project
+    const p1: Project = {
+        id: 'p-tiny-1',
+        name: 'Tiny Project',
+        customer: 'Tiny OEM',
+        status: 'Running',
+        schedule: {
+            phase: 'offline',
+            status: 'onTrack',
+            plannedStart: getDateOffset(-30),
+            plannedEnd: getDateOffset(30)
         }
-        projects.push(p1)
+    }
+    projects.push(p1)
 
-        // Area
-        const a1: Area = { id: 'a-tiny-1', name: 'Tiny Area', projectId: p1.id }
-        areas.push(a1)
+    // Area
+    const a1: Area = { id: 'a-tiny-1', name: 'Tiny Area', projectId: p1.id }
+    areas.push(a1)
 
-        // Cells
-        const c1: Cell = {
-            id: 'c-tiny-1',
-            name: 'Cell 10',
-            code: 'C10',
+    // Cells
+    const c1: Cell = {
+        id: 'c-tiny-1',
+        name: 'Cell 10',
+        code: 'C10',
+        areaId: a1.id,
+        projectId: p1.id,
+        status: 'Approved',
+        assignedEngineer: 'Dale',
+        simulation: {
+            percentComplete: 100,
+            hasIssues: false,
+            metrics: { cycleTime: 45.5 },
+            ...dummySource
+        },
+        schedule: {
+            phase: 'offline',
+            status: 'onTrack',
+            plannedStart: getDateOffset(-25),
+            plannedEnd: getDateOffset(5),
+            dueDate: getDateOffset(10)
+        }
+    }
+    const c2: Cell = {
+        id: 'c-tiny-2',
+        name: 'Cell 20',
+        code: 'C20',
+        areaId: a1.id,
+        projectId: p1.id,
+        status: 'Blocked',
+        assignedEngineer: 'George',
+        simulation: {
+            percentComplete: 45,
+            hasIssues: true,
+            metrics: { cycleTime: 0 },
+            ...dummySource
+        },
+        schedule: {
+            phase: 'offline',
+            status: 'atRisk',
+            plannedStart: getDateOffset(-20),
+            plannedEnd: getDateOffset(8),
+            dueDate: getDateOffset(8)
+        }
+    }
+    cells.push(c1, c2)
+
+    // Robots
+    robots.push({
+        id: 'r-tiny-1',
+        name: 'R1',
+        cellId: c1.id,
+        toolIds: ['t-tiny-1'],
+        ...dummySource
+    })
+    robots.push({
+        id: 'r-tiny-2',
+        name: 'R2',
+        cellId: c2.id,
+        toolIds: [],
+        ...dummySource
+    })
+
+    // Tools
+    tools.push({
+        id: 't-tiny-1',
+        name: 'Weld Gun 1',
+        toolType: 'SPOT_WELD',
+        mountType: 'ROBOT_MOUNTED',
+        cellId: c1.id,
+        ...dummySource
+    })
+
+    return { projects, areas, cells, robots, tools, warnings }
+}
+
+function getStlaSampleData(dummySource: any) {
+    const projects: Project[] = []
+    const areas: Area[] = []
+    const cells: Cell[] = []
+    const robots: Robot[] = []
+    const tools: Tool[] = []
+    const warnings: string[] = []
+
+    // Project 1: Rear
+    const p1: Project = {
+        id: 'p-stla-1',
+        name: 'STLA-S REAR UNIT',
+        customer: 'STLA',
+        status: 'Running',
+        schedule: {
+            phase: 'offline',
+            status: 'atRisk',
+            plannedStart: getDateOffset(-60),
+            plannedEnd: getDateOffset(30)
+        }
+    }
+    projects.push(p1)
+
+    const a1: Area = { id: 'a-stla-1', name: 'Rear Floor', projectId: p1.id }
+    const a2: Area = { id: 'a-stla-2', name: 'Wheelhouse', projectId: p1.id }
+    areas.push(a1, a2)
+
+    // Cells for Rear Floor - with varied schedule states
+    for (let i = 1; i <= 5; i++) {
+        const hasIssues = i % 3 === 0
+        const percent = i * 20 > 100 ? 100 : i * 20
+
+        const { plannedStart, plannedEnd, dueDate, phase } = getCellSchedule(i)
+
+        const cell: Cell = {
+            id: `c-stla-1-${i}`,
+            name: `OP${i}0`,
+            code: `OP${i}0`,
             areaId: a1.id,
             projectId: p1.id,
-            status: 'Approved',
-            assignedEngineer: 'Dale',
+            status: hasIssues ? 'Blocked' : (percent === 100 ? 'Approved' : 'InProgress'),
+            assignedEngineer: i % 2 === 0 ? 'Dale' : 'George',
             simulation: {
-                percentComplete: 100,
-                hasIssues: false,
-                metrics: { cycleTime: 45.5 },
+                percentComplete: percent,
+                hasIssues,
+                metrics: { cycleTime: 50 + i },
                 ...dummySource
             },
             schedule: {
-                phase: 'offline',
-                status: 'onTrack',
-                plannedStart: getDateOffset(-25),
-                plannedEnd: getDateOffset(5),
-                dueDate: getDateOffset(10)
+                phase,
+                status: 'unknown', // Will be computed by scheduleMetrics
+                plannedStart,
+                plannedEnd,
+                dueDate
             }
         }
-        const c2: Cell = {
-            id: 'c-tiny-2',
-            name: 'Cell 20',
-            code: 'C20',
-            areaId: a1.id,
-            projectId: p1.id,
-            status: 'Blocked',
-            assignedEngineer: 'George',
-            simulation: {
-                percentComplete: 45,
-                hasIssues: true,
-                metrics: { cycleTime: 0 },
-                ...dummySource
-            },
-            schedule: {
-                phase: 'offline',
-                status: 'atRisk',
-                plannedStart: getDateOffset(-20),
-                plannedEnd: getDateOffset(8),
-                dueDate: getDateOffset(8)
-            }
-        }
-        cells.push(c1, c2)
+        cells.push(cell)
 
-        // Robots
+        // Add robots
+        const r1Id = `r-stla-1-${i}-1`
+        const r2Id = `r-stla-1-${i}-2`
+        const t1Id = `t-stla-1-${i}-1`
+
         robots.push({
-            id: 'r-tiny-1',
-            name: 'R1',
-            cellId: c1.id,
-            toolIds: ['t-tiny-1'],
+            id: r1Id,
+            name: `R${i}1`,
+            cellId: cell.id,
+            toolIds: [t1Id],
             ...dummySource
         })
         robots.push({
-            id: 'r-tiny-2',
-            name: 'R2',
-            cellId: c2.id,
+            id: r2Id,
+            name: `R${i}2`,
+            cellId: cell.id,
             toolIds: [],
             ...dummySource
         })
 
-        // Tools
+        // Add tools
         tools.push({
-            id: 't-tiny-1',
-            name: 'Weld Gun 1',
+            id: t1Id,
+            name: `Gun ${i}1`,
             toolType: 'SPOT_WELD',
             mountType: 'ROBOT_MOUNTED',
-            cellId: c1.id,
+            cellId: cell.id,
             ...dummySource
         })
+    }
 
-    } else if (id === 'STLA_SAMPLE') {
-        // Project 1: Rear
-        const p1: Project = {
-            id: 'p-stla-1',
-            name: 'STLA-S REAR UNIT',
-            customer: 'STLA',
-            status: 'Running',
-            schedule: {
-                phase: 'offline',
-                status: 'atRisk',
-                plannedStart: getDateOffset(-60),
-                plannedEnd: getDateOffset(30)
-            }
+    // Wheelhouse cells - one with no schedule data
+    const whCell: Cell = {
+        id: 'c-stla-wh-1',
+        name: 'WH10',
+        code: 'WH10',
+        areaId: a2.id,
+        projectId: p1.id,
+        status: 'InProgress',
+        assignedEngineer: 'Dale',
+        simulation: {
+            percentComplete: 75,
+            hasIssues: false,
+            metrics: { cycleTime: 48 },
+            ...dummySource
         }
-        projects.push(p1)
+        // NO schedule field - tests graceful degradation
+    }
+    cells.push(whCell)
 
-        const a1: Area = { id: 'a-stla-1', name: 'Rear Floor', projectId: p1.id }
-        const a2: Area = { id: 'a-stla-2', name: 'Wheelhouse', projectId: p1.id }
-        areas.push(a1, a2)
-
-        // Cells for Rear Floor - with varied schedule states
-        for (let i = 1; i <= 5; i++) {
-            const hasIssues = i % 3 === 0
-            const percent = i * 20 > 100 ? 100 : i * 20
-
-            let plannedStart: string
-            let plannedEnd: string
-            let dueDate: string | undefined
-            let phase: SchedulePhase
-
-            // Create mix of schedule scenarios
-            if (i === 1) {
-                // On track - early phase, good progress
-                plannedStart = getDateOffset(-40)
-                plannedEnd = getDateOffset(20)
-                dueDate = getDateOffset(25)
-                phase = 'presim'
-            } else if (i === 2) {
-                // On track - mid phase, excellent progress (100%)
-                plannedStart = getDateOffset(-35)
-                plannedEnd = getDateOffset(15)
-                dueDate = getDateOffset(20)
-                phase = 'offline'
-            } else if (i === 3) {
-                // At risk - low completion, close to deadline
-                plannedStart = getDateOffset(-30)
-                plannedEnd = getDateOffset(5)
-                dueDate = getDateOffset(5)
-                phase = 'offline'
-            } else if (i === 4) {
-                // Late - past due date, not complete
-                plannedStart = getDateOffset(-45)
-                plannedEnd = getDateOffset(-5)
-                dueDate = getDateOffset(-5)
-                phase = 'onsite'
-            } else {
-                // On track - high completion, plenty of time
-                plannedStart = getDateOffset(-20)
-                plannedEnd = getDateOffset(40)
-                dueDate = getDateOffset(50)
-                phase = 'rampup'
-            }
-
-            const cell: Cell = {
-                id: `c-stla-1-${i}`,
-                name: `OP${i}0`,
-                code: `OP${i}0`,
-                areaId: a1.id,
-                projectId: p1.id,
-                status: hasIssues ? 'Blocked' : (percent === 100 ? 'Approved' : 'InProgress'),
-                assignedEngineer: i % 2 === 0 ? 'Dale' : 'George',
-                simulation: {
-                    percentComplete: percent,
-                    hasIssues,
-                    metrics: { cycleTime: 50 + i },
-                    ...dummySource
-                },
-                schedule: {
-                    phase,
-                    status: 'unknown', // Will be computed by scheduleMetrics
-                    plannedStart,
-                    plannedEnd,
-                    dueDate
-                }
-            }
-            cells.push(cell)
-
-            // Add robots
-            const r1Id = `r-stla-1-${i}-1`
-            const r2Id = `r-stla-1-${i}-2`
-            const t1Id = `t-stla-1-${i}-1`
-
-            robots.push({
-                id: r1Id,
-                name: `R${i}1`,
-                cellId: cell.id,
-                toolIds: [t1Id],
-                ...dummySource
-            })
-            robots.push({
-                id: r2Id,
-                name: `R${i}2`,
-                cellId: cell.id,
-                toolIds: [],
-                ...dummySource
-            })
-
-            // Add tools
-            tools.push({
-                id: t1Id,
-                name: `Gun ${i}1`,
-                toolType: 'SPOT_WELD',
-                mountType: 'ROBOT_MOUNTED',
-                cellId: cell.id,
-                ...dummySource
-            })
+    // Project 2: Underbody
+    const p2: Project = {
+        id: 'p-stla-2',
+        name: 'STLA-S UNDERBODY',
+        customer: 'STLA',
+        status: 'Planning',
+        schedule: {
+            phase: 'presim',
+            status: 'onTrack',
+            plannedStart: getDateOffset(10),
+            plannedEnd: getDateOffset(90)
         }
+    }
+    projects.push(p2)
 
-        // Wheelhouse cells - one with no schedule data
-        const whCell: Cell = {
-            id: 'c-stla-wh-1',
-            name: 'WH10',
-            code: 'WH10',
-            areaId: a2.id,
-            projectId: p1.id,
-            status: 'InProgress',
-            assignedEngineer: 'Dale',
+    const a3: Area = { id: 'a-stla-3', name: 'Main Line', projectId: p2.id }
+    areas.push(a3)
+
+    // Cells for Underbody - future project
+    for (let i = 1; i <= 4; i++) {
+        const cell: Cell = {
+            id: `c-stla-2-${i}`,
+            name: `UB${i}0`,
+            code: `UB${i}0`,
+            areaId: a3.id,
+            projectId: p2.id,
+            status: 'NotStarted',
+            assignedEngineer: undefined,
             simulation: {
-                percentComplete: 75,
+                percentComplete: 0,
                 hasIssues: false,
-                metrics: { cycleTime: 48 },
+                metrics: {},
                 ...dummySource
-            }
-            // NO schedule field - tests graceful degradation
-        }
-        cells.push(whCell)
-
-        // Project 2: Underbody
-        const p2: Project = {
-            id: 'p-stla-2',
-            name: 'STLA-S UNDERBODY',
-            customer: 'STLA',
-            status: 'Planning',
+            },
             schedule: {
                 phase: 'presim',
-                status: 'onTrack',
-                plannedStart: getDateOffset(10),
-                plannedEnd: getDateOffset(90)
+                status: 'unknown',
+                plannedStart: getDateOffset(15 + i * 7),
+                plannedEnd: getDateOffset(45 + i * 7)
             }
         }
-        projects.push(p2)
-
-        const a3: Area = { id: 'a-stla-3', name: 'Main Line', projectId: p2.id }
-        areas.push(a3)
-
-        // Cells for Underbody - future project
-        for (let i = 1; i <= 4; i++) {
-            const cell: Cell = {
-                id: `c-stla-2-${i}`,
-                name: `UB${i}0`,
-                code: `UB${i}0`,
-                areaId: a3.id,
-                projectId: p2.id,
-                status: 'NotStarted',
-                assignedEngineer: undefined,
-                simulation: {
-                    percentComplete: 0,
-                    hasIssues: false,
-                    metrics: {},
-                    ...dummySource
-                },
-                schedule: {
-                    phase: 'presim',
-                    status: 'unknown',
-                    plannedStart: getDateOffset(15 + i * 7),
-                    plannedEnd: getDateOffset(45 + i * 7)
-                }
-            }
-            cells.push(cell)
-        }
+        cells.push(cell)
     }
 
     return { projects, areas, cells, robots, tools, warnings }
+}
+
+function getCellSchedule(i: number): { plannedStart: string, plannedEnd: string, dueDate?: string, phase: SchedulePhase } {
+    if (i === 1) {
+        // On track - early phase, good progress
+        return {
+            plannedStart: getDateOffset(-40),
+            plannedEnd: getDateOffset(20),
+            dueDate: getDateOffset(25),
+            phase: 'presim'
+        }
+    }
+
+    if (i === 2) {
+        // On track - mid phase, excellent progress (100%)
+        return {
+            plannedStart: getDateOffset(-35),
+            plannedEnd: getDateOffset(15),
+            dueDate: getDateOffset(20),
+            phase: 'offline'
+        }
+    }
+
+    if (i === 3) {
+        // At risk - low completion, close to deadline
+        return {
+            plannedStart: getDateOffset(-30),
+            plannedEnd: getDateOffset(5),
+            dueDate: getDateOffset(5),
+            phase: 'offline'
+        }
+    }
+
+    if (i === 4) {
+        // Late - past due date, not complete
+        return {
+            plannedStart: getDateOffset(-45),
+            plannedEnd: getDateOffset(-5),
+            dueDate: getDateOffset(-5),
+            phase: 'onsite'
+        }
+    }
+
+    // On track - high completion, plenty of time
+    return {
+        plannedStart: getDateOffset(-20),
+        plannedEnd: getDateOffset(40),
+        dueDate: getDateOffset(50),
+        phase: 'rampup'
+    }
 }

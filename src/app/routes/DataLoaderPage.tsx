@@ -514,23 +514,23 @@ export function DataLoaderPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.projectsCount}</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-projects-count">{result.projectsCount}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Projects</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.areasCount}</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-areas-count">{result.areasCount}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Areas</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.cellsCount}</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-cells-count">{result.cellsCount}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cells</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.robotsCount}</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-robots-count">{result.robotsCount}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Robots</div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.toolsCount}</div>
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-tools-count">{result.toolsCount}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tools</div>
             </div>
           </div>

@@ -37,4 +37,11 @@ export async function ingestLocalFixture(page: Page, simulationPath: string, equ
 
     // Wait for success
     await expect(page.getByTestId('data-loaded-indicator')).toHaveText(/complete/i, { timeout: 10000 });
+
+    // Verify we actually loaded something
+    const projectCountText = await page.getByTestId('result-projects-count').textContent();
+    const cellCountText = await page.getByTestId('result-cells-count').textContent();
+
+    expect(parseInt(projectCountText || '0')).toBeGreaterThan(0);
+    expect(parseInt(cellCountText || '0')).toBeGreaterThan(0);
 }

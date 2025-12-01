@@ -48,7 +48,7 @@ export function WarningsPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
-                <PageHeader title="Ingestion Warnings" subtitle="Review issues found during data loading" />
+                <PageHeader title="Warnings Center" subtitle="Review issues found during data loading" />
                 <button
                     onClick={handleCopy}
                     disabled={warnings.length === 0}
@@ -72,7 +72,7 @@ export function WarningsPage() {
                 {Object.keys(grouped).length === 0 ? (
                     <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                         <Check className="h-12 w-12 mx-auto text-green-500 mb-3" />
-                        <p>No warnings found. Great job!</p>
+                        <p>No warnings found</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">

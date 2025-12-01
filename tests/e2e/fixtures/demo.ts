@@ -15,9 +15,10 @@ export async function openDashboardInDaleMode(page: Page) {
     // or we check for a specific element that only appears in Dale Mode)
     // For now, let's assume the toggle is unchecked by default on fresh load.
     const toggle = page.getByTestId('dashboard-dale-toggle');
-    // Check if it's already on (implementation dependent, usually aria-checked)
-    const isChecked = await toggle.getAttribute('aria-checked') === 'true';
-    if (!isChecked) {
+    await expect(toggle).toBeVisible();
+    // Check if it's already on (using aria-pressed which we added)
+    const isPressed = await toggle.getAttribute('aria-pressed') === 'true';
+    if (!isPressed) {
         await toggle.click();
     }
 }

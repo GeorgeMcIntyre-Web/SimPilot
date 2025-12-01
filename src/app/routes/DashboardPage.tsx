@@ -18,6 +18,7 @@ export function DashboardPage() {
     const projectMetrics = useAllProjectMetrics();
     const cells = useCells();
     const hasData = useHasSimulationData();
+    console.log('DashboardPage render. hasData:', hasData);
     const navigate = useNavigate();
 
     const [isDaleMode, setIsDaleMode] = useState(() => getUserPreference('simpilot.dashboard.mode', true));
@@ -55,27 +56,23 @@ export function DashboardPage() {
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
             setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortKey(key);
-            setSortDir('asc');
+            return;
         }
+        setSortKey(key);
+        setSortDir('asc');
     };
 
     const getSortedCells = () => {
         return [...atRiskCells].sort((a, b) => {
-            let valA: string | number = '';
-            let valB: string | number = '';
+            const getValue = (cell: Cell, key: SortKey): string | number => {
+                if (key === 'percentComplete') return cell.simulation?.percentComplete || 0;
+                if (key === 'name') return cell.name;
+                if (key === 'status') return cell.status;
+                return '';
+            };
 
-            if (sortKey === 'percentComplete') {
-                valA = a.simulation?.percentComplete || 0;
-                valB = b.simulation?.percentComplete || 0;
-            } else if (sortKey === 'name') {
-                valA = a.name;
-                valB = b.name;
-            } else if (sortKey === 'status') {
-                valA = a.status;
-                valB = b.status;
-            }
+            const valA = getValue(a, sortKey);
+            const valB = getValue(b, sortKey);
 
             if (valA < valB) return sortDir === 'asc' ? -1 : 1;
             if (valA > valB) return sortDir === 'asc' ? 1 : -1;
@@ -162,6 +159,7 @@ export function DashboardPage() {
                     <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                         <button
                             onClick={() => setIsDaleMode(false)}
+                            aria-pressed={!isDaleMode}
                             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${!isDaleMode ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                         >
                             Standard
@@ -169,6 +167,7 @@ export function DashboardPage() {
                         <button
                             onClick={() => setIsDaleMode(true)}
                             data-testid="dashboard-dale-toggle"
+                            aria-pressed={isDaleMode}
                             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${isDaleMode ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                         >
                             Dale Mode

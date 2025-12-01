@@ -34,27 +34,23 @@ export function ProjectsPage() {
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
             setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortKey(key);
-            setSortDir('asc');
+            return;
         }
+        setSortKey(key);
+        setSortDir('asc');
     };
 
     const getSortedProjects = () => {
         return [...projects].sort((a, b) => {
-            let valA: any = '';
-            let valB: any = '';
+            const getValue = (project: ProjectWithMetrics, key: SortKey): any => {
+                if (key === 'name') return project.name;
+                if (key === 'avgCompletion') return project.avgCompletion;
+                if (key === 'atRiskCellsCount') return project.atRiskCellsCount;
+                return '';
+            };
 
-            if (sortKey === 'name') {
-                valA = a.name;
-                valB = b.name;
-            } else if (sortKey === 'avgCompletion') {
-                valA = a.avgCompletion;
-                valB = b.avgCompletion;
-            } else if (sortKey === 'atRiskCellsCount') {
-                valA = a.atRiskCellsCount;
-                valB = b.atRiskCellsCount;
-            }
+            const valA = getValue(a, sortKey);
+            const valB = getValue(b, sortKey);
 
             if (valA < valB) return sortDir === 'asc' ? -1 : 1;
             if (valA > valB) return sortDir === 'asc' ? 1 : -1;
