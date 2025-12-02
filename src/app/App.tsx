@@ -6,6 +6,7 @@ import { ProjectsByCustomerPage } from './routes/ProjectsByCustomerPage'
 import { ProjectDetailPage } from './routes/ProjectDetailPage'
 import { CellDetailPage } from './routes/CellDetailPage'
 import { ToolsPage } from './routes/ToolsPage'
+import { ToolingPage } from './routes/ToolingPage'
 import { AssetsPage } from './routes/AssetsPage'
 import { DataLoaderPage } from './routes/DataLoaderPage'
 import { EngineersPage } from './routes/EngineersPage'
@@ -46,6 +47,7 @@ function App() {
                                     <Route path="cells/:cellId" element={<CellDetailPage />} />
                                     <Route path="engineers" element={<EngineersPage />} />
                                     <Route path="tools" element={<ToolsPage />} />
+                                    <Route path="tooling" element={<ToolingPage />} />
                                     <Route path="assets" element={<AssetsPage />} />
                                     <Route path="data-loader" element={<DataLoaderPage />} />
                                     <Route path="changes" element={<ChangesPage />} />
