@@ -22,6 +22,7 @@ import {
   TodayForDaleStrip,
   AreaCardsGrid,
   StationsTable,
+  DashboardBottlenecksPanel,
   generateFocusItems,
   countByRisk,
   getRiskLevel
@@ -298,6 +299,14 @@ export function DashboardPage() {
         stationsHealthy={stats.healthy}
         totalStations={stats.total}
       />
+
+      {/* Tooling bottlenecks */}
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Tooling Bottlenecks Overview
+        </h3>
+        <DashboardBottlenecksPanel />
+      </section>
 
       {viewMode === 'overview' ? (
         <>

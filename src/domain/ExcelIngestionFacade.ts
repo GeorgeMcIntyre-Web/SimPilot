@@ -14,6 +14,12 @@ import {
 } from '../ingestion/excelIngestionOrchestrator';
 import type { ReuseAllocationStatus } from '../ingestion/excelIngestionTypes';
 import type { SimplifiedAsset } from '../ingestion/parsers/reuseLinker';
+import {
+  type BottleneckSnapshot,
+  type ToolingSnapshot,
+  createEmptyBottleneckSnapshot,
+  createEmptyToolingSnapshot
+} from './toolingTypes';
 
 /**
  * Stable snapshot of all SimPilot data loaded from Excel workbooks
@@ -40,6 +46,12 @@ export type SimPilotDataSnapshot = {
 
   /** Errors encountered during ingestion (non-fatal) */
   errors: string[];
+
+  /** Tooling catalog snapshot */
+  toolingSnapshot: ToolingSnapshot;
+
+  /** Tooling bottleneck snapshot */
+  bottleneckSnapshot: BottleneckSnapshot;
 };
 
 /**
@@ -113,11 +125,18 @@ export async function loadSimPilotDataSnapshot(
       matchedReuseRecords: result.linkingStats.matchedReuseRecords,
       unmatchedReuseRecords: result.linkingStats.unmatchedReuseRecords
     },
-    errors: result.errors
+    errors: result.errors,
+    toolingSnapshot: createEmptyToolingSnapshot(),
+    bottleneckSnapshot: createEmptyBottleneckSnapshot()
   };
 }
 
 /**
  * Re-export stable types for convenience
  */
-export type { SimplifiedAsset, ReuseAllocationStatus };
+export type {
+  SimplifiedAsset,
+  ReuseAllocationStatus,
+  ToolingSnapshot,
+  BottleneckSnapshot
+};
