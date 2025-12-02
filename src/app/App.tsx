@@ -15,6 +15,7 @@ import { ChangesPage } from './routes/ChangesPage'
 import { ReadinessBoard } from './routes/ReadinessBoard'
 import { TimelineView } from './routes/TimelineView'
 import { SimulationPage } from './routes/SimulationPage'
+import { DataHealthPage } from './routes/DataHealthPage'
 import { MsAuthProvider } from '../integrations/ms/useMsAccount'
 import { GlobalBusyProvider } from '../ui/GlobalBusyContext'
 import { DevDiagnostics } from '../ui/DevDiagnostics'
@@ -50,6 +51,7 @@ function App() {
                                     <Route path="changes" element={<ChangesPage />} />
                                     <Route path="readiness" element={<ReadinessBoard />} />
                                     <Route path="timeline/:projectId" element={<TimelineView />} />
+                                    <Route path="data-health" element={<DataHealthPage />} />
                                 </Route>
                             </Routes>
                             <DevDiagnostics />

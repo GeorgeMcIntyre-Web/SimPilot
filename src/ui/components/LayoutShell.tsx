@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, Wrench, Upload, Menu, Users, LogOut, Calendar, Box, LayoutGrid } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, Wrench, Upload, Menu, Users, LogOut, Calendar, Box, LayoutGrid, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useState } from 'react';
 import { useHasSimulationData, useWarnings, useHasUnsyncedChanges, useLastUpdated, useDataSource } from '../../ui/hooks/useDomainData';
@@ -33,6 +33,7 @@ export function LayoutShell() {
         { href: '/engineers', label: 'Engineers', icon: Users },
         { href: '/tools', label: 'Tools', icon: Wrench },
         { href: '/assets', label: 'Assets', icon: Box },
+        { href: '/data-health', label: 'Data Health', icon: Activity },
         { href: '/data-loader', label: 'Data Loader', icon: Upload },
     ];
 
