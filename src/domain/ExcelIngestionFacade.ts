@@ -17,9 +17,18 @@ import type { SimplifiedAsset } from '../ingestion/parsers/reuseLinker';
 import {
   type BottleneckSnapshot,
   type ToolingSnapshot,
+  type ToolingWorkflowStatus,
   createEmptyBottleneckSnapshot,
   createEmptyToolingSnapshot
 } from './toolingTypes';
+import {
+  type WorkflowSnapshot,
+  type WorkflowBottleneckSnapshot,
+  type WorkflowItem,
+  type WorkflowBottleneckStatus
+} from './workflowTypes';
+import { toolingItemToWorkflowItem, toolingWorkflowStatusToWorkflowItem } from './workflowMappers';
+import { analyzeWorkflowItem } from './workflowBottleneckLinker';
 
 /**
  * Stable snapshot of all SimPilot data loaded from Excel workbooks
@@ -47,11 +56,17 @@ export type SimPilotDataSnapshot = {
   /** Errors encountered during ingestion (non-fatal) */
   errors: string[];
 
-  /** Tooling catalog snapshot */
+  /** Tooling catalog snapshot (legacy) */
   toolingSnapshot: ToolingSnapshot;
 
-  /** Tooling bottleneck snapshot */
+  /** Tooling bottleneck snapshot (legacy) */
   bottleneckSnapshot: BottleneckSnapshot;
+
+  /** Generic workflow items (all asset kinds) */
+  workflowSnapshot: WorkflowSnapshot;
+
+  /** Generic workflow bottleneck analysis */
+  workflowBottleneckSnapshot: WorkflowBottleneckSnapshot;
 };
 
 /**
@@ -110,6 +125,16 @@ export async function loadSimPilotDataSnapshot(
   // Execute ingestion pipeline
   const result: FullIngestionResult = await ingestAllExcelData(options);
 
+  // PHASE 1: Build tooling snapshots (currently empty, will be populated by future ingestion)
+  const toolingSnapshot = createEmptyToolingSnapshot();
+  const bottleneckSnapshot = createEmptyBottleneckSnapshot();
+
+  // PHASE 1: Build workflow snapshots from tooling snapshots
+  // This demonstrates the generic workflow engine wiring
+  // When tooling ingestion is complete, these will contain real data
+  const workflowSnapshot = buildWorkflowSnapshotFromTooling(toolingSnapshot);
+  const workflowBottleneckSnapshot = buildWorkflowBottleneckSnapshotFromTooling(bottleneckSnapshot);
+
   // Map to stable facade types
   return {
     assets: result.assets,
@@ -126,9 +151,57 @@ export async function loadSimPilotDataSnapshot(
       unmatchedReuseRecords: result.linkingStats.unmatchedReuseRecords
     },
     errors: result.errors,
-    toolingSnapshot: createEmptyToolingSnapshot(),
-    bottleneckSnapshot: createEmptyBottleneckSnapshot()
+    toolingSnapshot,
+    bottleneckSnapshot,
+    workflowSnapshot,
+    workflowBottleneckSnapshot
   };
+}
+
+/**
+ * PHASE 1: Build workflow snapshot from tooling snapshot
+ *
+ * Converts tooling-specific items to generic WorkflowItem[]
+ * This demonstrates the mapping framework without requiring full ingestion changes
+ */
+function buildWorkflowSnapshotFromTooling(toolingSnapshot: ToolingSnapshot): WorkflowSnapshot {
+  const workflowItems: WorkflowItem[] = toolingSnapshot.items.map(toolingItemToWorkflowItem)
+
+  return {
+    generatedAt: toolingSnapshot.updatedAt,
+    items: workflowItems
+  }
+}
+
+/**
+ * PHASE 1: Build workflow bottleneck snapshot from tooling bottleneck snapshot
+ *
+ * Converts tooling-specific workflow statuses to generic WorkflowBottleneckStatus[]
+ * Uses the generic workflow engine for consistency
+ */
+function buildWorkflowBottleneckSnapshotFromTooling(
+  bottleneckSnapshot: BottleneckSnapshot
+): WorkflowBottleneckSnapshot {
+  const bottlenecks: WorkflowBottleneckStatus[] = bottleneckSnapshot.workflowStatuses.map(
+    (toolingStatus: ToolingWorkflowStatus) => {
+      // Convert to generic WorkflowItem
+      const workflowItem = toolingWorkflowStatusToWorkflowItem(toolingStatus)
+
+      // Analyze using generic workflow engine
+      const bottleneckStatus = analyzeWorkflowItem(workflowItem)
+
+      // Attach the full workflow item for reference
+      return {
+        ...bottleneckStatus,
+        workflowItem
+      }
+    }
+  )
+
+  return {
+    generatedAt: bottleneckSnapshot.generatedAt,
+    bottlenecks
+  }
 }
 
 /**
@@ -138,5 +211,7 @@ export type {
   SimplifiedAsset,
   ReuseAllocationStatus,
   ToolingSnapshot,
-  BottleneckSnapshot
+  BottleneckSnapshot,
+  WorkflowSnapshot,
+  WorkflowBottleneckSnapshot
 };

@@ -4,10 +4,17 @@ import {
   selectWorstBottlenecks,
   selectBottlenecksByStationKey,
   selectBottlenecksForToolingNumber,
-  selectBottlenecksByStage
+  selectBottlenecksByStage,
+  selectWorstWorkflowBottlenecks,
+  selectWorkflowBottlenecksByContextKey,
+  selectWorkflowBottlenecksByKind,
+  selectWorkflowBottlenecksByStage,
+  selectWorkflowBottlenecksByReason,
+  selectWorkflowBottleneckStats
 } from '../simPilotSelectors'
 import type { SimPilotStoreState } from '../simPilotStore'
 import type { ToolingWorkflowStatus, WorkflowStage, StageStatusSnapshot } from '../toolingTypes'
+import type { WorkflowBottleneckStatus } from '../workflowTypes'
 
 const baseSnapshot = {
   assets: [],
@@ -79,10 +86,65 @@ const makeState = (statuses: ToolingWorkflowStatus[]): SimPilotStoreState => ({
     bottleneckSnapshot: {
       generatedAt: '2024-01-01T00:00:00.000Z',
       workflowStatuses: statuses
+    },
+    workflowSnapshot: {
+      generatedAt: '2024-01-01T00:00:00.000Z',
+      items: []
+    },
+    workflowBottleneckSnapshot: {
+      generatedAt: '2024-01-01T00:00:00.000Z',
+      bottlenecks: []
     }
   },
   isLoading: false,
   errors: []
+})
+
+const makeWorkflowState = (bottlenecks: WorkflowBottleneckStatus[]): SimPilotStoreState => ({
+  snapshot: {
+    ...baseSnapshot,
+    bottleneckSnapshot: {
+      generatedAt: '2024-01-01T00:00:00.000Z',
+      workflowStatuses: []
+    },
+    workflowSnapshot: {
+      generatedAt: '2024-01-01T00:00:00.000Z',
+      items: []
+    },
+    workflowBottleneckSnapshot: {
+      generatedAt: '2024-01-01T00:00:00.000Z',
+      bottlenecks
+    }
+  },
+  isLoading: false,
+  errors: []
+})
+
+const makeWorkflowBottleneck = (overrides: Partial<WorkflowBottleneckStatus>): WorkflowBottleneckStatus => ({
+  workflowItemId: overrides.workflowItemId ?? randomUUID(),
+  kind: overrides.kind ?? 'TOOLING',
+  simulationContextKey: overrides.simulationContextKey ?? 'PRG|Plant1|Unit1|Line1|Station1',
+  itemNumber: overrides.itemNumber ?? 'ITEM-001',
+  dominantStage: overrides.dominantStage ?? 'DESIGN',
+  bottleneckReason: overrides.bottleneckReason ?? 'DESIGN_NOT_DETAILED',
+  severity: overrides.severity ?? 'HIGH',
+  severityScore: overrides.severityScore ?? 80,
+  blockingItemIds: overrides.blockingItemIds ?? [],
+  designStage: overrides.designStage ?? {
+    stage: 'DESIGN',
+    status: 'IN_PROGRESS',
+    percentComplete: 40
+  },
+  simulationStage: overrides.simulationStage ?? {
+    stage: 'SIMULATION',
+    status: 'NOT_STARTED',
+    percentComplete: 0
+  },
+  manufactureStage: overrides.manufactureStage ?? {
+    stage: 'MANUFACTURE',
+    status: 'NOT_STARTED',
+    percentComplete: 0
+  }
 })
 
 describe('simPilotSelectors', () => {
@@ -128,5 +190,98 @@ describe('simPilotSelectors', () => {
     const result = selectBottlenecksByStage(state, 'SIMULATION')
     expect(result).toHaveLength(1)
     expect(result[0]?.workflowId).toBe('sim')
+  })
+})
+
+describe('Generic Workflow Selectors', () => {
+  it('selectWorstWorkflowBottlenecks sorts by severity and score', () => {
+    const state = makeWorkflowState([
+      makeWorkflowBottleneck({ workflowItemId: 'low', severity: 'LOW', severityScore: 30 }),
+      makeWorkflowBottleneck({ workflowItemId: 'high', severity: 'HIGH', severityScore: 90 }),
+      makeWorkflowBottleneck({ workflowItemId: 'medium', severity: 'MEDIUM', severityScore: 60 })
+    ])
+
+    const result = selectWorstWorkflowBottlenecks(state, 2)
+    expect(result).toHaveLength(2)
+    expect(result[0].workflowItemId).toBe('high')
+    expect(result[1].workflowItemId).toBe('medium')
+  })
+
+  it('selectWorkflowBottlenecksByContextKey filters by simulation context', () => {
+    const state = makeWorkflowState([
+      makeWorkflowBottleneck({ workflowItemId: 'A', simulationContextKey: 'PRG|Plant1|Unit1|Line1|Station1' }),
+      makeWorkflowBottleneck({ workflowItemId: 'B', simulationContextKey: 'PRG|Plant1|Unit1|Line1|Station2' })
+    ])
+
+    const result = selectWorkflowBottlenecksByContextKey(state, 'PRG|Plant1|Unit1|Line1|Station1')
+    expect(result).toHaveLength(1)
+    expect(result[0].workflowItemId).toBe('A')
+  })
+
+  it('selectWorkflowBottlenecksByKind filters by workflow item kind', () => {
+    const state = makeWorkflowState([
+      makeWorkflowBottleneck({ workflowItemId: 'A', kind: 'TOOLING' }),
+      makeWorkflowBottleneck({ workflowItemId: 'B', kind: 'WELD_GUN' }),
+      makeWorkflowBottleneck({ workflowItemId: 'C', kind: 'TOOLING' })
+    ])
+
+    const result = selectWorkflowBottlenecksByKind(state, 'TOOLING')
+    expect(result).toHaveLength(2)
+    expect(result.map(r => r.workflowItemId)).toEqual(['A', 'C'])
+  })
+
+  it('selectWorkflowBottlenecksByStage filters by dominant stage', () => {
+    const state = makeWorkflowState([
+      makeWorkflowBottleneck({ workflowItemId: 'A', dominantStage: 'DESIGN' }),
+      makeWorkflowBottleneck({ workflowItemId: 'B', dominantStage: 'SIMULATION' }),
+      makeWorkflowBottleneck({ workflowItemId: 'C', dominantStage: 'DESIGN' })
+    ])
+
+    const result = selectWorkflowBottlenecksByStage(state, 'DESIGN')
+    expect(result).toHaveLength(2)
+    expect(result.map(r => r.workflowItemId)).toEqual(['A', 'C'])
+  })
+
+  it('selectWorkflowBottlenecksByReason filters by bottleneck reason', () => {
+    const state = makeWorkflowState([
+      makeWorkflowBottleneck({ workflowItemId: 'A', bottleneckReason: 'DESIGN_BLOCKED' }),
+      makeWorkflowBottleneck({ workflowItemId: 'B', bottleneckReason: 'SIM_NOT_STARTED' }),
+      makeWorkflowBottleneck({ workflowItemId: 'C', bottleneckReason: 'DESIGN_BLOCKED' })
+    ])
+
+    const result = selectWorkflowBottlenecksByReason(state, 'DESIGN_BLOCKED')
+    expect(result).toHaveLength(2)
+    expect(result.map(r => r.workflowItemId)).toEqual(['A', 'C'])
+  })
+
+  it('selectWorkflowBottleneckStats computes statistics', () => {
+    const state = makeWorkflowState([
+      makeWorkflowBottleneck({ workflowItemId: 'A', kind: 'TOOLING', severity: 'HIGH', dominantStage: 'DESIGN', bottleneckReason: 'DESIGN_BLOCKED' }),
+      makeWorkflowBottleneck({ workflowItemId: 'B', kind: 'WELD_GUN', severity: 'MEDIUM', dominantStage: 'SIMULATION', bottleneckReason: 'SIM_NOT_STARTED' }),
+      makeWorkflowBottleneck({ workflowItemId: 'C', kind: 'TOOLING', severity: 'LOW', dominantStage: 'MANUFACTURE', bottleneckReason: 'MISSING_ASSETS' })
+    ])
+
+    const stats = selectWorkflowBottleneckStats(state)
+
+    expect(stats.total).toBe(3)
+    expect(stats.bySeverity.HIGH).toBe(1)
+    expect(stats.bySeverity.MEDIUM).toBe(1)
+    expect(stats.bySeverity.LOW).toBe(1)
+    expect(stats.byStage.DESIGN).toBe(1)
+    expect(stats.byStage.SIMULATION).toBe(1)
+    expect(stats.byStage.MANUFACTURE).toBe(1)
+    expect(stats.byReason.DESIGN_BLOCKED).toBe(1)
+    expect(stats.byReason.SIM_NOT_STARTED).toBe(1)
+    expect(stats.byReason.MISSING_ASSETS).toBe(1)
+  })
+
+  it('returns empty arrays when no bottlenecks exist', () => {
+    const state = makeWorkflowState([])
+
+    expect(selectWorstWorkflowBottlenecks(state)).toEqual([])
+    expect(selectWorkflowBottlenecksByContextKey(state, 'any')).toEqual([])
+    expect(selectWorkflowBottlenecksByKind(state, 'TOOLING')).toEqual([])
+    expect(selectWorkflowBottlenecksByStage(state, 'DESIGN')).toEqual([])
+    expect(selectWorkflowBottlenecksByReason(state, 'DESIGN_BLOCKED')).toEqual([])
   })
 })

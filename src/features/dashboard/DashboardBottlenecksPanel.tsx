@@ -25,6 +25,11 @@ export function DashboardBottlenecksPanel() {
   const [reasonFilter, setReasonFilter] = useState<BottleneckReason[]>([])
   const [activeWorkflow, setActiveWorkflow] = useState<ToolingWorkflowStatus | null>(null)
 
+  // PHASE 1: Currently using legacy tooling-specific selectors
+  // Future migration: Switch to generic workflow selectors
+  // const worstBottlenecks = useMemo(() => {
+  //   return selectWorstToolingWorkflowBottlenecks(simPilotState, 25)
+  // }, [simPilotState])
   const worstBottlenecks = useMemo(() => {
     return selectWorstBottlenecks(simPilotState, 25)
   }, [simPilotState])
