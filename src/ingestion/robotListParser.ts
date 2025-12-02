@@ -35,7 +35,11 @@ const POSSIBLE_HEADERS = [
   ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'],  // From Robotlist_ZA files
   ['ROBOTNUMBER (E-NUMBER)', 'ASSEMBLY LINE', 'STATION NUMBER'],
   ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER'],
-  ['ROBOT', 'ASSEMBLY LINE', 'STATION']
+  ['ROBOT', 'ASSEMBLY LINE', 'STATION'],
+  // Additional patterns for Robotlist_ZA__STLA-S_UB files
+  ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'],  // Case variations
+  ['ROBOT CAPTION', 'ASSEMBLY LINE', 'STATION NUMBER'],
+  ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER']  // "Robots Total" contains robot caption
 ]
 
 // ============================================================================
@@ -110,7 +114,15 @@ export async function parseRobotList(
     'ASSEMBLY LINE',
     'STATION',
     'STATION CODE',
-    'CELL'
+    'STATION NUMBER',
+    'CELL',
+    // Additional patterns for Robotlist_ZA files
+    'ROBOTNUMBER',
+    'ROBOTNUMBER (E-NUMBER)',
+    'ROBOT CAPTION',
+    'ROBOTS TOTAL',
+    'ROBOT TYPE',
+    'ROBOT TYPE CONFIRMED'
   ])
 
   // Parse data rows
@@ -124,11 +136,16 @@ export async function parseRobotList(
     if (isEmptyRow(row) || isTotalRow(row)) continue
 
     // Extract robot identifier (try multiple column names)
-    const robotId = getCellString(row, columnMap, 'ROBOT ID')
+    // Priority: E-Number first (most specific), then other identifiers
+    const robotId = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
+      || getCellString(row, columnMap, 'ROBOT ID')
+      || getCellString(row, columnMap, 'ROBOTNUMBER')
       || getCellString(row, columnMap, 'ROBOT')
       || getCellString(row, columnMap, 'ID')
       || getCellString(row, columnMap, 'ROBOT NAME')
       || getCellString(row, columnMap, 'NAME')
+      || getCellString(row, columnMap, 'ROBOT CAPTION')
+      || getCellString(row, columnMap, 'ROBOTS TOTAL')
 
     if (!robotId) {
       warnings.push(createRowSkippedWarning({
@@ -154,6 +171,7 @@ export async function parseRobotList(
 
     const stationCode = getCellString(row, columnMap, 'STATION')
       || getCellString(row, columnMap, 'STATION CODE')
+      || getCellString(row, columnMap, 'STATION NUMBER')
       || getCellString(row, columnMap, 'CELL')
 
     // Vacuum Parser: Collect all other columns into metadata
@@ -163,7 +181,9 @@ export async function parseRobotList(
       'MODEL', 'OEM MODEL', 'TYPE',
       'AREA', 'AREA NAME',
       'LINE', 'LINE CODE', 'ASSEMBLY LINE',
-      'STATION', 'STATION CODE', 'CELL'
+      'STATION', 'STATION CODE', 'STATION NUMBER', 'CELL',
+      'ROBOTNUMBER', 'ROBOTNUMBER (E-NUMBER)', 'ROBOT CAPTION', 'ROBOTS TOTAL',
+      'ROBOT TYPE', 'ROBOT TYPE CONFIRMED'
     ]
 
     // Create a set of consumed indices based on the column map and consumed headers
