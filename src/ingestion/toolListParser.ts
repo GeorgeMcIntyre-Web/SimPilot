@@ -186,12 +186,16 @@ export async function parseToolList(
       || getCellString(row, columnMap, 'NAME')
 
     if (!toolId) {
-      warnings.push(createRowSkippedWarning({
-        fileName,
-        sheetName,
-        rowIndex: i + 1,
-        reason: 'No tool ID found in any expected columns'
-      }))
+      // Only warn if row looks like it might have been intended as data
+      // Skip warnings for effectively empty rows (reduces noise)
+      if (!isEffectivelyEmptyRow(row, 2)) {
+        warnings.push(createRowSkippedWarning({
+          fileName,
+          sheetName,
+          rowIndex: i + 1,
+          reason: 'No tool ID found in any expected columns'
+        }))
+      }
       continue
     }
 
