@@ -5,6 +5,7 @@ import { ProjectsPage } from './routes/ProjectsPage'
 import { ProjectDetailPage } from './routes/ProjectDetailPage'
 import { CellDetailPage } from './routes/CellDetailPage'
 import { ToolsPage } from './routes/ToolsPage'
+import { AssetsPage } from './routes/AssetsPage'
 import { DataLoaderPage } from './routes/DataLoaderPage'
 import { EngineersPage } from './routes/EngineersPage'
 import { DaleConsole } from './routes/DaleConsole'
@@ -40,6 +41,7 @@ function App() {
                                     <Route path="cells/:cellId" element={<CellDetailPage />} />
                                     <Route path="engineers" element={<EngineersPage />} />
                                     <Route path="tools" element={<ToolsPage />} />
+                                    <Route path="assets" element={<AssetsPage />} />
                                     <Route path="data-loader" element={<DataLoaderPage />} />
                                     <Route path="changes" element={<ChangesPage />} />
                                     <Route path="readiness" element={<ReadinessBoard />} />
