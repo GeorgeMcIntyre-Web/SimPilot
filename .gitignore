@@ -52,3 +52,10 @@ scripts/verify_local_data.ts
 # Generated data exports (can be regenerated via scripts/export_store_data.ts)
 exported_store_data.json
 public/exported_store_data.json
+# Temporary status files
+FINAL_STATUS.md
+FIXES_APPLIED.md
+LOCAL_CHANGES_STATUS.md
+PROGRESS_SUMMARY.md
+REVIEW_SUMMARY.md
+push-changes.ps1
