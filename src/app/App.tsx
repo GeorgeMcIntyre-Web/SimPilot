@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LayoutShell } from '../ui/components/LayoutShell'
 import { DashboardPage } from './routes/DashboardPage'
 import { ProjectsPage } from './routes/ProjectsPage'
+import { ProjectsByCustomerPage } from './routes/ProjectsByCustomerPage'
 import { ProjectDetailPage } from './routes/ProjectDetailPage'
 import { CellDetailPage } from './routes/CellDetailPage'
 import { ToolsPage } from './routes/ToolsPage'
@@ -36,6 +37,7 @@ function App() {
                                     <Route path="dale-console" element={<DaleConsole />} />
                                     <Route path="warnings" element={<WarningsPage />} />
                                     <Route path="projects" element={<ProjectsPage />} />
+                                    <Route path="projects-by-customer" element={<ProjectsByCustomerPage />} />
                                     <Route path="projects/:projectId" element={<ProjectDetailPage />} />
                                     <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
                                     <Route path="cells/:cellId" element={<CellDetailPage />} />

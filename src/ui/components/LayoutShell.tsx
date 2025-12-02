@@ -27,6 +27,7 @@ export function LayoutShell() {
     const navItems = [
         { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/projects', label: 'Projects', icon: FolderKanban },
+        { href: '/projects-by-customer', label: 'By Customer', icon: FolderKanban },
         { href: '/readiness', label: 'Readiness', icon: Calendar },
         { href: '/engineers', label: 'Engineers', icon: Users },
         { href: '/tools', label: 'Tools', icon: Wrench },
