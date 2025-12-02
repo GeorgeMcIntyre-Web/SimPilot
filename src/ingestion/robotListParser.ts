@@ -109,6 +109,7 @@ export async function parseRobotList(
     'TYPE',
     'AREA',
     'AREA NAME',
+    'INDEX', // Robotlist_ZA files use "Index" column for area names
     'LINE',
     'LINE CODE',
     'ASSEMBLY LINE',
