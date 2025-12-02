@@ -346,6 +346,20 @@ export function isEmptyRow(row: CellValue[]): boolean {
 }
 
 /**
+ * Check if a row is effectively empty (has very few non-empty cells, likely not real data)
+ * This helps reduce noise from warnings about rows that are mostly empty
+ */
+export function isEffectivelyEmptyRow(row: CellValue[], minCells: number = 2): boolean {
+  if (!row || row.length === 0) return true
+  const nonEmptyCount = row.filter(cell => {
+    if (cell === null || cell === undefined) return false
+    if (typeof cell === 'string' && cell.trim() === '') return false
+    return true
+  }).length
+  return nonEmptyCount < minCells
+}
+
+/**
  * Check if a row appears to be a "TOTAL" summary row
  */
 export function isTotalRow(row: CellValue[]): boolean {

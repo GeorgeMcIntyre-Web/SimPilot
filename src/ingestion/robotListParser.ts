@@ -10,6 +10,7 @@ import {
   getCellString,
   isEmptyRow,
   isTotalRow,
+  isEffectivelyEmptyRow,
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
@@ -149,12 +150,16 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'ROBOTS TOTAL')
 
     if (!robotId) {
-      warnings.push(createRowSkippedWarning({
-        fileName,
-        sheetName,
-        rowIndex: i + 1,
-        reason: 'No robot ID found in any expected columns'
-      }))
+      // Only warn if row looks like it might have been intended as data
+      // Skip warnings for effectively empty rows (reduces noise)
+      if (!isEffectivelyEmptyRow(row, 2)) {
+        warnings.push(createRowSkippedWarning({
+          fileName,
+          sheetName,
+          rowIndex: i + 1,
+          reason: 'No robot ID found in any expected columns'
+        }))
+      }
       continue
     }
 

@@ -17,6 +17,7 @@ import {
   findHeaderRow,
   isEmptyRow,
   isTotalRow,
+  isEffectivelyEmptyRow,
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
@@ -271,12 +272,16 @@ export function vacuumParseSimulationSheet(
 
     // Skip rows without critical data
     if (!area || !stationKey) {
-      warnings.push(createRowSkippedWarning({
-        fileName,
-        sheetName,
-        rowIndex: i + 1,
-        reason: 'Missing required fields: AREA or STATION'
-      }))
+      // Only warn if row looks like it might have been intended as data
+      // Skip warnings for effectively empty rows (reduces noise)
+      if (!isEffectivelyEmptyRow(row, 2)) {
+        warnings.push(createRowSkippedWarning({
+          fileName,
+          sheetName,
+          rowIndex: i + 1,
+          reason: 'Missing required fields: AREA or STATION'
+        }))
+      }
       continue
     }
 

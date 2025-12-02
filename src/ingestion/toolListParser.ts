@@ -10,7 +10,8 @@ import {
   buildColumnMap,
   getCellString,
   isEmptyRow,
-  isTotalRow
+  isTotalRow,
+  isEffectivelyEmptyRow
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 
