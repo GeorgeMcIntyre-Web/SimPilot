@@ -83,6 +83,7 @@ Set these in Cloudflare Pages → Settings → Environment Variables:
 |----------|----------|---------|-------------|
 | `NODE_VERSION` | Yes | — | Set to `20` for Node.js 20 LTS |
 | `VITE_APP_ENV` | No | `local` | Set to `production` for production builds |
+| `VITE_SIMPILOT_DATA_ROOT` | No | `''` | Default data root path (typically left empty for browser-based file loading) |
 
 ### Optional: Microsoft Integration
 
@@ -104,6 +105,86 @@ If you're using Azure AD / SharePoint integration:
 | Variable | Description |
 |----------|-------------|
 | `VITE_SIMBRIDGE_URL` | SimBridge service URL |
+
+---
+
+## Security: Cloudflare Access / Zero Trust
+
+For internal or enterprise deployments, you can protect SimPilot behind **Cloudflare Access** (part of Cloudflare Zero Trust) to require authentication before users can access the app.
+
+### Why Use Cloudflare Access?
+
+- **No secrets in frontend code**: All authentication is handled at the edge by Cloudflare
+- **SSO integration**: Works with Okta, Azure AD, Google Workspace, GitHub, and more
+- **Per-request authentication**: Every request is authenticated, not just the initial page load
+- **Audit logging**: Full access logs available in Cloudflare Dashboard
+
+### Setting Up Cloudflare Access
+
+1. **Enable Zero Trust** (if not already):
+   - Go to [Cloudflare Zero Trust Dashboard](https://one.dash.cloudflare.com/)
+   - Complete the onboarding wizard
+
+2. **Add an Access Application**:
+   - Navigate to **Access** → **Applications** → **Add an application**
+   - Select **Self-hosted**
+   - Configure:
+     - **Application name**: `SimPilot`
+     - **Session Duration**: Choose based on your security requirements (e.g., 24 hours)
+     - **Application domain**: Your Cloudflare Pages URL (e.g., `simpilot.pages.dev`)
+
+3. **Create an Access Policy**:
+   - **Policy name**: e.g., `SimPilot Users`
+   - **Action**: `Allow`
+   - **Include rules**: Configure who can access:
+     - **Emails**: Specific email addresses
+     - **Emails ending in**: e.g., `@yourcompany.com`
+     - **Identity provider groups**: SSO groups from your IdP
+     - **Everyone**: (Not recommended for internal apps)
+
+4. **Configure Identity Providers** (optional but recommended):
+   - Go to **Settings** → **Authentication** → **Login methods**
+   - Add your corporate SSO provider (Azure AD, Okta, Google Workspace, etc.)
+   - This allows users to sign in with their existing corporate credentials
+
+### Access Policy Examples
+
+**Allow specific team members:**
+```
+Include:
+  - Emails: alice@company.com, bob@company.com
+```
+
+**Allow entire organization:**
+```
+Include:
+  - Emails ending in: @company.com
+```
+
+**Allow Azure AD group:**
+```
+Include:
+  - Azure AD Groups: "SimPilot Users"
+```
+
+### Important Security Notes
+
+> ⚠️ **NEVER store secret keys in frontend code**
+>
+> All `VITE_*` environment variables are bundled into the client-side JavaScript and are visible to anyone who can access the app.
+>
+> - ✅ Use Cloudflare Access for authentication
+> - ✅ Use backend APIs with proper authentication for sensitive operations
+> - ❌ Do NOT put API keys, database credentials, or secrets in `VITE_*` variables
+
+### Verifying Access is Working
+
+After configuring Access:
+
+1. Open an incognito/private browser window
+2. Navigate to your SimPilot URL
+3. You should be redirected to the Cloudflare Access login page
+4. After authenticating, you'll be redirected back to SimPilot
 
 ---
 
@@ -150,6 +231,18 @@ Open the URL shown in the terminal (typically `http://localhost:4173`).
 2. Azure AD redirect URI matches your Cloudflare Pages URL
 3. Azure AD app has correct permissions
 
+### Cloudflare Access Issues
+
+**Access policy not enforcing:**
+- Verify the application domain matches exactly
+- Check that the policy is set to "Allow" (not "Block" or "Bypass")
+- Ensure Zero Trust is properly connected to your Cloudflare account
+
+**SSO not working:**
+- Verify your Identity Provider is correctly configured in Zero Trust
+- Check the callback URL in your IdP matches Cloudflare's expected URL
+- Review Cloudflare Access audit logs for authentication errors
+
 ---
 
 ## CI/CD Pipeline
@@ -159,7 +252,7 @@ The repository includes GitHub Actions workflows:
 | Workflow | File | Purpose |
 |----------|------|---------|
 | CI | `.github/workflows/ci.yml` | Runs on every PR and push to `main`; builds and runs tests |
-| Deploy | `.github/workflows/deploy-pages.yml` | (Disabled by default) Deploys to Cloudflare Pages on push to `main` |
+| Deploy | `.github/workflows/deploy-pages.yml` | Deploys to Cloudflare Pages on push to `main` |
 
 ---
 
@@ -170,6 +263,42 @@ The repository includes GitHub Actions workflows:
 - [ ] Confirm demo data loads correctly
 - [ ] Test file upload functionality
 - [ ] (If using MS integration) Test Azure AD sign-in
+- [ ] (If using Cloudflare Access) Verify authentication is required
+- [ ] (If using Cloudflare Access) Test with an unauthorized user
+
+---
+
+## Architecture Notes
+
+SimPilot is a **static SPA (Single Page Application)** that runs entirely in the browser:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Cloudflare Edge                       │
+│  ┌─────────────────┐    ┌────────────────────────────┐  │
+│  │ Cloudflare      │    │ Cloudflare Pages           │  │
+│  │ Access          │───▶│ (Static SPA)               │  │
+│  │ (Auth at Edge)  │    │                            │  │
+│  └─────────────────┘    └────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────┐
+│                    User's Browser                        │
+│  ┌────────────────────────────────────────────────────┐ │
+│  │ SimPilot React App                                 │ │
+│  │  • Loads Excel files directly in browser          │ │
+│  │  • Processes data client-side                     │ │
+│  │  • No backend server required                     │ │
+│  └────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key points:**
+- All data processing happens in the browser
+- No secret keys are stored in the frontend
+- Cloudflare Access provides authentication at the edge
+- The app can work offline once loaded (PWA-capable in future)
 
 ---
 
@@ -179,3 +308,4 @@ For deployment issues:
 1. Check Cloudflare Pages build logs
 2. Compare with local `npm run build` output
 3. Verify environment variables are set correctly
+4. Review Cloudflare Access audit logs (if using Zero Trust)

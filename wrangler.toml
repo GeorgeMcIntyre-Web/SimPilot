@@ -2,6 +2,11 @@
 # 
 # This file is for Pages deployment only.
 # For Git-integrated Pages projects, the deploy command should be empty in the dashboard.
+#
+# DEPLOYMENT OPTIONS:
+#   1. Git Integration: Connect repo in Cloudflare Dashboard → auto-deploys on push
+#   2. Wrangler CLI: `wrangler pages deploy dist --project-name=simpilot`
+#   3. GitHub Actions: See .github/workflows/deploy-pages.yml
 
 name = "simpilot"
 pages_build_output_dir = "dist"
@@ -12,3 +17,10 @@ compatibility_date = "2024-01-01"
 # Note: [build] and [site] sections are for Workers, not Pages
 # Pages projects don't need these sections
 
+# SECURITY NOTE:
+# This is a static SPA frontend. All secrets and authentication should be handled via:
+#   - Cloudflare Access / Zero Trust for access control
+#   - Backend APIs for data operations (if applicable)
+#
+# Do NOT embed secrets in frontend code. Environment variables prefixed with VITE_
+# are bundled into the client-side code and visible to end users.
