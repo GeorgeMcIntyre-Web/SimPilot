@@ -164,6 +164,7 @@ export async function parseRobotList(
 
     const areaName = getCellString(row, columnMap, 'AREA')
       || getCellString(row, columnMap, 'AREA NAME')
+      || getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
 
     const lineCode = getCellString(row, columnMap, 'LINE')
       || getCellString(row, columnMap, 'LINE CODE')
@@ -179,7 +180,7 @@ export async function parseRobotList(
     const consumedHeaders = [
       'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
       'MODEL', 'OEM MODEL', 'TYPE',
-      'AREA', 'AREA NAME',
+      'AREA', 'AREA NAME', 'INDEX',
       'LINE', 'LINE CODE', 'ASSEMBLY LINE',
       'STATION', 'STATION CODE', 'STATION NUMBER', 'CELL',
       'ROBOTNUMBER', 'ROBOTNUMBER (E-NUMBER)', 'ROBOT CAPTION', 'ROBOTS TOTAL',
