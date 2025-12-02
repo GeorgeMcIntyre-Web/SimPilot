@@ -15,8 +15,10 @@ export type SheetCategory =
   | 'IN_HOUSE_TOOLING'
   | 'ROBOT_SPECS'
   | 'REUSE_WELD_GUNS'
-  | 'GUN_FORCE'
   | 'REUSE_RISERS'
+  | 'REUSE_TIP_DRESSERS'
+  | 'REUSE_ROBOTS'
+  | 'GUN_FORCE'
   | 'METADATA'
   | 'UNKNOWN'
 
@@ -217,6 +219,58 @@ export const CATEGORY_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
       'Location',
       'Type',
       'Project'
+    ]
+  },
+
+  // -------------------------------------------------------------------------
+  // REUSE_TIP_DRESSERS
+  // File: GLOBAL_ZA_REUSE_LIST_TIP_DRESSER.xlsx
+  // Sheet: Tip Dressers
+  // -------------------------------------------------------------------------
+  REUSE_TIP_DRESSERS: {
+    strong: [
+      'Tip Dresser ID',
+      'Tip Dresser',
+      'TipDresser'
+    ],
+    weak: [
+      'New Project',
+      'Old Project',
+      'New Line',
+      'Old Line',
+      'Station',
+      'Area',
+      'Type',
+      'Status',
+      'Location',
+      'Project'
+    ]
+  },
+
+  // -------------------------------------------------------------------------
+  // REUSE_ROBOTS
+  // File: FEB Underbody TMS_10.09.25_REUSE_LIST_ROBOTS_DES - R01.xlsx
+  // Sheet: STLA-S
+  // -------------------------------------------------------------------------
+  REUSE_ROBOTS: {
+    strong: [
+      'REUSE LIST',
+      'Old Line',
+      'New Line',
+      'Robot Reuse'
+    ],
+    weak: [
+      'Robot Number',
+      'Robot Type',
+      'Old Station',
+      'New Station',
+      'Old Project',
+      'New Project',
+      'Station',
+      'Area',
+      'Type',
+      'Status',
+      'Reuse'
     ]
   },
 
@@ -429,8 +483,10 @@ export function sniffSheet(
     'IN_HOUSE_TOOLING',
     'ROBOT_SPECS',
     'REUSE_WELD_GUNS',
-    'GUN_FORCE',
     'REUSE_RISERS',
+    'REUSE_TIP_DRESSERS',
+    'REUSE_ROBOTS',
+    'GUN_FORCE',
     'METADATA'
   ]
 
@@ -497,8 +553,10 @@ export function scanWorkbook(
     IN_HOUSE_TOOLING: null,
     ROBOT_SPECS: null,
     REUSE_WELD_GUNS: null,
-    GUN_FORCE: null,
     REUSE_RISERS: null,
+    REUSE_TIP_DRESSERS: null,
+    REUSE_ROBOTS: null,
+    GUN_FORCE: null,
     METADATA: null,
     UNKNOWN: null
   }
@@ -734,9 +792,13 @@ export function categoryToFileKind(category: SheetCategory): FileKind {
       return 'RobotList'
     case 'REUSE_WELD_GUNS':
       return 'ToolList'
-    case 'GUN_FORCE':
-      return 'ToolList'
     case 'REUSE_RISERS':
+      return 'ToolList'
+    case 'REUSE_TIP_DRESSERS':
+      return 'ToolList'
+    case 'REUSE_ROBOTS':
+      return 'RobotList'
+    case 'GUN_FORCE':
       return 'ToolList'
     case 'METADATA':
       return 'Metadata'
@@ -793,8 +855,10 @@ export function scanWorkbookWithConfig(
     IN_HOUSE_TOOLING: null,
     ROBOT_SPECS: null,
     REUSE_WELD_GUNS: null,
-    GUN_FORCE: null,
     REUSE_RISERS: null,
+    REUSE_TIP_DRESSERS: null,
+    REUSE_ROBOTS: null,
+    GUN_FORCE: null,
     METADATA: null,
     UNKNOWN: null
   }
@@ -831,8 +895,10 @@ export function scanWorkbookWithConfig(
     'IN_HOUSE_TOOLING',
     'ROBOT_SPECS',
     'REUSE_WELD_GUNS',
-    'GUN_FORCE',
     'REUSE_RISERS',
+    'REUSE_TIP_DRESSERS',
+    'REUSE_ROBOTS',
+    'GUN_FORCE',
     'METADATA'
   ]
 
