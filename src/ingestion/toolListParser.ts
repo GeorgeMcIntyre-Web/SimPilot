@@ -285,9 +285,14 @@ export async function parseToolList(
       areaName: areaName || undefined,
       lineCode: lineCode || undefined,
       stationCode: stationCode || undefined,
+      stationNumber: stationCode || undefined, // Map to UnifiedAsset field
       reuseStatus: reuseStatus || undefined,
       sourcing,
-      metadata,
+      metadata: {
+        ...metadata,
+        // Store lineCode in metadata for UnifiedAsset access
+        ...(lineCode ? { lineCode } : {})
+      },
       sourceFile: fileName,
       sheetName,
       rowIndex: i
