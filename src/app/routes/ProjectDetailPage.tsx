@@ -31,7 +31,7 @@ export function ProjectDetailPage() {
         { header: 'Area', accessor: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '-' },
         { header: 'Line', accessor: (c) => c.lineCode || '-' },
         { header: 'Station', accessor: (c) => c.code },
-        { header: 'Cell Name', accessor: (c) => <Link to={`/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link> },
+        { header: 'Station Name', accessor: (c) => <Link to={`/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link> },
         { header: 'Engineer', accessor: (c) => c.assignedEngineer || '-' },
         { header: '% Complete', accessor: (c) => c.simulation ? `${c.simulation.percentComplete}%` : '-' },
         { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },
@@ -94,11 +94,11 @@ export function ProjectDetailPage() {
                     </div>
                 </div>
 
-                {/* Right Content: Cells Table */}
+                {/* Right Content: Stations Table */}
                 <div className="flex-1">
                     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            Cells ({filteredCells.length})
+                            Stations ({filteredCells.length})
                         </h3>
                         <DataTable
                             data={filteredCells}

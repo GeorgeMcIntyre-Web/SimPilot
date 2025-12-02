@@ -5,7 +5,7 @@
  */
 
 /** Supported authentication provider identifiers */
-export type AuthProviderId = 'google'
+export type AuthProviderId = 'google' | 'mock'
 
 /** Authenticated user information */
 export type AuthUser = {

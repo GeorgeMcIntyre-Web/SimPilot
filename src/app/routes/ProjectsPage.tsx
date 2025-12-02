@@ -74,12 +74,12 @@ export function ProjectsPage() {
     const columns: Column<ProjectWithMetrics>[] = [
         { header: <SortHeader label="Project Name" keyName="name" />, accessor: (p) => <Link to={`/projects/${p.id}`} className="text-blue-600 hover:underline font-medium">{p.name}</Link> },
         { header: 'Customer', accessor: (p) => p.customer },
-        { header: 'Cell Count', accessor: (p) => p.cellCount },
+        { header: 'Station Count', accessor: (p) => p.cellCount },
         { header: <SortHeader label="Avg % Complete" keyName="avgCompletion" />, accessor: (p) => `${p.avgCompletion}%` },
         {
             header: <SortHeader label="At Risk" keyName="atRiskCellsCount" />,
             accessor: (p) => p.atRiskCellsCount > 0
-                ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">{p.atRiskCellsCount} Cells</span>
+                ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">{p.atRiskCellsCount} Stations</span>
                 : <span className="text-gray-400">-</span>
         },
         { header: 'Status', accessor: (p) => <StatusPill status={p.status} /> },

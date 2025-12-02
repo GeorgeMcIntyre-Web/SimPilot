@@ -293,6 +293,80 @@ export function DataLoaderPage() {
     }, 500)
   }
 
+  const handleLoadExportedData = async () => {
+    pushBusy('Loading exported data...')
+    setError(null)
+    setM365Error(null)
+    
+    try {
+      const response = await fetch('/exported_store_data.json')
+      if (!response.ok) {
+        throw new Error(`Failed to load data: ${response.status}`)
+      }
+      
+      const snapshot = await response.json()
+      
+      // Deduplicate projects, areas, and cells by ID before loading
+      const deduplicatedSnapshot = {
+        ...snapshot,
+        projects: deduplicateById(snapshot.projects || []),
+        areas: deduplicateById(snapshot.areas || []),
+        cells: deduplicateById(snapshot.cells || []),
+        assets: deduplicateById(snapshot.assets || [])
+      }
+      
+      // Clear store first to avoid duplicates
+      coreStore.clear()
+      coreStore.loadSnapshot(deduplicatedSnapshot)
+      
+      const state = coreStore.getState()
+      setResult({
+        projectsCount: state.projects.length,
+        areasCount: state.areas.length,
+        cellsCount: state.cells.length,
+        robotsCount: state.assets.filter(a => a.kind === 'ROBOT').length,
+        toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
+        warnings: state.warnings || []
+      })
+      
+      console.log('✅ Exported data loaded (deduplicated):', {
+        projects: state.projects.length,
+        areas: state.areas.length,
+        cells: state.cells.length,
+        assets: state.assets.length
+      })
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load exported data'
+      setError(errorMsg)
+      console.error('Error loading exported data:', err)
+    } finally {
+      popBusy()
+    }
+  }
+
+  // Helper to deduplicate arrays by ID
+  const deduplicateById = <T extends { id: string }>(items: T[]): T[] => {
+    const seen = new Map<string, T>()
+    for (const item of items) {
+      if (!seen.has(item.id)) {
+        seen.set(item.id, item)
+      }
+    }
+    return Array.from(seen.values())
+  }
+
+  const handleClearData = () => {
+    if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+      coreStore.clear()
+      setResult(null)
+      setError(null)
+      setM365Error(null)
+      setSimulationFiles([])
+      setEquipmentFiles([])
+      console.log('✅ Data cleared')
+    }
+  }
+
   return (
     <div className="space-y-6" data-testid="data-loader-root">
       <PageHeader
@@ -344,11 +418,22 @@ export function DataLoaderPage() {
             <button
               onClick={handleLoadDemo}
               data-testid="demo-load-button"
-
               data-testid-stla="load-demo-stla"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
             >
               Load Demo Scenario
+            </button>
+            <button
+              onClick={handleLoadExportedData}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Load All Excel Data
+            </button>
+            <button
+              onClick={handleClearData}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Clear Data
             </button>
           </div>
         </div>
@@ -701,7 +786,7 @@ export function DataLoaderPage() {
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-cells-count">{result.cellsCount}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cells</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Stations</div>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="result-robots-count">{result.robotsCount}</div>

@@ -135,7 +135,8 @@ const ROLE_PATTERNS: RolePattern[] = [
       'gun force [n]',
       'gun force',
       'force [n]',
-      'max force'
+      'max force',
+      'required force'  // From GUN_FORCE files
       // Note: 'force' alone is too generic - removed to avoid false matches
     ],
     confidence: 'HIGH'
@@ -439,7 +440,24 @@ const ROLE_PATTERNS: RolePattern[] = [
       'comment',
       'notes',
       'remarks',
-      'description'
+      'description',
+      'dcs configured',  // Configuration status from SIMULATION_STATUS
+      'dcs documentation created',
+      'spot list updated',
+      'weld jt files',
+      'dress pack & frying pan configured',
+      'track length + catrac confirmed',
+      'machine operation checked',
+      'collisions checked',
+      'joining',  // Completion status indicators
+      'gripper',
+      'fixture',
+      'safety',
+      'layout',
+      'documentation',
+      '1st stage sim completion',
+      'final deliverables completion',
+      'application'  // Application type (H+W, HD, HW, etc.) - common in SIMULATION_STATUS
     ],
     confidence: 'MEDIUM'
   },
@@ -453,7 +471,8 @@ const ROLE_PATTERNS: RolePattern[] = [
       'quantity',
       'qty',
       'count',
-      'amount'
+      'amount',
+      'additional'  // From GUN_FORCE files - often indicates additional quantity
     ],
     confidence: 'MEDIUM'
   },
@@ -462,7 +481,8 @@ const ROLE_PATTERNS: RolePattern[] = [
     patterns: [
       'reserve',
       'spare',
-      'backup'
+      'backup',
+      'additional'  // Can also indicate reserve/additional stock
     ],
     confidence: 'LOW'
   }

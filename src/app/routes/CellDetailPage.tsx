@@ -39,8 +39,8 @@ export function CellDetailPage() {
     if (!cell) {
         return (
             <div>
-                <PageHeader title="Cell Not Found" />
-                <p className="text-gray-500">The cell you are looking for does not exist.</p>
+                <PageHeader title="Station Not Found" />
+                <p className="text-gray-500">The station you are looking for does not exist.</p>
             </div>
         );
     }

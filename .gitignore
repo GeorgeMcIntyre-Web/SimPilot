@@ -35,3 +35,20 @@ user_data/
 coverage/
 playwright-report/
 test-results/
+
+# Debug/Output files
+verification_output*.txt
+tms_debug_output.txt
+headers_output*.txt
+found_files.json
+
+# Debug/Utility scripts (with hardcoded local paths)
+scripts/debug_tms_file.ts
+scripts/find_files.cjs
+scripts/inspect_headers.ts
+scripts/verify_full_dataset.ts
+scripts/verify_local_data.ts
+
+# Generated data exports (can be regenerated via scripts/export_store_data.ts)
+exported_store_data.json
+public/exported_store_data.json

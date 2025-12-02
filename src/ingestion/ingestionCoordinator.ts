@@ -3,7 +3,7 @@
 
 import { IngestionWarning } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
-import { readWorkbook } from './excelUtils'
+import { readWorkbook, sheetToMatrix } from './excelUtils'
 import { parseSimulationStatus } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
@@ -201,7 +201,27 @@ export async function ingestFiles(
 
       // Route to appropriate parser, passing the detected sheet name
       if (kind === 'SimulationStatus') {
-        const result = await parseSimulationStatus(workbook, file.name, sheetName || undefined)
+        // For simulation status, prefer "SIMULATION" sheet if it exists and detected sheet is too small
+        let targetSheet = sheetName || undefined
+        if (targetSheet && workbook.SheetNames.includes('SIMULATION')) {
+          // Check if detected sheet is too small (likely a summary sheet like "DATA")
+          try {
+            const testRows = sheetToMatrix(workbook, targetSheet)
+            if (testRows.length < 10) {
+              // Prefer SIMULATION sheet if it has more data
+              const simRows = sheetToMatrix(workbook, 'SIMULATION')
+              if (simRows.length > testRows.length) {
+                targetSheet = 'SIMULATION'
+                console.log(`[Ingestion] Using SIMULATION sheet instead of ${sheetName} (more rows)`)
+              }
+            }
+          } catch {
+            // If we can't read the sheet, try SIMULATION
+            targetSheet = 'SIMULATION'
+          }
+        }
+        
+        const result = await parseSimulationStatus(workbook, file.name, targetSheet)
 
         if (!ingestedData.simulation) {
           ingestedData.simulation = result

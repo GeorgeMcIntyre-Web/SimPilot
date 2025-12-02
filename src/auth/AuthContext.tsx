@@ -5,7 +5,7 @@
 
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google'
 import { createContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
-import { getGoogleClientId } from './googleConfig'
+import { getGoogleClientId, isGoogleAuthConfigured } from './googleConfig'
 import { AuthContextValue, AuthUser } from './AuthTypes'
 
 const STORAGE_KEY = 'simpilot.auth.google'
@@ -152,10 +152,57 @@ type AuthProviderProps = {
 }
 
 /**
+ * Mock auth provider for development when Google OAuth is not configured.
+ * Allows the app to run without authentication.
+ */
+function MockAuthProvider({ children }: AuthProviderProps) {
+    const mockUser: AuthUser = {
+        name: 'Development User',
+        email: 'dev@localhost',
+        picture: undefined,
+        provider: 'mock',
+        rawIdToken: 'mock-token',
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+    }
+
+    const mockContextValue: AuthContextValue = {
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: undefined,
+        login: () => {
+            console.warn('Mock auth: login called but auth is disabled')
+        },
+        logout: () => {
+            console.warn('Mock auth: logout called but auth is disabled')
+        }
+    }
+
+    // Save mock user to storage for consistency
+    useEffect(() => {
+        saveUserToStorage(mockUser)
+    }, [])
+
+    return (
+        <AuthContext.Provider value={mockContextValue}>
+            {children}
+        </AuthContext.Provider>
+    )
+}
+
+/**
  * Top-level authentication provider.
  * Wraps the app with GoogleOAuthProvider and the inner auth context.
+ * Falls back to mock auth if Google OAuth is not configured.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
+    const isConfigured = isGoogleAuthConfigured()
+
+    if (!isConfigured) {
+        console.warn('Google OAuth not configured. Running in development mode without authentication.')
+        return <MockAuthProvider>{children}</MockAuthProvider>
+    }
+
     const clientId = getGoogleClientId()
 
     return (

@@ -31,7 +31,11 @@ const POSSIBLE_HEADERS = [
   ['ROBOT', 'AREA', 'STATION'],
   ['ROBOT ID', 'AREA', 'STATION'],
   ['ROBOT NAME', 'AREA', 'LINE'],
-  ['ID', 'AREA', 'STATION']
+  ['ID', 'AREA', 'STATION'],
+  ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'],  // From Robotlist_ZA files
+  ['ROBOTNUMBER (E-NUMBER)', 'ASSEMBLY LINE', 'STATION NUMBER'],
+  ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER'],
+  ['ROBOT', 'ASSEMBLY LINE', 'STATION']
 ]
 
 // ============================================================================
