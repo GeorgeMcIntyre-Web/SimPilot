@@ -1,0 +1,381 @@
+/**
+ * DATA HEALTH PAGE TESTS
+ *
+ * Component tests for the DataHealthPage including:
+ * - Rendering with mocked store data
+ * - Correct display of counts and statistics
+ * - Export functionality
+ */
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom/vitest'
+import { BrowserRouter } from 'react-router-dom'
+import { DataHealthPage } from '../DataHealthPage'
+import { coreStore } from '../../../domain/coreStore'
+import { dataHealthStore, type ReuseSummary, type LinkingStats } from '../../../domain/dataHealthStore'
+import { ThemeProvider } from '../../../ui/ThemeContext'
+import * as dataHealthExport from '../../../utils/dataHealthExport'
+import type { UnifiedAsset } from '../../../domain/core'
+
+// ============================================================================
+// TEST HELPERS
+// ============================================================================
+
+const createMockAsset = (overrides: Partial<UnifiedAsset> = {}): UnifiedAsset => ({
+  id: overrides.id ?? `asset-${Math.random().toString(36).substring(7)}`,
+  name: overrides.name ?? 'Test Asset',
+  kind: overrides.kind ?? 'ROBOT',
+  sourcing: overrides.sourcing ?? 'UNKNOWN',
+  metadata: overrides.metadata ?? {},
+  sourceFile: overrides.sourceFile ?? 'test.xlsx',
+  sheetName: overrides.sheetName ?? 'Sheet1',
+  rowIndex: overrides.rowIndex ?? 1
+})
+
+const createMockReuseSummary = (overrides: Partial<ReuseSummary> = {}): ReuseSummary => ({
+  total: overrides.total ?? 100,
+  byType: overrides.byType ?? {
+    Riser: 40,
+    TipDresser: 30,
+    TMSGun: 30
+  },
+  byStatus: overrides.byStatus ?? {
+    AVAILABLE: 25,
+    ALLOCATED: 35,
+    IN_USE: 20,
+    RESERVED: 10,
+    UNKNOWN: 10
+  },
+  unmatchedReuseCount: overrides.unmatchedReuseCount ?? 5
+})
+
+const createMockLinkingStats = (overrides: Partial<LinkingStats> = {}): LinkingStats => ({
+  totalAssets: overrides.totalAssets ?? 50,
+  assetsWithReuseInfo: overrides.assetsWithReuseInfo ?? 30,
+  matchedReuseRecords: overrides.matchedReuseRecords ?? 28,
+  unmatchedReuseRecords: overrides.unmatchedReuseRecords ?? 5
+})
+
+const renderDataHealthPage = () => {
+  return render(
+    <ThemeProvider>
+      <BrowserRouter>
+        <DataHealthPage />
+      </BrowserRouter>
+    </ThemeProvider>
+  )
+}
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
+describe('DataHealthPage', () => {
+  beforeEach(() => {
+    // Clear all stores before each test
+    coreStore.clear()
+    dataHealthStore.clear()
+  })
+
+  afterEach(() => {
+    coreStore.clear()
+    dataHealthStore.clear()
+    vi.restoreAllMocks()
+  })
+
+  describe('Empty state', () => {
+    it('shows empty state when no data is loaded', () => {
+      renderDataHealthPage()
+
+      expect(screen.getByText('No Data Loaded')).toBeInTheDocument()
+      expect(screen.getByText('Go to Data Loader')).toBeInTheDocument()
+    })
+  })
+
+  describe('With assets loaded', () => {
+    beforeEach(() => {
+      // Set up mock assets in coreStore
+      const mockAssets = [
+        createMockAsset({ id: '1', sourcing: 'REUSE' }),
+        createMockAsset({ id: '2', sourcing: 'NEW_BUY' }),
+        createMockAsset({ id: '3', sourcing: 'UNKNOWN' }),
+        createMockAsset({ id: '4', sourcing: 'UNKNOWN' }),
+        createMockAsset({ id: '5', sourcing: 'MAKE' })
+      ]
+
+      coreStore.setData({
+        projects: [],
+        areas: [],
+        cells: [],
+        robots: mockAssets.filter(a => a.kind === 'ROBOT'),
+        tools: mockAssets.filter(a => a.kind !== 'ROBOT'),
+        warnings: ['Warning 1', 'Warning 2', '[TEST_WORKBOOK:Sheet1] Error in row 5']
+      })
+    })
+
+    it('displays correct total assets count', () => {
+      renderDataHealthPage()
+
+      // Should show Total Assets label
+      expect(screen.getByText('Total Assets')).toBeInTheDocument()
+
+      // Find the StatCard containing "Total Assets" and verify the count
+      const totalAssetsCard = screen.getByText('Total Assets').closest('div[class*="rounded-xl"]')
+      expect(totalAssetsCard).toBeInTheDocument()
+      expect(totalAssetsCard?.textContent).toContain('5')
+    })
+
+    it('displays correct ingestion errors count', () => {
+      renderDataHealthPage()
+
+      // Should show Ingestion Errors label
+      expect(screen.getByText('Ingestion Errors')).toBeInTheDocument()
+
+      // Find the StatCard containing "Ingestion Errors" and verify the count
+      const errorsCard = screen.getByText('Ingestion Errors').closest('div[class*="rounded-xl"]')
+      expect(errorsCard).toBeInTheDocument()
+      expect(errorsCard?.textContent).toContain('3')
+    })
+
+    it('displays correct unknown sourcing count', () => {
+      renderDataHealthPage()
+
+      // Should show UNKNOWN Sourcing label
+      expect(screen.getByText('UNKNOWN Sourcing')).toBeInTheDocument()
+
+      // Find the StatCard containing "UNKNOWN Sourcing" and verify the count
+      const unknownCard = screen.getByText('UNKNOWN Sourcing').closest('div[class*="rounded-xl"]')
+      expect(unknownCard).toBeInTheDocument()
+      expect(unknownCard?.textContent).toContain('2')
+    })
+
+    it('displays errors grouped by source', () => {
+      renderDataHealthPage()
+
+      // Should have collapsible sections
+      expect(screen.getByText('Unknown Source')).toBeInTheDocument()
+      expect(screen.getByText('TEST_WORKBOOK')).toBeInTheDocument()
+    })
+
+    it('can expand error groups', () => {
+      renderDataHealthPage()
+
+      // Click to expand the Unknown Source group
+      const unknownSourceButton = screen.getByText('Unknown Source')
+      fireEvent.click(unknownSourceButton)
+
+      // Should show the error messages
+      expect(screen.getByText('Warning 1')).toBeInTheDocument()
+      expect(screen.getByText('Warning 2')).toBeInTheDocument()
+    })
+  })
+
+  describe('With reuse summary loaded', () => {
+    beforeEach(() => {
+      // Set up mock assets
+      coreStore.setData({
+        projects: [],
+        areas: [],
+        cells: [],
+        robots: [createMockAsset({ kind: 'ROBOT', sourcing: 'REUSE' })],
+        tools: [],
+        warnings: []
+      })
+
+      // Set up mock reuse summary
+      dataHealthStore.setDataHealth({
+        reuseSummary: createMockReuseSummary(),
+        linkingStats: createMockLinkingStats()
+      })
+    })
+
+    it('displays reuse pool total', () => {
+      renderDataHealthPage()
+
+      expect(screen.getByText('Reuse Pool')).toBeInTheDocument()
+      expect(screen.getByText('100')).toBeInTheDocument()
+    })
+
+    it('displays reuse by status breakdown', () => {
+      renderDataHealthPage()
+
+      expect(screen.getByText('Reuse by Status')).toBeInTheDocument()
+      expect(screen.getByText('AVAILABLE')).toBeInTheDocument()
+      expect(screen.getByText('ALLOCATED')).toBeInTheDocument()
+      expect(screen.getByText('IN_USE')).toBeInTheDocument()
+    })
+
+    it('displays reuse by type breakdown', () => {
+      renderDataHealthPage()
+
+      expect(screen.getByText('Reuse by Type')).toBeInTheDocument()
+      expect(screen.getByText('Riser')).toBeInTheDocument()
+      expect(screen.getByText('TipDresser')).toBeInTheDocument()
+      expect(screen.getByText('TMSGun')).toBeInTheDocument()
+    })
+
+    it('displays linking statistics', () => {
+      renderDataHealthPage()
+
+      expect(screen.getByText('Linking Statistics')).toBeInTheDocument()
+      expect(screen.getByText('With Reuse Info')).toBeInTheDocument()
+      expect(screen.getByText('Matched Records')).toBeInTheDocument()
+      expect(screen.getByText('Unmatched Records')).toBeInTheDocument()
+    })
+  })
+
+  describe('Export functionality', () => {
+    beforeEach(() => {
+      // Set up minimal mock data
+      coreStore.setData({
+        projects: [],
+        areas: [],
+        cells: [],
+        robots: [createMockAsset({ kind: 'ROBOT' })],
+        tools: [],
+        warnings: ['Test warning']
+      })
+
+      dataHealthStore.setDataHealth({
+        reuseSummary: createMockReuseSummary({ total: 10 })
+      })
+    })
+
+    it('has Export JSON button', () => {
+      renderDataHealthPage()
+
+      const exportButton = screen.getByRole('button', { name: /export json/i })
+      expect(exportButton).toBeInTheDocument()
+    })
+
+    it('calls exportDataHealthJson when Export JSON is clicked', () => {
+      const exportSpy = vi.spyOn(dataHealthExport, 'exportDataHealthJson')
+
+      renderDataHealthPage()
+
+      const exportButton = screen.getByRole('button', { name: /export json/i })
+      fireEvent.click(exportButton)
+
+      expect(exportSpy).toHaveBeenCalledTimes(1)
+      expect(exportSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          totalAssets: 1,
+          totalErrors: 1
+        })
+      )
+    })
+
+    it('has Export Errors CSV button when errors exist', () => {
+      renderDataHealthPage()
+
+      const csvButton = screen.getByRole('button', { name: /export errors csv/i })
+      expect(csvButton).toBeInTheDocument()
+    })
+
+    it('calls exportErrorsCsv when Export Errors CSV is clicked', () => {
+      const exportSpy = vi.spyOn(dataHealthExport, 'exportErrorsCsv')
+
+      renderDataHealthPage()
+
+      const csvButton = screen.getByRole('button', { name: /export errors csv/i })
+      fireEvent.click(csvButton)
+
+      expect(exportSpy).toHaveBeenCalledTimes(1)
+      expect(exportSpy).toHaveBeenCalledWith(['Test warning'])
+    })
+  })
+
+  describe('All healthy state', () => {
+    beforeEach(() => {
+      coreStore.setData({
+        projects: [],
+        areas: [],
+        cells: [],
+        robots: [createMockAsset({ kind: 'ROBOT', sourcing: 'REUSE' })],
+        tools: [],
+        warnings: []  // No warnings
+      })
+
+      dataHealthStore.setDataHealth({
+        errors: []  // No errors
+      })
+    })
+
+    it('shows healthy message when no errors', () => {
+      renderDataHealthPage()
+
+      expect(screen.getByText('No errors found. Data ingestion is healthy!')).toBeInTheDocument()
+    })
+  })
+})
+
+describe('dataHealthExport utilities', () => {
+  describe('parseErrorContext', () => {
+    it('extracts workbookId and sheet from bracketed context', () => {
+      const result = dataHealthExport.parseErrorContext('[WORKBOOK_ID:Sheet1:42] Some error')
+
+      expect(result.workbookId).toBe('WORKBOOK_ID')
+      expect(result.sheet).toBe('Sheet1')
+      expect(result.cleanMessage).toBe('Some error')
+    })
+
+    it('handles messages without context', () => {
+      const result = dataHealthExport.parseErrorContext('Plain error message')
+
+      expect(result.workbookId).toBeNull()
+      expect(result.sheet).toBeNull()
+      expect(result.cleanMessage).toBe('Plain error message')
+    })
+
+    it('handles partial context with just workbook', () => {
+      const result = dataHealthExport.parseErrorContext('[WORKBOOK_ID] Error')
+
+      expect(result.workbookId).toBe('WORKBOOK_ID')
+      expect(result.sheet).toBeNull()
+      expect(result.cleanMessage).toBe('Error')
+    })
+  })
+
+  describe('buildDataHealthExport', () => {
+    it('creates export object with all fields', () => {
+      const result = dataHealthExport.buildDataHealthExport({
+        totalAssets: 100,
+        totalErrors: 5,
+        unknownSourcingCount: 10,
+        reuseSummary: createMockReuseSummary(),
+        linkingStats: createMockLinkingStats(),
+        errors: ['error1', 'error2']
+      })
+
+      expect(result.totalAssets).toBe(100)
+      expect(result.totalErrors).toBe(5)
+      expect(result.unknownSourcingCount).toBe(10)
+      expect(result.exportedAt).toBeDefined()
+      expect(result.errors).toHaveLength(2)
+    })
+  })
+
+  describe('generateErrorsCsv', () => {
+    it('generates valid CSV with headers', () => {
+      const csv = dataHealthExport.generateErrorsCsv([
+        '[WB:Sheet1] Error 1',
+        'Plain error'
+      ])
+
+      expect(csv).toContain('Index,Workbook,Sheet,Message')
+      expect(csv).toContain('1,WB,Sheet1,Error 1')
+      expect(csv).toContain('2,,,Plain error')
+    })
+
+    it('returns empty string for empty errors', () => {
+      const csv = dataHealthExport.generateErrorsCsv([])
+      expect(csv).toBe('')
+    })
+
+    it('escapes commas in messages', () => {
+      const csv = dataHealthExport.generateErrorsCsv(['Error with, comma'])
+      expect(csv).toContain('"Error with, comma"')
+    })
+  })
+})
