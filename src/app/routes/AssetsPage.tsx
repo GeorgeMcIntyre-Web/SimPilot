@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { Tag } from '../../ui/components/Tag';
-import { coreStore, useCoreStore } from '../../domain/coreStore';
+import { useCoreStore } from '../../domain/coreStore';
 import { UnifiedAsset } from '../../domain/core';
 import { Search, Bot, Zap, Box, Wrench, ArrowUpDown } from 'lucide-react';
 import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
@@ -37,7 +37,11 @@ export function AssetsPage() {
             // Search in station/area
             if (asset.stationNumber?.toLowerCase().includes(term)) return true;
             if (asset.areaName?.toLowerCase().includes(term)) return true;
-            if (asset.lineCode?.toLowerCase().includes(term)) return true;
+            // Check if it's a Robot or Tool with lineCode
+            if ('lineCode' in asset) {
+                const lineCode = (asset as { lineCode?: string }).lineCode;
+                if (lineCode?.toLowerCase().includes(term)) return true;
+            }
             // Search in model
             if (asset.oemModel?.toLowerCase().includes(term)) return true;
             // Search in metadata
@@ -142,7 +146,12 @@ export function AssetsPage() {
         },
         {
             header: 'Line',
-            accessor: (a) => a.lineCode || '-'
+            accessor: (a) => {
+                if ('lineCode' in a) {
+                    return (a as { lineCode?: string }).lineCode || '-';
+                }
+                return '-';
+            }
         },
         {
             header: 'Source',
