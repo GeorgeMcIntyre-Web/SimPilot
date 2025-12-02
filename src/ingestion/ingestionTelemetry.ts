@@ -397,6 +397,8 @@ export function getCategoryLabel(category: SheetCategory): string {
       return 'Metadata'
     case 'UNKNOWN':
       return 'Unknown'
+    default:
+      return 'Unknown'
   }
 }
 
@@ -421,6 +423,8 @@ export function getCategoryColorClass(category: SheetCategory): string {
       return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
     case 'UNKNOWN':
       return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+    default:
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
   }
 }
 
@@ -444,6 +448,8 @@ export function getCategoryIcon(category: SheetCategory): string {
     case 'METADATA':
       return 'Database'
     case 'UNKNOWN':
+      return 'HelpCircle'
+    default:
       return 'HelpCircle'
   }
 }
