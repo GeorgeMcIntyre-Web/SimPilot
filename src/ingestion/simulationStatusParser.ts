@@ -547,7 +547,6 @@ function deriveProjectName(fileName: string): string {
  * Uses customer mapping for consistent assignment
  */
 function deriveCustomer(fileName: string): string {
-  const { deriveCustomerFromFileName } = require('./customerMapping')
   return deriveCustomerFromFileName(fileName)
 }
 
