@@ -1,0 +1,209 @@
+{
+  "$schema": "./expectations.schema.json",
+  "version": "1.0.0",
+  "description": "Golden test expectations for Excel Universal Ingestion system",
+  "testCases": [
+    {
+      "testId": "ROBOT_LIST",
+      "fileName": "Ford_SLS_C519_Roboterliste_REV03_20160728.xls",
+      "description": "Robot list with German headers, multi-language content",
+      "expectations": {
+        "sheets": [
+          {
+            "sheetName": "Roboterliste",
+            "sheetCategory": "ROBOT_LIST",
+            "categoryConfidence": "HIGH",
+            "qualityTier": "GOOD",
+            "requiredFields": [
+              {
+                "fieldId": "robot_id",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Robot", "Roboter", "Robot-Nr"]
+              },
+              {
+                "fieldId": "station_code",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Station", "Stationsnummer"]
+              },
+              {
+                "fieldId": "robot_type",
+                "confidence": "MEDIUM",
+                "expectedHeaders": ["Type", "Typ", "Robot Type"]
+              },
+              {
+                "fieldId": "assembly_line",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Line", "Linie", "Assembly Line"]
+              }
+            ],
+            "minColumns": 8,
+            "maxColumns": 20,
+            "minRows": 10,
+            "expectedMappingCoverage": 0.75
+          }
+        ],
+        "performance": {
+          "maxParseTimeMs": 2000,
+          "maxProfilingTimeMs": 1000,
+          "maxMatchingTimeMs": 500
+        }
+      }
+    },
+    {
+      "testId": "CROSS_REFERENCE",
+      "fileName": "Spotweld_Crossreferencelist_C519_UB_SLS_W1631-UPV2_Rev11.xls",
+      "description": "Multi-sheet cross-reference list with gun assignments",
+      "expectations": {
+        "sheets": [
+          {
+            "sheetName": "Cross Reference",
+            "sheetCategory": "REUSE_LIST",
+            "categoryConfidence": "HIGH",
+            "qualityTier": "GOOD",
+            "requiredFields": [
+              {
+                "fieldId": "gun_id",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Gun", "Gun ID", "Weld Gun"]
+              },
+              {
+                "fieldId": "robot_id",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Robot", "Robot Number"]
+              },
+              {
+                "fieldId": "station_code",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Station"]
+              },
+              {
+                "fieldId": "reuse_status",
+                "confidence": "MEDIUM",
+                "expectedHeaders": ["Status", "Allocation Status"]
+              }
+            ],
+            "minColumns": 6,
+            "maxColumns": 15,
+            "minRows": 20,
+            "expectedMappingCoverage": 0.80
+          }
+        ],
+        "performance": {
+          "maxParseTimeMs": 2500,
+          "maxProfilingTimeMs": 1500,
+          "maxMatchingTimeMs": 800
+        }
+      }
+    },
+    {
+      "testId": "GUN_STATUS",
+      "fileName": "Ford_Saar_Louis_Weld_Gun_Status.xlsx",
+      "description": "Weld gun status tracking with dates and personnel",
+      "expectations": {
+        "sheets": [
+          {
+            "sheetName": "Gun Status",
+            "sheetCategory": "GUN_LIST",
+            "categoryConfidence": "HIGH",
+            "qualityTier": "EXCELLENT",
+            "requiredFields": [
+              {
+                "fieldId": "gun_id",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Gun Number", "Gun ID", "Weld Gun"]
+              },
+              {
+                "fieldId": "gun_status",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Status", "Current Status"]
+              },
+              {
+                "fieldId": "date_installed",
+                "confidence": "MEDIUM",
+                "expectedHeaders": ["Install Date", "Date Installed", "Installation"]
+              },
+              {
+                "fieldId": "technician",
+                "confidence": "MEDIUM",
+                "expectedHeaders": ["Technician", "Installed By", "Tech"]
+              }
+            ],
+            "minColumns": 5,
+            "maxColumns": 12,
+            "minRows": 15,
+            "expectedMappingCoverage": 0.85
+          }
+        ],
+        "performance": {
+          "maxParseTimeMs": 1500,
+          "maxProfilingTimeMs": 800,
+          "maxMatchingTimeMs": 400
+        }
+      }
+    },
+    {
+      "testId": "TIP_DRESSER",
+      "fileName": "Ford_Saar_Louis_Weld_Gun_Tip_Dresser_Stands.xlsx",
+      "description": "Tip dresser and stand inventory",
+      "expectations": {
+        "sheets": [
+          {
+            "sheetName": "Tip Dresser Stands",
+            "sheetCategory": "TOOLING_LIST",
+            "categoryConfidence": "HIGH",
+            "qualityTier": "GOOD",
+            "requiredFields": [
+              {
+                "fieldId": "tool_id",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Tool ID", "Stand ID", "Dresser ID"]
+              },
+              {
+                "fieldId": "tool_type",
+                "confidence": "HIGH",
+                "expectedHeaders": ["Type", "Tool Type", "Dresser Type"]
+              },
+              {
+                "fieldId": "station_code",
+                "confidence": "MEDIUM",
+                "expectedHeaders": ["Station", "Location"]
+              },
+              {
+                "fieldId": "device_status",
+                "confidence": "MEDIUM",
+                "expectedHeaders": ["Status", "Condition"]
+              }
+            ],
+            "minColumns": 4,
+            "maxColumns": 10,
+            "minRows": 10,
+            "expectedMappingCoverage": 0.70
+          }
+        ],
+        "performance": {
+          "maxParseTimeMs": 1500,
+          "maxProfilingTimeMs": 800,
+          "maxMatchingTimeMs": 400
+        }
+      }
+    }
+  ],
+  "globalExpectations": {
+    "caching": {
+      "secondLoadSpeedup": 0.90,
+      "description": "Second load should be 90% faster due to caching"
+    },
+    "parallelProcessing": {
+      "fourFilesSpeedup": 2.5,
+      "description": "Loading 4 files in parallel should be 2.5x faster than sequential"
+    },
+    "dataQuality": {
+      "minAverageQuality": 0.70,
+      "description": "Average quality score across all sheets should be ≥0.70"
+    },
+    "mappingAccuracy": {
+      "minHighConfidenceFields": 0.60,
+      "description": "At least 60% of required fields should match with HIGH confidence"
+    }
+  }
+}
