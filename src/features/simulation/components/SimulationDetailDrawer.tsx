@@ -2,6 +2,7 @@
 // Side panel showing full station context and related assets
 // Provides action to view assets in Assets tab
 
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   X,
@@ -16,10 +17,17 @@ import {
   HelpCircle,
   FileSpreadsheet,
   User,
-  Layers
+  Layers,
+  AlertTriangle
 } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
+import {
+  useToolingBottleneckState,
+  type ToolingWorkflowStatus
+} from '../../../domain/toolingBottleneckStore'
+import { selectBottlenecksByStationKey } from '../../../domain/simPilotSelectors'
+import { getBottleneckReasonLabel } from '../../../domain/toolingBottleneckLabels'
 
 // ============================================================================
 // TYPES
@@ -126,6 +134,8 @@ export function SimulationDetailDrawer({
   onClose
 }: SimulationDetailDrawerProps) {
   const navigate = useNavigate()
+  const bottleneckState = useToolingBottleneckState()
+  const [isToolingDrawerOpen, setIsToolingDrawerOpen] = useState(false)
 
   if (station === null) return null
 
@@ -139,6 +149,33 @@ export function SimulationDetailDrawer({
   }
 
   const simStatus = station.simulationStatus
+  const toolingBottlenecks = useMemo(
+    () => selectBottlenecksByStationKey(bottleneckState, station.contextKey),
+    [bottleneckState, station.contextKey]
+  )
+  const hasToolingBottlenecks = toolingBottlenecks.length > 0
+
+  const handleOpenToolingPage = (toolingNumber: string) => {
+    const params = new URLSearchParams()
+    params.set('tooling', toolingNumber)
+    navigate(`/tooling?${params.toString()}`)
+    onClose()
+    setIsToolingDrawerOpen(false)
+  }
+
+  const handleOpenAssetsForTooling = (toolingNumber: string) => {
+    const params = new URLSearchParams()
+    params.set('station', station.station)
+    params.set('line', station.line)
+    params.set('tooling', toolingNumber)
+    navigate(`/assets?${params.toString()}`)
+    onClose()
+    setIsToolingDrawerOpen(false)
+  }
+
+  const handleOpenGeneralAssets = () => {
+    handleViewAssets()
+  }
 
   return (
     <>
@@ -302,9 +339,23 @@ export function SimulationDetailDrawer({
           </Section>
 
           {/* Actions */}
-          <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+            {hasToolingBottlenecks && (
+              <button
+                onClick={() => setIsToolingDrawerOpen(true)}
+                className={cn(
+                  'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border',
+                  'border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300',
+                  'bg-amber-50 dark:bg-amber-900/20 font-medium'
+                )}
+                data-testid="view-tooling-bottlenecks"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                View Tooling Bottlenecks
+              </button>
+            )}
             <button
-              onClick={handleViewAssets}
+              onClick={handleOpenGeneralAssets}
               className={cn(
                 'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg',
                 'bg-blue-600 hover:bg-blue-700 text-white font-medium',
@@ -317,6 +368,156 @@ export function SimulationDetailDrawer({
           </div>
         </div>
       </div>
+
+      <ToolingBottleneckDrawer
+        isOpen={isToolingDrawerOpen}
+        onClose={() => setIsToolingDrawerOpen(false)}
+        statuses={toolingBottlenecks}
+        onOpenTooling={handleOpenToolingPage}
+        onOpenAssets={handleOpenAssetsForTooling}
+      />
     </>
   )
 }
+
+interface ToolingBottleneckDrawerProps {
+  isOpen: boolean
+  statuses: ToolingWorkflowStatus[]
+  onClose: () => void
+  onOpenTooling: (toolingNumber: string) => void
+  onOpenAssets: (toolingNumber: string) => void
+}
+
+function ToolingBottleneckDrawer({
+  isOpen,
+  statuses,
+  onClose,
+  onOpenTooling,
+  onOpenAssets
+}: ToolingBottleneckDrawerProps) {
+  if (!isOpen) return null
+  if (statuses.length === 0) return null
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-60"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        className={cn(
+          'fixed right-0 top-0 h-full w-full max-w-2xl bg-white dark:bg-gray-900 shadow-2xl z-70',
+          'transform transition-transform duration-300 ease-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Tooling bottlenecks"
+        data-testid="tooling-bottleneck-drawer"
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tooling Bottlenecks</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {statuses.length} impacted {statuses.length === 1 ? 'tool' : 'tools'}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+            aria-label="Close tooling drawer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4 overflow-y-auto h-full">
+          <div className="grid grid-cols-[120px_110px_120px_120px_110px_1fr] gap-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <span>Tooling #</span>
+            <span>Tool Type</span>
+            <span>Design Stage</span>
+            <span>Sim Stage</span>
+            <span>Dominant</span>
+            <span>Reason & Actions</span>
+          </div>
+
+          {statuses.map(status => (
+            <div
+              key={status.toolingNumber}
+              className="grid grid-cols-[120px_110px_120px_120px_110px_1fr] gap-3 items-center py-3 px-3 rounded-lg border border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/50"
+            >
+              <span className="font-mono text-sm text-gray-900 dark:text-white">{status.toolingNumber}</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{status.toolType}</span>
+              <StagePill snapshot={status.designStage} />
+              <StagePill snapshot={status.simulationStage} />
+              <DominantStageTag stage={status.dominantStage} severity={status.severity} />
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {getBottleneckReasonLabel(status.bottleneckReason).label}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onOpenTooling(status.toolingNumber)}
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-300 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Open in Tooling
+                  </button>
+                  <button
+                    onClick={() => onOpenAssets(status.toolingNumber)}
+                    className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-300 hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Open Assets
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+interface StagePillProps {
+  snapshot: ToolingWorkflowStatus['designStage']
+}
+
+function StagePill({ snapshot }: StagePillProps) {
+  const tone =
+    snapshot.status === 'BLOCKED'
+      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+      : snapshot.status === 'AT_RISK'
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+
+  return (
+    <div className={cn('rounded-full px-2 py-1 text-[11px] font-semibold text-center', tone)}>
+      {snapshot.stage}
+      <span className="block text-[10px] font-normal capitalize">{snapshot.status.toLowerCase()}</span>
+    </div>
+  )
+}
+
+interface DominantStageTagProps {
+  stage: ToolingWorkflowStatus['dominantStage']
+  severity: ToolingWorkflowStatus['severity']
+}
+
+function DominantStageTag({ stage, severity }: DominantStageTagProps) {
+  const tone =
+    severity === 'critical'
+      ? 'bg-red-600 text-white'
+      : severity === 'warning'
+        ? 'bg-amber-500 text-white'
+        : 'bg-gray-500 text-white'
+
+  return (
+    <span className={cn('px-2 py-1 rounded-full text-xs font-semibold text-center', tone)}>
+      {stage}
+    </span>
+  )
+}
+

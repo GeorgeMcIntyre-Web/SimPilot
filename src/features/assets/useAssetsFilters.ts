@@ -466,3 +466,7 @@ export function useAssetsFilters(allAssets: UnifiedAsset[]): UseAssetsFiltersRet
     hasActiveFilters,
   };
 }
+
+export function summarizeAssetsForCounts(assets: AssetWithMetadata[]): FilterCounts {
+  return calculateCounts(assets);
+}

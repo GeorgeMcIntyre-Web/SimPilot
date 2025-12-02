@@ -15,6 +15,7 @@ import { ThemeProvider } from '../../../ui/ThemeContext';
 import { AssetsPage } from '../../../app/routes/AssetsPage';
 import { coreStore } from '../../../domain/coreStore';
 import type { UnifiedAsset } from '../../../domain/UnifiedModel';
+import { toolingBottleneckStore } from '../../../domain/toolingBottleneckStore';
 
 // ============================================================================
 // TEST HELPERS
@@ -71,6 +72,7 @@ const testAssets: UnifiedAsset[] = [
       lineCode: 'BN_B05',
       detailedKind: 'Robot',
       reuseAllocationStatus: 'AVAILABLE',
+      toolingNumber: 'T-ROBOT-1',
     },
   }),
   createMockAsset({
@@ -137,6 +139,7 @@ describe('AssetsPage', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
     coreStore.clear();
+    toolingBottleneckStore.clear();
   });
 
   describe('Empty state', () => {
@@ -213,6 +216,64 @@ describe('AssetsPage', () => {
         tools: testAssets.filter((a) => a.kind !== 'ROBOT') as never[],
         warnings: [],
       });
+    });
+
+    it('shows bottleneck badge when tooling snapshot matches asset', () => {
+      toolingBottleneckStore.loadSnapshot({
+        statuses: [
+          {
+            toolingNumber: 'T-ROBOT-1',
+            toolType: 'Robot',
+            stationKey: 'program|plant|unit|line|010',
+            stationNumber: '010',
+            dominantStage: 'DESIGN',
+            bottleneckReason: 'BUILD_AHEAD_OF_SIM',
+            severity: 'critical',
+            designStage: { stage: 'DESIGN', status: 'BLOCKED' },
+            simulationStage: { stage: 'SIMULATION', status: 'ON_TRACK' },
+          },
+        ],
+      });
+
+      coreStore.setData({
+        projects: [],
+        areas: [],
+        cells: [],
+        robots: testAssets.filter((a) => a.id === 'robot-1') as never[],
+        tools: [] as never[],
+        warnings: [],
+      });
+
+      renderAssetsPage();
+
+      expect(screen.getByText(/Blocked \(DESIGN\)/i)).toBeInTheDocument();
+    });
+
+    it('filters to bottleneck assets when toggle enabled', () => {
+      toolingBottleneckStore.loadSnapshot({
+        statuses: [
+          {
+            toolingNumber: 'T-ROBOT-1',
+            toolType: 'Robot',
+            stationKey: 'program|plant|unit|line|010',
+            stationNumber: '010',
+            dominantStage: 'DESIGN',
+            bottleneckReason: 'BUILD_AHEAD_OF_SIM',
+            severity: 'critical',
+            designStage: { stage: 'DESIGN', status: 'BLOCKED' },
+            simulationStage: { stage: 'SIMULATION', status: 'ON_TRACK' },
+          },
+        ],
+      });
+
+      renderAssetsPage();
+
+      const toggle = screen.getByTestId('bottleneck-only-filter');
+      fireEvent.click(toggle);
+
+      expect(screen.getByText('Robot R01')).toBeInTheDocument();
+      expect(screen.queryByText('Robot R02')).not.toBeInTheDocument();
+      expect(screen.queryByText('Robot R03')).not.toBeInTheDocument();
     });
 
     it('filters by asset type', () => {
