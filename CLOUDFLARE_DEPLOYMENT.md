@@ -1,12 +1,20 @@
 # Cloudflare Pages Deployment Guide
 
+## ⚠️ Important: Use Pages, Not Workers!
+
+You're creating a **static site**, so you need **Cloudflare Pages**, not Workers.
+
+---
+
 ## Quick Deployment Steps
 
 ### Option 1: Git Integration (Recommended)
 
 1. **Go to Cloudflare Dashboard**
    - Visit: https://dash.cloudflare.com/
-   - Navigate to: **Workers & Pages** → **Create Application** → **Pages**
+   - Navigate to: **Workers & Pages** → **Pages** (NOT "Create Application")
+   - Click **"Create a project"** button
+   - OR if you see "Create Application", make sure you select **"Pages"** tab, not "Workers"
 
 2. **Connect Repository**
    - Click **"Connect to Git"**
