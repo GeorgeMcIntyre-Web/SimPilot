@@ -14,6 +14,7 @@ import { WarningsPage } from './routes/WarningsPage'
 import { ChangesPage } from './routes/ChangesPage'
 import { ReadinessBoard } from './routes/ReadinessBoard'
 import { TimelineView } from './routes/TimelineView'
+import { SimulationPage } from './routes/SimulationPage'
 import { MsAuthProvider } from '../integrations/ms/useMsAccount'
 import { GlobalBusyProvider } from '../ui/GlobalBusyContext'
 import { DevDiagnostics } from '../ui/DevDiagnostics'
@@ -34,6 +35,7 @@ function App() {
                                 <Route path="/" element={<LayoutShell />}>
                                     <Route index element={<Navigate to="/dashboard" replace />} />
                                     <Route path="dashboard" element={<DashboardPage />} />
+                                    <Route path="simulation" element={<SimulationPage />} />
                                     <Route path="dale-console" element={<DaleConsole />} />
                                     <Route path="warnings" element={<WarningsPage />} />
                                     <Route path="projects" element={<ProjectsPage />} />
