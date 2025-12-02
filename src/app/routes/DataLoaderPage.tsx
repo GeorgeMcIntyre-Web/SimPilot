@@ -676,9 +676,18 @@ export function DataLoaderPage() {
       {
         result && (
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <div className="flex items-center mb-4" data-testid="data-loaded-indicator">
-              <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Ingestion Complete</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center" data-testid="data-loaded-indicator">
+                <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Ingestion Complete</h3>
+              </div>
+              <button
+                onClick={() => window.location.href = '/dashboard'}
+                data-testid="go-to-dashboard-button"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+              >
+                Go to Dashboard →
+              </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">

@@ -410,7 +410,7 @@ describe('edge cases', () => {
       'Data': rows
     })
 
-    const result = sniffSheet(workbook, 'Data', 10)
+    const result = sniffSheet(workbook, 'Data', 'test.xlsx', 10)
 
     expect(result.category).toBe('GUN_FORCE')
   })
@@ -425,7 +425,7 @@ describe('edge cases', () => {
       'Data': rows
     })
 
-    const result = sniffSheet(workbook, 'Data', 10)
+    const result = sniffSheet(workbook, 'Data', 'test.xlsx', 10)
 
     // Should NOT detect because header is beyond scan limit
     expect(result.category).toBe('UNKNOWN')

@@ -15,15 +15,11 @@ import {
 import {
   sheetToMatrix,
   findHeaderRow,
-  buildColumnMap,
-  getCellString,
-  getCellNumber,
   isEmptyRow,
   isTotalRow,
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
-import { AnalyzedSheet, toAnalyzedSheet, NormalizedSheet } from './workbookLoader'
 
 // ============================================================================
 // VACUUM PARSER TYPES
@@ -79,19 +75,6 @@ export interface SimulationStatusResult {
 // ============================================================================
 // CORE FIELDS (Known Columns)
 // ============================================================================
-
-/**
- * Core fields that are mapped to specific row properties.
- * Any column NOT in this list becomes a metric.
- */
-const CORE_FIELDS = [
-  'AREA',
-  'ASSEMBLY LINE',
-  'STATION',
-  'ROBOT',
-  'APPLICATION',
-  'PERSONS RESPONSIBLE'
-]
 
 // Column name aliases for flexible matching
 const COLUMN_ALIASES: Record<string, string[]> = {
@@ -181,10 +164,18 @@ function parsePercent(value: CellValue): number | null {
 function createMetric(label: string, rawValue: CellValue): SimulationMetric {
   const percent = parsePercent(rawValue)
 
+  // Normalize rawValue to string | number | null (handle boolean case)
+  let normalizedRawValue: string | number | null
+  if (typeof rawValue === 'boolean') {
+    normalizedRawValue = rawValue ? 'true' : 'false'
+  } else {
+    normalizedRawValue = rawValue
+  }
+
   return {
     label,
     percent,
-    rawValue
+    rawValue: normalizedRawValue
   }
 }
 
