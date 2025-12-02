@@ -195,8 +195,38 @@ export function StationsTable({
   // Empty state
   if (cells.length === 0) {
     return (
-      <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-        <p className="text-gray-500 dark:text-gray-400">
+      <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="flex justify-center mb-6">
+          <svg
+            viewBox="0 0 120 120"
+            className="w-28 h-28"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            {/* Big beautiful sunflower */}
+            <g transform="translate(60, 40)">
+              <ellipse cx="0" cy="-15" rx="4" ry="12" fill="#FCD34D" />
+              <ellipse cx="9" cy="-11" rx="4" ry="12" fill="#FCD34D" transform="rotate(30 9 -11)" />
+              <ellipse cx="13" cy="0" rx="4" ry="12" fill="#FCD34D" transform="rotate(60 13 0)" />
+              <ellipse cx="9" cy="11" rx="4" ry="12" fill="#FCD34D" transform="rotate(90 9 11)" />
+              <ellipse cx="0" cy="15" rx="4" ry="12" fill="#FCD34D" transform="rotate(120 0 15)" />
+              <ellipse cx="-9" cy="11" rx="4" ry="12" fill="#FCD34D" transform="rotate(150 -9 11)" />
+              <ellipse cx="-13" cy="0" rx="4" ry="12" fill="#FCD34D" transform="rotate(180 -13 0)" />
+              <ellipse cx="-9" cy="-11" rx="4" ry="12" fill="#FCD34D" transform="rotate(210 -9 -11)" />
+              <ellipse cx="0" cy="-15" rx="4" ry="12" fill="#FCD34D" transform="rotate(240 0 -15)" />
+              <ellipse cx="9" cy="-11" rx="4" ry="12" fill="#FCD34D" transform="rotate(270 9 -11)" />
+              <ellipse cx="13" cy="0" rx="4" ry="12" fill="#FCD34D" transform="rotate(300 13 0)" />
+              <ellipse cx="9" cy="11" rx="4" ry="12" fill="#FCD34D" transform="rotate(330 9 11)" />
+              <circle cx="0" cy="0" r="8" fill="#92400E" />
+              <circle cx="0" cy="0" r="5" fill="#78350F" />
+            </g>
+            <path d="M 60 58 L 60 100" stroke="#10B981" strokeWidth="4" strokeLinecap="round" />
+            <ellipse cx="48" cy="80" rx="8" ry="6" fill="#10B981" opacity="0.8" transform="rotate(-35 48 80)" />
+            <ellipse cx="72" cy="88" rx="8" ry="6" fill="#10B981" opacity="0.8" transform="rotate(35 72 88)" />
+          </svg>
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 text-lg">
           No station data available. Load data from the Data Loader.
         </p>
       </div>

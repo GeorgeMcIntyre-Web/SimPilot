@@ -30,25 +30,51 @@ async function getMsalInstance(): Promise<PublicClientApplication | undefined> {
     return msalInstance
 }
 
+/**
+ * Get current MSAL auth state (synchronous, may not reflect initialized state)
+ * Use initializeMsAuth() for proper async initialization and state check.
+ */
 export function getMsAuthState(): MsAuthState {
     const config = getMsConfig()
     if (!config.enabled) {
         return { enabled: false, isSignedIn: false, account: undefined }
     }
 
-    // This is a synchronous check, but msalInstance might not be initialized yet.
-    // However, for the initial state in the provider, we can check if we have an active account if initialized.
-    // Since initialization is async, the provider will handle the async initialization.
-    // But for this helper, we'll return a safe default and let the provider sync up.
-    // Actually, the provider calls this. If msalInstance isn't ready, we can't know the account.
-    // We'll rely on the provider to initialize and then update state.
-    // For now, return what we know.
-
+    // If MSAL isn't initialized yet, return default state
     if (!msalInstance) {
         return { enabled: true, isSignedIn: false, account: undefined }
     }
 
     const accounts = msalInstance.getAllAccounts()
+    const account = accounts.length > 0 ? accounts[0] : undefined
+
+    return {
+        enabled: true,
+        isSignedIn: !!account,
+        account,
+    }
+}
+
+/**
+ * Initialize MSAL and get auth state (async, proper initialization)
+ * This ensures MSAL is initialized before checking for accounts.
+ * 
+ * @returns Promise resolving to current auth state after initialization
+ */
+export async function initializeMsAuth(): Promise<MsAuthState> {
+    const config = getMsConfig()
+    if (!config.enabled) {
+        return { enabled: false, isSignedIn: false, account: undefined }
+    }
+
+    // Ensure MSAL is initialized (this is idempotent)
+    const msal = await getMsalInstance()
+    if (!msal) {
+        return { enabled: false, isSignedIn: false, account: undefined }
+    }
+
+    // Now we can safely check for accounts
+    const accounts = msal.getAllAccounts()
     const account = accounts.length > 0 ? accounts[0] : undefined
 
     return {

@@ -262,11 +262,6 @@ describe('E2E: Sheet Sniffer', () => {
 
 describe('E2E: Vacuum Parser', () => {
   it('vacuums all metric columns from simulation sheet', () => {
-    // workbook used for consistency; vacuumParseSimulationSheet uses raw matrix
-    createXlsxWorkbook({
-      'SIMULATION': REALISTIC_SIMULATION_SHEET
-    })
-
     const result = vacuumParseSimulationSheet(
       REALISTIC_SIMULATION_SHEET as (string | number | null)[][],
       3,  // Header row index
@@ -294,11 +289,6 @@ describe('E2E: Vacuum Parser', () => {
   })
 
   it('correctly parses percentage values', () => {
-    // workbook created for consistency; vacuumParseSimulationSheet uses raw matrix
-    createXlsxWorkbook({
-      'SIMULATION': REALISTIC_SIMULATION_SHEET
-    })
-
     const result = vacuumParseSimulationSheet(
       REALISTIC_SIMULATION_SHEET as (string | number | null)[][],
       3,

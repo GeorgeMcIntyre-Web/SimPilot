@@ -4,6 +4,7 @@ import '@testing-library/jest-dom'
 
 // Polyfills for File/Blob APIs that may be missing in jsdom
 
+// Import testing-library matchers
 import '@testing-library/jest-dom/vitest'
 
 // Polyfill File.prototype.arrayBuffer if not available

@@ -3,6 +3,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom/vitest'
 import { BrowserRouter } from 'react-router-dom'
 import { DashboardPage } from '../../../app/routes/DashboardPage'
 import { setCrossRefData, clearCrossRefData } from '../../../hooks/useCrossRefData'
@@ -125,7 +126,7 @@ describe('DashboardPage', () => {
 
       // Find area cards by looking for elements with role button that contain area text
       const areaCards = screen.getAllByRole('button')
-      const ubCard = areaCards.find(card => card.textContent?.includes('UB') && card.textContent?.includes('stations'))
+      const ubCard = areaCards.find((card: HTMLElement) => card.textContent?.includes('UB') && card.textContent?.includes('stations'))
 
       expect(ubCard).toBeDefined()
       fireEvent.click(ubCard!)

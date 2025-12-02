@@ -20,11 +20,42 @@ export function FlowerEmptyState({ title, message, ctaLabel, onCtaClick }: Flowe
                 ? "bg-rose-50/50 border-rose-200 dark:bg-rose-900/10 dark:border-rose-900/30"
                 : "bg-gray-50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700"
         )}>
-            <div className="mb-4">
+            <div className="mb-6">
                 {themeMode === 'flower' ? (
-                    <div className="relative">
-                        <span className="text-4xl animate-bounce-slow inline-block" role="img" aria-hidden="true">🌸</span>
-                        <FlowerAccent className="absolute -bottom-2 -right-2 w-6 h-6 text-rose-400" />
+                    <div className="relative flex items-center justify-center">
+                        {/* Big beautiful cherry blossom */}
+                        <svg
+                            viewBox="0 0 120 120"
+                            className="w-32 h-32 animate-bounce-slow"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            {/* Realistic cherry blossom - BIG */}
+                            <g transform="translate(60, 40)">
+                                {/* Outer petals - larger */}
+                                <ellipse cx="0" cy="-12" rx="10" ry="16" fill="#FBCFE8" opacity="0.95" transform="rotate(-20 0 -12)" />
+                                <ellipse cx="11" cy="-6" rx="10" ry="16" fill="#FBCFE8" opacity="0.95" transform="rotate(20 11 -6)" />
+                                <ellipse cx="11" cy="6" rx="10" ry="16" fill="#FBCFE8" opacity="0.95" transform="rotate(70 11 6)" />
+                                <ellipse cx="0" cy="12" rx="10" ry="16" fill="#FBCFE8" opacity="0.95" transform="rotate(110 0 12)" />
+                                <ellipse cx="-11" cy="6" rx="10" ry="16" fill="#FBCFE8" opacity="0.95" transform="rotate(160 -11 6)" />
+                                <ellipse cx="-11" cy="-6" rx="10" ry="16" fill="#FBCFE8" opacity="0.95" transform="rotate(200 -11 -6)" />
+                                {/* Inner petals */}
+                                <ellipse cx="0" cy="0" rx="7" ry="10" fill="#F9A8D4" opacity="0.98" transform="rotate(45 0 0)" />
+                                <ellipse cx="0" cy="0" rx="7" ry="10" fill="#F9A8D4" opacity="0.98" transform="rotate(-45 0 0)" />
+                                {/* Center */}
+                                <circle cx="0" cy="0" r="5" fill="#F472B6" />
+                                <circle cx="0" cy="0" r="2.5" fill="#EC4899" />
+                            </g>
+                            {/* Stem */}
+                            <path d="M 60 58 L 60 100" stroke="#10B981" strokeWidth="4" strokeLinecap="round" />
+                            {/* Leaves */}
+                            <ellipse cx="45" cy="80" rx="8" ry="6" fill="#10B981" opacity="0.8" transform="rotate(-30 45 80)" />
+                            <ellipse cx="75" cy="88" rx="8" ry="6" fill="#10B981" opacity="0.8" transform="rotate(30 75 88)" />
+                        </svg>
+                        {/* Additional small flowers for decoration */}
+                        <FlowerAccent className="absolute -top-4 -left-4 w-10 h-10 text-rose-300 opacity-70" />
+                        <FlowerAccent className="absolute -bottom-4 -right-4 w-8 h-8 text-pink-300 opacity-60" />
                     </div>
                 ) : (
                     <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-full">

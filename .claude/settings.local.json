@@ -12,7 +12,10 @@
       "Bash(npm test:*)",
       "Bash(npx vitest run)",
       "Bash(npx vitest:*)",
-      "Bash(del \"c:\\Users\\George\\source\\repos\\SimPilot\\src\\simple.test.ts\")"
+      "Bash(del \"c:\\Users\\George\\source\\repos\\SimPilot\\src\\simple.test.ts\")",
+      "Bash(git checkout:*)",
+      "Bash(git diff:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": [],
     "ask": []

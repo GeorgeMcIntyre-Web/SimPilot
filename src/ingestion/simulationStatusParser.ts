@@ -34,7 +34,7 @@ export interface SimulationMetric {
   /** 0-100 if parsed successfully, null otherwise */
   percent: number | null
   /** Original cell value before normalization */
-  rawValue: string | number | null
+  rawValue: string | number | boolean | null
 }
 
 /**
