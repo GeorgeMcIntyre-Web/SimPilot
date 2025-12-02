@@ -320,13 +320,22 @@ export function DataLoaderPage() {
       coreStore.loadSnapshot(deduplicatedSnapshot)
       
       const state = coreStore.getState()
+      // Convert string warnings to IngestionWarning format
+      const warnings = (state.warnings || []).map((msg, idx) => ({
+        id: `warning-${idx}`,
+        kind: 'ROW_SKIPPED' as const,
+        fileName: 'exported_store_data.json',
+        message: msg,
+        createdAt: new Date().toISOString()
+      }))
+      
       setResult({
         projectsCount: state.projects.length,
         areasCount: state.areas.length,
         cellsCount: state.cells.length,
         robotsCount: state.assets.filter(a => a.kind === 'ROBOT').length,
         toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
-        warnings: state.warnings || []
+        warnings
       })
       
       console.log('✅ Exported data loaded (deduplicated):', {
