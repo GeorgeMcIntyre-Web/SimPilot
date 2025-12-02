@@ -1,11 +1,9 @@
 name: Deploy to Cloudflare Pages
 
-# Disabled by default until secrets are configured.
-# To enable, uncomment the 'on' section below.
-
-# on:
-#   push:
-#     branches: [ main ]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   deploy:
@@ -32,12 +30,11 @@ jobs:
         env:
           VITE_APP_ENV: production
 
-      - name: Publish to Cloudflare Pages
+      - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: simpilot
           directory: dist
-          # Optional: Enable if you want GitHub Deployments integration
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
