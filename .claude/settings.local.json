@@ -15,7 +15,10 @@
       "Bash(del \"c:\\Users\\George\\source\\repos\\SimPilot\\src\\simple.test.ts\")",
       "Bash(git checkout:*)",
       "Bash(git diff:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
