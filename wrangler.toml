@@ -1,8 +1,7 @@
 # Cloudflare Pages Configuration for SimPilot
 # 
-# This file configures Cloudflare Pages for local development and CLI deployments.
-# For most users, the Cloudflare Dashboard Git integration is sufficient and this
-# file is optional. However, it enables `wrangler pages deploy` for manual deploys.
+# This file is for Pages deployment only.
+# For Git-integrated Pages projects, the deploy command should be empty in the dashboard.
 
 name = "simpilot"
 pages_build_output_dir = "dist"
@@ -10,8 +9,6 @@ pages_build_output_dir = "dist"
 # Compatibility settings for Cloudflare Workers runtime (if using Functions in future)
 compatibility_date = "2024-01-01"
 
-[build]
-command = "npm run build"
+# Note: [build] and [site] sections are for Workers, not Pages
+# Pages projects don't need these sections
 
-[site]
-bucket = "./dist"
