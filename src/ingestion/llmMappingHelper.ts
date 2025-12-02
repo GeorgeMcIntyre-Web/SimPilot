@@ -174,7 +174,6 @@ export class OpenAILLMMapper implements LLMMapper {
    * Build the system prompt for the LLM
    * @internal Reserved for future OpenAI implementation
    */
-  // @ts-expect-error Reserved for future implementation
   private _getSystemPrompt(): string {
     return `You are an expert at analyzing Excel spreadsheet columns and mapping them to known field definitions.
 
@@ -203,7 +202,6 @@ Consider:
    * Build the user prompt with sheet data
    * @internal Reserved for future OpenAI implementation
    */
-  // @ts-expect-error Reserved for future implementation
   private _buildPrompt(input: SheetSemanticModel[]): string {
     return JSON.stringify({
       task: 'Suggest field mappings for the following sheets',

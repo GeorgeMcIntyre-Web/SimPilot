@@ -905,7 +905,7 @@ export function getConfidenceColorClass(confidence: MatchConfidence): string {
 import {
   profileSheet,
   matchAllColumns,
-  buildRoleMapFromMatchResults,
+  // buildRoleMapFromMatchResults  // Reserved for future use,
   fieldIdToColumnRole,
   type RawSheet,
   type FieldMatchResult
