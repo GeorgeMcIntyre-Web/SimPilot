@@ -21,6 +21,7 @@ import {
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
+import { deriveCustomerFromFileName } from './customerMapping'
 
 // ============================================================================
 // VACUUM PARSER TYPES
@@ -543,10 +544,11 @@ function deriveProjectName(fileName: string): string {
 
 /**
  * Derive customer from filename
+ * Uses customer mapping for consistent assignment
  */
 function deriveCustomer(fileName: string): string {
-  const parts = fileName.split('_')
-  return parts[0] || 'Unknown'
+  const { deriveCustomerFromFileName } = require('./customerMapping')
+  return deriveCustomerFromFileName(fileName)
 }
 
 /**
