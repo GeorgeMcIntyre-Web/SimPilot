@@ -206,6 +206,7 @@ export async function parseRobotList(
     })
 
     // Build robot entity
+    // Map stationCode to stationNumber for UnifiedAsset compatibility
     const robot: Robot = {
       id: generateId('robot', robotId),
       kind: 'ROBOT',
@@ -214,9 +215,14 @@ export async function parseRobotList(
       areaName: areaName || undefined,
       lineCode: lineCode || undefined,
       stationCode: stationCode || undefined,
+      stationNumber: stationCode || undefined, // Map to UnifiedAsset field
       toolIds: [],
       sourcing: 'UNKNOWN', // Default for now
-      metadata,
+      metadata: {
+        ...metadata,
+        // Store lineCode in metadata for UnifiedAsset access
+        ...(lineCode ? { lineCode } : {})
+      },
       sourceFile: fileName,
       sheetName,
       rowIndex: i

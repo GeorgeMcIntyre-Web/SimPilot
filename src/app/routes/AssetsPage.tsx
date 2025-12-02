@@ -37,11 +37,9 @@ export function AssetsPage() {
             // Search in station/area
             if (asset.stationNumber?.toLowerCase().includes(term)) return true;
             if (asset.areaName?.toLowerCase().includes(term)) return true;
-            // Check if it's a Robot or Tool with lineCode
-            if ('lineCode' in asset) {
-                const lineCode = (asset as { lineCode?: string }).lineCode;
-                if (lineCode?.toLowerCase().includes(term)) return true;
-            }
+            // Check lineCode (stored in metadata for UnifiedAsset compatibility)
+            const lineCode = asset.metadata?.lineCode;
+            if (lineCode && String(lineCode).toLowerCase().includes(term)) return true;
             // Search in model
             if (asset.oemModel?.toLowerCase().includes(term)) return true;
             // Search in metadata
@@ -147,10 +145,9 @@ export function AssetsPage() {
         {
             header: 'Line',
             accessor: (a) => {
-                if ('lineCode' in a) {
-                    return (a as { lineCode?: string }).lineCode || '-';
-                }
-                return '-';
+                // lineCode is stored in metadata for UnifiedAsset compatibility
+                const lineCode = a.metadata?.lineCode;
+                return lineCode ? String(lineCode) : '-';
             }
         },
         {
