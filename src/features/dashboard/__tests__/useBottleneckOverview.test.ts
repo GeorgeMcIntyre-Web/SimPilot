@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { simPilotStore } from '../../../domain/simPilotStore'
@@ -16,7 +17,7 @@ import type { WorkflowBottleneckSnapshot } from '../../../domain/workflowTypes'
 // ============================================================================
 
 const baseSnapshotFields = {
-  assets: [],
+  assets: [] as never[],
   reuseSummary: {
     total: 0,
     byType: {},
@@ -35,16 +36,16 @@ const baseSnapshotFields = {
     matchedReuseRecords: 0,
     unmatchedReuseRecords: 0
   },
-  errors: [],
+  errors: [] as never[],
   workflowSnapshot: {
     generatedAt: '2024-03-01T12:00:00.000Z',
-    items: []
+    items: [] as never[]
   },
   workflowBottleneckSnapshot: {
     generatedAt: '2024-03-01T12:00:00.000Z',
-    bottlenecks: []
+    bottlenecks: [] as never[]
   } as WorkflowBottleneckSnapshot
-} as const
+}
 
 const makeStage = (
   stage: WorkflowStage,
