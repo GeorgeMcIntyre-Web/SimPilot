@@ -6,15 +6,15 @@ import { ColumnProfile, profileColumn, RawColumnContext } from './columnProfiler
 import { SheetProfile, profileSheet, RawSheet } from './sheetProfiler'
 import {
   FieldMatchResult,
-  matchFieldForColumn,
+  // matchFieldForColumn,
   matchAllColumns,
-  getBestFieldId,
+  // getBestFieldId,
   buildFieldToColumnMap
 } from './fieldMatcher'
 import {
   FieldId,
-  FieldDescriptor,
-  getAllFieldDescriptors,
+  // FieldDescriptor,
+  // getAllFieldDescriptors,
   getFieldDescriptorById
 } from './fieldRegistry'
 import { ColumnRole } from '../ingestion/columnRoleDetector'
