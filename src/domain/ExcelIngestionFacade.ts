@@ -17,9 +17,7 @@ import type { SimplifiedAsset } from '../ingestion/parsers/reuseLinker';
 import {
   type BottleneckSnapshot,
   type ToolingSnapshot,
-  type ToolingWorkflowStatus,
-  createEmptyBottleneckSnapshot,
-  createEmptyToolingSnapshot
+  createEmptyBottleneckSnapshot
 } from './toolingTypes';
 import {
   type WorkflowSnapshot,
@@ -27,8 +25,9 @@ import {
   type WorkflowItem,
   type WorkflowBottleneckStatus
 } from './workflowTypes';
-import { toolingItemToWorkflowItem, toolingWorkflowStatusToWorkflowItem } from './workflowMappers';
-import { analyzeWorkflowItem } from './workflowBottleneckLinker';
+import { toolingItemToWorkflowItem } from './workflowMappers';
+import { analyzeWorkflowBottlenecks } from './workflowBottleneckLinker';
+import { buildToolingSnapshot } from './toolingSnapshotBuilder';
 
 /**
  * Stable snapshot of all SimPilot data loaded from Excel workbooks
@@ -125,15 +124,15 @@ export async function loadSimPilotDataSnapshot(
   // Execute ingestion pipeline
   const result: FullIngestionResult = await ingestAllExcelData(options);
 
-  // PHASE 1: Build tooling snapshots (currently empty, will be populated by future ingestion)
-  const toolingSnapshot = createEmptyToolingSnapshot();
+  // PHASE 3: Build tooling snapshots from real tooling data
+  const toolingSnapshot = buildToolingSnapshot(result.toolingItems);
+
+  // Legacy bottleneck snapshot (empty for now, as we're using generic workflow engine)
   const bottleneckSnapshot = createEmptyBottleneckSnapshot();
 
-  // PHASE 1: Build workflow snapshots from tooling snapshots
-  // This demonstrates the generic workflow engine wiring
-  // When tooling ingestion is complete, these will contain real data
+  // PHASE 3: Build workflow snapshots from real tooling data
   const workflowSnapshot = buildWorkflowSnapshotFromTooling(toolingSnapshot);
-  const workflowBottleneckSnapshot = buildWorkflowBottleneckSnapshotFromTooling(bottleneckSnapshot);
+  const workflowBottleneckSnapshot = buildWorkflowBottleneckSnapshotFromWorkflow(workflowSnapshot);
 
   // Map to stable facade types
   return {
@@ -159,10 +158,9 @@ export async function loadSimPilotDataSnapshot(
 }
 
 /**
- * PHASE 1: Build workflow snapshot from tooling snapshot
+ * PHASE 3: Build workflow snapshot from tooling snapshot
  *
  * Converts tooling-specific items to generic WorkflowItem[]
- * This demonstrates the mapping framework without requiring full ingestion changes
  */
 function buildWorkflowSnapshotFromTooling(toolingSnapshot: ToolingSnapshot): WorkflowSnapshot {
   const workflowItems: WorkflowItem[] = toolingSnapshot.items.map(toolingItemToWorkflowItem)
@@ -174,32 +172,17 @@ function buildWorkflowSnapshotFromTooling(toolingSnapshot: ToolingSnapshot): Wor
 }
 
 /**
- * PHASE 1: Build workflow bottleneck snapshot from tooling bottleneck snapshot
+ * PHASE 3: Build workflow bottleneck snapshot from workflow snapshot
  *
- * Converts tooling-specific workflow statuses to generic WorkflowBottleneckStatus[]
- * Uses the generic workflow engine for consistency
+ * Analyzes workflow items using the generic bottleneck engine
  */
-function buildWorkflowBottleneckSnapshotFromTooling(
-  bottleneckSnapshot: BottleneckSnapshot
+function buildWorkflowBottleneckSnapshotFromWorkflow(
+  workflowSnapshot: WorkflowSnapshot
 ): WorkflowBottleneckSnapshot {
-  const bottlenecks: WorkflowBottleneckStatus[] = bottleneckSnapshot.workflowStatuses.map(
-    (toolingStatus: ToolingWorkflowStatus) => {
-      // Convert to generic WorkflowItem
-      const workflowItem = toolingWorkflowStatusToWorkflowItem(toolingStatus)
-
-      // Analyze using generic workflow engine
-      const bottleneckStatus = analyzeWorkflowItem(workflowItem)
-
-      // Attach the full workflow item for reference
-      return {
-        ...bottleneckStatus,
-        workflowItem
-      }
-    }
-  )
+  const bottlenecks: WorkflowBottleneckStatus[] = analyzeWorkflowBottlenecks(workflowSnapshot.items)
 
   return {
-    generatedAt: bottleneckSnapshot.generatedAt,
+    generatedAt: workflowSnapshot.generatedAt,
     bottlenecks
   }
 }

@@ -3,18 +3,18 @@ import type { HTMLAttributes } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Filter, Loader2, SlidersHorizontal, ExternalLink } from 'lucide-react'
 import { DashboardBottlenecksSummary } from './DashboardBottlenecksSummary'
-import { selectWorstBottlenecks } from '../../domain/simPilotSelectors'
+import { selectWorstWorkflowBottlenecks } from '../../domain/simPilotSelectors'
 import { useSimPilotStore } from '../../domain/simPilotStore'
 import type {
-  BottleneckReason,
-  ToolingWorkflowStatus,
-  WorkflowStage
-} from '../../domain/toolingTypes'
+  WorkflowBottleneckStatus,
+  WorkflowStage,
+  WorkflowBottleneckReason
+} from '../../domain/workflowTypes'
 
-const STAGE_FILTERS: Array<WorkflowStage | 'ALL'> = ['ALL', 'DESIGN', 'SIMULATION', 'MANUFACTURE']
+const STAGE_FILTERS: ReadonlyArray<WorkflowStage | 'ALL'> = ['ALL', 'DESIGN', 'SIMULATION', 'MANUFACTURE', 'EXTERNAL_SUPPLIER', 'UNKNOWN'] as const
 
 interface ReasonOption {
-  value: BottleneckReason
+  value: WorkflowBottleneckReason
   label: string
 }
 
@@ -22,20 +22,21 @@ export function DashboardBottlenecksPanel() {
   const navigate = useNavigate()
   const simPilotState = useSimPilotStore()
   const [stageFilter, setStageFilter] = useState<WorkflowStage | 'ALL'>('ALL')
-  const [reasonFilter, setReasonFilter] = useState<BottleneckReason[]>([])
-  const [activeWorkflow, setActiveWorkflow] = useState<ToolingWorkflowStatus | null>(null)
+  const [reasonFilter, setReasonFilter] = useState<WorkflowBottleneckReason[]>([])
+  const [activeWorkflow, setActiveWorkflow] = useState<WorkflowBottleneckStatus | null>(null)
 
-  // PHASE 1: Currently using legacy tooling-specific selectors
-  // Future migration: Switch to generic workflow selectors
-  // const worstBottlenecks = useMemo(() => {
-  //   return selectWorstToolingWorkflowBottlenecks(simPilotState, 25)
-  // }, [simPilotState])
-  const worstBottlenecks = useMemo(() => {
-    return selectWorstBottlenecks(simPilotState, 25)
+  // PHASE 3: Using generic workflow selectors, filtered to TOOLING kind only
+  const allBottlenecks = useMemo(() => {
+    return selectWorstWorkflowBottlenecks(simPilotState, 50)
   }, [simPilotState])
 
+  // Filter to TOOLING kind only (preserves current behavior, ready for WELD_GUN/ROBOT_CELL later)
+  const worstBottlenecks = useMemo(() => {
+    return allBottlenecks.filter(b => b.kind === 'TOOLING').slice(0, 25)
+  }, [allBottlenecks])
+
   const reasonOptions: ReasonOption[] = useMemo(() => {
-    const unique = new Set<BottleneckReason>()
+    const unique = new Set<WorkflowBottleneckReason>()
     for (const status of worstBottlenecks) {
       unique.add(status.bottleneckReason)
     }
@@ -62,16 +63,19 @@ export function DashboardBottlenecksPanel() {
     let medium = 0
     let low = 0
     for (const status of worstBottlenecks) {
-      const derived = deriveSeverity(status.bottleneckReason)
-      if (derived === 'HIGH') {
+      const severity = status.severity.toUpperCase()
+      if (severity === 'CRITICAL' || severity === 'HIGH') {
         high += 1
         continue
       }
-      if (derived === 'MEDIUM') {
+      if (severity === 'MEDIUM') {
         medium += 1
         continue
       }
-      low += 1
+      if (severity === 'LOW') {
+        low += 1
+        continue
+      }
     }
     return { high, medium, low }
   }, [worstBottlenecks])
@@ -106,17 +110,21 @@ export function DashboardBottlenecksPanel() {
     )
   }
 
-  const handleOpenSimulation = (status: ToolingWorkflowStatus) => {
-    const params = new URLSearchParams()
-    params.set('program', status.location.program)
-    params.set('plant', status.location.plant)
-    params.set('unit', status.location.unit)
-    params.set('line', status.location.line)
-    params.set('station', status.location.station)
-    navigate(`/simulation?${params.toString()}`)
+  const handleOpenSimulation = (status: WorkflowBottleneckStatus) => {
+    // Parse simulation context key (format: Program|Plant|Unit|Line|Station)
+    const parts = status.simulationContextKey.split('|')
+    if (parts.length === 5) {
+      const params = new URLSearchParams()
+      params.set('program', parts[0])
+      params.set('plant', parts[1])
+      params.set('unit', parts[2])
+      params.set('line', parts[3])
+      params.set('station', parts[4])
+      navigate(`/simulation?${params.toString()}`)
+    }
   }
 
-  const handleOpenDrawer = (status: ToolingWorkflowStatus) => {
+  const handleOpenDrawer = (status: WorkflowBottleneckStatus) => {
     setActiveWorkflow(status)
   }
 
@@ -124,7 +132,7 @@ export function DashboardBottlenecksPanel() {
     setActiveWorkflow(null)
   }
 
-  const updatedAt = simPilotState.snapshot?.bottleneckSnapshot.generatedAt
+  const updatedAt = simPilotState.snapshot?.workflowBottleneckSnapshot.generatedAt
 
   return (
     <PanelCard data-testid="bottlenecks-panel">
@@ -163,7 +171,7 @@ export function DashboardBottlenecksPanel() {
           <div className="space-y-4">
             {filteredBottlenecks.map(status => (
               <BottleneckRow
-                key={status.workflowId}
+                key={status.workflowItemId}
                 status={status}
                 onOpenSimulation={() => handleOpenSimulation(status)}
                 onOpenDetail={() => handleOpenDrawer(status)}
@@ -173,7 +181,7 @@ export function DashboardBottlenecksPanel() {
         )}
       </div>
 
-      <ToolingDetailDrawer workflow={activeWorkflow} onClose={handleCloseDrawer} />
+      <WorkflowDetailDrawer workflow={activeWorkflow} onClose={handleCloseDrawer} />
     </PanelCard>
   )
 }
@@ -192,8 +200,8 @@ function PanelCard({ className, ...rest }: PanelCardProps) {
 interface FilterToolbarProps {
   stageFilter: WorkflowStage | 'ALL'
   onStageChange: (stage: WorkflowStage | 'ALL') => void
-  reasonFilter: BottleneckReason[]
-  onReasonToggle: (reason: BottleneckReason) => void
+  reasonFilter: WorkflowBottleneckReason[]
+  onReasonToggle: (reason: WorkflowBottleneckReason) => void
   onClearReasons: () => void
   reasons: ReasonOption[]
 }
@@ -269,14 +277,23 @@ function FilterToolbar({
 }
 
 interface BottleneckRowProps {
-  status: ToolingWorkflowStatus
+  status: WorkflowBottleneckStatus
   onOpenSimulation: () => void
   onOpenDetail: () => void
 }
 
 function BottleneckRow({ status, onOpenSimulation, onOpenDetail }: BottleneckRowProps) {
-  const severity = deriveSeverity(status.bottleneckReason)
-  const severityStyle = getSeverityStyle(severity)
+  const severityStyle = getSeverityStyle(status.severity)
+
+  // Extract location info from context key (format: Program|Plant|Unit|Line|Station)
+  const parts = status.simulationContextKey.split('|')
+  const program = parts[0] ?? 'UNKNOWN'
+  const station = parts[4] ?? 'UNKNOWN'
+
+  // Get item display info
+  const itemNumber = status.itemNumber ?? status.workflowItemId
+  const workflowItem = status.workflowItem
+  const handedness = workflowItem?.handedness
 
   return (
     <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-4">
@@ -284,18 +301,18 @@ function BottleneckRow({ status, onOpenSimulation, onOpenDetail }: BottleneckRow
         <div>
           <div className="flex items-center gap-3">
             <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${severityStyle}`}>
-              {severity} severity
+              {status.severity} severity
             </span>
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {formatReason(status.bottleneckReason)}
             </span>
           </div>
           <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
-            {status.toolingNumber}
-            {status.handedness ? ` • ${status.handedness}` : ''}
+            {itemNumber}
+            {handedness !== undefined ? ` • ${handedness}` : ''}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Station {status.station} · {status.area} · {status.program}
+            Station {station} · {program}
           </p>
         </div>
 
@@ -313,7 +330,7 @@ function BottleneckRow({ status, onOpenSimulation, onOpenDetail }: BottleneckRow
             onClick={onOpenDetail}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-indigo-400 transition-colors"
           >
-            Open Tooling Detail
+            Open Item Detail
           </button>
         </div>
       </div>
@@ -325,7 +342,7 @@ function BottleneckRow({ status, onOpenSimulation, onOpenDetail }: BottleneckRow
       </div>
 
       <div className="text-xs text-gray-400">
-        Dominant stage: {status.dominantStage} · Score {status.severityScore}
+        Dominant stage: {status.dominantStage} · Score {status.severityScore} · Kind: {status.kind}
       </div>
     </div>
   )
@@ -333,22 +350,35 @@ function BottleneckRow({ status, onOpenSimulation, onOpenDetail }: BottleneckRow
 
 interface StagePillProps {
   label: string
-  snapshot: ToolingWorkflowStatus['designStage']
+  snapshot: WorkflowBottleneckStatus['designStage']
 }
 
 function StagePill({ label, snapshot }: StagePillProps) {
   const statusText =
     snapshot.status === 'BLOCKED'
       ? 'Blocked'
-      : snapshot.status === 'AT_RISK'
-        ? 'At risk'
-        : 'On track'
+      : snapshot.status === 'CHANGES_REQUESTED'
+        ? 'Changes requested'
+        : snapshot.status === 'IN_PROGRESS'
+          ? 'In progress'
+          : snapshot.status === 'APPROVED'
+            ? 'Approved'
+            : snapshot.status === 'COMPLETE'
+              ? 'Complete'
+              : snapshot.status === 'NOT_STARTED'
+                ? 'Not started'
+                : 'Unknown'
+
   const statusColor =
     snapshot.status === 'BLOCKED'
       ? 'text-rose-600'
-      : snapshot.status === 'AT_RISK'
+      : snapshot.status === 'CHANGES_REQUESTED'
         ? 'text-amber-600'
-        : 'text-emerald-600'
+        : snapshot.status === 'IN_PROGRESS'
+          ? 'text-blue-600'
+          : snapshot.status === 'APPROVED' || snapshot.status === 'COMPLETE'
+            ? 'text-emerald-600'
+            : 'text-gray-500'
 
   return (
     <div className="rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-800 p-3">
@@ -357,31 +387,34 @@ function StagePill({ label, snapshot }: StagePillProps) {
         {statusText}
         {typeof snapshot.percentComplete === 'number' ? ` • ${snapshot.percentComplete}%` : ''}
       </p>
-      {snapshot.owner && (
+      {snapshot.owner !== undefined && (
         <p className="text-xs text-gray-500 dark:text-gray-400">Owner: {snapshot.owner}</p>
       )}
     </div>
   )
 }
 
-interface ToolingDetailDrawerProps {
-  workflow: ToolingWorkflowStatus | null
+interface WorkflowDetailDrawerProps {
+  workflow: WorkflowBottleneckStatus | null
   onClose: () => void
 }
 
-function ToolingDetailDrawer({ workflow, onClose }: ToolingDetailDrawerProps) {
+function WorkflowDetailDrawer({ workflow, onClose }: WorkflowDetailDrawerProps) {
   if (workflow === null) {
     return null
   }
 
-  const tool = workflow.tool
+  const workflowItem = workflow.workflowItem
+  const parts = workflow.simulationContextKey.split('|')
+  const program = parts[0] ?? 'UNKNOWN'
+  const station = parts[4] ?? 'UNKNOWN'
 
   return (
     <div className="fixed inset-0 z-40 flex items-stretch justify-end">
       <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
       <div className="w-full max-w-md bg-white dark:bg-gray-900 h-full p-6 overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Tooling Detail</h4>
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Workflow Item Detail</h4>
           <button
             type="button"
             onClick={onClose}
@@ -392,24 +425,32 @@ function ToolingDetailDrawer({ workflow, onClose }: ToolingDetailDrawerProps) {
         </div>
 
         <div className="space-y-4 text-sm">
-          <InfoRow label="Tooling number" value={workflow.toolingNumber} />
-          {workflow.equipmentNumber && (
-            <InfoRow label="Equipment #" value={workflow.equipmentNumber} />
-          )}
-          <InfoRow label="Station" value={`${workflow.station} • ${workflow.area}`} />
-          <InfoRow label="Program" value={workflow.program} />
+          <InfoRow label="Item number" value={workflow.itemNumber ?? workflow.workflowItemId} />
+          <InfoRow label="Kind" value={workflow.kind} />
+          <InfoRow label="Station" value={station} />
+          <InfoRow label="Program" value={program} />
           <InfoRow label="Dominant stage" value={workflow.dominantStage} />
           <InfoRow label="Bottleneck reason" value={formatReason(workflow.bottleneckReason)} />
+          <InfoRow label="Severity" value={workflow.severity} />
         </div>
 
         <div className="mt-6 space-y-3">
-          <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Tool metadata</h5>
-          {tool ? (
+          <h5 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Item metadata</h5>
+          {workflowItem !== undefined ? (
             <div className="space-y-2">
-              <InfoRow label="Supplier" value={tool.supplier ?? 'Not specified'} />
-              <InfoRow label="Owner" value={tool.owner ?? 'Unassigned'} />
-              <InfoRow label="Location" value={`${tool.location.plant} / ${tool.location.line}`} />
-              {Object.entries(tool.metadata).map(([key, value]) => (
+              {workflowItem.name !== undefined && (
+                <InfoRow label="Name" value={workflowItem.name} />
+              )}
+              {workflowItem.equipmentNumber !== undefined && (
+                <InfoRow label="Equipment #" value={workflowItem.equipmentNumber} />
+              )}
+              {workflowItem.handedness !== undefined && (
+                <InfoRow label="Handedness" value={workflowItem.handedness} />
+              )}
+              {workflowItem.externalSupplierName !== undefined && (
+                <InfoRow label="Supplier" value={workflowItem.externalSupplierName} />
+              )}
+              {workflowItem.metadata !== undefined && Object.entries(workflowItem.metadata).map(([key, value]) => (
                 <InfoRow
                   key={key}
                   label={key}
@@ -419,7 +460,7 @@ function ToolingDetailDrawer({ workflow, onClose }: ToolingDetailDrawerProps) {
             </div>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              No detailed tooling record was linked to this workflow item.
+              No detailed workflow item metadata available.
             </p>
           )}
         </div>
@@ -442,29 +483,25 @@ function InfoRow({ label, value }: InfoRowProps) {
   )
 }
 
-type SeverityLabel = 'HIGH' | 'MEDIUM' | 'LOW'
+function getSeverityStyle(severity: string): string {
+  const upper = severity.toUpperCase()
 
-function deriveSeverity(reason: BottleneckReason): SeverityLabel {
-  if (reason === 'DESIGN_BLOCKED' || reason === 'SIMULATION_DEFECT') {
-    return 'HIGH'
-  }
-  if (reason === 'MANUFACTURE_CONSTRAINT' || reason === 'SUPPLIER_DELAY') {
-    return 'MEDIUM'
-  }
-  return 'LOW'
-}
-
-function getSeverityStyle(severity: SeverityLabel): string {
-  if (severity === 'HIGH') {
+  if (upper === 'CRITICAL' || upper === 'HIGH') {
     return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-200'
   }
-  if (severity === 'MEDIUM') {
+  if (upper === 'MEDIUM') {
     return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200'
   }
-  return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+  if (upper === 'LOW') {
+    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
+  }
+  if (upper === 'OK') {
+    return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+  }
+  return 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-200'
 }
 
-function formatReason(reason: BottleneckReason): string {
+function formatReason(reason: WorkflowBottleneckReason): string {
   return reason
     .toLowerCase()
     .split('_')
