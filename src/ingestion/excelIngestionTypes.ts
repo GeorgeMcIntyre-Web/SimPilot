@@ -742,37 +742,53 @@ export function buildAssetKey(input: {
   areaName?: string | null
   assemblyLine?: string | null
   robotNumber?: string | null
+  assetName?: string | null
 }): string {
   const parts: string[] = []
 
-  // For reuse list assets, use simpler key structure
-  if (input.name !== null && input.name !== undefined && input.name.trim().length > 0) {
-    parts.push(input.name.trim().toLowerCase())
-  }
+  // Type A: Check if this is a reuse list asset (has name/location but no project hierarchy)
+  const isReuseAsset = (input.name !== null && input.name !== undefined && input.name.trim().length > 0) ||
+                        (input.location !== null && input.location !== undefined && input.location.trim().length > 0)
+  const hasProjectHierarchy = (input.projectCode !== null && input.projectCode !== undefined && input.projectCode.trim().length > 0)
 
-  if (input.location !== null && input.location !== undefined && input.location.trim().length > 0) {
-    parts.push(input.location.trim().toLowerCase())
-  }
+  if (isReuseAsset && !hasProjectHierarchy) {
+    // For reuse list assets, use simpler key structure: name|location|station
+    if (input.name !== null && input.name !== undefined && input.name.trim().length > 0) {
+      parts.push(input.name.trim().toLowerCase())
+    }
 
-  if (input.station !== null && input.station !== undefined && input.station.trim().length > 0) {
-    parts.push(input.station.trim().toLowerCase())
-  }
+    if (input.location !== null && input.location !== undefined && input.location.trim().length > 0) {
+      parts.push(input.location.trim().toLowerCase())
+    }
 
-  // For simulation status assets, use full hierarchy
-  if (input.projectCode !== null && input.projectCode !== undefined && input.projectCode.trim().length > 0) {
-    parts.push(input.projectCode.trim().toLowerCase())
-  }
+    if (input.station !== null && input.station !== undefined && input.station.trim().length > 0) {
+      parts.push(input.station.trim().toLowerCase())
+    }
+  } else {
+    // For simulation status assets, use full hierarchy: projectCode|areaName|assemblyLine|station|robotNumber|assetName
+    if (input.projectCode !== null && input.projectCode !== undefined && input.projectCode.trim().length > 0) {
+      parts.push(input.projectCode.trim().toLowerCase())
+    }
 
-  if (input.areaName !== null && input.areaName !== undefined && input.areaName.trim().length > 0) {
-    parts.push(input.areaName.trim().toLowerCase())
-  }
+    if (input.areaName !== null && input.areaName !== undefined && input.areaName.trim().length > 0) {
+      parts.push(input.areaName.trim().toLowerCase())
+    }
 
-  if (input.assemblyLine !== null && input.assemblyLine !== undefined && input.assemblyLine.trim().length > 0) {
-    parts.push(input.assemblyLine.trim().toLowerCase())
-  }
+    if (input.assemblyLine !== null && input.assemblyLine !== undefined && input.assemblyLine.trim().length > 0) {
+      parts.push(input.assemblyLine.trim().toLowerCase())
+    }
 
-  if (input.robotNumber !== null && input.robotNumber !== undefined && input.robotNumber.trim().length > 0) {
-    parts.push(input.robotNumber.trim().toLowerCase())
+    if (input.station !== null && input.station !== undefined && input.station.trim().length > 0) {
+      parts.push(input.station.trim().toLowerCase())
+    }
+
+    if (input.robotNumber !== null && input.robotNumber !== undefined && input.robotNumber.trim().length > 0) {
+      parts.push(input.robotNumber.trim().toLowerCase())
+    }
+
+    if (input.assetName !== null && input.assetName !== undefined && input.assetName.trim().length > 0) {
+      parts.push(input.assetName.trim().toLowerCase())
+    }
   }
 
   // Must have at least one part

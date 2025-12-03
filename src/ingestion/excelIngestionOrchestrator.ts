@@ -271,7 +271,7 @@ export function formatIngestionSummary(result: FullIngestionResult): string {
   lines.push('');
 
   // Assets summary
-  lines.push(`Total Assets: ${result.assets.length}`);
+  lines.push(`Total Assets: ${result.linkingStats.totalAssets}`);
   lines.push(`Assets with Reuse Info: ${result.linkingStats.assetsWithReuseInfo}`);
   lines.push('');
 

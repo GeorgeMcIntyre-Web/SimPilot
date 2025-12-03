@@ -896,3 +896,144 @@ export function getConfidenceColorClass(confidence: MatchConfidence): string {
       return 'text-red-600 dark:text-red-400'
   }
 }
+
+// ============================================================================
+// NEW ENGINE INTEGRATION
+// ============================================================================
+// Bridge to the new schema-agnostic engine for enhanced matching.
+
+import {
+  profileSheet,
+  matchAllColumns,
+  // buildRoleMapFromMatchResults  // Reserved for future use,
+  fieldIdToColumnRole,
+  type RawSheet,
+  type FieldMatchResult
+} from '../excel'
+
+/**
+ * Analyze a header row using the new schema-agnostic engine.
+ * This provides enhanced matching using the FieldRegistry.
+ *
+ * @param headers - Array of header values
+ * @param sheetName - Name of the sheet
+ * @param headerRowIndex - Index of the header row (default: 0)
+ * @returns SheetSchemaAnalysis compatible with existing code
+ */
+export function analyzeHeaderRowV2(
+  headers: CellValue[],
+  sheetName: string = 'Sheet',
+  headerRowIndex: number = 0
+): SheetSchemaAnalysis {
+  // Build rows array with just the header row for profiling
+  const rows: unknown[][] = [headers]
+
+  // Profile the sheet using the new engine
+  const rawSheet: RawSheet = {
+    sheetName,
+    rows,
+    headerRowIndex: 0
+  }
+
+  const profile = profileSheet(rawSheet, 'inline-analysis', 0)
+  const matchResults = matchAllColumns(profile)
+
+  // Convert to SheetSchemaAnalysis format
+  const columns: ColumnRoleDetection[] = []
+  const roleMap = new Map<ColumnRole, number[]>()
+  const unknownColumns: ColumnRoleDetection[] = []
+
+  for (const result of matchResults) {
+    const { columnProfile, bestMatch } = result
+    const role: ColumnRole = bestMatch !== undefined
+      ? fieldIdToColumnRole(bestMatch.fieldId)
+      : 'UNKNOWN'
+
+    const confidence: MatchConfidence = bestMatch !== undefined
+      ? scoreToConfidence(bestMatch.score)
+      : 'LOW'
+
+    const detection: ColumnRoleDetection = {
+      columnIndex: columnProfile.columnIndex,
+      headerText: columnProfile.headerRaw,
+      normalizedHeader: columnProfile.headerNormalized,
+      role,
+      confidence,
+      matchedPattern: bestMatch?.fieldId ?? '',
+      explanation: bestMatch !== undefined
+        ? `Matched ${bestMatch.fieldId} (score: ${bestMatch.score})`
+        : 'No match found'
+    }
+
+    columns.push(detection)
+
+    // Track by role
+    const existingIndices = roleMap.get(role) ?? []
+    existingIndices.push(columnProfile.columnIndex)
+    roleMap.set(role, existingIndices)
+
+    // Track unknowns
+    if (role === 'UNKNOWN' && columnProfile.headerRaw.trim() !== '') {
+      unknownColumns.push(detection)
+    }
+  }
+
+  // Calculate coverage
+  const total = columns.filter(c => c.headerText !== '').length
+  const known = total - unknownColumns.length
+  const percentage = total > 0 ? Math.round((known / total) * 100) : 0
+
+  return {
+    sheetName,
+    headerRowIndex,
+    headers: headers.map(h => String(h ?? '')),
+    columns,
+    roleMap,
+    unknownColumns,
+    coverage: {
+      total,
+      known,
+      unknown: unknownColumns.length,
+      percentage
+    }
+  }
+}
+
+/**
+ * Convert a numeric score to confidence level.
+ */
+function scoreToConfidence(score: number): MatchConfidence {
+  if (score >= 40) {
+    return 'HIGH'
+  }
+
+  if (score >= 25) {
+    return 'MEDIUM'
+  }
+
+  return 'LOW'
+}
+
+/**
+ * Get the underlying FieldMatchResult for detailed analysis.
+ * Use this when you need access to all match candidates and reasons.
+ *
+ * @param headers - Array of header values
+ * @param sheetName - Name of the sheet
+ * @returns Array of FieldMatchResult with full match details
+ */
+export function getFieldMatchResults(
+  headers: CellValue[],
+  sheetName: string = 'Sheet'
+): FieldMatchResult[] {
+  const rows: unknown[][] = [headers]
+
+  const rawSheet: RawSheet = {
+    sheetName,
+    rows,
+    headerRowIndex: 0
+  }
+
+  const profile = profileSheet(rawSheet, 'inline-analysis', 0)
+  return matchAllColumns(profile)
+}

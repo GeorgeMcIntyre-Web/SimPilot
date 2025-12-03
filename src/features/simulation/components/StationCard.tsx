@@ -2,9 +2,13 @@
 // Compact card showing station summary for the simulation board
 // Displays asset counts, sourcing breakdown, and simulation status
 
-import { Bot, Zap, Wrench, Box, RefreshCw, ShoppingCart, HelpCircle } from 'lucide-react'
+import { useMemo } from 'react'
+import { Bot, Zap, Wrench, Box, RefreshCw, ShoppingCart, HelpCircle, AlertTriangle } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// import { useToolingBottleneckState, type WorkflowStage } from '../../../domain/toolingBottleneckStore'
+// import { selectBottlenecksByStationKey } from '../../../domain/simPilotSelectors'
 
 // ============================================================================
 // TYPES
@@ -205,6 +209,76 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
           </span>
         )}
       </div>
+
+      <StationBottleneckSummary stationKey={station.contextKey} />
     </button>
   )
+}
+
+interface StationBottleneckSummaryProps {
+  stationKey: string
+}
+
+function StationBottleneckSummary({ stationKey }: StationBottleneckSummaryProps) {
+  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+  // const bottleneckState = useToolingBottleneckState()
+  // const matches = useMemo(
+  //   () => selectBottlenecksByStationKey(bottleneckState, stationKey),
+  //   [bottleneckState, stationKey]
+  // )
+  const matches: any[] = [] // Placeholder until bottleneck integration is re-enabled
+
+  if (matches.length === 0) return null
+
+  const summary = formatBottleneckSummary(matches)
+  const hasCritical = matches.some(match => match.severity === 'critical')
+  const chipClass = hasCritical
+    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800'
+    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+
+  return (
+    <div className="mt-3 flex items-center justify-between">
+      <div
+        className={cn(
+          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold',
+          chipClass
+        )}
+      >
+        <AlertTriangle className="h-3.5 w-3.5" />
+        {summary}
+      </div>
+      <span className="text-[10px] uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        Tooling bottleneck
+      </span>
+    </div>
+  )
+}
+
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// function formatBottleneckSummary(matches: { dominantStage: WorkflowStage }[]): string {
+//   const counts: Record<WorkflowStage, number> = {
+//     DESIGN: 0,
+//     SIMULATION: 0
+//   }
+//
+//   for (const match of matches) {
+//     counts[match.dominantStage] += 1
+//   }
+//
+//   const parts: string[] = []
+//   if (counts.DESIGN > 0) {
+//     parts.push(`${counts.DESIGN} DESIGN`)
+//   }
+//   if (counts.SIMULATION > 0) {
+//     parts.push(`${counts.SIMULATION} SIMULATION`)
+//   }
+//
+//   if (parts.length === 0) return 'Tooling bottleneck'
+//
+//   const noun = matches.length === 1 ? 'bottleneck' : 'bottlenecks'
+//   return `${parts.join(', ')} ${noun}`
+// }
+
+function formatBottleneckSummary(matches: any[]): string {
+  return 'Tooling bottleneck' // Placeholder until bottleneck integration is re-enabled
 }
