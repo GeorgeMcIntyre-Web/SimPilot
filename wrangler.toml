@@ -24,3 +24,4 @@ compatibility_date = "2024-01-01"
 #
 # Do NOT embed secrets in frontend code. Environment variables prefixed with VITE_
 # are bundled into the client-side code and visible to end users.
+

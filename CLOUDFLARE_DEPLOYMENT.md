@@ -152,3 +152,8 @@ Once deployed, your SimPilot application will be live and accessible to users!
 **Default URL:** `https://simpilot.pages.dev`  
 **Custom Domain:** (if configured)
 
+---
+
+## Latest failure – YYYY-MM-DD
+
+> **Note:** Paste the latest Cloudflare build/deploy error log here for analysis.

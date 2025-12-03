@@ -54,3 +54,4 @@ But **Option 1 is better** - just leave it empty.
 - ❌ Deploy: **Wrong command** (using Workers command instead of Pages)
 - 🔧 Fix: **Remove deploy command** or leave it empty
 
+
