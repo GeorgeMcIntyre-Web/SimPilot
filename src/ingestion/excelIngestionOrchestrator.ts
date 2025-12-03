@@ -10,6 +10,7 @@
  * Part of Phase 3: Integration Layer
  */
 
+import * as path from 'path';
 import type { ReuseAllocationStatus } from './excelIngestionTypes';
 import {
   loadAllReuseLists,
@@ -22,9 +23,12 @@ import {
   type ReuseLinkResult,
   type SimplifiedAsset
 } from './parsers/reuseLinker';
+import { parseToolListWorkbook } from './parsers/toolingListParser';
+import type { ToolingItem } from '../domain/toolingTypes';
 
 export type FullIngestionResult = {
   assets: SimplifiedAsset[];
+  toolingItems: ToolingItem[];
   reuseSummary: {
     total: number;
     byType: Record<string, number>;
@@ -43,18 +47,20 @@ export type FullIngestionResult = {
 export type IngestionOptions = {
   dataRoot: string;
   loadPrimaryAssets?: boolean; // Default true
+  loadToolingData?: boolean; // Default true
   loadReuseLists?: boolean; // Default true
   attachReuseInfo?: boolean; // Default true
 };
 
 /**
- * Ingest all Excel data including primary assets and reuse lists
+ * Ingest all Excel data including primary assets, tooling, and reuse lists
  *
  * Orchestrates the complete ingestion pipeline:
  * 1. Load primary assets (if enabled)
- * 2. Load reuse lists (if enabled)
- * 3. Attach reuse info to assets (if enabled)
- * 4. Return consolidated result with summary stats
+ * 2. Load tooling data (if enabled)
+ * 3. Load reuse lists (if enabled)
+ * 4. Attach reuse info to assets (if enabled)
+ * 5. Return consolidated result with summary stats
  */
 export async function ingestAllExcelData(
   options: IngestionOptions
@@ -63,6 +69,7 @@ export async function ingestAllExcelData(
 
   // Set defaults
   const loadPrimaryAssets = options.loadPrimaryAssets ?? true;
+  const loadToolingData = options.loadToolingData ?? true;
   const loadReuseLists = options.loadReuseLists ?? true;
   const attachReuseInfo = options.attachReuseInfo ?? true;
 
@@ -71,7 +78,12 @@ export async function ingestAllExcelData(
     ? await loadPrimaryAssetsFromWorkbooks(options.dataRoot, errors)
     : [];
 
-  // Step 2: Load reuse lists
+  // Step 2: Load tooling data
+  const toolingItems = loadToolingData
+    ? await loadToolingDataFromWorkbooks(options.dataRoot, errors)
+    : [];
+
+  // Step 3: Load reuse lists
   let reuseRecords: ReuseRecord[] = [];
 
   if (loadReuseLists) {
@@ -83,7 +95,7 @@ export async function ingestAllExcelData(
     }
   }
 
-  // Step 3: Attach reuse info to assets
+  // Step 4: Attach reuse info to assets
   let finalAssets = primaryAssets;
   let linkingResult: ReuseLinkResult = {
     updatedAssets: primaryAssets,
@@ -95,12 +107,13 @@ export async function ingestAllExcelData(
     finalAssets = linkingResult.updatedAssets;
   }
 
-  // Step 4: Compute summaries
+  // Step 5: Compute summaries
   const reuseSummary = summarizeReuseRecords(reuseRecords);
   const linkingStats = calculateLinkingStats(linkingResult);
 
   return {
     assets: finalAssets,
+    toolingItems,
     reuseSummary: {
       ...reuseSummary,
       unmatchedReuseCount: linkingResult.unmatchedReuseRecords.length
@@ -117,7 +130,6 @@ export async function ingestAllExcelData(
  * In a real implementation, this would call existing parsers for:
  * - ROBOTLIST workbooks
  * - SIMULATION_STATUS workbooks
- * - TOOL_LIST workbooks
  * - etc.
  */
 async function loadPrimaryAssetsFromWorkbooks(
@@ -135,6 +147,66 @@ async function loadPrimaryAssetsFromWorkbooks(
   // errors.push(...robotListResult.warnings);
 
   return assets;
+}
+
+/**
+ * Load tooling data from Tool List workbooks
+ *
+ * Searches for Tool List workbooks in the dataRoot and parses them.
+ * Common patterns:
+ * - STLA_S_ZAR Tool List.xlsx
+ * - TOOL_LIST.xlsx
+ * - Tooling.xlsx
+ */
+async function loadToolingDataFromWorkbooks(
+  dataRoot: string,
+  errors: string[]
+): Promise<ToolingItem[]> {
+  const toolingItems: ToolingItem[] = [];
+
+  // Guard: validate dataRoot
+  if (dataRoot.trim().length === 0) {
+    errors.push('Cannot load tooling data: dataRoot is empty');
+    return toolingItems;
+  }
+
+  // Common tooling file patterns
+  const toolingFilePatterns = [
+    'STLA_S_ZAR Tool List.xlsx',
+    'TOOL_LIST.xlsx',
+    'Tool List.xlsx',
+    'Tooling.xlsx'
+  ];
+
+  // Try each pattern
+  for (const pattern of toolingFilePatterns) {
+    const filePath = path.join(dataRoot, pattern);
+
+    try {
+      const fs = await import('fs');
+      const fileExists = fs.existsSync(filePath);
+
+      if (fileExists === false) {
+        continue;
+      }
+
+      // Parse the workbook
+      const parseResult = await parseToolListWorkbook(filePath);
+      toolingItems.push(...parseResult.items);
+
+      if (parseResult.warnings.length > 0) {
+        errors.push(...parseResult.warnings.map(w => `[${parseResult.workbookName}] ${w}`));
+      }
+
+      // Successfully loaded this file, don't try other patterns
+      break;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      errors.push(`Failed to load tooling from ${pattern}: ${message}`);
+    }
+  }
+
+  return toolingItems;
 }
 
 /**

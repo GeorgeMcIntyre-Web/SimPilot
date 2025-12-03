@@ -64,43 +64,95 @@ export function toolingWorkflowStatusToWorkflowItem(status: ToolingWorkflowStatu
 }
 
 /**
- * TODO: Map WeldGun to WorkflowItem
- *
- * @example
- * export function weldGunToWorkflowItem(gun: WeldGun): WorkflowItem {
- *   return {
- *     id: gun.gunId,
- *     kind: 'WELD_GUN',
- *     simulationContextKey: buildSimulationContextKey(...),
- *     name: gun.gunName,
- *     itemNumber: gun.gunId,
- *     designStageStatus: mapGunDesignStage(gun),
- *     simulationStageStatus: mapGunSimStage(gun),
- *     manufactureStageStatus: mapGunMfgStage(gun),
- *     externalSupplierName: gun.supplier,
- *     metadata: { ... }
- *   }
- * }
+ * Placeholder weld gun type for future implementation
  */
+export interface WeldGun {
+  gunId: string
+  gunName?: string
+  supplier?: string
+  location: {
+    program: string
+    plant: string
+    unit: string
+    line: string
+    station: string
+  }
+  metadata?: Record<string, unknown>
+}
 
 /**
- * TODO: Map RobotCell to WorkflowItem
+ * Map WeldGun to WorkflowItem
  *
- * @example
- * export function robotCellToWorkflowItem(cell: RobotCell): WorkflowItem {
- *   return {
- *     id: cell.cellId,
- *     kind: 'ROBOT_CELL',
- *     simulationContextKey: buildSimulationContextKey(...),
- *     name: cell.cellName,
- *     itemNumber: cell.cellCode,
- *     designStageStatus: mapCellDesignStage(cell),
- *     simulationStageStatus: mapCellSimStage(cell),
- *     manufactureStageStatus: mapCellMfgStage(cell),
- *     metadata: { ... }
- *   }
- * }
+ * This is a typed placeholder ready for weld gun ingestion.
+ * When weld gun data becomes available, this function can be used directly.
  */
+export function weldGunToWorkflowItem(gun: WeldGun): WorkflowItem {
+  const contextKey = buildSimulationContextKey(
+    gun.location.program,
+    gun.location.plant,
+    gun.location.unit,
+    gun.location.line,
+    gun.location.station
+  )
+
+  return {
+    id: gun.gunId,
+    kind: 'WELD_GUN',
+    simulationContextKey: contextKey,
+    name: gun.gunName ?? gun.gunId,
+    itemNumber: gun.gunId,
+    designStageStatus: createUnknownStageSnapshot('DESIGN'),
+    simulationStageStatus: createUnknownStageSnapshot('SIMULATION'),
+    manufactureStageStatus: createUnknownStageSnapshot('MANUFACTURE'),
+    externalSupplierName: gun.supplier,
+    metadata: gun.metadata
+  }
+}
+
+/**
+ * Placeholder robot cell type for future implementation
+ */
+export interface RobotCell {
+  cellId: string
+  cellName?: string
+  cellCode?: string
+  location: {
+    program: string
+    plant: string
+    unit: string
+    line: string
+    station: string
+  }
+  metadata?: Record<string, unknown>
+}
+
+/**
+ * Map RobotCell to WorkflowItem
+ *
+ * This is a typed placeholder ready for robot cell ingestion.
+ * When robot cell data becomes available, this function can be used directly.
+ */
+export function robotCellToWorkflowItem(cell: RobotCell): WorkflowItem {
+  const contextKey = buildSimulationContextKey(
+    cell.location.program,
+    cell.location.plant,
+    cell.location.unit,
+    cell.location.line,
+    cell.location.station
+  )
+
+  return {
+    id: cell.cellId,
+    kind: 'ROBOT_CELL',
+    simulationContextKey: contextKey,
+    name: cell.cellName ?? cell.cellCode ?? cell.cellId,
+    itemNumber: cell.cellCode ?? cell.cellId,
+    designStageStatus: createUnknownStageSnapshot('DESIGN'),
+    simulationStageStatus: createUnknownStageSnapshot('SIMULATION'),
+    manufactureStageStatus: createUnknownStageSnapshot('MANUFACTURE'),
+    metadata: cell.metadata
+  }
+}
 
 /**
  * Build simulation context key from hierarchy components

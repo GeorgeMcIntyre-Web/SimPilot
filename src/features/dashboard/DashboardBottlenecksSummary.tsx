@@ -1,4 +1,4 @@
-import type { WorkflowStage } from '../../domain/toolingTypes'
+import type { WorkflowStage } from '../../domain/workflowTypes'
 
 interface DashboardBottlenecksSummaryProps {
   total: number

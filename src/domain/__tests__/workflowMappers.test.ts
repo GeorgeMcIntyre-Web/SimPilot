@@ -7,7 +7,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   toolingItemToWorkflowItem,
-  toolingWorkflowStatusToWorkflowItem
+  toolingWorkflowStatusToWorkflowItem,
+  weldGunToWorkflowItem,
+  robotCellToWorkflowItem,
+  type WeldGun,
+  type RobotCell
 } from '../workflowMappers'
 import type { ToolingItem, ToolingWorkflowStatus } from '../toolingTypes'
 
@@ -272,5 +276,100 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
     expect(result.simulationStageStatus.owner).toBe('Jane Smith')
     expect(result.simulationStageStatus.note).toBe('In progress')
     expect(result.simulationStageStatus.updatedAt).toBe('2025-01-16')
+  })
+})
+
+describe('weldGunToWorkflowItem', () => {
+  it('should convert weld gun to workflow item', () => {
+    const gun: WeldGun = {
+      gunId: 'GUN-001',
+      gunName: 'Test Weld Gun',
+      supplier: 'Weld Corp',
+      location: {
+        program: 'STLA',
+        plant: 'Plant1',
+        unit: 'Unit1',
+        line: 'Line1',
+        station: 'ST-200'
+      },
+      metadata: { voltage: 220 }
+    }
+
+    const result = weldGunToWorkflowItem(gun)
+
+    expect(result.id).toBe('GUN-001')
+    expect(result.kind).toBe('WELD_GUN')
+    expect(result.simulationContextKey).toBe('STLA|Plant1|Unit1|Line1|ST-200')
+    expect(result.name).toBe('Test Weld Gun')
+    expect(result.itemNumber).toBe('GUN-001')
+    expect(result.externalSupplierName).toBe('Weld Corp')
+    expect(result.metadata).toEqual({ voltage: 220 })
+  })
+
+  it('should handle minimal weld gun data', () => {
+    const gun: WeldGun = {
+      gunId: 'GUN-002',
+      location: {
+        program: 'STLA',
+        plant: 'Plant1',
+        unit: 'Unit1',
+        line: 'Line1',
+        station: 'ST-200'
+      }
+    }
+
+    const result = weldGunToWorkflowItem(gun)
+
+    expect(result.id).toBe('GUN-002')
+    expect(result.kind).toBe('WELD_GUN')
+    expect(result.name).toBe('GUN-002') // Falls back to gunId
+    expect(result.externalSupplierName).toBeUndefined()
+  })
+})
+
+describe('robotCellToWorkflowItem', () => {
+  it('should convert robot cell to workflow item', () => {
+    const cell: RobotCell = {
+      cellId: 'CELL-001',
+      cellName: 'Body Welding Cell',
+      cellCode: 'BWC-01',
+      location: {
+        program: 'STLA',
+        plant: 'Plant1',
+        unit: 'Unit1',
+        line: 'Line1',
+        station: 'ST-300'
+      },
+      metadata: { robotCount: 4 }
+    }
+
+    const result = robotCellToWorkflowItem(cell)
+
+    expect(result.id).toBe('CELL-001')
+    expect(result.kind).toBe('ROBOT_CELL')
+    expect(result.simulationContextKey).toBe('STLA|Plant1|Unit1|Line1|ST-300')
+    expect(result.name).toBe('Body Welding Cell')
+    expect(result.itemNumber).toBe('BWC-01')
+    expect(result.metadata).toEqual({ robotCount: 4 })
+  })
+
+  it('should handle minimal robot cell data', () => {
+    const cell: RobotCell = {
+      cellId: 'CELL-002',
+      location: {
+        program: 'STLA',
+        plant: 'Plant1',
+        unit: 'Unit1',
+        line: 'Line1',
+        station: 'ST-300'
+      }
+    }
+
+    const result = robotCellToWorkflowItem(cell)
+
+    expect(result.id).toBe('CELL-002')
+    expect(result.kind).toBe('ROBOT_CELL')
+    expect(result.name).toBe('CELL-002') // Falls back to cellId
+    expect(result.itemNumber).toBe('CELL-002')
   })
 })

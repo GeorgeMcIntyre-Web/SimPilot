@@ -2,7 +2,7 @@
  * EXCEL INGESTION FACADE TESTS
  *
  * Tests for workflow snapshot building logic in the facade
- * Phase 1: Verifies tooling → workflow mapping works correctly
+ * Phase 3: Verifies tooling → workflow mapping and bottleneck analysis with real data
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -15,6 +15,8 @@ import type {
   ToolingSnapshot,
   BottleneckSnapshot
 } from '../toolingTypes'
+import { toolingItemToWorkflowItem } from '../workflowMappers'
+import { analyzeWorkflowBottlenecks } from '../workflowBottleneckLinker'
 
 // We'll test the internal building logic by creating snapshots with pre-populated data
 // and verifying the workflow snapshots are correctly derived
@@ -238,6 +240,71 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
       expect(toolingItem.equipmentNumber).toBe('EQ-CRITICAL')
       expect(toolingItem.handedness).toBe('PAIR')
       expect(toolingItem.supplier).toBe('External Vendor')
+    })
+
+    it('should produce workflow bottlenecks from real tooling items', () => {
+      // PHASE 3: Test that real tooling data flows through the generic workflow engine
+      const toolingItems: ToolingItem[] = [
+        {
+          toolingId: 'T001',
+          toolingNumber: 'TOOL-001',
+          equipmentNumber: 'EQ-001',
+          handedness: 'LH',
+          description: 'Test Fixture 1',
+          location: {
+            program: 'STLA',
+            plant: 'Plant1',
+            unit: 'Unit1',
+            line: 'Line1',
+            station: 'ST-100',
+            area: 'Underbody'
+          },
+          supplier: 'ACME Corp',
+          metadata: {}
+        },
+        {
+          toolingId: 'T002',
+          toolingNumber: 'TOOL-002',
+          location: {
+            program: 'STLA',
+            plant: 'Plant1',
+            unit: 'Unit1',
+            line: 'Line1',
+            station: 'ST-200',
+            area: 'Body'
+          },
+          metadata: {}
+        }
+      ]
+
+      // Convert to workflow items
+      const workflowItems = toolingItems.map(toolingItemToWorkflowItem)
+
+      // Verify conversion
+      expect(workflowItems).toHaveLength(2)
+      expect(workflowItems[0].kind).toBe('TOOLING')
+      expect(workflowItems[0].itemNumber).toBe('TOOL-001')
+      expect(workflowItems[1].itemNumber).toBe('TOOL-002')
+
+      // Analyze bottlenecks using generic engine
+      const bottlenecks = analyzeWorkflowBottlenecks(workflowItems)
+
+      // Verify bottlenecks were produced
+      expect(bottlenecks).toHaveLength(2)
+
+      // Items with UNKNOWN stage status should be classified as DESIGN_NOT_DETAILED
+      // (Rule 2 from bottleneck engine: design incomplete + sim not started)
+      expect(bottlenecks[0].bottleneckReason).toBe('DESIGN_NOT_DETAILED')
+      expect(bottlenecks[0].kind).toBe('TOOLING')
+      expect(bottlenecks[0].workflowItemId).toBe('T001')
+      expect(bottlenecks[0].dominantStage).toBe('DESIGN')
+      expect(bottlenecks[0].severity).toBe('HIGH')
+
+      expect(bottlenecks[1].bottleneckReason).toBe('DESIGN_NOT_DETAILED')
+      expect(bottlenecks[1].kind).toBe('TOOLING')
+      expect(bottlenecks[1].workflowItemId).toBe('T002')
+      expect(bottlenecks[1].dominantStage).toBe('DESIGN')
+      expect(bottlenecks[1].severity).toBe('HIGH')
     })
   })
 })
