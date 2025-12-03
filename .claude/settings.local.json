@@ -25,7 +25,15 @@
       "Bash(cat:*)",
       "Bash(git tag:*)",
       "Bash(node -e:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(node --version:*)",
+      "Bash(node --loader tsx --test src/sanity.test.ts)",
+      "Bash(del nul)",
+      "Bash(del vitest.config.minimal.ts)",
+      "Bash(git stash:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr view:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
