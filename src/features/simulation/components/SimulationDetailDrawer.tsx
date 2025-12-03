@@ -22,12 +22,13 @@ import {
 } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
-import {
-  useToolingBottleneckState,
-  type ToolingWorkflowStatus
-} from '../../../domain/toolingBottleneckStore'
-import { selectBottlenecksByStationKey } from '../../../domain/simPilotSelectors'
-import { getBottleneckReasonLabel } from '../../../domain/toolingBottleneckLabels'
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// import {
+//   useToolingBottleneckState,
+//   type ToolingWorkflowStatus
+// } from '../../../domain/toolingBottleneckStore'
+// import { selectBottlenecksByStationKey } from '../../../domain/simPilotSelectors'
+// import { getBottleneckReasonLabel } from '../../../domain/toolingBottleneckLabels'
 
 // ============================================================================
 // TYPES
@@ -134,7 +135,8 @@ export function SimulationDetailDrawer({
   onClose
 }: SimulationDetailDrawerProps) {
   const navigate = useNavigate()
-  const bottleneckState = useToolingBottleneckState()
+  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+  // const bottleneckState = useToolingBottleneckState()
   const [isToolingDrawerOpen, setIsToolingDrawerOpen] = useState(false)
 
   if (station === null) return null
@@ -149,10 +151,12 @@ export function SimulationDetailDrawer({
   }
 
   const simStatus = station.simulationStatus
-  const toolingBottlenecks = useMemo(
-    () => selectBottlenecksByStationKey(bottleneckState, station.contextKey),
-    [bottleneckState, station.contextKey]
-  )
+  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+  // const toolingBottlenecks = useMemo(
+  //   () => selectBottlenecksByStationKey(bottleneckState, station.contextKey),
+  //   [bottleneckState, station.contextKey]
+  // )
+  const toolingBottlenecks: any[] = [] // Placeholder
   const hasToolingBottlenecks = toolingBottlenecks.length > 0
 
   const handleOpenToolingPage = (toolingNumber: string) => {
@@ -369,25 +373,28 @@ export function SimulationDetailDrawer({
         </div>
       </div>
 
-      <ToolingBottleneckDrawer
+      {/* TODO(George): Re-enable bottleneck integration after migrating to generic workflow system */}
+      {/* <ToolingBottleneckDrawer
         isOpen={isToolingDrawerOpen}
         onClose={() => setIsToolingDrawerOpen(false)}
         statuses={toolingBottlenecks}
         onOpenTooling={handleOpenToolingPage}
         onOpenAssets={handleOpenAssetsForTooling}
-      />
+      /> */}
     </>
   )
 }
 
-interface ToolingBottleneckDrawerProps {
-  isOpen: boolean
-  statuses: ToolingWorkflowStatus[]
-  onClose: () => void
-  onOpenTooling: (toolingNumber: string) => void
-  onOpenAssets: (toolingNumber: string) => void
-}
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// interface ToolingBottleneckDrawerProps {
+//   isOpen: boolean
+//   statuses: ToolingWorkflowStatus[]
+//   onClose: () => void
+//   onOpenTooling: (toolingNumber: string) => void
+//   onOpenAssets: (toolingNumber: string) => void
+// }
 
+/*
 function ToolingBottleneckDrawer({
   isOpen,
   statuses,
@@ -480,7 +487,10 @@ function ToolingBottleneckDrawer({
     </>
   )
 }
+*/
 
+// TODO(George): StagePill and DominantStageTag also reference old ToolingWorkflowStatus types
+/*
 interface StagePillProps {
   snapshot: ToolingWorkflowStatus['designStage']
 }
@@ -520,4 +530,5 @@ function DominantStageTag({ stage, severity }: DominantStageTagProps) {
     </span>
   )
 }
+*/
 

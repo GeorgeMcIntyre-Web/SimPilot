@@ -36,12 +36,13 @@ import {
 import { AssetDetailPanel } from '../../features/assets/AssetDetailPanel';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes';
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
-import { useToolingBottleneckState } from '../../domain/toolingBottleneckStore';
-import {
-  selectBottleneckStageForAsset,
-  type SimPilotSelectorState,
-  type AssetBottleneckSummary,
-} from '../../domain/simPilotSelectors';
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// import { useToolingBottleneckState } from '../../domain/toolingBottleneckStore';
+// import {
+//   selectBottleneckStageForAsset,
+//   type SimPilotSelectorState,
+//   type AssetBottleneckSummary,
+// } from '../../domain/simPilotSelectors';
 import {
   Search,
   X,
@@ -417,7 +418,8 @@ export function AssetsPage() {
   const navigate = useNavigate();
   const state = useCoreStore();
   const allAssets = state.assets;
-  const toolingState = useToolingBottleneckState();
+  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+  // const toolingState = useToolingBottleneckState();
 
   // Filter state
   const {
@@ -439,26 +441,28 @@ export function AssetsPage() {
 
   const [onlyBottleneckAssets, setOnlyBottleneckAssets] = useState(false);
 
-  const selectorState: SimPilotSelectorState = useMemo(
-    () => ({
-      toolingBottlenecks: toolingState,
-      assets: allAssets,
-    }),
-    [toolingState, allAssets]
-  );
+  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+  // const selectorState: SimPilotSelectorState = useMemo(
+  //   () => ({
+  //     toolingBottlenecks: toolingState,
+  //     assets: allAssets,
+  //   }),
+  //   [toolingState, allAssets]
+  // );
 
-  const assetBottleneckMap = useMemo(() => {
-    const map = new Map<string, AssetBottleneckSummary>();
-    if (selectorState.toolingBottlenecks.statuses.length === 0) {
-      return map;
-    }
-    for (const asset of allAssets) {
-      const summary = selectBottleneckStageForAsset(selectorState, asset.id);
-      if (summary === null) continue;
-      map.set(asset.id, summary);
-    }
-    return map;
-  }, [selectorState, allAssets]);
+  // const assetBottleneckMap = useMemo(() => {
+  //   const map = new Map<string, AssetBottleneckSummary>();
+  //   if (selectorState.toolingBottlenecks.statuses.length === 0) {
+  //     return map;
+  //   }
+  //   for (const asset of allAssets) {
+  //     const summary = selectBottleneckStageForAsset(selectorState, asset.id);
+  //     if (summary === null) continue;
+  //     map.set(asset.id, summary);
+  //   }
+  //   return map;
+  // }, [selectorState, allAssets]);
+  const assetBottleneckMap = new Map(); // Placeholder until bottleneck integration is re-enabled
 
   // Sort state
   const [sortKey, setSortKey] = useState<SortKey>('name');

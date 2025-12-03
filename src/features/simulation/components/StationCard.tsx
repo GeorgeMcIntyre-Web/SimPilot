@@ -6,8 +6,9 @@ import { useMemo } from 'react'
 import { Bot, Zap, Wrench, Box, RefreshCw, ShoppingCart, HelpCircle, AlertTriangle } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
-import { useToolingBottleneckState, type WorkflowStage } from '../../../domain/toolingBottleneckStore'
-import { selectBottlenecksByStationKey } from '../../../domain/simPilotSelectors'
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// import { useToolingBottleneckState, type WorkflowStage } from '../../../domain/toolingBottleneckStore'
+// import { selectBottlenecksByStationKey } from '../../../domain/simPilotSelectors'
 
 // ============================================================================
 // TYPES
@@ -219,11 +220,13 @@ interface StationBottleneckSummaryProps {
 }
 
 function StationBottleneckSummary({ stationKey }: StationBottleneckSummaryProps) {
-  const bottleneckState = useToolingBottleneckState()
-  const matches = useMemo(
-    () => selectBottlenecksByStationKey(bottleneckState, stationKey),
-    [bottleneckState, stationKey]
-  )
+  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+  // const bottleneckState = useToolingBottleneckState()
+  // const matches = useMemo(
+  //   () => selectBottlenecksByStationKey(bottleneckState, stationKey),
+  //   [bottleneckState, stationKey]
+  // )
+  const matches: any[] = [] // Placeholder until bottleneck integration is re-enabled
 
   if (matches.length === 0) return null
 
@@ -251,26 +254,31 @@ function StationBottleneckSummary({ stationKey }: StationBottleneckSummaryProps)
   )
 }
 
-function formatBottleneckSummary(matches: { dominantStage: WorkflowStage }[]): string {
-  const counts: Record<WorkflowStage, number> = {
-    DESIGN: 0,
-    SIMULATION: 0
-  }
+// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
+// function formatBottleneckSummary(matches: { dominantStage: WorkflowStage }[]): string {
+//   const counts: Record<WorkflowStage, number> = {
+//     DESIGN: 0,
+//     SIMULATION: 0
+//   }
+//
+//   for (const match of matches) {
+//     counts[match.dominantStage] += 1
+//   }
+//
+//   const parts: string[] = []
+//   if (counts.DESIGN > 0) {
+//     parts.push(`${counts.DESIGN} DESIGN`)
+//   }
+//   if (counts.SIMULATION > 0) {
+//     parts.push(`${counts.SIMULATION} SIMULATION`)
+//   }
+//
+//   if (parts.length === 0) return 'Tooling bottleneck'
+//
+//   const noun = matches.length === 1 ? 'bottleneck' : 'bottlenecks'
+//   return `${parts.join(', ')} ${noun}`
+// }
 
-  for (const match of matches) {
-    counts[match.dominantStage] += 1
-  }
-
-  const parts: string[] = []
-  if (counts.DESIGN > 0) {
-    parts.push(`${counts.DESIGN} DESIGN`)
-  }
-  if (counts.SIMULATION > 0) {
-    parts.push(`${counts.SIMULATION} SIMULATION`)
-  }
-
-  if (parts.length === 0) return 'Tooling bottleneck'
-
-  const noun = matches.length === 1 ? 'bottleneck' : 'bottlenecks'
-  return `${parts.join(', ')} ${noun}`
+function formatBottleneckSummary(matches: any[]): string {
+  return 'Tooling bottleneck' // Placeholder until bottleneck integration is re-enabled
 }
