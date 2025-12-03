@@ -17,7 +17,8 @@ vi.mock('@react-oauth/google', () => ({
 
 // Mock the googleConfig
 vi.mock('../googleConfig', () => ({
-    getGoogleClientId: () => 'test-client-id'
+    getGoogleClientId: () => 'test-client-id',
+    isGoogleAuthConfigured: () => true // Mock as configured to test real auth flow
 }))
 
 // Helper component to access context
