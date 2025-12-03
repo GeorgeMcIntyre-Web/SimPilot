@@ -7,6 +7,7 @@
  * - "Open in Simulation Status" calls the correct navigation hook/route
  */
 
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';

@@ -3,6 +3,7 @@
  * Tests for authentication context and session management.
  */
 
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { AuthProvider, AuthContext } from '../AuthContext'

@@ -1,6 +1,7 @@
 // SheetMappingInspector Tests
 // Tests for the mapping inspection and override UI
 
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { SheetMappingInspector, SheetMappingData } from '../SheetMappingInspector'

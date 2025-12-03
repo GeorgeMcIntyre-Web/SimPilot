@@ -1,6 +1,7 @@
 // DaleTodayPanel Tests
 // Tests for Dale's Today Panel showing stations needing attention
 
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DaleTodayPanel } from '../components/DaleTodayPanel'

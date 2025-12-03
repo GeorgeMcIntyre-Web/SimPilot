@@ -18,7 +18,7 @@ export default defineConfig({
     },
     test: {
         globals: true,
-        environment: 'jsdom',
+        environment: 'node', // Default to node for unit tests, React tests use @vitest-environment jsdom
         include: ['**/*.test.ts', '**/*.test.tsx'],
         pool: 'vmThreads',
         setupFiles: ['./src/test/setup.ts'],
