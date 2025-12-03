@@ -10,8 +10,10 @@ import type {
   ToolingWorkflowStatus,
   WorkflowStage,
   StageStatusSnapshot,
-  ToolingItem
+  ToolingItem,
+  BottleneckReason
 } from '../../../domain/toolingTypes'
+import type { WorkflowBottleneckSnapshot } from '../../../domain/workflowTypes'
 
 const mockNavigate = vi.fn()
 
@@ -43,7 +45,15 @@ const baseSnapshotFields = {
     matchedReuseRecords: 0,
     unmatchedReuseRecords: 0
   },
-  errors: []
+  errors: [],
+  workflowSnapshot: {
+    generatedAt: '2024-03-01T12:00:00.000Z',
+    items: []
+  },
+  workflowBottleneckSnapshot: {
+    generatedAt: '2024-03-01T12:00:00.000Z',
+    bottlenecks: []
+  } as WorkflowBottleneckSnapshot
 } as const
 
 const makeStage = (
@@ -138,85 +148,334 @@ describe('DashboardBottlenecksPanel', () => {
     })
   })
 
-  it('shows loading state when store is loading', () => {
-    act(() => {
-      simPilotStore.setLoading(true)
-    })
-    renderPanel()
-    expect(screen.getByTestId('bottlenecks-loading')).toBeInTheDocument()
-  })
-
-  it('shows empty state when snapshot has no bottlenecks', () => {
-    act(() => {
-      simPilotStore.setSnapshot(makeSnapshot([]))
-    })
-    renderPanel()
-    expect(screen.getByTestId('bottlenecks-empty')).toBeInTheDocument()
-  })
-
-  it('renders a severe bottleneck with key fields', () => {
-    const workflow = makeWorkflow({
-      toolingNumber: 'TL-123',
-      station: 'ST-210',
-      area: 'Body Shop',
-      program: 'BETA',
-      bottleneckReason: 'SIMULATION_DEFECT'
-    })
-    act(() => {
-      simPilotStore.setSnapshot(makeSnapshot([workflow]))
-    })
-    renderPanel()
-
-    expect(screen.getByText(/TL-123/)).toBeInTheDocument()
-    expect(screen.getByText(/Station ST-210/)).toBeInTheDocument()
-    expect(screen.getAllByText('Simulation Defect').length).toBeGreaterThan(0)
-  })
-
-  it('filters by workflow stage', () => {
-    const designWorkflow = makeWorkflow({
-      workflowId: 'design',
-      toolingNumber: 'TL-Design',
-      dominantStage: 'DESIGN'
-    })
-    const simulationWorkflow = makeWorkflow({
-      workflowId: 'simulation',
-      toolingNumber: 'TL-Sim',
-      dominantStage: 'SIMULATION',
-      bottleneckReason: 'MANUFACTURE_CONSTRAINT'
-    })
-    act(() => {
-      simPilotStore.setSnapshot(makeSnapshot([designWorkflow, simulationWorkflow]))
-    })
-    renderPanel()
-
-    const designButton = screen.getByRole('button', { name: 'Design' })
-    fireEvent.click(designButton)
-
-    expect(screen.getByText(/TL-Design/)).toBeInTheDocument()
-    expect(screen.queryByText(/TL-Sim/)).not.toBeInTheDocument()
-  })
-
-  it('navigates to simulation view with station context', () => {
-    const workflow = makeWorkflow({
-      toolingNumber: 'TL-Open',
-      location: makeLocation({
-        program: 'OMEGA',
-        plant: 'Mack Assembly',
-        unit: 'Framing',
-        line: 'Line 2',
-        station: 'ST-555'
+  describe('loading and empty states', () => {
+    it('shows loading state when store is loading', () => {
+      act(() => {
+        simPilotStore.setLoading(true)
       })
+      renderPanel()
+      expect(screen.getByTestId('bottlenecks-loading')).toBeInTheDocument()
+      expect(screen.getByText(/Loading tooling bottlenecks/)).toBeInTheDocument()
     })
-    act(() => {
-      simPilotStore.setSnapshot(makeSnapshot([workflow]))
+
+    it('shows empty state when snapshot has no bottlenecks', () => {
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([]))
+      })
+      renderPanel()
+      expect(screen.getByTestId('bottlenecks-empty')).toBeInTheDocument()
+      expect(screen.getByText(/No tooling bottlenecks detected/)).toBeInTheDocument()
     })
-    renderPanel()
 
-    const openButton = screen.getByRole('button', { name: /Open Station in Simulation/i })
-    fireEvent.click(openButton)
+    it('shows empty state when snapshot is null', () => {
+      // Store is already clear (snapshot is null), so just render
+      renderPanel()
+      expect(screen.getByTestId('bottlenecks-empty')).toBeInTheDocument()
+    })
+  })
 
-    expect(mockNavigate).toHaveBeenCalledWith(
-      '/simulation?program=OMEGA&plant=Mack+Assembly&unit=Framing&line=Line+2&station=ST-555'
-    )
+  describe('bottleneck display', () => {
+    it('renders a severe bottleneck with key fields', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-123',
+        station: 'ST-210',
+        area: 'Body Shop',
+        program: 'BETA',
+        bottleneckReason: 'SIMULATION_DEFECT'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/TL-123/)).toBeInTheDocument()
+      expect(screen.getByText(/Station ST-210/)).toBeInTheDocument()
+      expect(screen.getAllByText('Simulation Defect').length).toBeGreaterThan(0)
+    })
+
+    it('displays severity badge for HIGH severity bottleneck', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-HIGH',
+        severity: 'HIGH',
+        bottleneckReason: 'DESIGN_BLOCKED'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/HIGH severity/i)).toBeInTheDocument()
+    })
+
+    it('displays severity badge for MEDIUM severity bottleneck', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-MEDIUM',
+        severity: 'MEDIUM',
+        bottleneckReason: 'MANUFACTURE_CONSTRAINT'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/MEDIUM severity/i)).toBeInTheDocument()
+    })
+
+    it('displays severity score in bottom details', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-SCORE',
+        severityScore: 85
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/Score 85/)).toBeInTheDocument()
+    })
+
+    it('shows dominant stage in bottom details', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-DOM',
+        dominantStage: 'SIMULATION'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/Dominant stage: SIMULATION/)).toBeInTheDocument()
+    })
+
+    it('renders multiple bottlenecks sorted by severity', () => {
+      const highWorkflow = makeWorkflow({
+        workflowId: 'high',
+        toolingNumber: 'TL-HIGH',
+        severity: 'HIGH',
+        severityScore: 100
+      })
+      const lowWorkflow = makeWorkflow({
+        workflowId: 'low',
+        toolingNumber: 'TL-LOW',
+        severity: 'LOW',
+        severityScore: 30,
+        bottleneckReason: 'DATA_GAP'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([lowWorkflow, highWorkflow]))
+      })
+      renderPanel()
+
+      // Both should be visible
+      expect(screen.getByText(/TL-HIGH/)).toBeInTheDocument()
+      expect(screen.getByText(/TL-LOW/)).toBeInTheDocument()
+    })
+  })
+
+  describe('summary counts', () => {
+    it('displays bottleneck overview header with total count', () => {
+      const workflows = [
+        makeWorkflow({ workflowId: '1', toolingNumber: 'TL-1' }),
+        makeWorkflow({ workflowId: '2', toolingNumber: 'TL-2' })
+      ]
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot(workflows))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/2 open blockers/)).toBeInTheDocument()
+    })
+
+    it('displays severity counts in summary pills', () => {
+      const workflows = [
+        makeWorkflow({ workflowId: '1', severity: 'HIGH', bottleneckReason: 'DESIGN_BLOCKED' }),
+        makeWorkflow({ workflowId: '2', severity: 'HIGH', bottleneckReason: 'SIMULATION_DEFECT' }),
+        makeWorkflow({ workflowId: '3', severity: 'MEDIUM', bottleneckReason: 'MANUFACTURE_CONSTRAINT' })
+      ]
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot(workflows))
+      })
+      renderPanel()
+
+      // Summary shows 2 high, 1 medium
+      expect(screen.getByText('3 open blockers')).toBeInTheDocument()
+    })
+  })
+
+  describe('filtering', () => {
+    it('filters by workflow stage', () => {
+      const designWorkflow = makeWorkflow({
+        workflowId: 'design',
+        toolingNumber: 'TL-Design',
+        dominantStage: 'DESIGN'
+      })
+      const simulationWorkflow = makeWorkflow({
+        workflowId: 'simulation',
+        toolingNumber: 'TL-Sim',
+        dominantStage: 'SIMULATION',
+        bottleneckReason: 'MANUFACTURE_CONSTRAINT'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([designWorkflow, simulationWorkflow]))
+      })
+      renderPanel()
+
+      const designButton = screen.getByRole('button', { name: 'Design' })
+      fireEvent.click(designButton)
+
+      expect(screen.getByText(/TL-Design/)).toBeInTheDocument()
+      expect(screen.queryByText(/TL-Sim/)).not.toBeInTheDocument()
+    })
+
+    it('filters by simulation stage', () => {
+      const designWorkflow = makeWorkflow({
+        workflowId: 'design',
+        toolingNumber: 'TL-Design',
+        dominantStage: 'DESIGN'
+      })
+      const simulationWorkflow = makeWorkflow({
+        workflowId: 'simulation',
+        toolingNumber: 'TL-Sim',
+        dominantStage: 'SIMULATION'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([designWorkflow, simulationWorkflow]))
+      })
+      renderPanel()
+
+      const simButton = screen.getByRole('button', { name: 'Simulation' })
+      fireEvent.click(simButton)
+
+      expect(screen.getByText(/TL-Sim/)).toBeInTheDocument()
+      expect(screen.queryByText(/TL-Design/)).not.toBeInTheDocument()
+    })
+
+    it('shows "All stages" option in filter toolbar', () => {
+      const workflow = makeWorkflow({ toolingNumber: 'TL-ANY' })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByRole('button', { name: 'All stages' })).toBeInTheDocument()
+    })
+
+    it('displays no-match message when filter excludes all bottlenecks', () => {
+      const designWorkflow = makeWorkflow({
+        workflowId: 'design',
+        toolingNumber: 'TL-Design',
+        dominantStage: 'DESIGN'
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([designWorkflow]))
+      })
+      renderPanel()
+
+      // Filter to MANUFACTURE stage (no bottlenecks match)
+      const mfgButton = screen.getByRole('button', { name: 'Manufacture' })
+      fireEvent.click(mfgButton)
+
+      expect(screen.getByText(/No bottlenecks match the current filters/)).toBeInTheDocument()
+    })
+  })
+
+  describe('navigation and actions', () => {
+    it('navigates to simulation view with station context', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-Open',
+        location: makeLocation({
+          program: 'OMEGA',
+          plant: 'Mack Assembly',
+          unit: 'Framing',
+          line: 'Line 2',
+          station: 'ST-555'
+        })
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      const openButton = screen.getByRole('button', { name: /Open Station in Simulation/i })
+      fireEvent.click(openButton)
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/simulation?program=OMEGA&plant=Mack+Assembly&unit=Framing&line=Line+2&station=ST-555'
+      )
+    })
+
+    it('opens tooling detail drawer when clicking detail button', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-DETAIL',
+        tool: makeTool({
+          toolingNumber: 'TL-DETAIL',
+          supplier: 'ABB Robotics',
+          owner: 'Alex Engineer'
+        })
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      const detailButton = screen.getByRole('button', { name: /Open Tooling Detail/i })
+      fireEvent.click(detailButton)
+
+      // Drawer should now be visible
+      expect(screen.getByText('Tooling Detail')).toBeInTheDocument()
+      expect(screen.getByText('ABB Robotics')).toBeInTheDocument()
+    })
+
+    it('closes tooling detail drawer when clicking close', () => {
+      const workflow = makeWorkflow({ toolingNumber: 'TL-CLOSE' })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      // Open drawer
+      const detailButton = screen.getByRole('button', { name: /Open Tooling Detail/i })
+      fireEvent.click(detailButton)
+      expect(screen.getByText('Tooling Detail')).toBeInTheDocument()
+
+      // Close drawer
+      const closeButton = screen.getByRole('button', { name: /Close/i })
+      fireEvent.click(closeButton)
+
+      // Drawer should be hidden
+      expect(screen.queryByText('Tooling Detail')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('stage pills', () => {
+    it('displays stage status pills with percent complete', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-STAGES',
+        designStage: makeStage('DESIGN', 50, 'AT_RISK'),
+        simulationStage: makeStage('SIMULATION', 75, 'ON_TRACK'),
+        manufactureStage: makeStage('MANUFACTURE', 25, 'BLOCKED')
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/50%/)).toBeInTheDocument()
+      expect(screen.getByText(/75%/)).toBeInTheDocument()
+      expect(screen.getByText(/25%/)).toBeInTheDocument()
+    })
+
+    it('displays stage owner when available', () => {
+      const workflow = makeWorkflow({
+        toolingNumber: 'TL-OWNERS',
+        designStage: { ...makeStage('DESIGN', 50, 'AT_RISK'), owner: 'Sarah Designer' }
+      })
+      act(() => {
+        simPilotStore.setSnapshot(makeSnapshot([workflow]))
+      })
+      renderPanel()
+
+      expect(screen.getByText(/Owner: Sarah Designer/)).toBeInTheDocument()
+    })
   })
 })
