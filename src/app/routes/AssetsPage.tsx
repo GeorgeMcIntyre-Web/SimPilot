@@ -15,7 +15,7 @@
  * - No any types
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
@@ -25,15 +25,23 @@ import { useCoreStore } from '../../domain/coreStore';
 import {
   useAssetsFilters,
   type AssetWithMetadata,
+  summarizeAssetsForCounts,
 } from '../../features/assets';
 import {
   SourcingBadge,
   ReuseStatusBadge,
   AssetKindBadge,
+  BottleneckBadge,
 } from '../../features/assets/AssetBadges';
 import { AssetDetailPanel } from '../../features/assets/AssetDetailPanel';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes';
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
+import { useToolingBottleneckState } from '../../domain/toolingBottleneckStore';
+import {
+  selectBottleneckStageForAsset,
+  type SimPilotSelectorState,
+  type AssetBottleneckSummary,
+} from '../../domain/simPilotSelectors';
 import {
   Search,
   X,
@@ -78,6 +86,7 @@ type FilterBarProps = {
   availableLines: string[];
   availablePrograms: string[];
   hasActiveFilters: boolean;
+  onlyBottlenecks: boolean;
   onSearchChange: (term: string) => void;
   onKindChange: (kind: 'ALL' | 'ROBOT' | 'GUN' | 'TOOL' | 'OTHER') => void;
   onSourcingChange: (sourcing: EquipmentSourcing | 'ALL') => void;
@@ -85,6 +94,7 @@ type FilterBarProps = {
   onAreaChange: (area: string | null) => void;
   onLineChange: (line: string | null) => void;
   onProgramChange: (program: string | null) => void;
+  onOnlyBottlenecksChange: (isActive: boolean) => void;
   onClearFilters: () => void;
 };
 
@@ -94,6 +104,7 @@ function FilterBar({
   availableLines,
   availablePrograms,
   hasActiveFilters,
+  onlyBottlenecks,
   onSearchChange,
   onKindChange,
   onSourcingChange,
@@ -101,6 +112,7 @@ function FilterBar({
   onAreaChange,
   onLineChange,
   onProgramChange,
+  onOnlyBottlenecksChange,
   onClearFilters,
 }: FilterBarProps) {
   return (
@@ -194,6 +206,18 @@ function FilterBar({
             <option value="UNKNOWN">Unknown</option>
           </select>
         </div>
+
+        {/* Bottleneck Toggle */}
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+            checked={onlyBottlenecks}
+            onChange={(e) => onOnlyBottlenecksChange(e.target.checked)}
+            data-testid="bottleneck-only-filter"
+          />
+          Only bottleneck tools
+        </label>
       </div>
 
       {/* Hierarchy Filters Row */}
@@ -393,12 +417,12 @@ export function AssetsPage() {
   const navigate = useNavigate();
   const state = useCoreStore();
   const allAssets = state.assets;
+  const toolingState = useToolingBottleneckState();
 
   // Filter state
   const {
     filters,
     filteredAssets,
-    counts,
     availableAreas,
     availableLines,
     availablePrograms,
@@ -412,6 +436,29 @@ export function AssetsPage() {
     setProgramFilter,
     clearFilters,
   } = useAssetsFilters(allAssets);
+
+  const [onlyBottleneckAssets, setOnlyBottleneckAssets] = useState(false);
+
+  const selectorState: SimPilotSelectorState = useMemo(
+    () => ({
+      toolingBottlenecks: toolingState,
+      assets: allAssets,
+    }),
+    [toolingState, allAssets]
+  );
+
+  const assetBottleneckMap = useMemo(() => {
+    const map = new Map<string, AssetBottleneckSummary>();
+    if (selectorState.toolingBottlenecks.statuses.length === 0) {
+      return map;
+    }
+    for (const asset of allAssets) {
+      const summary = selectBottleneckStageForAsset(selectorState, asset.id);
+      if (summary === null) continue;
+      map.set(asset.id, summary);
+    }
+    return map;
+  }, [selectorState, allAssets]);
 
   // Sort state
   const [sortKey, setSortKey] = useState<SortKey>('name');
@@ -431,8 +478,20 @@ export function AssetsPage() {
     setSortDir('asc');
   }, [sortKey]);
 
+  const filteredByBottleneck = useMemo(() => {
+    if (!onlyBottleneckAssets) {
+      return filteredAssets;
+    }
+    return filteredAssets.filter((asset) => assetBottleneckMap.has(asset.id));
+  }, [filteredAssets, onlyBottleneckAssets, assetBottleneckMap]);
+
+  const displayCounts = useMemo(
+    () => summarizeAssetsForCounts(filteredByBottleneck),
+    [filteredByBottleneck]
+  );
+
   // Sort assets
-  const sortedAssets = [...filteredAssets].sort((a, b) => {
+  const sortedAssets = [...filteredByBottleneck].sort((a, b) => {
     let valA: string = '';
     let valB: string = '';
 
@@ -572,7 +631,21 @@ export function AssetsPage() {
     },
     {
       header: <SortHeader label="Sourcing" keyName="sourcing" />,
-      accessor: (asset) => <SourcingBadge sourcing={asset.sourcing} />,
+      accessor: (asset) => {
+        const bottleneck = assetBottleneckMap.get(asset.id);
+        return (
+          <div className="flex flex-col gap-1">
+            <SourcingBadge sourcing={asset.sourcing} />
+            {bottleneck && (
+              <BottleneckBadge
+                stage={bottleneck.stage}
+                reason={bottleneck.reason}
+                severity={bottleneck.severity}
+              />
+            )}
+          </div>
+        );
+      },
     },
     {
       header: 'Reuse Status',
@@ -619,11 +692,20 @@ export function AssetsPage() {
     );
   }
 
+  const showActiveFilters = hasActiveFilters || onlyBottleneckAssets;
+
+  const handleClearAllFilters = useCallback(() => {
+    clearFilters();
+    setOnlyBottleneckAssets(false);
+  }, [clearFilters]);
+
   return (
     <div className="space-y-6" data-testid="assets-page">
       <PageHeader
         title="Assets"
-        subtitle={`${counts.total} of ${allAssets.length} assets${hasActiveFilters ? ' (filtered)' : ''}`}
+        subtitle={`${displayCounts.total} of ${allAssets.length} assets${
+          showActiveFilters ? ' (filtered)' : ''
+        }`}
       />
 
       {/* Filter Bar */}
@@ -633,6 +715,7 @@ export function AssetsPage() {
         availableLines={availableLines}
         availablePrograms={availablePrograms}
         hasActiveFilters={hasActiveFilters}
+        onlyBottlenecks={onlyBottleneckAssets}
         onSearchChange={setSearchTerm}
         onKindChange={setKindFilter}
         onSourcingChange={setSourcingFilter}
@@ -640,21 +723,22 @@ export function AssetsPage() {
         onAreaChange={setAreaFilter}
         onLineChange={setLineFilter}
         onProgramChange={setProgramFilter}
-        onClearFilters={clearFilters}
+        onOnlyBottlenecksChange={setOnlyBottleneckAssets}
+        onClearFilters={handleClearAllFilters}
       />
 
       {/* Summary Strip */}
-      <SummaryStrip counts={counts} onFilterClick={handleSummaryFilterClick} />
+      <SummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
 
       {/* Active Filters Indicator */}
-      {hasActiveFilters && (
+      {showActiveFilters && (
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <Filter className="w-4 h-4" />
           <span>
-            Showing {counts.total} of {allAssets.length} assets
+            Showing {displayCounts.total} of {allAssets.length} assets
           </span>
           <button
-            onClick={clearFilters}
+            onClick={handleClearAllFilters}
             className="text-blue-600 dark:text-blue-400 hover:underline"
           >
             Clear all filters

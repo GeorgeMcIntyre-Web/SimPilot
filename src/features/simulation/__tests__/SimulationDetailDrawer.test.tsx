@@ -6,6 +6,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { SimulationDetailDrawer } from '../components/SimulationDetailDrawer'
 import type { StationContext } from '../simulationStore'
+import { toolingBottleneckStore } from '../../../domain/toolingBottleneckStore'
 
 // Wrapper with Router
 function renderWithRouter(ui: React.ReactNode) {
@@ -182,5 +183,61 @@ describe('SimulationDetailDrawer', () => {
     )
 
     expect(screen.getByText(/no simulation status data/i)).toBeInTheDocument()
+  })
+})
+
+describe('SimulationDetailDrawer tooling bottlenecks', () => {
+  beforeEach(() => {
+    toolingBottleneckStore.clear()
+  })
+
+  function seedBottleneck() {
+    toolingBottleneckStore.loadSnapshot({
+      statuses: [
+        {
+          toolingNumber: 'T-100',
+          toolType: 'Gripper',
+          stationKey: mockStation.contextKey,
+          stationNumber: mockStation.station,
+          dominantStage: 'DESIGN',
+          bottleneckReason: 'BUILD_AHEAD_OF_SIM',
+          severity: 'critical',
+          designStage: { stage: 'DESIGN', status: 'BLOCKED' },
+          simulationStage: { stage: 'SIMULATION', status: 'ON_TRACK' }
+        }
+      ]
+    })
+  }
+
+  it('shows tooling button when bottlenecks exist', () => {
+    seedBottleneck()
+
+    renderWithRouter(
+      <SimulationDetailDrawer
+        station={mockStation}
+        isOpen={true}
+        onClose={() => {}}
+      />
+    )
+
+    expect(screen.getByTestId('view-tooling-bottlenecks')).toBeInTheDocument()
+  })
+
+  it('opens tooling drawer and lists entries', () => {
+    seedBottleneck()
+
+    renderWithRouter(
+      <SimulationDetailDrawer
+        station={mockStation}
+        isOpen={true}
+        onClose={() => {}}
+      />
+    )
+
+    fireEvent.click(screen.getByTestId('view-tooling-bottlenecks'))
+
+    expect(screen.getByTestId('tooling-bottleneck-drawer')).toBeInTheDocument()
+    expect(screen.getByText('T-100')).toBeInTheDocument()
+    expect(screen.getByText(/Build ahead/i)).toBeInTheDocument()
   })
 })
