@@ -1,5 +1,7 @@
 # SimPilot v0.3 Acceptance Checklist
 
+> For a high-level overview of v0.3, see [SIMPILOT_v0.3_MASTER_OVERVIEW.md](../SIMPILOT_v0.3_MASTER_OVERVIEW.md).
+
 **Version:** 0.3 - Excel Bottlenecks  
 **Date:** 2024  
 **Status:** Ready for acceptance testing

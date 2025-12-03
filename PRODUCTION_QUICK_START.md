@@ -1,5 +1,7 @@
 # Production Deployment Quick Start
 
+> For a high-level overview of v0.3, see [SIMPILOT_v0.3_MASTER_OVERVIEW.md](../SIMPILOT_v0.3_MASTER_OVERVIEW.md).
+
 ## 🚀 Quick Steps to Production
 
 ### Step 1: Test Locally (Production Build)
@@ -126,4 +128,5 @@ Production is ready when:
 2. ⏳ Preview works locally
 3. ⏳ Deployed to Cloudflare
 4. ⏳ All features work on production URL
+
 

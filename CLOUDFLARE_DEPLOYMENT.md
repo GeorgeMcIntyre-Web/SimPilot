@@ -1,5 +1,7 @@
 # Cloudflare Pages Deployment Guide
 
+> For a high-level overview of v0.3, see [SIMPILOT_v0.3_MASTER_OVERVIEW.md](../SIMPILOT_v0.3_MASTER_OVERVIEW.md).
+
 ## ⚠️ Important: Use Pages, Not Workers!
 
 You're creating a **static site**, so you need **Cloudflare Pages**, not Workers.

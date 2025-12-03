@@ -1,5 +1,7 @@
 # SimPilot v0.3 Capabilities
 
+> For a high-level overview of v0.3, see [SIMPILOT_v0.3_MASTER_OVERVIEW.md](../SIMPILOT_v0.3_MASTER_OVERVIEW.md).
+
 **Version:** 0.3 - Excel Bottlenecks  
 **Status:** Production-ready core features
 
@@ -143,7 +145,7 @@ This document lists what SimPilot v0.3 can do, grouped by functional area. Each 
 
 **Automated tests:**
 - `src/domain/crossRef/__tests__/CrossRefEngine.test.ts` - Cross-reference engine tests
-- `src/domain/__tests__/workflowMappers.test.ts` - Workflow mapping tests (44 tests)
+- `src/domain/__tests__/workflowMappers.test.ts` - Workflow mapping tests (12 tests)
 - `src/domain/__tests__/workflowBottleneckLinker.test.ts` - Bottleneck linking tests
 
 **Manual check:**
@@ -447,7 +449,7 @@ npm test -- --run src/ingestion/__tests__/toolListParser.test.ts
 ### ✅ Fully Covered (Tests Passing)
 - Excel Universal Ingestion (128 tests)
 - Excel Ingestion Facade (workflow snapshot building)
-- Workflow Mappers (44 tests)
+- Workflow Mappers (12 tests)
 - Tool List Parser (35 tests)
 - Cross-reference Engine
 - Workflow Bottleneck Computation

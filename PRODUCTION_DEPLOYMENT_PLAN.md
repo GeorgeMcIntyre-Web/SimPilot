@@ -1,5 +1,7 @@
 # Production Deployment Plan - SimPilot
 
+> For a high-level overview of v0.3, see [SIMPILOT_v0.3_MASTER_OVERVIEW.md](../SIMPILOT_v0.3_MASTER_OVERVIEW.md).
+
 ## Overview
 
 This plan covers getting all current SimPilot features production-ready, testing locally first, then deploying to Cloudflare Pages.
@@ -416,4 +418,5 @@ wrangler pages deploy dist --project-name=simpilot
 - **Authentication**: Optional Google OAuth, falls back to mock for development
 - **Deployment**: Static site, no backend required (for now)
 - **Future**: Will need backend for shared multi-user database
+
 
