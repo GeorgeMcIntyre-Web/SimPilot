@@ -258,10 +258,6 @@ export async function parseAssembliesList(
   const headerRowIndex = headerRowIndexRelative + 8
   const headerRow = rows[headerRowIndex]
 
-  // DEBUG: Log header row to understand structure
-  console.log(`[Assemblies Parser] ${fileName} - Header row (index ${headerRowIndex}):`,
-    headerRow.slice(0, 15).map((h, i) => `[${i}]${h}`))
-
   // Build core field indices
   const coreIndices: Record<string, number> = {}
 
@@ -281,9 +277,6 @@ export async function parseAssembliesList(
       }
     }
   }
-
-  // DEBUG: Log detected core fields
-  console.log(`[Assemblies Parser] Core fields found:`, coreIndices)
 
   // Find metric columns (progress stages)
   const metricIndices: number[] = []
@@ -341,20 +334,14 @@ export async function parseAssembliesList(
       continue
     }
 
-    // Extract tool number - can be in dedicated column OR embedded in station column
+    // Extract tool number - ALWAYS use STATION column in Assemblies Lists
+    // Format: "BN010 GJR 10" or "FU010 Fixture 5"
     let toolNumber = ''
     let stationCode = ''
 
-    // Try dedicated TOOL_NUMBER column first
-    const toolNumberIdx = coreIndices['TOOL_NUMBER']
-    if (toolNumberIdx !== undefined) {
-      toolNumber = String(row[toolNumberIdx] || '').trim()
-    }
-
-    // If no dedicated tool column, extract from STATION column
-    // Format: "BN010 GJR 10" or "FU010 Fixture 5"
-    if (!toolNumber && coreIndices['STATION'] !== undefined) {
-      const stationValue = String(row[coreIndices['STATION']] || '').trim()
+    const stationIdx = coreIndices['STATION']
+    if (stationIdx !== undefined) {
+      const stationValue = String(row[stationIdx] || '').trim()
 
       // Parse format: "BN010 GJR 10" -> station: "BN010", tool: "GJR 10"
       const parts = stationValue.split(/\s+/)
