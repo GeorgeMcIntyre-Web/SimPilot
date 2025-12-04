@@ -46,7 +46,7 @@ export function LayoutShell() {
                     ? "bg-gradient-to-r from-rose-50 via-white to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-rose-100 dark:border-gray-700"
                     : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
             )}>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full px-3 sm:px-4 lg:px-6">
                     <div className="flex justify-between h-16">
                         <div className="flex">
                             <div className="flex-shrink-0 flex items-center space-x-3">
@@ -96,7 +96,7 @@ export function LayoutShell() {
                             </nav>
                         </div>
 
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-wrap items-center justify-end gap-3">
                             <div className="hidden md:block">
                                 <ThemeToggle />
                             </div>
@@ -111,7 +111,7 @@ export function LayoutShell() {
 
                             {/* Last Updated Indicator */}
                             {lastUpdated && dataSource && (
-                                <div className="hidden md:flex flex-col items-end mr-4 text-xs text-gray-500 dark:text-gray-400" title={`Last updated: ${new Date(lastUpdated).toLocaleString()}`}>
+                                <div className="hidden md:flex flex-col items-end text-xs text-gray-500 dark:text-gray-400" title={`Last updated: ${new Date(lastUpdated).toLocaleString()}`}>
                                     <span className="font-medium">{dataSource}</span>
                                     <span className="text-[10px]">{new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
@@ -133,7 +133,7 @@ export function LayoutShell() {
                             {useHasUnsyncedChanges() && (
                                 <Link
                                     to="/changes"
-                                    className="flex items-center text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 transition-colors ml-4"
+                                    className="flex items-center text-orange-600 dark:text-orange-500 hover:text-orange-700 dark:hover:text-orange-400 transition-colors"
                                     title="Unsynced changes"
                                 >
                                     <div className="relative">
@@ -144,38 +144,36 @@ export function LayoutShell() {
                                 </Link>
                             )}
 
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-3">
                                 {/* Google Auth User Display */}
                                 {googleUser && (
-                                    <div className="hidden sm:flex items-center ml-4 border-l border-gray-200 dark:border-gray-700 pl-4">
-                                        <div className="flex items-center space-x-3">
-                                            {googleUser.picture && (
-                                                <img
-                                                    src={googleUser.picture}
-                                                    alt={googleUser.name || 'User'}
-                                                    className="w-7 h-7 rounded-full border-2 border-rose-200 dark:border-rose-700"
-                                                />
-                                            )}
-                                            <span
-                                                className="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[150px] truncate"
-                                                title={googleUser.email}
-                                            >
-                                                {googleUser.name || googleUser.email || 'User'}
-                                            </span>
-                                            <button
-                                                onClick={googleLogout}
-                                                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                                title="Sign out"
-                                            >
-                                                <LogOut className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                    <div className="hidden sm:flex items-center border-l border-gray-200 dark:border-gray-700 pl-4">
+                                        {googleUser.picture && (
+                                            <img
+                                                src={googleUser.picture}
+                                                alt={googleUser.name || 'User'}
+                                                className="w-7 h-7 rounded-full border-2 border-rose-200 dark:border-rose-700"
+                                            />
+                                        )}
+                                        <span
+                                            className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[150px] truncate"
+                                            title={googleUser.email}
+                                        >
+                                            {googleUser.name || googleUser.email || 'User'}
+                                        </span>
+                                        <button
+                                            onClick={googleLogout}
+                                            className="ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                            title="Sign out"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 )}
 
                                 {/* Microsoft Auth UI */}
                                 {msEnabled && (
-                                    <div className="hidden sm:flex items-center ml-4 border-l border-gray-200 dark:border-gray-700 pl-4">
+                                    <div className="hidden sm:flex items-center border-l border-gray-200 dark:border-gray-700 pl-4">
                                         {!isSignedIn ? (
                                             <button
                                                 onClick={() => login()}
@@ -204,7 +202,7 @@ export function LayoutShell() {
                                 )}
 
                                 {/* Mobile menu button */}
-                                <div className="-mr-2 flex items-center sm:hidden ml-4">
+                                <div className="-mr-2 flex items-center sm:hidden ml-2">
                                     <button
                                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                                         className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
