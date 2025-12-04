@@ -329,6 +329,15 @@ export async function parseAssembliesList(
       continue
     }
 
+    // CHECK COLUMN A for type marker
+    // Only parse rows where Column A = 'X' (main tools)
+    // Skip 'Y' (sub-components), 'Z' (GA markers), 'T' (totals)
+    const columnA = String(row[0] || '').trim().toUpperCase()
+    if (columnA !== 'X') {
+      // Skip sub-components and markers silently
+      continue
+    }
+
     // Extract tool number - can be in dedicated column OR embedded in station column
     let toolNumber = ''
     let stationCode = ''
