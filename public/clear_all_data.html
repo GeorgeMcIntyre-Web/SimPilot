@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear SimPilot Data</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 {
+            color: #4ec9b0;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-family: monospace;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        #output {
+            background: #252526;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #3c3c3c;
+            min-height: 200px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .warning { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+    <h1>🗑️ Clear All SimPilot Data</h1>
+    <p>This will permanently delete:</p>
+    <ul>
+        <li>IndexedDB (SimPilotDB) - all persisted snapshots</li>
+        <li>localStorage - all user preferences and cached data</li>
+        <li>sessionStorage - all session data</li>
+    </ul>
+
+    <button id="clearBtn" onclick="clearAllData()">Clear All Data</button>
+    <button onclick="location.reload()">Refresh Page</button>
+
+    <div id="output"></div>
+
+    <script>
+        const DB_NAME = 'SimPilotDB';
+        const output = document.getElementById('output');
+        const clearBtn = document.getElementById('clearBtn');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function clearIndexedDB() {
+            log('🗑️  Clearing IndexedDB...', 'info');
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.deleteDatabase(DB_NAME);
+
+                request.onsuccess = () => {
+                    log('✅ IndexedDB cleared successfully', 'success');
+                    resolve();
+                };
+
+                request.onerror = () => {
+                    log('❌ Failed to clear IndexedDB: ' + request.error, 'error');
+                    reject(request.error);
+                };
+
+                request.onblocked = () => {
+                    log('⚠️  IndexedDB deletion blocked (close all other tabs)', 'warning');
+                };
+            });
+        }
+
+        function clearLocalStorage() {
+            log('🗑️  Clearing localStorage...', 'info');
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) keys.push(key);
+            }
+
+            localStorage.clear();
+            log(`✅ localStorage cleared (${keys.length} items removed)`, 'success');
+            if (keys.length > 0) {
+                log(`   Removed keys: ${keys.join(', ')}`, 'info');
+            }
+        }
+
+        function clearSessionStorage() {
+            log('🗑️  Clearing sessionStorage...', 'info');
+            const keys = [];
+            for (let i = 0; i < sessionStorage.length; i++) {
+                const key = sessionStorage.key(i);
+                if (key) keys.push(key);
+            }
+
+            sessionStorage.clear();
+            log(`✅ sessionStorage cleared (${keys.length} items removed)`, 'success');
+            if (keys.length > 0) {
+                log(`   Removed keys: ${keys.join(', ')}`, 'info');
+            }
+        }
+
+        async function clearAllData() {
+            output.innerHTML = '';
+            clearBtn.disabled = true;
+
+            log('🚀 Starting complete data cleanup...', 'info');
+            log('', 'info');
+
+            try {
+                await clearIndexedDB();
+                clearLocalStorage();
+                clearSessionStorage();
+
+                log('', 'info');
+                log('✅ All local data has been cleared!', 'success');
+                log('', 'info');
+                log('Next steps:', 'info');
+                log('1. Close this tab', 'info');
+                log('2. Reload your SimPilot application', 'info');
+                log('3. Load new data via the Data Loader page', 'info');
+
+            } catch (error) {
+                log('', 'info');
+                log('❌ Data cleanup failed: ' + error, 'error');
+            } finally {
+                clearBtn.disabled = false;
+            }
+        }
+
+        log('Ready to clear data. Click the button above to proceed.', 'info');
+    </script>
+</body>
+</html>

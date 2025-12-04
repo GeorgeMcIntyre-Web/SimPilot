@@ -13,6 +13,7 @@ import { NormalizedWorkbook } from './workbookLoader'
 export type SheetCategory =
   | 'SIMULATION_STATUS'
   | 'IN_HOUSE_TOOLING'
+  | 'ASSEMBLIES_LIST'
   | 'ROBOT_SPECS'
   | 'REUSE_WELD_GUNS'
   | 'REUSE_RISERS'
@@ -118,6 +119,34 @@ export const CATEGORY_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
       'TYPE',
       'AREA',
       'LINE'
+    ]
+  },
+
+  // -------------------------------------------------------------------------
+  // ASSEMBLIES_LIST
+  // File: J11006_TMS_STLA_S_*_Assemblies_List.xlsm
+  // Sheet: A_List
+  // Design progress tracking ("status document between design and simulation")
+  // -------------------------------------------------------------------------
+  ASSEMBLIES_LIST: {
+    strong: [
+      '1st Stage',
+      '2nd Stage',
+      'Detailing',
+      'Checking',
+      'Issued',
+      'Not Started'
+    ],
+    weak: [
+      'Station',
+      'Tool Number',
+      'Description',
+      'Progress',
+      'Status',
+      'Date',
+      'Job Number',
+      'Customer',
+      'Area'
     ]
   },
 
@@ -551,6 +580,7 @@ export function scanWorkbook(
   const byCategory: Record<SheetCategory, SheetDetection | null> = {
     SIMULATION_STATUS: null,
     IN_HOUSE_TOOLING: null,
+    ASSEMBLIES_LIST: null,
     ROBOT_SPECS: null,
     REUSE_WELD_GUNS: null,
     REUSE_RISERS: null,
@@ -780,7 +810,7 @@ export function detectWorkbookCategory(workbook: XLSX.WorkBook): SheetCategory {
  * 
  * This bridges the new sniffer with the existing parser routing.
  */
-export type FileKind = 'SimulationStatus' | 'RobotList' | 'ToolList' | 'Metadata' | 'Unknown'
+export type FileKind = 'SimulationStatus' | 'RobotList' | 'ToolList' | 'AssembliesList' | 'Metadata' | 'Unknown'
 
 export function categoryToFileKind(category: SheetCategory): FileKind {
   switch (category) {
@@ -788,6 +818,8 @@ export function categoryToFileKind(category: SheetCategory): FileKind {
       return 'SimulationStatus'
     case 'IN_HOUSE_TOOLING':
       return 'ToolList'
+    case 'ASSEMBLIES_LIST':
+      return 'AssembliesList'
     case 'ROBOT_SPECS':
       return 'RobotList'
     case 'REUSE_WELD_GUNS':
@@ -853,6 +885,7 @@ export function scanWorkbookWithConfig(
   const byCategory: Record<SheetCategory, SheetDetection | null> = {
     SIMULATION_STATUS: null,
     IN_HOUSE_TOOLING: null,
+    ASSEMBLIES_LIST: null,
     ROBOT_SPECS: null,
     REUSE_WELD_GUNS: null,
     REUSE_RISERS: null,

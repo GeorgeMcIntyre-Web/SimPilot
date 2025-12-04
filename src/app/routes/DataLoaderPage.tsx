@@ -14,6 +14,8 @@ import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { useHasSimulationData } from '../../ui/hooks/useDomainData';
 import { simBridgeClient, SimBridgeStatus } from '../../integrations/simbridge/SimBridgeClient';
 import { Radio } from 'lucide-react';
+import { VersionComparisonModal } from '../components/VersionComparisonModal';
+import { VersionComparisonResult } from '../../ingestion/versionComparison';
 
 export function DataLoaderPage() {
   const [isIngesting, setIsIngesting] = useState(false)
@@ -23,6 +25,11 @@ export function DataLoaderPage() {
   const { pushBusy, popBusy } = useGlobalBusy()
   const hasData = useHasSimulationData()
 
+  // Version Comparison State
+  const [showVersionComparison, setShowVersionComparison] = useState(false)
+  const [versionComparison, setVersionComparison] = useState<VersionComparisonResult | null>(null)
+  const [pendingIngestInput, setPendingIngestInput] = useState<IngestFilesInput | null>(null)
+
   useEffect(() => {
     setUserPreference('simpilot.dataloader.tab', activeTab)
   }, [activeTab])
@@ -30,6 +37,8 @@ export function DataLoaderPage() {
   // Local State
   const [simulationFiles, setSimulationFiles] = useState<File[]>([])
   const [equipmentFiles, setEquipmentFiles] = useState<File[]>([])
+  const [toolListFiles, setToolListFiles] = useState<File[]>([])
+  const [assembliesFiles, setAssembliesFiles] = useState<File[]>([])
 
   // M365 State
   const { enabled: msEnabled, isSignedIn, login } = useMsAccount()
@@ -116,6 +125,19 @@ export function DataLoaderPage() {
     setResult(null)
     setError(null)
   }, [])
+
+  const onDropToolList = useCallback((acceptedFiles: File[]) => {
+    setToolListFiles(prev => [...prev, ...acceptedFiles])
+    setResult(null)
+    setError(null)
+  }, [])
+
+  const onDropAssemblies = useCallback((acceptedFiles: File[]) => {
+    setAssembliesFiles(prev => [...prev, ...acceptedFiles])
+    setResult(null)
+    setError(null)
+  }, [])
+
   const { getRootProps: getSimProps, getInputProps: getSimInputProps, isDragActive: isSimActive } = useDropzone({
     onDrop: onDropSimulation,
     accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] }
@@ -123,6 +145,16 @@ export function DataLoaderPage() {
 
   const { getRootProps: getEqProps, getInputProps: getEqInputProps, isDragActive: isEqActive } = useDropzone({
     onDrop: onDropEquipment,
+    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] }
+  })
+
+  const { getRootProps: getToolProps, getInputProps: getToolInputProps, isDragActive: isToolActive } = useDropzone({
+    onDrop: onDropToolList,
+    accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] }
+  })
+
+  const { getRootProps: getAsmProps, getInputProps: getAsmInputProps, isDragActive: isAsmActive } = useDropzone({
+    onDrop: onDropAssemblies,
     accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] }
   })
 
@@ -138,19 +170,32 @@ export function DataLoaderPage() {
     setResult(null)
 
     try {
+      // Combine all equipment-related files into equipmentFiles array
+      const allEquipmentFiles = [...equipmentFiles, ...toolListFiles, ...assembliesFiles]
+
       const input: IngestFilesInput = {
         simulationFiles,
-        equipmentFiles,
+        equipmentFiles: allEquipmentFiles,
         fileSources: {},
-        dataSource: 'Local'
+        dataSource: 'Local',
+        previewOnly: hasData  // If we have existing data, do preview first
       }
 
       // Mark sources as local
       simulationFiles.forEach(f => { if (input.fileSources) input.fileSources[f.name] = 'local' })
-      equipmentFiles.forEach(f => { if (input.fileSources) input.fileSources[f.name] = 'local' })
+      allEquipmentFiles.forEach(f => { if (input.fileSources) input.fileSources[f.name] = 'local' })
 
       const res = await ingestFiles(input)
-      setResult(res)
+
+      // If we have existing data and got a version comparison, show the modal
+      if (hasData && res.versionComparison) {
+        setVersionComparison(res.versionComparison)
+        setPendingIngestInput(input)
+        setShowVersionComparison(true)
+      } else {
+        // No existing data, just show result
+        setResult(res)
+      }
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? err.message : "An unknown error occurred during ingestion.")
@@ -158,6 +203,36 @@ export function DataLoaderPage() {
       setIsIngesting(false)
       popBusy()
     }
+  }
+
+  const confirmVersionComparison = async () => {
+    if (!pendingIngestInput) return
+
+    setIsIngesting(true)
+    pushBusy('Applying changes...')
+    setShowVersionComparison(false)
+
+    try {
+      // Now actually apply the data (previewOnly = false)
+      const input = { ...pendingIngestInput, previewOnly: false }
+      const res = await ingestFiles(input)
+      setResult(res)
+      setPendingIngestInput(null)
+      setVersionComparison(null)
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? err.message : "An unknown error occurred during ingestion.")
+    } finally {
+      setIsIngesting(false)
+      popBusy()
+    }
+  }
+
+  const cancelVersionComparison = () => {
+    setShowVersionComparison(false)
+    setPendingIngestInput(null)
+    setVersionComparison(null)
+    setIsIngesting(false)
   }
 
   // ============================================================================
@@ -232,11 +307,21 @@ export function DataLoaderPage() {
         simulationFiles: simBlobsAsFiles,
         equipmentFiles: eqBlobsAsFiles,
         fileSources,
-        dataSource: 'MS365'
+        dataSource: 'MS365',
+        previewOnly: hasData  // If we have existing data, do preview first
       }
 
       const res = await ingestFiles(input)
-      setResult(res)
+
+      // If we have existing data and got a version comparison, show the modal
+      if (hasData && res.versionComparison) {
+        setVersionComparison(res.versionComparison)
+        setPendingIngestInput(input)
+        setShowVersionComparison(true)
+      } else {
+        // No existing data, just show result
+        setResult(res)
+      }
 
     } catch (err) {
       console.error(err)
@@ -372,6 +457,8 @@ export function DataLoaderPage() {
       setM365Error(null)
       setSimulationFiles([])
       setEquipmentFiles([])
+      setToolListFiles([])
+      setAssembliesFiles([])
       console.log('✅ Data cleared')
     }
   }
@@ -528,24 +615,84 @@ export function DataLoaderPage() {
               {/* Equipment Files Dropzone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Equipment/Robot List Files (Optional)
+                  Robot Equipment List (Optional)
                 </label>
                 <div
                   {...getEqProps()}
                   className={cn(
-                    "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                    "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
                     isEqActive ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
                   )}
                 >
                   <input {...getEqInputProps()} data-testid="local-equipment-input" />
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                  <Upload className="mx-auto h-10 w-10 text-gray-400" />
                   <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Drag & drop equipment files here, or click to select
+                    Robotlist_*.xlsx
                   </p>
                 </div>
                 {equipmentFiles.length > 0 && (
                   <ul className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     {equipmentFiles.map((file, idx) => (
+                      <li key={idx} className="flex items-center">
+                        <FileUp className="w-4 h-4 mr-2" />
+                        {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Tool List Files Dropzone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Tool List (Optional)
+                </label>
+                <div
+                  {...getToolProps()}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                    isToolActive ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                  )}
+                >
+                  <input {...getToolInputProps()} data-testid="local-toollist-input" />
+                  <Upload className="mx-auto h-10 w-10 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    STLA_S_ZAR Tool List.xlsx
+                  </p>
+                </div>
+                {toolListFiles.length > 0 && (
+                  <ul className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {toolListFiles.map((file, idx) => (
+                      <li key={idx} className="flex items-center">
+                        <FileUp className="w-4 h-4 mr-2" />
+                        {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Assemblies List Files Dropzone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Assemblies List (Optional)
+                </label>
+                <div
+                  {...getAsmProps()}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+                    isAsmActive ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
+                  )}
+                >
+                  <input {...getAsmInputProps()} data-testid="local-assemblies-input" />
+                  <Upload className="mx-auto h-10 w-10 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    J11006_TMS_STLA_S_*_Assemblies_List.xlsm
+                  </p>
+                </div>
+                {assembliesFiles.length > 0 && (
+                  <ul className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {assembliesFiles.map((file, idx) => (
                       <li key={idx} className="flex items-center">
                         <FileUp className="w-4 h-4 mr-2" />
                         {file.name} ({(file.size / 1024).toFixed(1)} KB)
@@ -827,6 +974,15 @@ export function DataLoaderPage() {
           </div>
         )
       }
+
+      {/* Version Comparison Modal */}
+      {showVersionComparison && versionComparison && (
+        <VersionComparisonModal
+          comparison={versionComparison}
+          onConfirm={confirmVersionComparison}
+          onCancel={cancelVersionComparison}
+        />
+      )}
     </div >
   )
 }

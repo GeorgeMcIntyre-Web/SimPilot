@@ -33,7 +33,15 @@
       "Bash(git stash:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr view:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(node --loader tsx scripts/clear_all_data.ts:*)",
+      "Bash(node scripts/analyze_all_documents.cjs:*)",
+      "Bash(node scripts/analyze_csg_documents.cjs:*)",
+      "Bash(wc:*)",
+      "Bash(node scripts/analyze_station_ownership.cjs:*)",
+      "Bash(node scripts/investigate_robot_list.cjs:*)",
+      "Bash(node scripts/count_real_simulation_rows.cjs:*)",
+      "Bash(node scripts/analyze_assemblies_headers.cjs:*)"
     ],
     "deny": [],
     "ask": []

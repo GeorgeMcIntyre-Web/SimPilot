@@ -122,6 +122,12 @@ const CATEGORY_FIELD_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, Field
     'sim_leader',
     'due_date'
   ],
+  ASSEMBLIES_LIST: [
+    'tool_id',
+    'station_name',
+    'description',
+    'area_name'
+  ],
   ROBOT_SPECS: [
     'robot_id',
     'robot_number',

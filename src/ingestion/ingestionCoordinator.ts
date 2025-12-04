@@ -1,12 +1,13 @@
 // Ingestion Coordinator
 // Main entry point for ingesting Excel files and routing to appropriate parsers
 
-import { IngestionWarning } from '../domain/core'
+import { IngestionWarning, UnifiedAsset } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
 import { readWorkbook, sheetToMatrix } from './excelUtils'
 import { parseSimulationStatus } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
+import { parseAssembliesList } from './assembliesListParser'
 import { applyIngestedData, IngestedData } from './applyIngestedData'
 import { createUnknownFileTypeWarning, createParserErrorWarning } from './warningUtils'
 import {
@@ -17,6 +18,11 @@ import {
   FileKind,
   pickBestDetectionForCategory
 } from './sheetSniffer'
+import {
+  compareVersions,
+  VersionComparisonResult,
+  hasSignificantChanges
+} from './versionComparison'
 import * as XLSX from 'xlsx'
 
 // ============================================================================
@@ -34,6 +40,7 @@ export interface IngestFilesInput {
   equipmentFiles: File[]
   fileSources?: Record<string, 'local' | 'remote'>
   dataSource?: 'Local' | 'MS365'
+  previewOnly?: boolean  // If true, only return version comparison without applying data
 }
 
 /**
@@ -46,6 +53,7 @@ export interface IngestFilesResult {
   robotsCount: number
   toolsCount: number
   warnings: IngestionWarning[]
+  versionComparison?: VersionComparisonResult
 }
 
 // ============================================================================
@@ -88,6 +96,10 @@ function detectFileTypeFromFilename(fileName: string): FileKind {
     return 'SimulationStatus'
   }
 
+  if (name.includes('assemblies') && name.includes('list')) {
+    return 'AssembliesList'
+  }
+
   if (name.includes('robot') && name.includes('list')) {
     return 'RobotList'
   }
@@ -123,6 +135,7 @@ function getAllDetectedSheets(
   const categories: SheetCategory[] = [
     'SIMULATION_STATUS',
     'IN_HOUSE_TOOLING',
+    'ASSEMBLIES_LIST',
     'ROBOT_SPECS',
     'REUSE_WELD_GUNS',
     'GUN_FORCE',
@@ -255,6 +268,17 @@ export async function ingestFiles(
         }
       }
 
+      if (kind === 'AssembliesList') {
+        const result = await parseAssembliesList(workbook, file.name, sheetName || undefined)
+
+        if (!ingestedData.tools) {
+          ingestedData.tools = result
+        } else {
+          ingestedData.tools.tools.push(...result.tools)
+          ingestedData.tools.warnings.push(...result.warnings)
+        }
+      }
+
       // Note: Metadata files are currently logged and skipped
       if (kind === 'Metadata') {
         console.log(`[Ingestion] Detected Metadata file: ${file.name} (sheet: ${sheetName}). Skipping for now.`)
@@ -273,6 +297,71 @@ export async function ingestFiles(
 
   // Collect all warnings (from parsers and linking)
   allWarnings.push(...applyResult.warnings)
+
+  // NEW: Perform version comparison if store has existing data
+  let versionComparison: VersionComparisonResult | undefined = undefined
+  const currentState = coreStore.getState()
+  const hasExistingData = currentState.projects.length > 0 || currentState.assets.length > 0
+
+  if (hasExistingData) {
+    // Convert robots and tools to UnifiedAsset for comparison
+    const newAssets: UnifiedAsset[] = [
+      ...applyResult.robots.map(r => ({
+        id: r.id,
+        name: r.name,
+        kind: 'ROBOT' as const,
+        sourcing: r.sourcing,
+        metadata: r.metadata || {},
+        areaId: r.areaId,
+        areaName: r.areaName,
+        cellId: r.cellId,
+        stationNumber: r.stationNumber,
+        oemModel: r.oemModel,
+        description: r.description,
+        sourceFile: r.sourceFile,
+        sheetName: r.sheetName,
+        rowIndex: r.rowIndex
+      })),
+      ...applyResult.tools.map(t => ({
+        id: t.id,
+        name: t.name,
+        kind: t.kind,
+        sourcing: t.sourcing,
+        metadata: t.metadata || {},
+        areaId: t.areaId,
+        areaName: t.areaName,
+        cellId: t.cellId,
+        stationNumber: t.stationNumber,
+        oemModel: t.oemModel,
+        description: t.description,
+        sourceFile: t.sourceFile,
+        sheetName: t.sheetName,
+        rowIndex: t.rowIndex
+      }))
+    ]
+
+    versionComparison = compareVersions(
+      applyResult.projects,
+      applyResult.areas,
+      applyResult.cells,
+      newAssets
+    )
+
+    console.log('[Version Comparison]', versionComparison.summary)
+  }
+
+  // If previewOnly mode, return comparison without applying data
+  if (input.previewOnly && versionComparison) {
+    return {
+      projectsCount: applyResult.projects.length,
+      areasCount: applyResult.areas.length,
+      cellsCount: applyResult.cells.length,
+      robotsCount: applyResult.robots.length,
+      toolsCount: applyResult.tools.length,
+      warnings: allWarnings,
+      versionComparison
+    }
+  }
 
   // Update core store (backward compat: store warnings as strings)
   const warningStrings = allWarnings.map(w => w.message)
@@ -294,7 +383,8 @@ export async function ingestFiles(
     cellsCount: state.cells.length,
     robotsCount: state.assets.filter(a => a.kind === 'ROBOT').length,
     toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
-    warnings: allWarnings
+    warnings: allWarnings,
+    versionComparison
   }
 }
 
@@ -389,6 +479,29 @@ export async function processWorkbook(
       warnings.push(createParserErrorWarning({
         fileName,
         sheetName: toolDetection.sheetName,
+        error: String(error)
+      }))
+    }
+  }
+
+  // Process ASSEMBLIES_LIST
+  const assembliesDetection = detections.get('ASSEMBLIES_LIST')
+  if (assembliesDetection) {
+    try {
+      const result = await parseAssembliesList(workbook, fileName, assembliesDetection.sheetName)
+
+      if (!ingestedData.tools) {
+        ingestedData.tools = result
+      } else {
+        ingestedData.tools.tools.push(...result.tools)
+        ingestedData.tools.warnings.push(...result.warnings)
+      }
+
+      warnings.push(...result.warnings)
+    } catch (error) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName: assembliesDetection.sheetName,
         error: String(error)
       }))
     }
