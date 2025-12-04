@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getUserPreference, setUserPreference } from '../utils/prefsStorage';
 
-export type ThemeMode = 'standard' | 'flower';
+export type ThemeMode = 'standard' | 'flower' | 'professional';
 
 interface ThemeContextType {
     themeMode: ThemeMode;

@@ -60,7 +60,9 @@ export function Header({
                 "border-b sticky top-0 z-50 transition-colors duration-500",
                 themeMode === 'flower'
                     ? "bg-gradient-to-r from-rose-50 via-white to-emerald-50 dark:from-gray-800 dark:to-gray-800 border-rose-100 dark:border-gray-700"
-                    : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                    : themeMode === 'professional'
+                        ? "bg-slate-50 dark:bg-gray-900 border-slate-200 dark:border-gray-700"
+                        : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
             )}
         >
             <div className="w-full px-3 sm:px-4 lg:px-6">

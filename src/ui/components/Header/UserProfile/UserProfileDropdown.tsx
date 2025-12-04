@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, User, Settings, Palette } from 'lucide-react';
-import { useTheme } from '../../../ThemeContext';
+import { ChevronDown, LogOut, User, Settings, Palette, Briefcase } from 'lucide-react';
+import { useTheme, type ThemeMode } from '../../../ThemeContext';
 import { FlowerAccent } from '../../FlowerAccent';
 
 interface UserProfileDropdownProps {
@@ -42,6 +42,18 @@ export function UserProfileDropdown({
     const providerBadgeColor = provider === 'google'
         ? 'bg-blue-500'
         : 'bg-orange-500';
+
+    const themeLabel: Record<ThemeMode, string> = {
+        flower: "Dale's Flow",
+        standard: 'Standard',
+        professional: 'Professional',
+    };
+
+    const nextTheme = (current: ThemeMode): ThemeMode => {
+        if (current === 'flower') return 'standard';
+        if (current === 'standard') return 'professional';
+        return 'flower';
+    };
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -135,20 +147,22 @@ export function UserProfileDropdown({
 
                         <button
                             onClick={() => {
-                                setThemeMode(themeMode === 'flower' ? 'standard' : 'flower');
+                                setThemeMode(nextTheme(themeMode));
                             }}
                             className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
                             <div className="flex items-center">
                                 {themeMode === 'flower' ? (
                                     <FlowerAccent className="w-3.5 h-3.5 mr-2 text-rose-500" />
+                                ) : themeMode === 'professional' ? (
+                                    <Briefcase className="w-3.5 h-3.5 mr-2 text-slate-600 dark:text-slate-300" />
                                 ) : (
                                     <Palette className="w-3.5 h-3.5 mr-2" />
                                 )}
                                 Theme
                             </div>
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                {themeMode === 'flower' ? "Dale's Flow" : 'Standard'}
+                                {themeLabel[themeMode]}
                             </span>
                         </button>
                     </div>
