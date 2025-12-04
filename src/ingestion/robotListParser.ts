@@ -14,6 +14,7 @@ import {
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
+import { buildStationId, buildRobotId, inferAssembliesAreaName } from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -168,9 +169,14 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'MODEL')
       || getCellString(row, columnMap, 'TYPE')
 
-    const areaName = getCellString(row, columnMap, 'AREA')
+    let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
       || getCellString(row, columnMap, 'AREA NAME')
       || getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
+
+    // Infer area from filename if not in row (similar to Assemblies Lists)
+    if (!areaName) {
+      areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
+    }
 
     const lineCode = getCellString(row, columnMap, 'LINE')
       || getCellString(row, columnMap, 'LINE CODE')
@@ -212,6 +218,10 @@ export async function parseRobotList(
       metadata[header] = cell
     })
 
+    // Build canonical IDs
+    const canonicalStationId = buildStationId(areaName, stationCode)
+    const canonicalRobotId = buildRobotId(canonicalStationId, robotId)
+
     // Build robot entity
     // Map stationCode to stationNumber for UnifiedAsset compatibility
     const robot: Robot = {
@@ -223,6 +233,8 @@ export async function parseRobotList(
       lineCode: lineCode || undefined,
       stationCode: stationCode || undefined,
       stationNumber: stationCode || undefined, // Map to UnifiedAsset field
+      stationId: canonicalStationId,
+      robotId: canonicalRobotId,
       toolIds: [],
       sourcing: 'UNKNOWN', // Default for now
       metadata: {

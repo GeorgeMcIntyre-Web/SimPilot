@@ -1,175 +1,241 @@
 /**
  * Relationship Linker - Links assets (robots, tools) to simulation cells
- * 
- * This module implements the "Relational Engine" that connects data across
- * isolated Excel files (Simulation Status, Robot Lists, Tool Lists).
- * 
- * Algorithm:
- * 1. Index assets by normalized station code for O(1) lookup
- * 2. For each simulation cell, find matching assets by station + robot/device name
- * 3. Merge sourcing, OEM model, and metadata from asset into cell
- * 
- * Normalization handles variations like:
- * - Station: "010" vs "10" vs "OP-10"
- * - Robot: "R01" vs "R-01" vs "Robot 01"
+ *
+ * LINKING STRATEGY (V2 - Canonical IDs):
+ * ----------------------------------------
+ * Uses canonical stationId for deterministic, schema-agnostic matching.
+ *
+ * PRIMARY KEY: stationId (normalized "AREA|STATION")
+ *   - Cells have stationId set during ingestion
+ *   - Assets have stationId set during ingestion
+ *   - Matching is O(1) via stationId index
+ *
+ * MATCHING RULES:
+ *   1. If no stationId on cell → no link
+ *   2. If no assets at stationId → no link
+ *   3. If exactly one asset at stationId → auto-match
+ *   4. If multiple assets at stationId → disambiguate by assetKind (prefer robots for cells)
+ *   5. If still ambiguous → link to first, mark low confidence
+ *
+ * BENEFITS:
+ *   - Works regardless of Excel column names
+ *   - Robust to schema variations across OEMs
+ *   - No dependency on raw areaName/stationCode parsing in linker
  */
 
 import { Cell, Tool, Robot } from '../domain/core'
 
 type Asset = Robot | Tool
 
+export interface LinkingResult {
+    linkedCells: Cell[]
+    linkCount: number
+    totalCells: number
+    stationCount: number
+}
+
+// ============================================================================
+// LEGACY NORMALIZATION (kept for backward compatibility)
+// ============================================================================
+// NOTE: New code should use normalizers.ts for canonical ID building
+
 /**
- * Normalize station code for fuzzy matching
- * Examples:
- * - "010" → "10"
- * - "OP-20" → "20"
- * - "Station 030" → "30"
+ * @deprecated Use normalizers.ts normalizeStationCode instead
  */
-export function normalizeStationCode(code: string | undefined): string {
+export function normalizeStationCode(code: string | undefined | null): string {
     if (!code) return ''
 
-    // Remove common prefixes and normalize
-    return code
+    let normalized = code
         .toLowerCase()
-        .replace(/^(op|station|st)[-_\s]*/i, '')  // Remove "OP-", "Station ", etc.
-        .replace(/^0+/, '')                        // Remove leading zeros
+        .replace(/^(op|station|st)[-_\s]*/i, '')
         .trim()
+
+    normalized = normalized.replace(/(\d+)/g, (match) => {
+        const num = parseInt(match, 10)
+        return num.toString()
+    })
+
+    return normalized
 }
 
 /**
- * Normalize robot/device name for fuzzy matching
- * Examples:
- * - "R01" → "r01"
- * - "R-01" → "r01"
- * - "Robot 01" → "r01"
+ * @deprecated Use normalizers.ts normalizeAreaName instead
  */
-export function normalizeRobotName(name: string | undefined): string {
+export function normalizeAreaName(name: string | undefined | null): string {
     if (!name) return ''
 
     return name
         .toLowerCase()
-        .replace(/^(robot|device)[-_\s]*/i, '')   // Remove "Robot ", "Device ", etc.
-        .replace(/[-_\s]/g, '')                    // Remove separators
         .trim()
+        .replace(/\s+/g, ' ')
+}
+
+// ============================================================================
+// INDEXING (V2 - Canonical StationId)
+// ============================================================================
+
+interface StationIndex {
+    assetsByStationId: Map<string, Asset[]>
+    stationCount: number
 }
 
 /**
- * Find asset matching the given cell by station and robot/device name
+ * Build station index for O(1) lookup using canonical stationId
+ * Groups assets by stationId field (pre-normalized during ingestion)
  */
-function findMatchingAsset(
-    cell: Cell,
-    assetsByStation: Map<string, Asset[]>
-): Asset | null {
-    const normalizedStation = normalizeStationCode(cell.code)
-    const assetsAtStation = assetsByStation.get(normalizedStation)
+export function buildStationIndex(assets: Asset[]): StationIndex {
+    const assetsByStationId = new Map<string, Asset[]>()
 
-    if (!assetsAtStation || assetsAtStation.length === 0) {
+    for (const asset of assets) {
+        // Guard: no stationId
+        if (!asset.stationId) continue
+
+        const existing = assetsByStationId.get(asset.stationId) || []
+        existing.push(asset)
+        assetsByStationId.set(asset.stationId, existing)
+    }
+
+    return {
+        assetsByStationId,
+        stationCount: assetsByStationId.size
+    }
+}
+
+// ============================================================================
+// MATCHING (V2 - StationId-based)
+// ============================================================================
+
+interface MatchContext {
+    cell: Cell
+    candidates: Asset[]
+}
+
+/**
+ * Pick best asset for cell using disambiguation rules
+ * Simplified since stationId already handles area+station normalization
+ */
+function pickBestAssetForCell(ctx: MatchContext): Asset | null {
+    // Guard: no candidates
+    if (ctx.candidates.length === 0) {
         return null
     }
 
-    // Try to match by robot name or device name
-    const normalizedCellRobot = normalizeRobotName(cell.name)
+    // Simple case: exactly one asset at station
+    if (ctx.candidates.length === 1) {
+        return ctx.candidates[0]
+    }
 
-    const match = assetsAtStation.find(asset => {
-        const normalizedAssetName = normalizeRobotName(asset.name)
+    // Multiple candidates: prefer robots over tools (common case for simulation cells)
+    const robots = ctx.candidates.filter(asset =>
+        (asset as Robot).kind === 'ROBOT'
+    )
 
-        // Match if robot names align
-        if (normalizedAssetName && normalizedAssetName === normalizedCellRobot) {
-            return true
-        }
+    if (robots.length === 1) {
+        return robots[0]
+    }
 
-        // Also check alternative name fields if they exist
-        // (some Excel files use different column names)
-        return false
-    })
+    if (robots.length > 1) {
+        return robots[0]  // Low confidence, return first
+    }
 
-    return match || null
+    // No robots: return first tool (low confidence)
+    return ctx.candidates[0]
 }
 
 /**
- * Merge asset data into simulation cell
- * Copies sourcing, OEM model, and metadata from asset to cell
+ * Find matching asset for a single cell using canonical stationId
+ */
+function findMatchingAsset(
+    cell: Cell,
+    _areas: Map<string, string>,  // No longer needed with stationId
+    index: StationIndex
+): Asset | null {
+    // Guard: no stationId on cell
+    if (!cell.stationId) {
+        return null
+    }
+
+    const candidates = index.assetsByStationId.get(cell.stationId)
+
+    // Guard: no assets at this stationId
+    if (!candidates || candidates.length === 0) {
+        return null
+    }
+
+    const ctx: MatchContext = {
+        cell,
+        candidates
+    }
+
+    return pickBestAssetForCell(ctx)
+}
+
+/**
+ * Merge asset data into cell
+ * Enriches cell with sourcing, OEM model, and metadata from asset
  */
 function mergeAssetIntoCell(cell: Cell, asset: Asset): Cell {
     return {
         ...cell,
-        // Copy sourcing status (REUSE, NEW_BUY, etc.)
         sourcing: asset.sourcing || cell.sourcing,
-
-        // Copy OEM model (e.g., "Fanuc R-2000i/210F")
-        // TODO: Uncomment when oemModel exists on Cell type
-        // oemModel: asset.oemModel || cell.oemModel,
-
-        // Merge metadata (keep existing + add asset metadata)
         metadata: {
             ...cell.metadata,
             ...asset.metadata,
-
-            // Track which asset was linked (for debugging)
-            'Asset Link ID': asset.id,
-            'Asset Name': asset.name,
-
-            // If asset has OEM model, include it
+            'Linked Asset ID': asset.id,
+            'Linked Asset Name': asset.name,
             ...(asset.oemModel ? { 'OEM Model': asset.oemModel } : {})
         }
     }
 }
 
+// ============================================================================
+// MAIN LINKING FUNCTION
+// ============================================================================
+
 /**
- * Link assets to simulation cells using station + robot matching
- * 
- * @param cells - Simulation cells (from SimulationStatus Excel files)
- * @param assets - Tools/Robots (from RobotList, ToolList, Zangenpool, etc.)
- * @returns Enriched cells with merged asset data + link statistics
+ * Link assets to simulation cells using station-first matching
+ *
+ * @param cells - Simulation cells from SimulationStatus files
+ * @param assets - Tools and robots from asset files
+ * @param areas - Area lookup for resolving cell area names
+ * @returns Enriched cells with merged asset data and statistics
  */
 export function linkAssetsToSimulation(
     cells: Cell[],
-    assets: Asset[]
-): { linkedCells: Cell[], linkCount: number, totalCells: number } {
-    // Build index: normalized station → assets at that station
-    const assetsByStation = new Map<string, Asset[]>()
+    assets: Asset[],
+    areas: Map<string, string>
+): LinkingResult {
+    // Build station index
+    const index = buildStationIndex(assets)
 
-    for (const asset of assets) {
-        const normalizedStation = normalizeStationCode(asset.stationCode)
-
-        if (!normalizedStation) continue
-
-        const existing = assetsByStation.get(normalizedStation) || []
-        existing.push(asset)
-        assetsByStation.set(normalizedStation, existing)
-    }
-
-    // Link each cell to matching asset(s)
+    // Link each cell to matching asset
     let linkCount = 0
     const linkedCells = cells.map(cell => {
-        const matchingAsset = findMatchingAsset(cell, assetsByStation)
+        const matchingAsset = findMatchingAsset(cell, areas, index)
 
-        if (matchingAsset) {
-            linkCount++
-            return mergeAssetIntoCell(cell, matchingAsset)
+        if (!matchingAsset) {
+            return cell
         }
 
-        // No match found - return cell unchanged
-        return cell
+        linkCount++
+        return mergeAssetIntoCell(cell, matchingAsset)
     })
 
     return {
         linkedCells,
         linkCount,
-        totalCells: cells.length
+        totalCells: cells.length,
+        stationCount: index.stationCount
     }
 }
 
 /**
- * Get linking statistics for user feedback
+ * Get human-readable linking statistics
  */
-export function getLinkingStats(
-    linkCount: number,
-    totalCells: number
-): string {
-    const percentage = totalCells > 0
-        ? Math.round((linkCount / totalCells) * 100)
+export function getLinkingStats(result: LinkingResult): string {
+    const percentage = result.totalCells > 0
+        ? Math.round((result.linkCount / result.totalCells) * 100)
         : 0
 
-    return `Linked ${linkCount}/${totalCells} items (${percentage}%)`
+    return `Linked ${result.linkCount}/${result.totalCells} cells (${percentage}%) across ${result.stationCount} stations`
 }

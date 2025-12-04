@@ -91,6 +91,7 @@ export interface Cell {
   areaId: string
   name: string        // human-friendly label
   code: string        // station id, e.g. "010"
+  stationId?: string | null  // canonical station ID (area|station normalized)
   oemRef?: string
   status: CellStatus
   assignedEngineer?: string
