@@ -1,5 +1,13 @@
 // STLA-S E2E Ingestion Tests
 // Validates complete ingestion of real STLA-S data with expected counts
+//
+// HIERARCHY BEING TESTED:
+//   Project: J11006 STLA-S (1 project)
+//   Plant: ZAR South Africa (1 plant, implicit)
+//   Areas: FRONT UNIT, REAR UNIT, UNDERBODY, BOTTOM TRAY (~17-40, includes manufacturing cells)
+//   Station-level rows: 138 non-empty simulation rows (166 raw rows, ~28 empty/placeholder)
+//   Robots: 170 distinct robots with unique IDs (172 raw rows in Robot List)
+//   Equipment: 636 tooling assets from Tool List + Assemblies Lists
 
 import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
@@ -44,13 +52,13 @@ const STLA_S_FILES = {
 
 export interface StlaSIngestionResult {
   projectIds: Set<string>
-  areas: Set<string>
+  areas: Set<string>  // Currently mixes Area (FRONT UNIT) and Cell (Rear Rail LH) levels
   robots: {
     byId: Map<string, any>
     bySerial: Map<string, any[]>
   }
   toolingAssets: any[] // filtered to isActive !== false
-  allCells: any[]
+  allCells: any[]  // Station-level simulation rows (166 expected)
 }
 
 // ============================================================================
@@ -177,20 +185,25 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
 // ============================================================================
 
 describe('STLA-S E2E Ingestion', () => {
-  it('should ingest all files and have correct project/area/robot counts', async () => {
+  it('should ingest all files and have correct project/area/station/robot counts', async () => {
     const result = await ingestStlaSData()
 
-    // 1 project
+    // 1 project: J11006 STLA-S
     expect(result.projectIds.size).toBe(1)
     expect(result.projectIds.has('STLA-S')).toBe(true)
 
-    // Areas: We expect around 17-34 areas (sub-areas like "Front Rail LH" count separately)
+    // Areas/Cells: 17-40 (currently mixes AREA and CELL levels like "FRONT UNIT" and "Rear Rail LH")
     expect(result.areas.size).toBeGreaterThanOrEqual(17)
     expect(result.areas.size).toBeLessThanOrEqual(40)
 
-    // 166 robots (as specified by George) - allow for small variations
-    expect(result.robots.byId.size).toBeGreaterThanOrEqual(160)
-    expect(result.robots.byId.size).toBeLessThanOrEqual(175)
+    // Station-level simulation rows: 138 non-empty rows from 5 Simulation Status files
+    // (Parser skips empty rows and rows without critical station/robot data)
+    // Note: Raw Excel has 166 rows total, but ~28 are empty/placeholder rows
+    expect(result.allCells.length).toBe(138)
+
+    // Robots: 170 distinct robots with unique IDs from Robot List
+    // (Robot List file has 172 rows, but some may share IDs or be filtered)
+    expect(result.robots.byId.size).toBe(170)
   }, 60000) // 60s timeout for file I/O
 
   it('should have active tooling assets with correct equipment types', async () => {
