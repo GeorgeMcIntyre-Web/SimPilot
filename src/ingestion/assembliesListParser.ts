@@ -239,20 +239,23 @@ export async function parseAssembliesList(
   }
 
   // Find header row (usually around row 8-10 in Assemblies Lists)
-  const headerRowIndex = findBestHeaderRow(
-    rows,
+  // Skip first 8 rows to avoid matching metadata rows (Job Number, Customer, etc.)
+  const rowsToSearch = rows.slice(8)
+  const headerRowIndexRelative = findBestHeaderRow(
+    rowsToSearch,
     STRONG_KEYWORDS,
     WEAK_KEYWORDS,
     3  // Minimum score
   )
 
-  if (headerRowIndex === null) {
+  if (headerRowIndexRelative === null) {
     throw new Error(
       `Could not find header row in ${fileName}. ` +
       `Expected keywords like: ${STRONG_KEYWORDS.slice(0, 5).join(', ')}, etc.`
     )
   }
 
+  const headerRowIndex = headerRowIndexRelative + 8
   const headerRow = rows[headerRowIndex]
 
   // DEBUG: Log header row to understand structure

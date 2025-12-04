@@ -97,7 +97,7 @@ export function LayoutShell() {
                         </div>
 
                         <div className="flex items-center space-x-4">
-                            <div className="hidden md:block">
+                            <div className="hidden md:block mr-4">
                                 <ThemeToggle />
                             </div>
 
