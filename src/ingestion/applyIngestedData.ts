@@ -7,6 +7,7 @@ import { RobotListResult } from './robotListParser'
 import { ToolListResult } from './toolListParser'
 import { createLinkingMissingTargetWarning, createParserErrorWarning } from './warningUtils'
 import { linkAssetsToSimulation } from './relationshipLinker'
+import { buildStationId, normalizeAreaName, normalizeStationCode } from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -148,14 +149,22 @@ function linkRobotsToCells(
   warnings: IngestionWarning[]
 ): void {
   for (const robot of robots) {
-    // Try to find matching cell
-    const matchingCell = findMatchingCell(
-      cells,
-      areas,
-      robot.lineCode,
-      robot.stationCode,
-      robot.areaName
-    )
+    // First try to match using stationId (most reliable)
+    let matchingCell: Cell | undefined
+    if (robot.stationId) {
+      matchingCell = cells.find(c => c.stationId === robot.stationId)
+    }
+
+    // Fallback to matching by station code and area
+    if (!matchingCell) {
+      matchingCell = findMatchingCell(
+        cells,
+        areas,
+        robot.lineCode,
+        robot.stationCode,
+        robot.areaName
+      )
+    }
 
     if (matchingCell) {
       robot.cellId = matchingCell.id
@@ -193,14 +202,22 @@ function linkToolsToCells(
   warnings: IngestionWarning[]
 ): void {
   for (const tool of tools) {
-    // Try to find matching cell
-    const matchingCell = findMatchingCell(
-      cells,
-      areas,
-      tool.lineCode,
-      tool.stationCode,
-      tool.areaName
-    )
+    // First try to match using stationId (most reliable)
+    let matchingCell: Cell | undefined
+    if (tool.stationId) {
+      matchingCell = cells.find(c => c.stationId === tool.stationId)
+    }
+
+    // Fallback to matching by station code and area
+    if (!matchingCell) {
+      matchingCell = findMatchingCell(
+        cells,
+        areas,
+        tool.lineCode,
+        tool.stationCode,
+        tool.areaName
+      )
+    }
 
     if (matchingCell) {
       tool.cellId = matchingCell.id
@@ -256,6 +273,7 @@ function updateCellEquipmentLinks(
 
 /**
  * Find a cell matching the given criteria
+ * Uses normalized area names and station codes for consistent matching
  */
 function findMatchingCell(
   cells: Cell[],
@@ -266,28 +284,60 @@ function findMatchingCell(
 ): Cell | undefined {
   if (!stationCode) return undefined
 
-  // Build area candidates
+  // Build stationId from normalized values (same as used in parsers)
+  const normalizedArea = normalizeAreaName(areaName)
+  const normalizedStation = normalizeStationCode(stationCode)
+  const candidateStationId = buildStationId(normalizedArea, normalizedStation)
+
+  // First try to match by stationId if we can build one
+  if (candidateStationId) {
+    const cell = cells.find(c => c.stationId === candidateStationId)
+    if (cell) return cell
+  }
+
+  // Fallback: Build area candidates using normalized comparison
   const areaCandidates = areas.filter(area => {
-    if (areaName && normalizeString(area.name) === normalizeString(areaName)) return true
-    if (lineCode && area.code && normalizeString(area.code) === normalizeString(lineCode)) return true
+    if (areaName) {
+      const normalizedSearchArea = normalizeAreaName(areaName)
+      const normalizedCellArea = normalizeAreaName(area.name)
+      if (normalizedSearchArea && normalizedCellArea && 
+          normalizedSearchArea === normalizedCellArea) return true
+    }
+    if (lineCode && area.code) {
+      const normalizedLineCode = normalizeString(lineCode)
+      const normalizedAreaCode = normalizeString(area.code)
+      if (normalizedLineCode === normalizedAreaCode) return true
+    }
     return false
   })
 
   // Find cell in candidate areas with matching station
   for (const area of areaCandidates) {
-    const cell = cells.find(c =>
-      c.areaId === area.id &&
-      normalizeString(c.code) === normalizeString(stationCode)
-    )
+    const normalizedCellStation = normalizeStationCode(stationCode)
+    const cell = cells.find(c => {
+      if (c.areaId !== area.id) return false
+      const normalizedCellCode = normalizeStationCode(c.code)
+      return normalizedCellStation && normalizedCellCode && 
+             normalizedCellStation === normalizedCellCode
+    })
     if (cell) return cell
   }
 
-  // Fallback: find any cell with matching station code
-  return cells.find(c => normalizeString(c.code) === normalizeString(stationCode))
+  // Fallback: find any cell with matching normalized station code
+  const normalizedSearchStation = normalizeStationCode(stationCode)
+  if (normalizedSearchStation) {
+    return cells.find(c => {
+      const normalizedCellCode = normalizeStationCode(c.code)
+      return normalizedCellCode === normalizedSearchStation
+    })
+  }
+
+  return undefined
 }
 
 /**
  * Find an area matching the given criteria
+ * Uses normalized area names for consistent matching
  */
 function findMatchingArea(
   areas: Area[],
@@ -297,8 +347,17 @@ function findMatchingArea(
   if (!areaName && !lineCode) return undefined
 
   return areas.find(area => {
-    if (areaName && normalizeString(area.name) === normalizeString(areaName)) return true
-    if (lineCode && area.code && normalizeString(area.code) === normalizeString(lineCode)) return true
+    if (areaName) {
+      const normalizedSearchArea = normalizeAreaName(areaName)
+      const normalizedCellArea = normalizeAreaName(area.name)
+      if (normalizedSearchArea && normalizedCellArea && 
+          normalizedSearchArea === normalizedCellArea) return true
+    }
+    if (lineCode && area.code) {
+      const normalizedSearchLine = normalizeString(lineCode)
+      const normalizedAreaCode = normalizeString(area.code)
+      if (normalizedSearchLine === normalizedAreaCode) return true
+    }
     return false
   })
 }
