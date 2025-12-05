@@ -12,6 +12,7 @@ import {
   SimulationFiltersBar,
   SimulationBoardGrid,
   DaleTodayPanel,
+  SimulationDetailPanel,
   SimulationDetailDrawer,
   useSimulationSync,
   useSimulationLoading,
@@ -156,7 +157,6 @@ export function SimulationPage() {
     searchTerm: searchParams.get('search') ?? ''
   })
   const [selectedStation, setSelectedStation] = useState<StationContext | null>(null)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   // Filtered stations
   const stations = useSimulationBoardStations(filters)
@@ -178,11 +178,6 @@ export function SimulationPage() {
 
   const handleStationClick = (station: StationContext) => {
     setSelectedStation(station)
-    setIsDrawerOpen(true)
-  }
-
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false)
   }
 
   // Loading state
@@ -246,26 +241,25 @@ export function SimulationPage() {
       {/* Error Banner */}
       <ErrorBanner errors={errors} />
 
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Summary Stats */}
-          <SummaryStats
-            totalStations={summary.totalStations}
-            totalRobots={summary.totalRobots}
-            totalGuns={summary.totalGuns}
-            totalReuse={summary.totalReuse}
-            avgCompletion={summary.avgCompletion}
-          />
+      {/* Summary Stats */}
+      <SummaryStats
+        totalStations={summary.totalStations}
+        totalRobots={summary.totalRobots}
+        totalGuns={summary.totalGuns}
+        totalReuse={summary.totalReuse}
+        avgCompletion={summary.avgCompletion}
+      />
 
-          {/* Filters */}
-          <SimulationFiltersBar
-            filters={filters}
-            onFiltersChange={setFilters}
-          />
+      {/* Filters */}
+      <SimulationFiltersBar
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
 
-          {/* Board Grid */}
+      {/* Split View Layout - Desktop */}
+      <div className="hidden lg:flex lg:flex-row gap-6">
+        {/* Left Side - Station List (Master) */}
+        <div className="flex-1 lg:max-w-[60%] space-y-6">
           <SimulationBoardGrid
             stations={stations}
             onStationClick={handleStationClick}
@@ -273,20 +267,40 @@ export function SimulationPage() {
           />
         </div>
 
-        {/* Sidebar - Dale's Today Panel */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-4">
+        {/* Right Side - Detail Panel (Detail) */}
+        <div className="lg:w-[40%] space-y-6">
+          <div className="sticky top-4 space-y-6">
+            {/* Dale's Today Panel */}
             <DaleTodayPanel onStationClick={handleStationClick} />
+
+            {/* Station Detail Panel */}
+            <SimulationDetailPanel
+              station={selectedStation}
+              onClose={() => setSelectedStation(null)}
+            />
           </div>
         </div>
       </div>
 
-      {/* Detail Drawer */}
-      <SimulationDetailDrawer
-        station={selectedStation}
-        isOpen={isDrawerOpen}
-        onClose={handleDrawerClose}
-      />
+      {/* Mobile Layout - Drawer */}
+      <div className="lg:hidden space-y-6">
+        {/* Dale's Today Panel */}
+        <DaleTodayPanel onStationClick={handleStationClick} />
+
+        {/* Station List */}
+        <SimulationBoardGrid
+          stations={stations}
+          onStationClick={handleStationClick}
+          selectedStationKey={selectedStation?.contextKey}
+        />
+
+        {/* Detail Drawer for Mobile */}
+        <SimulationDetailDrawer
+          station={selectedStation}
+          isOpen={selectedStation !== null}
+          onClose={() => setSelectedStation(null)}
+        />
+      </div>
     </div>
   )
 }
