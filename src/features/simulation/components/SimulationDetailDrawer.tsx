@@ -18,10 +18,21 @@ import {
   FileSpreadsheet,
   User,
   Layers,
-  AlertTriangle
+  AlertTriangle,
+  BarChart3,
+  Package,
+  CheckCircle2,
+  Clock,
+  AlertCircle
 } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
+
+// ============================================================================
+// TAB TYPES
+// ============================================================================
+
+type TabView = 'overview' | 'assets' | 'simulation'
 // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
 // import {
 //   useToolingBottleneckState,
@@ -135,8 +146,7 @@ export function SimulationDetailDrawer({
   onClose
 }: SimulationDetailDrawerProps) {
   const navigate = useNavigate()
-  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
-  // const bottleneckState = useToolingBottleneckState()
+  const [activeTab, setActiveTab] = useState<TabView>('overview')
   const [isToolingDrawerOpen, setIsToolingDrawerOpen] = useState(false)
 
   if (station === null) return null
@@ -207,143 +217,296 @@ export function SimulationDetailDrawer({
         data-testid="simulation-detail-drawer"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 z-10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 id="drawer-title" className="text-xl font-bold text-gray-900 dark:text-white">
-                {station.station}
-              </h2>
-              <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                <Layers className="h-4 w-4" />
-                <span>{station.line}</span>
-                <span>•</span>
-                <span>{station.unit}</span>
+        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-10">
+          <div className="px-6 py-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 id="drawer-title" className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {station.station}
+                </h2>
+                <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <Layers className="h-4 w-4" />
+                  <span>{station.line}</span>
+                  <span>•</span>
+                  <span>{station.unit}</span>
+                </div>
               </div>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                aria-label="Close drawer"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-t border-gray-200 dark:border-gray-700">
             <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              aria-label="Close drawer"
+              onClick={() => setActiveTab('overview')}
+              className={cn(
+                'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2',
+                activeTab === 'overview'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              )}
             >
-              <X className="h-5 w-5" />
+              <div className="flex items-center justify-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Overview
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('assets')}
+              className={cn(
+                'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2',
+                activeTab === 'assets'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              )}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Package className="h-4 w-4" />
+                Assets ({station.assetCounts.total})
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('simulation')}
+              className={cn(
+                'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2',
+                activeTab === 'simulation'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+              )}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Simulation
+              </div>
             </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4 space-y-2">
+        <div className="px-6 py-6 space-y-6">
           {/* Context Breadcrumb */}
-          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
-              <span className="font-medium text-gray-900 dark:text-white">{station.program}</span>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-              <span>{station.plant}</span>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
+            <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-semibold text-blue-900 dark:text-blue-100">{station.program}</span>
+              <ChevronRight className="h-4 w-4 text-blue-400" />
+              <span className="font-medium">{station.plant}</span>
+              <ChevronRight className="h-4 w-4 text-blue-400" />
               <span>{station.unit}</span>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-blue-400" />
               <span>{station.line}</span>
             </div>
           </div>
 
-          {/* Asset Summary */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <AssetCountRow
-              icon={<Bot className="h-4 w-4" />}
-              label="Robots"
-              count={station.assetCounts.robots}
-              color="text-purple-500"
-            />
-            <AssetCountRow
-              icon={<Zap className="h-4 w-4" />}
-              label="Guns"
-              count={station.assetCounts.guns}
-              color="text-yellow-500"
-            />
-            <AssetCountRow
-              icon={<Wrench className="h-4 w-4" />}
-              label="Tools"
-              count={station.assetCounts.tools}
-              color="text-blue-500"
-            />
-            <AssetCountRow
-              icon={<Box className="h-4 w-4" />}
-              label="Other"
-              count={station.assetCounts.other}
-              color="text-gray-500"
-            />
-          </div>
+          {/* Tab Content */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Asset Summary Cards */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Asset Summary
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <AssetCountRow
+                    icon={<Bot className="h-5 w-5" />}
+                    label="Robots"
+                    count={station.assetCounts.robots}
+                    color="text-purple-500"
+                  />
+                  <AssetCountRow
+                    icon={<Zap className="h-5 w-5" />}
+                    label="Guns"
+                    count={station.assetCounts.guns}
+                    color="text-yellow-500"
+                  />
+                  <AssetCountRow
+                    icon={<Wrench className="h-5 w-5" />}
+                    label="Tools"
+                    count={station.assetCounts.tools}
+                    color="text-blue-500"
+                  />
+                  <AssetCountRow
+                    icon={<Box className="h-5 w-5" />}
+                    label="Other"
+                    count={station.assetCounts.other}
+                    color="text-gray-500"
+                  />
+                </div>
+              </div>
 
-          {/* Sourcing Breakdown */}
-          <Section title="Sourcing" icon={<RefreshCw className="h-4 w-4" />}>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between py-2 px-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-sm text-emerald-700 dark:text-emerald-300">Reuse / Free Issue</span>
-                </div>
-                <span className="font-semibold text-emerald-700 dark:text-emerald-300">
-                  {station.sourcingCounts.reuse + station.sourcingCounts.freeIssue}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2 px-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm text-blue-700 dark:text-blue-300">New Buy</span>
-                </div>
-                <span className="font-semibold text-blue-700 dark:text-blue-300">
-                  {station.sourcingCounts.newBuy}
-                </span>
-              </div>
-              <div className="flex items-center justify-between py-2 px-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                  <span className="text-sm text-amber-700 dark:text-amber-300">Unknown</span>
-                </div>
-                <span className="font-semibold text-amber-700 dark:text-amber-300">
-                  {station.sourcingCounts.unknown}
-                </span>
-              </div>
-            </div>
-          </Section>
-
-          {/* Simulation Status */}
-          <Section title="Simulation Status" icon={<FileSpreadsheet className="h-4 w-4" />}>
-            {simStatus === undefined ? (
-              <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                <FileSpreadsheet className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No simulation status data for this station.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <MetricRow
-                  label="1st Stage Completion"
-                  value={simStatus.firstStageCompletion}
-                  threshold={80}
-                />
-                <MetricRow
-                  label="Final Deliverables"
-                  value={simStatus.finalDeliverablesCompletion}
-                  threshold={80}
-                />
-                {simStatus.engineer && (
-                  <div className="flex items-center gap-2 py-2 mt-2 border-t border-gray-100 dark:border-gray-700">
-                    <User className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      {simStatus.engineer}
+              {/* Sourcing Breakdown */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Sourcing Breakdown
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-3 px-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 dark:bg-emerald-800/50 rounded-lg">
+                        <RefreshCw className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">Reuse / Free Issue</span>
+                    </div>
+                    <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                      {station.sourcingCounts.reuse + station.sourcingCounts.freeIssue}
                     </span>
                   </div>
-                )}
-                {simStatus.sourceFile && (
-                  <div className="text-xs text-gray-400 mt-2">
-                    Source: {simStatus.sourceFile}
+                  <div className="flex items-center justify-between py-3 px-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg">
+                        <ShoppingCart className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">New Buy</span>
+                    </div>
+                    <span className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                      {station.sourcingCounts.newBuy}
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between py-3 px-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-100 dark:bg-amber-800/50 rounded-lg">
+                        <HelpCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Unknown</span>
+                    </div>
+                    <span className="text-lg font-bold text-amber-700 dark:text-amber-300">
+                      {station.sourcingCounts.unknown}
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
-          </Section>
+            </div>
+          )}
+
+          {activeTab === 'assets' && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Asset List ({station.assets.length})
+              </h3>
+              {station.assets.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">No assets linked to this station</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {station.assets.map((asset, idx) => (
+                    <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {asset.kind === 'ROBOT' && <Bot className="h-4 w-4 text-purple-500" />}
+                            {asset.kind === 'GUN' && <Zap className="h-4 w-4 text-yellow-500" />}
+                            {asset.kind === 'TOOL' && <Wrench className="h-4 w-4 text-blue-500" />}
+                            {asset.kind !== 'ROBOT' && asset.kind !== 'GUN' && asset.kind !== 'TOOL' && <Box className="h-4 w-4 text-gray-500" />}
+                            <span className="font-medium text-gray-900 dark:text-white text-sm">{asset.name}</span>
+                          </div>
+                          {asset.oemModel && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Model: {asset.oemModel}</p>
+                          )}
+                          {asset.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{asset.description}</p>
+                          )}
+                        </div>
+                        {asset.sourcing && (
+                          <span className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium",
+                            asset.sourcing === 'REUSE' && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+                            asset.sourcing === 'NEW_BUY' && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+                            asset.sourcing === 'UNKNOWN' && "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300"
+                          )}>
+                            {asset.sourcing}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'simulation' && (
+            <div className="space-y-6">
+              {simStatus === undefined ? (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                  <FileSpreadsheet className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                  <h3 className="text-lg font-medium mb-2">No Simulation Data</h3>
+                  <p className="text-sm">No simulation status data available for this station.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Completion Metrics */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Completion Progress
+                    </h3>
+                    <div className="space-y-4">
+                      <MetricRow
+                        label="1st Stage Completion"
+                        value={simStatus.firstStageCompletion}
+                        threshold={80}
+                      />
+                      <MetricRow
+                        label="Final Deliverables"
+                        value={simStatus.finalDeliverablesCompletion}
+                        threshold={80}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Engineer & Metadata */}
+                  <div className="space-y-3">
+                    {simStatus.engineer && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <User className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Assigned Engineer</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{simStatus.engineer}</p>
+                        </div>
+                      </div>
+                    )}
+                    {simStatus.dcsConfigured !== undefined && (
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        {simStatus.dcsConfigured ? (
+                          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-amber-500" />
+                        )}
+                        <div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">DCS Configuration</p>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {simStatus.dcsConfigured ? 'Configured' : 'Not Configured'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {simStatus.sourceFile && (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Source File</p>
+                        <p className="text-xs font-mono text-gray-700 dark:text-gray-300">{simStatus.sourceFile}</p>
+                        {simStatus.sheetName && (
+                          <p className="text-xs font-mono text-gray-600 dark:text-gray-400 mt-1">Sheet: {simStatus.sheetName}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
-          <div className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+          <div className="pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3">
             {hasToolingBottlenecks && (
               <button
                 onClick={() => setIsToolingDrawerOpen(true)}
@@ -361,13 +524,14 @@ export function SimulationDetailDrawer({
             <button
               onClick={handleOpenGeneralAssets}
               className={cn(
-                'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg',
-                'bg-blue-600 hover:bg-blue-700 text-white font-medium',
-                'transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                'w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-lg',
+                'bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm',
+                'shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40',
+                'transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
               )}
             >
-              <ExternalLink className="h-4 w-4" />
-              View Related Assets in Assets Tab
+              <ExternalLink className="h-5 w-5" />
+              View All Assets in Assets Tab
             </button>
           </div>
         </div>
