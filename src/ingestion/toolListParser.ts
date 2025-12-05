@@ -170,6 +170,9 @@ export async function parseToolList(
   const dataStartIndex = headerRowIndex + 1
   const tools: Tool[] = []
 
+  // Check if "EQUIPMENT NO SHOWN" column exists in the header
+  const hasEquipmentNoColumn = columnMap['EQUIPMENT NO SHOWN'] !== null || columnMap['EQUIPMENT NO'] !== null
+
   for (let i = dataStartIndex; i < rows.length; i++) {
     const row = rows[i]
 
@@ -178,11 +181,13 @@ export async function parseToolList(
 
     // FILTER: Only parse rows where "Equipment No \nShown" is not empty
     // This column indicates real tool positions (excludes metadata/summary rows)
+    // BUT: Only apply this filter if the column actually exists in the data
     const equipmentNoShown = getCellString(row, columnMap, 'EQUIPMENT NO SHOWN')
       || getCellString(row, columnMap, 'EQUIPMENT NO')
 
-    if (!equipmentNoShown) {
+    if (hasEquipmentNoColumn && !equipmentNoShown) {
       // Skip rows without equipment number (not a real tool)
+      // Only apply this filter when the column exists in the sheet
       continue
     }
 
