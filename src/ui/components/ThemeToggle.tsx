@@ -38,13 +38,17 @@ export function ThemeToggle() {
                         title={`Switch to ${labels[mode]} mode`}
                     >
                         {mode === 'flower' && (
-                            <FlowerAccent className="w-4 h-4 text-rose-500" />
+                            isActive ? (
+                                <FlowerAccent className="w-4 h-4 text-rose-500" />
+                            ) : (
+                                <span className="w-3 h-3 rounded-full bg-rose-300 inline-block" aria-hidden="true" />
+                            )
                         )}
                         {mode === 'standard' && (
                             <span className="w-4 h-4 rounded-full bg-gray-400 inline-block" aria-hidden="true" />
                         )}
                         {mode === 'professional' && (
-                            <span className="w-4 h-4 rounded-full bg-slate-500 inline-block" aria-hidden="true" />
+                            <span className="w-4 h-4 rounded-full bg-slate-600 inline-block" aria-hidden="true" />
                         )}
                         {labels[mode]}
                     </button>
