@@ -3,7 +3,7 @@
 // Shows hierarchy navigation and station cards
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Layers, Bot, Zap } from 'lucide-react'
+import { ChevronDown, ChevronRight, Layers, Bot, Zap, Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { StationCard } from './StationCard'
 import { useLineAggregations } from '../simulationSelectors'
@@ -29,7 +29,8 @@ interface LineGroupProps {
   gunCount: number
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
-  defaultExpanded?: boolean
+  isExpanded: boolean
+  onToggle: () => void
 }
 
 // ============================================================================
@@ -45,16 +46,16 @@ function LineGroup({
   gunCount,
   onStationClick,
   selectedStationKey,
-  defaultExpanded = true
+  isExpanded,
+  onToggle
 }: LineGroupProps) {
   // _lineKey is for identification but not displayed directly
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
       {/* Line Header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={onToggle}
         className={cn(
           'w-full flex items-center justify-between px-4 py-3',
           'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50',
@@ -132,6 +133,35 @@ export function SimulationBoardGrid({
     a[0].localeCompare(b[0])
   )
 
+  // Track expanded state for each line
+  const [expandedLines, setExpandedLines] = useState<Set<string>>(() => {
+    // Initialize with all lines collapsed by default
+    return new Set()
+  })
+
+  const handleToggleLine = (lineKey: string) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev)
+      if (next.has(lineKey)) {
+        next.delete(lineKey)
+      } else {
+        next.add(lineKey)
+      }
+      return next
+    })
+  }
+
+  const handleExpandAll = () => {
+    setExpandedLines(new Set(sortedLines.map(([lineKey]) => lineKey)))
+  }
+
+  const handleCollapseAll = () => {
+    setExpandedLines(new Set())
+  }
+
+  const allExpanded = expandedLines.size === sortedLines.length
+  const allCollapsed = expandedLines.size === 0
+
   if (stations.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
@@ -148,6 +178,39 @@ export function SimulationBoardGrid({
 
   return (
     <div className="space-y-4">
+      {/* Expand/Collapse All Controls */}
+      {sortedLines.length > 1 && (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleExpandAll}
+            disabled={allExpanded}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              allExpanded
+                ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            )}
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+            Expand All
+          </button>
+          <button
+            onClick={handleCollapseAll}
+            disabled={allCollapsed}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+              allCollapsed
+                ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            )}
+          >
+            <Minimize2 className="h-3.5 w-3.5" />
+            Collapse All
+          </button>
+        </div>
+      )}
+
+      {/* Line Groups */}
       {sortedLines.map(([lineKey, lineStations]) => {
         const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
         if (aggregation === undefined) return null
@@ -163,6 +226,8 @@ export function SimulationBoardGrid({
             gunCount={aggregation.assetCounts.guns}
             onStationClick={onStationClick}
             selectedStationKey={selectedStationKey}
+            isExpanded={expandedLines.has(lineKey)}
+            onToggle={() => handleToggleLine(lineKey)}
           />
         )
       })}

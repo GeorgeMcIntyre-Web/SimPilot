@@ -94,11 +94,11 @@ export const coreStore = {
     }
   }, source?: 'Demo' | 'Local' | 'MS365'): void {
     storeState = {
-      projects: data.projects,
-      areas: data.areas,
-      cells: data.cells,
+      projects: [...data.projects],
+      areas: [...data.areas],
+      cells: [...data.cells],
       assets: [...data.robots, ...data.tools], // Merge into Unified Assets
-      warnings: data.warnings,
+      warnings: [...data.warnings],
       changeLog: [], // Reset change log on new data load
       lastUpdated: new Date().toISOString(),
       dataSource: source || null,
