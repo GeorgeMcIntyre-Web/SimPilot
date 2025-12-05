@@ -242,14 +242,14 @@ export function isLowScore(config: SnifferConfig, score: number): boolean {
  * Add entries here when the sniffer fails on specific files.
  */
 export const KNOWN_FILE_OVERRIDES: FileConfig[] = [
-  // Example: If "STLA_S_ZAR Tool List.xlsx" always uses "ToolList" sheet
-  // {
-  //   fileName: 'STLA_S_ZAR Tool List.xlsx',
-  //   sheetOverrides: {
-  //     IN_HOUSE_TOOLING: 'ToolList'
-  //   },
-  //   notes: 'Sheet name is always ToolList for this template'
-  // }
+  // STLA_S_ZAR Tool List always uses "ToolList" sheet
+  {
+    fileName: 'STLA_S_ZAR Tool List.xlsx',
+    sheetOverrides: {
+      IN_HOUSE_TOOLING: 'ToolList'
+    },
+    notes: 'Sheet name is always ToolList for this template'
+  }
 ]
 
 /**

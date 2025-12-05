@@ -263,3 +263,86 @@ export function buildToolId(
 
   return null
 }
+
+// ============================================================================
+// AREA / ZONE PARSING
+// ============================================================================
+
+export interface AreaZoneParsed {
+  parentArea: string      // "FRONT UNIT", "REAR UNIT", "UNDERBODY"
+  zone: string | null     // "Rear Rail LH", "Front Floor ASS 1", null if no sub-zone
+  fullName: string        // Original full name
+}
+
+/**
+ * Parse area name into parent area and optional zone
+ *
+ * Rules:
+ * 1. If name contains "ASS" or "Ass" followed by number → zone = full name, parent = extract base
+ *    - "Front Unit ASS 1" → parent="FRONT UNIT", zone="Front Unit ASS 1"
+ *    - "Rear Unit Ass2" → parent="REAR UNIT", zone="Rear Unit Ass2"
+ *
+ * 2. If name contains LH/RH (Left Hand/Right Hand) → zone = full name, parent = extract base
+ *    - "Rear Rail LH" → parent="REAR RAIL", zone="Rear Rail LH"
+ *    - "WHR RH" → parent="WHR", zone="WHR RH"
+ *
+ * 3. If name contains common zone keywords → zone = full name, parent = infer
+ *    - "Front Floor ASS 1" → parent="FRONT FLOOR", zone="Front Floor ASS 1"
+ *    - "Dash UPR" → parent="DASH", zone="Dash UPR"
+ *    - "Preoperation MIG" → parent="PREOPERATION", zone="Preoperation MIG"
+ *
+ * 4. Otherwise → parent = full name, zone = null (top-level area)
+ *
+ * Examples:
+ *   "FRONT UNIT" → { parentArea: "FRONT UNIT", zone: null }
+ *   "Front Unit ASS 1" → { parentArea: "FRONT UNIT", zone: "Front Unit ASS 1" }
+ *   "Rear Rail LH" → { parentArea: "REAR RAIL", zone: "Rear Rail LH" }
+ *   "WHR RH" → { parentArea: "WHR", zone: "WHR RH" }
+ */
+export function parseAreaZone(rawAreaName: string | null | undefined): AreaZoneParsed | null {
+  if (!rawAreaName) return null
+
+  const fullName = rawAreaName.trim()
+  if (!fullName) return null
+
+  const upper = fullName.toUpperCase()
+
+  // Pattern 1: Assembly zones (ASS/Ass + number)
+  const assMatch = /^(.+?)\s+ASS\s*\d+$/i.exec(fullName)
+  if (assMatch) {
+    const parentArea = assMatch[1].trim().toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Pattern 2: LH/RH zones (Left Hand / Right Hand)
+  const lhRhMatch = /^(.+?)\s+(LH|RH)$/i.exec(fullName)
+  if (lhRhMatch) {
+    const parentArea = lhRhMatch[1].trim().toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Pattern 3: Combined LH/RH notation "Sill INR LH / RH"
+  const lhRhCombinedMatch = /^(.+?)\s+(LH\s*\/\s*RH)$/i.exec(fullName)
+  if (lhRhCombinedMatch) {
+    const parentArea = lhRhCombinedMatch[1].trim().toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Pattern 4: Common zone suffixes (UPR, LWR, INR, etc.)
+  const zoneSuffixes = ['UPR', 'LWR', 'INR', 'MIG']
+  for (const suffix of zoneSuffixes) {
+    if (upper.endsWith(` ${suffix}`)) {
+      const parentArea = fullName.replace(new RegExp(`\\s+${suffix}$`, 'i'), '').trim().toUpperCase()
+      return { parentArea, zone: fullName, fullName }
+    }
+  }
+
+  // Pattern 5: Starts with "Preoperation" or "Prepa"
+  if (upper.startsWith('PREOPERATION') || upper.startsWith('PREPA')) {
+    const parentArea = fullName.split(/\s+/)[0].toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Default: Top-level area with no zone
+  return { parentArea: upper, zone: null, fullName }
+}
