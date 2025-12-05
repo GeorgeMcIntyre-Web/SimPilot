@@ -3,12 +3,23 @@
 // Shows hierarchy navigation and station cards
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Layers, Bot, Zap, Maximize2, Minimize2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Layers, Bot, Zap, Maximize2, Minimize2, ArrowUpDown } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { StationCard } from './StationCard'
 import { useLineAggregations } from '../simulationSelectors'
 import { useStationsGroupedByLine } from '../simulationSelectors'
 import type { StationContext } from '../simulationStore'
+
+// ============================================================================
+// SORTING TYPES
+// ============================================================================
+
+type SortOption = 'line-asc' | 'line-desc' | 'stations-asc' | 'stations-desc' | 'robots-asc' | 'robots-desc'
+
+interface SortConfig {
+  value: SortOption
+  label: string
+}
 
 // ============================================================================
 // TYPES
@@ -120,6 +131,15 @@ function LineGroup({
 // MAIN COMPONENT
 // ============================================================================
 
+const SORT_OPTIONS: SortConfig[] = [
+  { value: 'line-asc', label: 'Line (A-Z)' },
+  { value: 'line-desc', label: 'Line (Z-A)' },
+  { value: 'stations-asc', label: 'Stations (Low-High)' },
+  { value: 'stations-desc', label: 'Stations (High-Low)' },
+  { value: 'robots-asc', label: 'Robots (Low-High)' },
+  { value: 'robots-desc', label: 'Robots (High-Low)' }
+]
+
 export function SimulationBoardGrid({
   stations,
   onStationClick,
@@ -128,15 +148,38 @@ export function SimulationBoardGrid({
   const groupedByLine = useStationsGroupedByLine(stations)
   const lineAggregations = useLineAggregations(stations)
 
-  // Sort lines by key for consistent ordering
-  const sortedLines = Array.from(groupedByLine.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  )
-
   // Track expanded state for each line
   const [expandedLines, setExpandedLines] = useState<Set<string>>(() => {
     // Initialize with all lines collapsed by default
     return new Set()
+  })
+
+  // Track sorting preference
+  const [sortBy, setSortBy] = useState<SortOption>('line-asc')
+
+  // Sort lines based on selected option
+  const sortedLines = Array.from(groupedByLine.entries()).sort((a, b) => {
+    const [keyA, stationsA] = a
+    const [keyB, stationsB] = b
+    const aggA = lineAggregations.find(agg => agg.lineKey === keyA)
+    const aggB = lineAggregations.find(agg => agg.lineKey === keyB)
+
+    switch (sortBy) {
+      case 'line-asc':
+        return keyA.localeCompare(keyB)
+      case 'line-desc':
+        return keyB.localeCompare(keyA)
+      case 'stations-asc':
+        return stationsA.length - stationsB.length
+      case 'stations-desc':
+        return stationsB.length - stationsA.length
+      case 'robots-asc':
+        return (aggA?.assetCounts.robots ?? 0) - (aggB?.assetCounts.robots ?? 0)
+      case 'robots-desc':
+        return (aggB?.assetCounts.robots ?? 0) - (aggA?.assetCounts.robots ?? 0)
+      default:
+        return keyA.localeCompare(keyB)
+    }
   })
 
   const handleToggleLine = (lineKey: string) => {
@@ -178,35 +221,63 @@ export function SimulationBoardGrid({
 
   return (
     <div className="space-y-4">
-      {/* Expand/Collapse All Controls */}
+      {/* Controls Bar */}
       {sortedLines.length > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={handleExpandAll}
-            disabled={allExpanded}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              allExpanded
-                ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            )}
-          >
-            <Maximize2 className="h-3.5 w-3.5" />
-            Expand All
-          </button>
-          <button
-            onClick={handleCollapseAll}
-            disabled={allCollapsed}
-            className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-              allCollapsed
-                ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-            )}
-          >
-            <Minimize2 className="h-3.5 w-3.5" />
-            Collapse All
-          </button>
+        <div className="flex items-center justify-between gap-4">
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <label htmlFor="sort-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Sort by:
+            </label>
+            <select
+              id="sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className={cn(
+                "text-sm rounded-md border-gray-300 dark:border-gray-600",
+                "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100",
+                "focus:ring-blue-500 focus:border-blue-500",
+                "px-3 py-1.5"
+              )}
+            >
+              {SORT_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Expand/Collapse All Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExpandAll}
+              disabled={allExpanded}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                allExpanded
+                  ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                  : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              )}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              Expand All
+            </button>
+            <button
+              onClick={handleCollapseAll}
+              disabled={allCollapsed}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
+                allCollapsed
+                  ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                  : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              )}
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+              Collapse All
+            </button>
+          </div>
         </div>
       )}
 
