@@ -42,30 +42,38 @@ function SummaryStats({
   totalReuse,
   avgCompletion
 }: SummaryStatsProps) {
+  const renderCard = (stat: { label: string; value: number | string; accent: string }) => (
+    <div
+      key={stat.label}
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 h-full flex items-center justify-between shadow-sm"
+    >
+      <div>
+        <div className={`text-xl font-bold ${stat.accent}`}>{stat.value}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+      </div>
+      <div className="h-10 w-1 rounded-full bg-gradient-to-b from-blue-200 via-purple-200 to-emerald-200 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-emerald-900/40" />
+    </div>
+  )
+
+  const stats = [
+    { label: 'Stations', value: totalStations, accent: 'text-sky-600 dark:text-sky-400' },
+    { label: 'Robots', value: totalRobots, accent: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Weld Guns', value: totalGuns, accent: 'text-amber-600 dark:text-amber-400' },
+    { label: 'Reuse Items', value: totalReuse, accent: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Avg Completion', value: avgCompletion !== null ? `${avgCompletion}%` : '—', accent: 'text-blue-600 dark:text-blue-400' }
+  ]
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalStations}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Stations</div>
+    <div className="grid grid-cols-1 gap-3 h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {renderCard(stats[0])}
+        {renderCard(stats[1])}
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalRobots}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Robots</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {renderCard(stats[2])}
+        {renderCard(stats[3])}
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{totalGuns}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Weld Guns</div>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{totalReuse}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Reuse Items</div>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-          {avgCompletion !== null ? `${avgCompletion}%` : '—'}
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Avg Completion</div>
-      </div>
+      {renderCard(stats[4])}
     </div>
   )
 }
@@ -241,14 +249,35 @@ export function SimulationPage() {
       {/* Error Banner */}
       <ErrorBanner errors={errors} />
 
-      {/* Summary Stats */}
-      <SummaryStats
-        totalStations={summary.totalStations}
-        totalRobots={summary.totalRobots}
-        totalGuns={summary.totalGuns}
-        totalReuse={summary.totalReuse}
-        avgCompletion={summary.avgCompletion}
-      />
+      {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
+      <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
+        {/* Summary Stats - Takes 2 columns, full height */}
+        <div className="col-span-2 max-h-64 overflow-y-auto">
+          <SummaryStats
+            totalStations={summary.totalStations}
+            totalRobots={summary.totalRobots}
+            totalGuns={summary.totalGuns}
+            totalReuse={summary.totalReuse}
+            avgCompletion={summary.avgCompletion}
+          />
+        </div>
+
+        {/* Dale's Today Panel - Takes 3 columns, full height */}
+        <div className="col-span-3">
+          <DaleTodayPanel onStationClick={handleStationClick} />
+        </div>
+      </div>
+
+      {/* Mobile - Stacked Layout */}
+      <div className="lg:hidden space-y-6">
+        <SummaryStats
+          totalStations={summary.totalStations}
+          totalRobots={summary.totalRobots}
+          totalGuns={summary.totalGuns}
+          totalReuse={summary.totalReuse}
+          avgCompletion={summary.avgCompletion}
+        />
+      </div>
 
       {/* Filters */}
       <SimulationFiltersBar
@@ -268,11 +297,8 @@ export function SimulationPage() {
         </div>
 
         {/* Right Side - Detail Panel (Detail) */}
-        <div className="lg:w-[40%] space-y-6">
-          <div className="sticky top-4 space-y-6">
-            {/* Dale's Today Panel */}
-            <DaleTodayPanel onStationClick={handleStationClick} />
-
+        <div className="lg:w-[40%]">
+          <div className="sticky top-4">
             {/* Station Detail Panel */}
             <SimulationDetailPanel
               station={selectedStation}

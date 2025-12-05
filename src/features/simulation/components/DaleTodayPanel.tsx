@@ -13,7 +13,6 @@ import type { StationContext } from '../simulationStore'
 
 interface DaleTodayPanelProps {
   onStationClick?: (station: StationContext) => void
-  maxItems?: number
 }
 
 interface AttentionItemRowProps {
@@ -42,7 +41,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg',
+        'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg',
         'text-left transition-colors',
         'hover:bg-gray-100 dark:hover:bg-gray-700/50',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
@@ -75,13 +74,11 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
 // ============================================================================
 
 export function DaleTodayPanel({
-  onStationClick,
-  maxItems = 5
+  onStationClick
 }: DaleTodayPanelProps) {
   const attentionItems = useStationsNeedingAttention()
-  const displayedItems = attentionItems.slice(0, maxItems)
 
-  if (displayedItems.length === 0) {
+  if (attentionItems.length === 0) {
     return (
       <div 
         className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
@@ -102,20 +99,20 @@ export function DaleTodayPanel({
     )
   }
 
-  const errorCount = displayedItems.filter(i => i.severity === 'error').length
-  const warningCount = displayedItems.filter(i => i.severity === 'warning').length
+  const errorCount = attentionItems.filter(i => i.severity === 'error').length
+  const warningCount = attentionItems.filter(i => i.severity === 'warning').length
 
   return (
     <div 
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
       data-testid="dale-today-panel"
     >
       {/* Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
+      <div className="px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
               Today's Focus
             </h3>
           </div>
@@ -132,14 +129,17 @@ export function DaleTodayPanel({
             )}
           </div>
         </div>
-        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
           {attentionItems.length} station{attentionItems.length !== 1 ? 's' : ''} need attention
         </p>
       </div>
 
       {/* Items */}
-      <div className="divide-y divide-gray-100 dark:divide-gray-700">
-        {displayedItems.map(item => (
+      <div
+        className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-48"
+        aria-label="Today's focus station list"
+      >
+        {attentionItems.map(item => (
           <AttentionItemRow
             key={item.station.contextKey}
             item={item}
@@ -147,15 +147,6 @@ export function DaleTodayPanel({
           />
         ))}
       </div>
-
-      {/* Show more */}
-      {attentionItems.length > maxItems && (
-        <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 text-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            +{attentionItems.length - maxItems} more stations
-          </span>
-        </div>
-      )}
     </div>
   )
 }
