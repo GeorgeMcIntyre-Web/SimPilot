@@ -287,6 +287,11 @@ export function SimulationPage() {
 
       {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
       <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
+        {/* Dale's Today Panel - Takes 3 columns, full height */}
+        <div className="col-span-3">
+          <DaleTodayPanel onStationClick={handleStationClick} />
+        </div>
+
         {/* Summary Stats - Takes 2 columns, full height */}
         <div className="col-span-2 max-h-64 overflow-y-auto">
           <SummaryStats
@@ -296,11 +301,6 @@ export function SimulationPage() {
             totalReuse={summary.totalReuse}
             avgCompletion={summary.avgCompletion}
           />
-        </div>
-
-        {/* Dale's Today Panel - Takes 3 columns, full height */}
-        <div className="col-span-3">
-          <DaleTodayPanel onStationClick={handleStationClick} />
         </div>
       </div>
 

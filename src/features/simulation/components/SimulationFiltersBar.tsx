@@ -97,23 +97,26 @@ export function SimulationFiltersBar({
     filters.searchTerm !== ''
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <Filter className="h-4 w-4 text-gray-500" />
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <div className="flex items-center gap-2">
+          <Filter className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+          <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">Filters & View</h3>
+        </div>
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="ml-auto text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1"
+            className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-medium"
           >
-            <X className="h-3.5 w-3.5" />
             Clear all
           </button>
         )}
       </div>
 
       {/* Main Filters Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+      <div className="px-3 py-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
         {/* Search */}
         <div>
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">

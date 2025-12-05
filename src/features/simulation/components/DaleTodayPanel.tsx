@@ -2,7 +2,7 @@
 // Shows shortlist of stations needing attention
 // Uses selectors to find stations with issues
 
-import { AlertCircle, AlertTriangle, Info, ChevronRight, Sparkles } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Info, ChevronRight, Sparkles, Bot, Zap, Package } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { useStationsNeedingAttention, type StationAttentionItem } from '../simulationSelectors'
 import type { StationContext } from '../simulationStore'
@@ -37,34 +37,70 @@ function SeverityIcon({ severity }: { severity: 'error' | 'warning' | 'info' }) 
 }
 
 function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
+  const { station } = item
+
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2 px-3 py-1.5 rounded-lg',
+        'w-full flex items-start gap-2.5 px-3 py-2 rounded-lg',
         'text-left transition-colors',
         'hover:bg-gray-100 dark:hover:bg-gray-700/50',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
       )}
       data-testid={`attention-item-${item.station.contextKey}`}
     >
-      <SeverityIcon severity={item.severity} />
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
-            {item.station.station}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-            {item.station.line}
-          </span>
-        </div>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
-          {item.reason}
-        </p>
+      <div className="flex-shrink-0 mt-0.5">
+        <SeverityIcon severity={item.severity} />
       </div>
 
-      <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+      <div className="flex-1 min-w-0 space-y-0.5">
+        {/* Station name, line, and location in one line */}
+        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+          <span className="font-semibold text-gray-900 dark:text-white">
+            {station.station}
+          </span>
+          <span className="text-gray-400 dark:text-gray-500">•</span>
+          <span className="text-gray-600 dark:text-gray-400">
+            {station.line}
+          </span>
+          <span className="text-gray-400 dark:text-gray-500">•</span>
+          <span className="text-gray-500 dark:text-gray-400">
+            {station.unit}
+          </span>
+        </div>
+
+        {/* Reason for attention */}
+        <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+          {item.reason}
+        </p>
+
+        {/* Asset summary badges - more compact */}
+        <div className="flex items-center gap-1.5 pt-0.5">
+          {station.assetCounts.robots > 0 && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs">
+              <Bot className="h-2.5 w-2.5" />
+              {station.assetCounts.robots}
+            </span>
+          )}
+          {station.assetCounts.guns > 0 && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">
+              <Zap className="h-2.5 w-2.5" />
+              {station.assetCounts.guns}
+            </span>
+          )}
+          {station.assetCounts.total > 0 && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">
+              <Package className="h-2.5 w-2.5" />
+              {station.assetCounts.total}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-shrink-0 mt-0.5">
+        <ChevronRight className="h-4 w-4 text-gray-400" />
+      </div>
     </button>
   )
 }
@@ -111,32 +147,32 @@ export function DaleTodayPanel({
       <div className="px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
               Today's Focus
             </h3>
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              ({attentionItems.length})
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {errorCount > 0 && (
-              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">
-                {errorCount} critical
+              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded-full">
+                {errorCount}
               </span>
             )}
             {warningCount > 0 && (
-              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
-                {warningCount} warning
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                {warningCount}
               </span>
             )}
           </div>
         </div>
-        <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-          {attentionItems.length} station{attentionItems.length !== 1 ? 's' : ''} need attention
-        </p>
       </div>
 
       {/* Items */}
       <div
-        className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-48 custom-scrollbar"
+        className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-64 custom-scrollbar"
         aria-label="Today's focus station list"
       >
         {attentionItems.map(item => (
