@@ -43,63 +43,63 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-2.5 px-3 py-2 rounded-lg',
+        'w-full flex items-center gap-3 px-3 py-1.5',
         'text-left transition-colors',
         'hover:bg-gray-100 dark:hover:bg-gray-700/50',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
       )}
       data-testid={`attention-item-${item.station.contextKey}`}
     >
-      <div className="flex-shrink-0 mt-0.5">
+      {/* Severity Icon - fixed width */}
+      <div className="flex-shrink-0 w-4 flex items-center justify-center">
         <SeverityIcon severity={item.severity} />
       </div>
 
-      <div className="flex-1 min-w-0 space-y-0.5">
-        {/* Station name, line, and location in one line */}
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {station.station}
-          </span>
-          <span className="text-gray-400 dark:text-gray-500">•</span>
-          <span className="text-gray-600 dark:text-gray-400">
-            {station.line}
-          </span>
-          <span className="text-gray-400 dark:text-gray-500">•</span>
-          <span className="text-gray-500 dark:text-gray-400">
-            {station.unit}
-          </span>
-        </div>
-
-        {/* Reason for attention */}
-        <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
-          {item.reason}
-        </p>
-
-        {/* Asset summary badges - more compact */}
-        <div className="flex items-center gap-1.5 pt-0.5">
-          {station.assetCounts.robots > 0 && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs">
-              <Bot className="h-2.5 w-2.5" />
-              {station.assetCounts.robots}
-            </span>
-          )}
-          {station.assetCounts.guns > 0 && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">
-              <Zap className="h-2.5 w-2.5" />
-              {station.assetCounts.guns}
-            </span>
-          )}
-          {station.assetCounts.total > 0 && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs">
-              <Package className="h-2.5 w-2.5" />
-              {station.assetCounts.total}
-            </span>
-          )}
-        </div>
+      {/* Station info - fixed width section */}
+      <div className="w-[280px] flex-shrink-0 flex items-center gap-1.5 text-xs">
+        <span className="font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
+          {station.station}
+        </span>
+        <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">•</span>
+        <span className="text-gray-600 dark:text-gray-400 truncate max-w-[80px]">
+          {station.line}
+        </span>
+        <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">•</span>
+        <span className="text-gray-500 dark:text-gray-400 truncate max-w-[60px]">
+          {station.unit}
+        </span>
       </div>
 
-      <div className="flex-shrink-0 mt-0.5">
-        <ChevronRight className="h-4 w-4 text-gray-400" />
+      {/* Reason - flexible section */}
+      <div className="flex-1 min-w-0 text-[10px] text-gray-600 dark:text-gray-400 truncate">
+        {item.reason}
+      </div>
+
+      {/* Asset badges - fixed width section */}
+      <div className="flex-shrink-0 w-[120px] flex items-center justify-end gap-1">
+        {station.assetCounts.robots > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-medium">
+            <Bot className="h-2 w-2" />
+            {station.assetCounts.robots}
+          </span>
+        )}
+        {station.assetCounts.guns > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-medium">
+            <Zap className="h-2 w-2" />
+            {station.assetCounts.guns}
+          </span>
+        )}
+        {station.assetCounts.total > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-[10px] font-medium">
+            <Package className="h-2 w-2" />
+            {station.assetCounts.total}
+          </span>
+        )}
+      </div>
+
+      {/* Chevron - fixed width */}
+      <div className="flex-shrink-0 w-4 flex items-center justify-center">
+        <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
       </div>
     </button>
   )
