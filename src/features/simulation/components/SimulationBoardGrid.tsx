@@ -110,7 +110,7 @@ function LineGroup({
 
       {/* Stations Grid */}
       {isExpanded && (
-        <div className="p-4 bg-white dark:bg-gray-800">
+        <div className="p-4 bg-white dark:bg-gray-800 max-h-[600px] overflow-y-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {stations.map(station => (
               <StationCard
@@ -281,27 +281,29 @@ export function SimulationBoardGrid({
         </div>
       )}
 
-      {/* Line Groups */}
-      {sortedLines.map(([lineKey, lineStations]) => {
-        const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
-        if (aggregation === undefined) return null
+      {/* Line Groups - Max 10 visible with scroll */}
+      <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
+        {sortedLines.map(([lineKey, lineStations]) => {
+          const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
+          if (aggregation === undefined) return null
 
-        return (
-          <LineGroup
-            key={lineKey}
-            lineKey={lineKey}
-            unit={aggregation.unit}
-            line={aggregation.line}
-            stations={lineStations}
-            robotCount={aggregation.assetCounts.robots}
-            gunCount={aggregation.assetCounts.guns}
-            onStationClick={onStationClick}
-            selectedStationKey={selectedStationKey}
-            isExpanded={expandedLines.has(lineKey)}
-            onToggle={() => handleToggleLine(lineKey)}
-          />
-        )
-      })}
+          return (
+            <LineGroup
+              key={lineKey}
+              lineKey={lineKey}
+              unit={aggregation.unit}
+              line={aggregation.line}
+              stations={lineStations}
+              robotCount={aggregation.assetCounts.robots}
+              gunCount={aggregation.assetCounts.guns}
+              onStationClick={onStationClick}
+              selectedStationKey={selectedStationKey}
+              isExpanded={expandedLines.has(lineKey)}
+              onToggle={() => handleToggleLine(lineKey)}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }
