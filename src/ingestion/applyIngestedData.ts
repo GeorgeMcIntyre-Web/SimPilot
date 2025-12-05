@@ -47,7 +47,20 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
   // Add simulation data
   if (data.simulation) {
-    projects.push(...data.simulation.projects)
+    // Merge multiple Simulation Status files into a single unified project
+    // Each file (CSG, DES, Front Unit, etc.) creates its own project, but they should be unified
+    const projectMap = new Map<string, Project>()
+
+    for (const project of data.simulation.projects) {
+      const key = `${project.customer}:${project.name}`
+
+      if (!projectMap.has(key)) {
+        projectMap.set(key, project)
+      }
+      // If duplicate, keep the first one (they're identical anyway)
+    }
+
+    projects.push(...projectMap.values())
     areas.push(...data.simulation.areas)
     cells.push(...data.simulation.cells)
     warnings.push(...data.simulation.warnings)
@@ -59,9 +72,12 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     warnings.push(...data.robots.warnings)
   }
 
-  // Add tools
+  // Add tools (filter out inactive/cancelled tools)
   if (data.tools) {
-    tools.push(...data.tools.tools)
+    // Only add active tools (isActive !== false)
+    // Inactive tools are cancelled/historical (strikethrough in Excel with "REMOVED FROM BOM" or "SIM TO SPEC")
+    const activeTools = data.tools.tools.filter(tool => tool.isActive !== false)
+    tools.push(...activeTools)
     warnings.push(...data.tools.warnings)
   }
 
