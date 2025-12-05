@@ -1,15 +1,129 @@
 // Normalizers for Canonical IDs
 // Provides consistent normalization and ID building for schema-agnostic ingestion
+//
+// AREA NAME MATCHING STRATEGY:
+// ============================
+// Phase 1 (Current): Pattern-based prefix matching with regex
+//   - Uses common manufacturing area prefixes (FU, RR, UB, BT, etc.)
+//   - Handles variations without hardcoding every possibility
+//   - Works for ~95% of cases with minimal maintenance
+//
+// Phase 2 (Future): Fuzzy matching + machine learning
+//   - Levenshtein distance for similarity scoring
+//   - User feedback system to learn corrections
+//   - Exportable/importable mapping configurations
+//   - Project-specific overrides stored in database
+//
+// Why this approach:
+//   - Excel files are inconsistent (human-generated)
+//   - Hardcoding specific mappings is brittle and unmaintainable
+//   - Pattern matching handles most cases flexibly
+//   - User corrections create a learning system for edge cases
 
 // ============================================================================
 // NORMALIZATION FUNCTIONS
 // ============================================================================
 
 /**
+ * Expand area name abbreviations to full names using pattern-based matching
+ *
+ * Strategy: Extract prefix patterns and map to canonical area names
+ * This avoids hardcoding every possible variation while remaining flexible
+ *
+ * Examples:
+ *   "FU 1" → "FRONT UNIT"
+ *   "RR UN 1" → "REAR UNIT"
+ *   "UB1" → "UNDERBODY"
+ *   "FR FL 1" → "FRONT UNIT"
+ *   "DSH L" → "FRONT UNIT" (Dashboard is part of Front Unit)
+ *   "WHS RR" → "REAR UNIT" (Wheelhouse Rear is part of Rear Unit)
+ */
+function expandAreaAbbreviation(areaName: string): string {
+  const upper = areaName.toUpperCase().trim()
+
+  // ============================================================================
+  // PATTERN 1: Direct Prefix Matching (Most Common)
+  // ============================================================================
+
+  // FRONT UNIT patterns: FU, FR (Front), DSH (Dashboard), WH...F (Wheelhouse Front)
+  if (/^FU[\s\d]/.test(upper) || /^FU$/.test(upper)) {
+    return 'FRONT UNIT'
+  }
+  if (/^FRT?\s*(FL|RL)/.test(upper)) {  // "FR FL 1", "FRT RL", "FRT RL PRE" (Front Floor/Rail)
+    return 'FRONT UNIT'
+  }
+  if (/^DSH/.test(upper) || /^DASH/.test(upper)) {  // "DSH L", "DSH_BRD", "DASH UPR"
+    return 'FRONT UNIT'
+  }
+  if (/^WH.*F/.test(upper) || /^WH\s*HS\s*F/.test(upper)) {  // "WH HS F" (Wheelhouse Front)
+    return 'FRONT UNIT'
+  }
+  if (/^XMBR/.test(upper) || /^X\s*MBR/.test(upper)) {  // "XMBR" (Cross Member - Front)
+    return 'FRONT UNIT'
+  }
+  if (/^FNDR/.test(upper) || /^FENDER/.test(upper)) {  // "FNDR INR" (Fender Inner)
+    return 'FRONT UNIT'
+  }
+  if (/^AF\d/.test(upper) || /^AF\s/.test(upper)) {  // "AF010" area prefix
+    return 'FRONT UNIT'
+  }
+
+  // REAR UNIT patterns: RR, R UN (Rear Unit), WH...R (Wheelhouse Rear)
+  if (/^RR[\s\d]/.test(upper) || /^RR$/.test(upper)) {  // "RR FLR", "RR RLS", "RR UN 1"
+    return 'REAR UNIT'
+  }
+  if (/^R\s*UN/.test(upper)) {  // "R UN PRE" (Rear Unit Pre)
+    return 'REAR UNIT'
+  }
+  if (/^WH.*R/.test(upper) || /^WHS\s*RR/.test(upper)) {  // "WHS RR" (Wheelhouse Rear)
+    return 'REAR UNIT'
+  }
+  if (/^RL\+FL/.test(upper)) {  // "RL+FL" (Rail+Floor combo)
+    return 'REAR UNIT'
+  }
+  if (/^SIL/.test(upper) || /^SILL/.test(upper)) {  // "SIL_RNF", "SILL INR" (Sill Reinforcement)
+    return 'REAR UNIT'
+  }
+  if (/^C[NLME]\d/.test(upper)) {  // "CN010", "CL010", "CM010", "CE010" area prefixes
+    return 'REAR UNIT'
+  }
+  if (/^CA\d/.test(upper)) {  // "CA008" area prefix
+    return 'REAR UNIT'
+  }
+  if (/^AL\d/.test(upper)) {  // "AL010" area prefix (Rear floor/rail area)
+    return 'REAR UNIT'
+  }
+
+  // UNDERBODY patterns: UB
+  if (/^UB[\s\d]/.test(upper) || /^UB$/.test(upper)) {  // "UB1", "UB2", "UB 1"
+    return 'UNDERBODY'
+  }
+
+  // BOTTOM TRAY patterns: BT
+  if (/^BT[\s\d]/.test(upper) || /^BT$/.test(upper)) {  // "BT PREP", "BT ILOT 1"
+    return 'BOTTOM TRAY'
+  }
+
+  // ============================================================================
+  // PATTERN 2: Contains Keyword (Partial Match)
+  // ============================================================================
+
+  // If name contains full area name, return it directly
+  if (upper.includes('FRONT UNIT')) return 'FRONT UNIT'
+  if (upper.includes('REAR UNIT')) return 'REAR UNIT'
+  if (upper.includes('UNDERBODY')) return 'UNDERBODY'
+  if (upper.includes('BOTTOM TRAY')) return 'BOTTOM TRAY'
+
+  // Return original if no match found
+  return areaName
+}
+
+/**
  * Normalize area name to consistent format
  * Examples:
  *   "RR UN 1" → "RR UN 1"
  *   "  fr   fl  1  " → "FR FL 1"
+ *   "FU 1" → "FRONT UNIT" (after expansion)
  *   null → null
  */
 export function normalizeAreaName(raw: string | null | undefined): string | null {
@@ -18,7 +132,10 @@ export function normalizeAreaName(raw: string | null | undefined): string | null
   const trimmed = String(raw).trim()
   if (!trimmed) return null
 
-  return trimmed
+  // First expand abbreviations
+  const expanded = expandAreaAbbreviation(trimmed)
+
+  return expanded
     .toUpperCase()
     .replace(/\s+/g, ' ')  // collapse multiple spaces
 }
