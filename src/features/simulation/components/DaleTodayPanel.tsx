@@ -43,7 +43,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-1.5',
+        'w-full grid grid-cols-[auto,1fr,auto,1fr,auto] items-center gap-3 px-3 py-2 rounded-lg',
         'text-left transition-colors',
         'hover:bg-gray-100 dark:hover:bg-gray-700/50',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
@@ -55,28 +55,19 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
         <SeverityIcon severity={item.severity} />
       </div>
 
-      {/* Station info - fixed width section */}
-      <div className="w-[280px] flex-shrink-0 flex items-center gap-1.5 text-xs">
-        <span className="font-semibold text-gray-900 dark:text-white truncate max-w-[120px]">
-          {station.station}
-        </span>
-        <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">•</span>
-        <span className="text-gray-600 dark:text-gray-400 truncate max-w-[80px]">
-          {station.line}
-        </span>
-        <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">•</span>
-        <span className="text-gray-500 dark:text-gray-400 truncate max-w-[60px]">
-          {station.unit}
-        </span>
+      {/* Station info */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-white leading-snug">
+          <span className="truncate">{station.station}</span>
+          <span className="text-gray-400 dark:text-gray-500">•</span>
+          <span className="text-gray-600 dark:text-gray-400 truncate">{station.line}</span>
+          <span className="text-gray-400 dark:text-gray-500">•</span>
+          <span className="text-gray-500 dark:text-gray-400 truncate">{station.unit}</span>
+        </div>
       </div>
 
-      {/* Reason - flexible section */}
-      <div className="flex-1 min-w-0 text-[10px] text-gray-600 dark:text-gray-400 truncate">
-        {item.reason}
-      </div>
-
-      {/* Asset badges - fixed width section */}
-      <div className="flex-shrink-0 w-[120px] flex items-center justify-end gap-1">
+      {/* Asset badges */}
+      <div className="flex items-center justify-end gap-1 text-[10px]">
         {station.assetCounts.robots > 0 && (
           <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-medium">
             <Bot className="h-2 w-2" />
@@ -95,6 +86,11 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
             {station.assetCounts.total}
           </span>
         )}
+      </div>
+
+      {/* Reason */}
+      <div className="text-[11px] text-gray-600 dark:text-gray-400 text-right truncate min-w-0">
+        {item.reason}
       </div>
 
       {/* Chevron - fixed width */}
