@@ -39,6 +39,7 @@ export function DataLoaderPage() {
   const [equipmentFiles, setEquipmentFiles] = useState<File[]>([])
   const [toolListFiles, setToolListFiles] = useState<File[]>([])
   const [assembliesFiles, setAssembliesFiles] = useState<File[]>([])
+  const [showClearDialog, setShowClearDialog] = useState(false)
 
   // M365 State
   const { enabled: msEnabled, isSignedIn, login } = useMsAccount()
@@ -450,17 +451,24 @@ export function DataLoaderPage() {
   }
 
   const handleClearData = () => {
-    if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-      coreStore.clear()
-      setResult(null)
-      setError(null)
-      setM365Error(null)
-      setSimulationFiles([])
-      setEquipmentFiles([])
-      setToolListFiles([])
-      setAssembliesFiles([])
-      console.log('✅ Data cleared')
-    }
+    setShowClearDialog(true)
+  }
+
+  const confirmClearData = () => {
+    coreStore.clear()
+    setResult(null)
+    setError(null)
+    setM365Error(null)
+    setSimulationFiles([])
+    setEquipmentFiles([])
+    setToolListFiles([])
+    setAssembliesFiles([])
+    setShowClearDialog(false)
+    console.log('✅ Data cleared')
+  }
+
+  const cancelClearData = () => {
+    setShowClearDialog(false)
   }
 
   return (
@@ -515,19 +523,19 @@ export function DataLoaderPage() {
               onClick={handleLoadDemo}
               data-testid="demo-load-button"
               data-testid-stla="load-demo-stla"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
+              className="inline-flex items-center justify-center px-3 py-1.5 w-32 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors whitespace-nowrap"
             >
-              Load Demo Scenario
+              Load Demo
             </button>
             <button
               onClick={handleLoadExportedData}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center justify-center px-3 py-1.5 w-40 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors whitespace-nowrap"
             >
-              Load All Excel Data
+              Load Excel Data
             </button>
             <button
               onClick={handleClearData}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              className="inline-flex items-center justify-center px-3 py-1.5 w-32 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors whitespace-nowrap"
             >
               Clear Data
             </button>
@@ -982,6 +990,34 @@ export function DataLoaderPage() {
           onConfirm={confirmVersionComparison}
           onCancel={cancelVersionComparison}
         />
+      )}
+
+      {/* Clear Data Confirmation Dialog */}
+      {showClearDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-sm w-full border border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Clear all data?</h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                This will remove loaded simulation, equipment, tool list, and assemblies data. This action cannot be undone.
+              </p>
+            </div>
+            <div className="px-6 pb-4 flex justify-end gap-3">
+              <button
+                onClick={cancelClearData}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmClearData}
+                className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-md shadow-sm transition-colors"
+              >
+                Yes, clear data
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div >
   )
