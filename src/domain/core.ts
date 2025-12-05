@@ -43,28 +43,51 @@ export interface ScheduleInfo {
 }
 
 // ============================================================================
-// PROJECTS, AREAS, CELLS
+// HIERARCHY: PROJECT → PLANT → AREA → CELL → STATION → EQUIPMENT
+// ============================================================================
+//
+// Correct manufacturing hierarchy:
+//   Project (J11006 STLA-S)
+//     → Plant (ZAR South Africa)
+//       → Area (FRONT UNIT, REAR UNIT, UNDERBODY, BOTTOM TRAY)
+//         → Cell (Rear Rail LH, WHR LH, UBM_Platforme / Styleline)
+//           → Station (010, 020, 030)
+//             → Equipment (Robots, Fixtures, Grippers, etc.)
+//
+// NOTE: The "Cell" type below represents station-level simulation rows,
+// not manufacturing cells. A manufacturing cell (e.g., "Rear Rail LH")
+// groups multiple stations and is currently stored in the "Area" concept.
+// Future refactor: introduce explicit ManufacturingCell and Station types.
 // ============================================================================
 
 export type ProjectStatus = "Planning" | "Running" | "OnHold" | "Closed"
 
+export interface Plant {
+  id: string
+  name: string              // e.g. "STLA-S ZAR Plant"
+  location: string          // e.g. "ZAR" (South Africa)
+  projectIds: string[]      // Projects at this plant
+}
+
 export interface Project {
   id: string
-  name: string              // e.g. "STLA-S Rear Unit"
+  name: string              // e.g. "STLA-S"
+  jobNumber?: string        // e.g. "J11006"
   customer: string          // OEM / program family, e.g. "STLA-S"
-  plant?: string
+  plantId?: string          // Reference to Plant
   programCode?: string
   manager?: string          // e.g. "Dale"
   status: ProjectStatus
   startDate?: string
   sopDate?: string
-  schedule?: ScheduleInfo   // NEW: schedule metadata
+  schedule?: ScheduleInfo
 }
 
 export interface Area {
   id: string
   projectId: string
-  name: string              // "WHR LH", "Rear Rail LH", "UBM_Platforme / Styleline"
+  name: string              // AREA level: "FRONT UNIT", "REAR UNIT", "UNDERBODY"
+                            // OR CELL level: "Rear Rail LH", "WHR LH" (currently mixed)
   code?: string             // "BN_B05", etc.
 }
 
@@ -85,12 +108,16 @@ export interface SimulationStatus {
   studyPath?: string // Path to the .psz study file
 }
 
+// NOTE: In STLA domain, this represents a station-level simulation row.
+// A manufacturing "cell" (Rear Rail LH, WHR LH, etc.) groups multiple stations.
+// Future: introduce explicit ManufacturingCell and Station types.
 export interface Cell {
   id: string
   projectId: string
-  areaId: string
-  name: string        // human-friendly label
-  code: string        // station id, e.g. "010"
+  areaId: string      // Currently references Area (which mixes Area/Cell concepts)
+  name: string        // human-friendly label (station name)
+  code: string        // station number, e.g. "010", "020"
+  stationId?: string | null  // canonical station ID (area|station normalized)
   oemRef?: string
   status: CellStatus
   assignedEngineer?: string
@@ -99,9 +126,9 @@ export interface Cell {
   plannedFinish?: string
   lastUpdated?: string
   simulation?: SimulationStatus
-  schedule?: ScheduleInfo  // NEW: schedule metadata
-  sourcing?: EquipmentSourcing  // NEW: sourcing status from linked assets (REUSE, NEW_BUY, etc.)
-  metadata?: Record<string, any>  // NEW: additional metadata from linked assets (Gun Force, Supplier, etc.)
+  schedule?: ScheduleInfo
+  sourcing?: EquipmentSourcing  // sourcing status from linked assets (REUSE, NEW_BUY, etc.)
+  metadata?: Record<string, any>  // additional metadata from linked assets (Gun Force, Supplier, etc.)
 }
 
 // ============================================================================

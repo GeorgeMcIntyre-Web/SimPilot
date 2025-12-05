@@ -79,7 +79,14 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
   let linkCount = 0
   if (cells.length > 0 && (robots.length > 0 || tools.length > 0)) {
     const allAssets = [...robots, ...tools]
-    const linkResult = linkAssetsToSimulation(cells, allAssets)
+
+    // Build area lookup map for efficient area name resolution
+    const areaLookup = new Map<string, string>()
+    for (const area of areas) {
+      areaLookup.set(area.id, area.name)
+    }
+
+    const linkResult = linkAssetsToSimulation(cells, allAssets, areaLookup)
 
     // Replace cells with enriched versions
     cells.length = 0
@@ -87,7 +94,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
     linkCount = linkResult.linkCount
 
-    console.log(`[Relational Linker] Linked ${linkCount}/${linkResult.totalCells} cells to assets`)
+    console.log(`[Relational Linker] Linked ${linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed)`)
   }
 
   // Link robots to cells and areas

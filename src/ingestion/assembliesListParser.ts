@@ -19,6 +19,12 @@ import {
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
+import {
+  buildStationId,
+  buildToolId,
+  inferAssembliesAreaName,
+  extractRawStationCodeFromAssembliesLabel
+} from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -175,35 +181,11 @@ function detectToolType(toolNumber: string): ToolType {
 
 /**
  * Extract station code from tool number (e.g., "BN010 GJR 10" -> "BN010")
+ * @deprecated Use extractRawStationCodeFromAssembliesLabel from normalizers.ts
  */
 function extractStationCode(toolNumber: string): string | undefined {
-  const match = toolNumber.match(/^([A-Z]{2}\d{3})/)
-  return match ? match[1] : undefined
-}
-
-/**
- * Extract area name from file name (e.g., "REAR_UNIT" -> "Rear Unit")
- */
-function extractAreaFromFilename(fileName: string): string | undefined {
-  const upper = fileName.toUpperCase()
-
-  if (upper.includes('REAR_UNIT') || upper.includes('REAR UNIT')) {
-    return 'Rear Unit'
-  }
-
-  if (upper.includes('FRONT_UNIT') || upper.includes('FRONT UNIT')) {
-    return 'Front Unit'
-  }
-
-  if (upper.includes('UNDERBODY')) {
-    return 'Underbody'
-  }
-
-  if (upper.includes('BOTTOM_TRAY') || upper.includes('BOTTOM TRAY')) {
-    return 'Bottom Tray'
-  }
-
-  return undefined
+  const result = extractRawStationCodeFromAssembliesLabel(toolNumber)
+  return result || undefined
 }
 
 // ============================================================================
@@ -310,8 +292,8 @@ export async function parseAssembliesList(
     }
   }
 
-  // Extract area from filename
-  const areaName = extractAreaFromFilename(fileName)
+  // Infer area from filename (and optionally workbook metadata)
+  const areaName = inferAssembliesAreaName({ filename: fileName })
 
   // Parse data rows
   const dataStartIndex = headerRowIndex + 1
@@ -335,7 +317,7 @@ export async function parseAssembliesList(
     }
 
     // Extract tool number - ALWAYS use STATION column in Assemblies Lists
-    // Format: "BN010 GJR 10" or "FU010 Fixture 5"
+    // Format: "BN010 GJR 10" or "FU010 Fixture 5" or "S010 GJR 02 - 03"
     let toolNumber = ''
     let stationCode = ''
 
@@ -343,13 +325,19 @@ export async function parseAssembliesList(
     if (stationIdx !== undefined) {
       const stationValue = String(row[stationIdx] || '').trim()
 
-      // Parse format: "BN010 GJR 10" -> station: "BN010", tool: "GJR 10"
-      const parts = stationValue.split(/\s+/)
-      if (parts.length >= 2) {
-        stationCode = parts[0]  // "BN010"
-        toolNumber = parts.slice(1).join(' ')  // "GJR 10"
+      // Extract station code using normalizer helper (handles "S010", "BN010", etc.)
+      const extractedStation = extractRawStationCodeFromAssembliesLabel(stationValue)
+      if (extractedStation) {
+        stationCode = extractedStation
+
+        // Tool number is everything after the station code
+        // "S010 GJR 02 - 03" -> "GJR 02 - 03"
+        // "BN010 GJR 10" -> "GJR 10"
+        const remainder = stationValue.substring(extractedStation.length).trim()
+        toolNumber = remainder || stationValue
       } else {
-        toolNumber = stationValue  // Use entire value as tool number
+        // No station code found, treat entire value as tool number
+        toolNumber = stationValue
       }
     }
 
@@ -366,11 +354,9 @@ export async function parseAssembliesList(
       continue
     }
 
-    // Extract station code if not already extracted
+    // Extract station code if not already extracted (fallback)
     if (!stationCode) {
-      const extracted = coreIndices['STATION'] !== undefined
-        ? String(row[coreIndices['STATION']] || '').trim() || extractStationCode(toolNumber)
-        : extractStationCode(toolNumber)
+      const extracted = extractStationCode(toolNumber)
       stationCode = extracted || ''
     }
 
@@ -398,6 +384,10 @@ export async function parseAssembliesList(
     // Detect tool type
     const toolType = detectToolType(toolNumber)
 
+    // Build canonical IDs
+    const canonicalStationId = buildStationId(areaName, stationCode)
+    const canonicalToolId = buildToolId(canonicalStationId, toolNumber, null)
+
     // Create Tool entity
     const tool: Tool = {
       id: generateId(),
@@ -407,9 +397,11 @@ export async function parseAssembliesList(
       mountType: 'ROBOT_MOUNTED', // Default assumption for Assemblies List tools
       sourcing: 'MAKE', // Default assumption for Assemblies List (in-house manufacturing)
       description,
-      areaName,
+      areaName: areaName ?? undefined,
       stationNumber: stationCode,
       stationCode,
+      stationId: canonicalStationId,
+      toolId: canonicalToolId,
       metadata: {
         designProgress: JSON.stringify(metrics),
         source: 'AssembliesList'
@@ -421,6 +413,8 @@ export async function parseAssembliesList(
 
     tools.push(tool)
   }
+
+  console.log(`[Assemblies Parser] ${fileName} - Parsed ${tools.length} tools`)
 
   return {
     tools,

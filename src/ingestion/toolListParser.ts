@@ -14,6 +14,7 @@ import {
   isEffectivelyEmptyRow
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
+import { buildStationId, buildToolId, inferAssembliesAreaName } from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -125,6 +126,8 @@ export async function parseToolList(
   // Build column map with all possible column names
   const headerRow = rows[headerRowIndex]
   const columnMap = buildColumnMap(headerRow, [
+    'EQUIPMENT NO SHOWN',
+    'EQUIPMENT NO',
     'GUN',
     'GUN ID',
     'GUN NUMBER',
@@ -173,6 +176,16 @@ export async function parseToolList(
     // Skip empty or total rows
     if (isEmptyRow(row) || isTotalRow(row)) continue
 
+    // FILTER: Only parse rows where "Equipment No \nShown" is not empty
+    // This column indicates real tool positions (excludes metadata/summary rows)
+    const equipmentNoShown = getCellString(row, columnMap, 'EQUIPMENT NO SHOWN')
+      || getCellString(row, columnMap, 'EQUIPMENT NO')
+
+    if (!equipmentNoShown) {
+      // Skip rows without equipment number (not a real tool)
+      continue
+    }
+
     // Extract tool identifier (try multiple column names)
     const toolId = getCellString(row, columnMap, 'GUN ID')
       || getCellString(row, columnMap, 'GUN NUMBER')
@@ -216,8 +229,13 @@ export async function parseToolList(
       || getCellString(row, columnMap, 'MANUFACTURER')
       || getCellString(row, columnMap, 'SUPPLIER')
 
-    const areaName = getCellString(row, columnMap, 'AREA')
+    let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
       || getCellString(row, columnMap, 'AREA NAME')
+
+    // Infer area from filename if not in row (similar to Assemblies Lists)
+    if (!areaName) {
+      areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
+    }
 
     const lineCode = getCellString(row, columnMap, 'LINE')
       || getCellString(row, columnMap, 'LINE CODE')
@@ -245,6 +263,10 @@ export async function parseToolList(
 
     // Detect Kind
     const kind = detectKind(toolType)
+
+    // Build canonical IDs
+    const canonicalStationId = buildStationId(areaName, stationCode)
+    const canonicalToolId = buildToolId(canonicalStationId, toolId, equipmentNoShown)
 
     // Vacuum Parser: Collect all other columns into metadata
     const metadata: Record<string, string | number | boolean | null> = {}
@@ -291,6 +313,8 @@ export async function parseToolList(
       lineCode: lineCode || undefined,
       stationCode: stationCode || undefined,
       stationNumber: stationCode || undefined, // Map to UnifiedAsset field
+      stationId: canonicalStationId,
+      toolId: canonicalToolId,
       reuseStatus: reuseStatus || undefined,
       sourcing,
       metadata: {
@@ -313,6 +337,8 @@ export async function parseToolList(
       error: 'No valid tool rows found after parsing'
     }))
   }
+
+  console.log(`[Tool List Parser] ${fileName} - Parsed ${tools.length} tools`)
 
   return {
     tools,

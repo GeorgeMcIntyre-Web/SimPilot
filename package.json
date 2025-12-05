@@ -12,7 +12,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "ingest:stla-s": "node scripts/ingest_stla_s.cjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

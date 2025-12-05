@@ -42,8 +42,8 @@ function extractHierarchy(
   // Program: from project customer or name (e.g., "STLA-S")
   const program = project?.customer ?? project?.name ?? 'Unknown Program'
   
-  // Plant: from project plant field or infer from area
-  const plant = project?.plant ?? 'Unknown Plant'
+  // Plant: from project plantId field or infer from area
+  const plant = project?.plantId ?? 'Unknown Plant'
   
   // Unit: from project name or area name (e.g., "Rear Unit", "Underbody")
   const unit = area?.name ?? project?.name ?? 'Unknown Unit'
