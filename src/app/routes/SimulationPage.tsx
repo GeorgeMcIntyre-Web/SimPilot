@@ -177,6 +177,18 @@ export function SimulationPage() {
     unit: filters.unit
   })
 
+  // Keep expanded lines in sync with current station set
+  useEffect(() => {
+    const validKeys = new Set(stations.map(station => `${station.unit}|${station.line}`))
+    setExpandedLines(prev => {
+      const next = new Set<string>()
+      prev.forEach(key => {
+        if (validKeys.has(key)) next.add(key)
+      })
+      return next
+    })
+  }, [stations])
+
   // Sync filters to URL
   useEffect(() => {
     const params = new URLSearchParams()
@@ -207,7 +219,7 @@ export function SimulationPage() {
     // Get all line keys from the filtered stations
     const lineKeys = new Set<string>()
     stations.forEach(station => {
-      const lineKey = `${station.program}|${station.plant}|${station.unit}|${station.line}`
+      const lineKey = `${station.unit}|${station.line}`
       lineKeys.add(lineKey)
     })
     setExpandedLines(lineKeys)
@@ -219,7 +231,7 @@ export function SimulationPage() {
 
   // Calculate if all lines are expanded or collapsed
   const totalLineCount = new Set(
-    stations.map(station => `${station.program}|${station.plant}|${station.unit}|${station.line}`)
+    stations.map(station => `${station.unit}|${station.line}`)
   ).size
   const allExpanded = expandedLines.size === totalLineCount && totalLineCount > 0
   const allCollapsed = expandedLines.size === 0
