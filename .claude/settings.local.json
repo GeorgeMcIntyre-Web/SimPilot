@@ -58,7 +58,10 @@
       "Bash(del:*)",
       "Bash(test:*)",
       "Bash(npm run ingest:stla-s:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(node scripts/analyze_robot_excel.cjs:*)",
+      "Bash(node scripts/analyze_tool_list_headers.cjs:*)",
+      "Bash(node scripts/test_stla_toollist.cjs:*)"
     ],
     "deny": [],
     "ask": []

@@ -275,7 +275,12 @@ export function buildColumnMap(
   for (const expected of expectedColumns) {
     const expectedLower = expected.toLowerCase().trim()
     const index = headerRow.findIndex(cell => {
-      const cellText = String(cell || '').toLowerCase().trim()
+      // Normalize: lowercase, trim, and replace newlines/multiple spaces with single space
+      const cellText = String(cell || '')
+        .toLowerCase()
+        .replace(/[\r\n]+/g, ' ')  // Replace newlines with spaces
+        .replace(/\s+/g, ' ')       // Collapse multiple spaces
+        .trim()
       return cellText === expectedLower || cellText.includes(expectedLower)
     })
 
