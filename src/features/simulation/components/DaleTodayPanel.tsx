@@ -136,7 +136,7 @@ export function DaleTodayPanel({
 
       {/* Items */}
       <div
-        className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-48"
+        className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-48 custom-scrollbar"
         aria-label="Today's focus station list"
       >
         {attentionItems.map(item => (

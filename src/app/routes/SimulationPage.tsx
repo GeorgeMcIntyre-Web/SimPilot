@@ -20,7 +20,8 @@ import {
   useSimulationBoardStations,
   useFilteredStationsSummary,
   type SimulationFilters,
-  type StationContext
+  type StationContext,
+  type SortOption
 } from '../../features/simulation'
 
 // ============================================================================
@@ -165,6 +166,8 @@ export function SimulationPage() {
     searchTerm: searchParams.get('search') ?? ''
   })
   const [selectedStation, setSelectedStation] = useState<StationContext | null>(null)
+  const [sortBy, setSortBy] = useState<SortOption>('line-asc')
+  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set())
 
   // Filtered stations
   const stations = useSimulationBoardStations(filters)
@@ -187,6 +190,39 @@ export function SimulationPage() {
   const handleStationClick = (station: StationContext) => {
     setSelectedStation(station)
   }
+
+  const handleToggleLine = (lineKey: string) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev)
+      if (next.has(lineKey)) {
+        next.delete(lineKey)
+      } else {
+        next.add(lineKey)
+      }
+      return next
+    })
+  }
+
+  const handleExpandAll = () => {
+    // Get all line keys from the filtered stations
+    const lineKeys = new Set<string>()
+    stations.forEach(station => {
+      const lineKey = `${station.program}|${station.plant}|${station.unit}|${station.line}`
+      lineKeys.add(lineKey)
+    })
+    setExpandedLines(lineKeys)
+  }
+
+  const handleCollapseAll = () => {
+    setExpandedLines(new Set())
+  }
+
+  // Calculate if all lines are expanded or collapsed
+  const totalLineCount = new Set(
+    stations.map(station => `${station.program}|${station.plant}|${station.unit}|${station.line}`)
+  ).size
+  const allExpanded = expandedLines.size === totalLineCount && totalLineCount > 0
+  const allCollapsed = expandedLines.size === 0
 
   // Loading state
   if (isLoading) {
@@ -283,6 +319,12 @@ export function SimulationPage() {
       <SimulationFiltersBar
         filters={filters}
         onFiltersChange={setFilters}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        onExpandAll={handleExpandAll}
+        onCollapseAll={handleCollapseAll}
+        allExpanded={allExpanded}
+        allCollapsed={allCollapsed}
       />
 
       {/* Split View Layout - Desktop */}
@@ -293,6 +335,9 @@ export function SimulationPage() {
             stations={stations}
             onStationClick={handleStationClick}
             selectedStationKey={selectedStation?.contextKey}
+            sortBy={sortBy}
+            expandedLines={expandedLines}
+            onToggleLine={handleToggleLine}
           />
         </div>
 
@@ -318,6 +363,9 @@ export function SimulationPage() {
           stations={stations}
           onStationClick={handleStationClick}
           selectedStationKey={selectedStation?.contextKey}
+          sortBy={sortBy}
+          expandedLines={expandedLines}
+          onToggleLine={handleToggleLine}
         />
 
         {/* Detail Drawer for Mobile */}

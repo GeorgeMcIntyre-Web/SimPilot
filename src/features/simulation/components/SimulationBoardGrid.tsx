@@ -3,7 +3,7 @@
 // Shows hierarchy navigation and station cards
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Layers, Bot, Zap, Maximize2, Minimize2, ArrowUpDown } from 'lucide-react'
+import { ChevronDown, ChevronRight, Layers, Bot, Zap } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { StationCard } from './StationCard'
 import { useLineAggregations } from '../simulationSelectors'
@@ -11,24 +11,18 @@ import { useStationsGroupedByLine } from '../simulationSelectors'
 import type { StationContext } from '../simulationStore'
 
 // ============================================================================
-// SORTING TYPES
+// TYPES
 // ============================================================================
 
 type SortOption = 'line-asc' | 'line-desc' | 'stations-asc' | 'stations-desc' | 'robots-asc' | 'robots-desc'
-
-interface SortConfig {
-  value: SortOption
-  label: string
-}
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 interface SimulationBoardGridProps {
   stations: StationContext[]
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
+  sortBy?: SortOption
+  expandedLines?: Set<string>
+  onToggleLine?: (lineKey: string) => void
 }
 
 interface LineGroupProps {
@@ -131,31 +125,23 @@ function LineGroup({
 // MAIN COMPONENT
 // ============================================================================
 
-const SORT_OPTIONS: SortConfig[] = [
-  { value: 'line-asc', label: 'Line (A-Z)' },
-  { value: 'line-desc', label: 'Line (Z-A)' },
-  { value: 'stations-asc', label: 'Stations (Low-High)' },
-  { value: 'stations-desc', label: 'Stations (High-Low)' },
-  { value: 'robots-asc', label: 'Robots (Low-High)' },
-  { value: 'robots-desc', label: 'Robots (High-Low)' }
-]
-
 export function SimulationBoardGrid({
   stations,
   onStationClick,
-  selectedStationKey
+  selectedStationKey,
+  sortBy: sortByProp,
+  expandedLines: expandedLinesProp,
+  onToggleLine: onToggleLineProp
 }: SimulationBoardGridProps) {
   const groupedByLine = useStationsGroupedByLine(stations)
   const lineAggregations = useLineAggregations(stations)
 
-  // Track expanded state for each line
-  const [expandedLines, setExpandedLines] = useState<Set<string>>(() => {
-    // Initialize with all lines collapsed by default
-    return new Set()
-  })
+  // Use local state as fallback if props not provided (for backwards compatibility)
+  const [localExpandedLines, setLocalExpandedLines] = useState<Set<string>>(new Set())
+  const [localSortBy, setLocalSortBy] = useState<SortOption>('line-asc')
 
-  // Track sorting preference
-  const [sortBy, setSortBy] = useState<SortOption>('line-asc')
+  const expandedLines = expandedLinesProp ?? localExpandedLines
+  const sortBy = sortByProp ?? localSortBy
 
   // Sort lines based on selected option
   const sortedLines = Array.from(groupedByLine.entries()).sort((a, b) => {
@@ -183,27 +169,21 @@ export function SimulationBoardGrid({
   })
 
   const handleToggleLine = (lineKey: string) => {
-    setExpandedLines(prev => {
-      const next = new Set(prev)
-      if (next.has(lineKey)) {
-        next.delete(lineKey)
-      } else {
-        next.add(lineKey)
-      }
-      return next
-    })
+    if (onToggleLineProp) {
+      onToggleLineProp(lineKey)
+    } else {
+      // Fallback to local state if no prop handler provided
+      setLocalExpandedLines(prev => {
+        const next = new Set(prev)
+        if (next.has(lineKey)) {
+          next.delete(lineKey)
+        } else {
+          next.add(lineKey)
+        }
+        return next
+      })
+    }
   }
-
-  const handleExpandAll = () => {
-    setExpandedLines(new Set(sortedLines.map(([lineKey]) => lineKey)))
-  }
-
-  const handleCollapseAll = () => {
-    setExpandedLines(new Set())
-  }
-
-  const allExpanded = expandedLines.size === sortedLines.length
-  const allCollapsed = expandedLines.size === 0
 
   if (stations.length === 0) {
     return (
@@ -221,68 +201,8 @@ export function SimulationBoardGrid({
 
   return (
     <div className="space-y-4">
-      {/* Controls Bar */}
-      {sortedLines.length > 1 && (
-        <div className="flex items-center justify-between gap-4">
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2">
-            <ArrowUpDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-            <label htmlFor="sort-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Sort by:
-            </label>
-            <select
-              id="sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className={cn(
-                "text-sm rounded-md border-gray-300 dark:border-gray-600",
-                "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100",
-                "focus:ring-blue-500 focus:border-blue-500",
-                "px-3 py-1.5"
-              )}
-            >
-              {SORT_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Expand/Collapse All Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleExpandAll}
-              disabled={allExpanded}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                allExpanded
-                  ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                  : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              )}
-            >
-              <Maximize2 className="h-3.5 w-3.5" />
-              Expand All
-            </button>
-            <button
-              onClick={handleCollapseAll}
-              disabled={allCollapsed}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors",
-                allCollapsed
-                  ? "text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                  : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              )}
-            >
-              <Minimize2 className="h-3.5 w-3.5" />
-              Collapse All
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Line Groups - Max 10 visible with scroll */}
-      <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
+      <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
         {sortedLines.map(([lineKey, lineStations]) => {
           const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
           if (aggregation === undefined) return null

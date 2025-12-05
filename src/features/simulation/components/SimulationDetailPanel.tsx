@@ -242,7 +242,7 @@ export function SimulationDetailPanel({
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto">
+      <div className="p-6 space-y-6 max-h-[calc(100vh-20rem)] overflow-y-auto custom-scrollbar">
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
