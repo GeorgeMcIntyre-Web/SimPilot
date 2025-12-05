@@ -87,8 +87,18 @@ export interface Area {
   id: string
   projectId: string
   name: string              // AREA level: "FRONT UNIT", "REAR UNIT", "UNDERBODY"
-                            // OR CELL level: "Rear Rail LH", "WHR LH" (currently mixed)
-  code?: string             // "BN_B05", etc.
+  code?: string             // Area code if applicable
+}
+
+// Zone represents a sub-area within an Area (manufacturing cell)
+// Examples: "Rear Rail LH", "Front Floor ASS 1", "Wheelhouse RH"
+// A Zone groups multiple stations that work on a specific assembly
+export interface Zone {
+  id: string
+  projectId: string
+  areaId: string            // Parent area ("FRONT UNIT", "REAR UNIT", etc.)
+  name: string              // Zone name: "Rear Rail LH", "Front Floor ASS 1"
+  code?: string             // Zone code if applicable
 }
 
 export type CellStatus =
@@ -109,12 +119,12 @@ export interface SimulationStatus {
 }
 
 // NOTE: In STLA domain, this represents a station-level simulation row.
-// A manufacturing "cell" (Rear Rail LH, WHR LH, etc.) groups multiple stations.
-// Future: introduce explicit ManufacturingCell and Station types.
+// Cell = Station in manufacturing terminology
 export interface Cell {
   id: string
   projectId: string
-  areaId: string      // Currently references Area (which mixes Area/Cell concepts)
+  areaId: string      // Reference to parent Area ("FRONT UNIT", "REAR UNIT")
+  zoneId?: string     // Optional reference to Zone ("Rear Rail LH", "Front Floor ASS 1")
   name: string        // human-friendly label (station name)
   code: string        // station number, e.g. "010", "020"
   stationId?: string | null  // canonical station ID (area|station normalized)

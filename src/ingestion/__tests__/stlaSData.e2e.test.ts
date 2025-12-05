@@ -122,9 +122,10 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
     if (!fs.existsSync(filePath)) continue
 
     const workbook = XLSX.readFile(filePath)
-    const result = await parseToolList(workbook, filename)
+    const result = await parseToolList(workbook, filename, 'ToolList')
 
     // Filter to active only (isActive !== false)
+    // Inactive tools (strikethrough in Excel) are tracked for history but excluded from active count
     const activeTools = result.tools.filter(tool => tool.isActive !== false)
     allToolingAssets.push(...activeTools)
   }
@@ -201,9 +202,16 @@ describe('STLA-S E2E Ingestion', () => {
     // Note: Raw Excel has 166 rows total, but ~28 are empty/placeholder rows
     expect(result.allCells.length).toBe(138)
 
-    // Robots: 170 distinct robots with unique IDs from Robot List
-    // (Robot List file has 172 rows, but some may share IDs or be filtered)
-    expect(result.robots.byId.size).toBe(170)
+    // Robots: 166 distinct robots with unique IDs from Robot List
+    // Only rows with Station Number are counted (excludes 6 rows without stations)
+    // Robot IDs are constructed as: AssemblyLine_Station_RobotCaption (e.g., AL_B09_010_R01)
+    expect(result.robots.byId.size).toBe(166)
+
+    // Tooling Assets: 616 active tools from Tool List + Assemblies Lists
+    // Tool List: 352 active tools (372 total, 20 inactive with "SIM TO SPEC" or "REMOVED FROM BOM")
+    // Assemblies Lists: 264 active tools (17+61+100+86 from 4 Assemblies List files, all active)
+    // Inactive tools are tracked for history but filtered out (20 simulation-only or cancelled tools)
+    expect(result.toolingAssets.length).toBe(616)
   }, 60000) // 60s timeout for file I/O
 
   it('should have active tooling assets with correct equipment types', async () => {

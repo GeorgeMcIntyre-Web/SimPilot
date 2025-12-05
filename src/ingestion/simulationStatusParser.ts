@@ -521,30 +521,18 @@ function findSimulationSheet(workbook: XLSX.WorkBook): string | null {
 
 /**
  * Derive project name from filename
- * e.g., "STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx" -> "STLA-S Rear Unit"
+ * e.g., "STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx" -> "STLA-S"
+ *
+ * Note: The unit parts (FRONT UNIT, REAR UNIT, UNDERBODY) are NOT part of the project name.
+ * They represent Areas within the project, which are already captured in the row data.
  */
 function deriveProjectName(fileName: string): string {
   const base = fileName.replace(/\.(xlsx|xlsm|xls)$/i, '')
   const parts = base.split('_')
 
-  // Find the customer part (e.g., "STLA-S")
-  const customer = parts[0]
-
-  // Find the area/unit part (e.g., "REAR UNIT" or "UNDERBODY")
-  const unitParts: string[] = []
-
-  for (let i = 1; i < parts.length; i++) {
-    const part = parts[i]
-
-    if (part.toLowerCase().includes('simulation') || part.toLowerCase().includes('status')) {
-      break
-    }
-
-    unitParts.push(part)
-  }
-
-  const unit = unitParts.join(' ')
-  return `${customer} ${unit}`.replace(/_/g, ' ').replace(/\s+/g, ' ').trim()
+  // Return just the customer/platform name (first part)
+  // e.g., "STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx" -> "STLA-S"
+  return parts[0].replace(/-/g, ' ').trim()
 }
 
 /**

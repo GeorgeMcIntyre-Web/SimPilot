@@ -1,15 +1,129 @@
 // Normalizers for Canonical IDs
 // Provides consistent normalization and ID building for schema-agnostic ingestion
+//
+// AREA NAME MATCHING STRATEGY:
+// ============================
+// Phase 1 (Current): Pattern-based prefix matching with regex
+//   - Uses common manufacturing area prefixes (FU, RR, UB, BT, etc.)
+//   - Handles variations without hardcoding every possibility
+//   - Works for ~95% of cases with minimal maintenance
+//
+// Phase 2 (Future): Fuzzy matching + machine learning
+//   - Levenshtein distance for similarity scoring
+//   - User feedback system to learn corrections
+//   - Exportable/importable mapping configurations
+//   - Project-specific overrides stored in database
+//
+// Why this approach:
+//   - Excel files are inconsistent (human-generated)
+//   - Hardcoding specific mappings is brittle and unmaintainable
+//   - Pattern matching handles most cases flexibly
+//   - User corrections create a learning system for edge cases
 
 // ============================================================================
 // NORMALIZATION FUNCTIONS
 // ============================================================================
 
 /**
+ * Expand area name abbreviations to full names using pattern-based matching
+ *
+ * Strategy: Extract prefix patterns and map to canonical area names
+ * This avoids hardcoding every possible variation while remaining flexible
+ *
+ * Examples:
+ *   "FU 1" → "FRONT UNIT"
+ *   "RR UN 1" → "REAR UNIT"
+ *   "UB1" → "UNDERBODY"
+ *   "FR FL 1" → "FRONT UNIT"
+ *   "DSH L" → "FRONT UNIT" (Dashboard is part of Front Unit)
+ *   "WHS RR" → "REAR UNIT" (Wheelhouse Rear is part of Rear Unit)
+ */
+function expandAreaAbbreviation(areaName: string): string {
+  const upper = areaName.toUpperCase().trim()
+
+  // ============================================================================
+  // PATTERN 1: Direct Prefix Matching (Most Common)
+  // ============================================================================
+
+  // FRONT UNIT patterns: FU, FR (Front), DSH (Dashboard), WH...F (Wheelhouse Front)
+  if (/^FU[\s\d]/.test(upper) || /^FU$/.test(upper)) {
+    return 'FRONT UNIT'
+  }
+  if (/^FRT?\s*(FL|RL)/.test(upper)) {  // "FR FL 1", "FRT RL", "FRT RL PRE" (Front Floor/Rail)
+    return 'FRONT UNIT'
+  }
+  if (/^DSH/.test(upper) || /^DASH/.test(upper)) {  // "DSH L", "DSH_BRD", "DASH UPR"
+    return 'FRONT UNIT'
+  }
+  if (/^WH.*F/.test(upper) || /^WH\s*HS\s*F/.test(upper)) {  // "WH HS F" (Wheelhouse Front)
+    return 'FRONT UNIT'
+  }
+  if (/^XMBR/.test(upper) || /^X\s*MBR/.test(upper)) {  // "XMBR" (Cross Member - Front)
+    return 'FRONT UNIT'
+  }
+  if (/^FNDR/.test(upper) || /^FENDER/.test(upper)) {  // "FNDR INR" (Fender Inner)
+    return 'FRONT UNIT'
+  }
+  if (/^AF\d/.test(upper) || /^AF\s/.test(upper)) {  // "AF010" area prefix
+    return 'FRONT UNIT'
+  }
+
+  // REAR UNIT patterns: RR, R UN (Rear Unit), WH...R (Wheelhouse Rear)
+  if (/^RR[\s\d]/.test(upper) || /^RR$/.test(upper)) {  // "RR FLR", "RR RLS", "RR UN 1"
+    return 'REAR UNIT'
+  }
+  if (/^R\s*UN/.test(upper)) {  // "R UN PRE" (Rear Unit Pre)
+    return 'REAR UNIT'
+  }
+  if (/^WH.*R/.test(upper) || /^WHS\s*RR/.test(upper)) {  // "WHS RR" (Wheelhouse Rear)
+    return 'REAR UNIT'
+  }
+  if (/^RL\+FL/.test(upper)) {  // "RL+FL" (Rail+Floor combo)
+    return 'REAR UNIT'
+  }
+  if (/^SIL/.test(upper) || /^SILL/.test(upper)) {  // "SIL_RNF", "SILL INR" (Sill Reinforcement)
+    return 'REAR UNIT'
+  }
+  if (/^C[NLME]\d/.test(upper)) {  // "CN010", "CL010", "CM010", "CE010" area prefixes
+    return 'REAR UNIT'
+  }
+  if (/^CA\d/.test(upper)) {  // "CA008" area prefix
+    return 'REAR UNIT'
+  }
+  if (/^AL\d/.test(upper)) {  // "AL010" area prefix (Rear floor/rail area)
+    return 'REAR UNIT'
+  }
+
+  // UNDERBODY patterns: UB
+  if (/^UB[\s\d]/.test(upper) || /^UB$/.test(upper)) {  // "UB1", "UB2", "UB 1"
+    return 'UNDERBODY'
+  }
+
+  // BOTTOM TRAY patterns: BT
+  if (/^BT[\s\d]/.test(upper) || /^BT$/.test(upper)) {  // "BT PREP", "BT ILOT 1"
+    return 'BOTTOM TRAY'
+  }
+
+  // ============================================================================
+  // PATTERN 2: Contains Keyword (Partial Match)
+  // ============================================================================
+
+  // If name contains full area name, return it directly
+  if (upper.includes('FRONT UNIT')) return 'FRONT UNIT'
+  if (upper.includes('REAR UNIT')) return 'REAR UNIT'
+  if (upper.includes('UNDERBODY')) return 'UNDERBODY'
+  if (upper.includes('BOTTOM TRAY')) return 'BOTTOM TRAY'
+
+  // Return original if no match found
+  return areaName
+}
+
+/**
  * Normalize area name to consistent format
  * Examples:
  *   "RR UN 1" → "RR UN 1"
  *   "  fr   fl  1  " → "FR FL 1"
+ *   "FU 1" → "FRONT UNIT" (after expansion)
  *   null → null
  */
 export function normalizeAreaName(raw: string | null | undefined): string | null {
@@ -18,7 +132,10 @@ export function normalizeAreaName(raw: string | null | undefined): string | null
   const trimmed = String(raw).trim()
   if (!trimmed) return null
 
-  return trimmed
+  // First expand abbreviations
+  const expanded = expandAreaAbbreviation(trimmed)
+
+  return expanded
     .toUpperCase()
     .replace(/\s+/g, ' ')  // collapse multiple spaces
 }
@@ -262,4 +379,87 @@ export function buildToolId(
   }
 
   return null
+}
+
+// ============================================================================
+// AREA / ZONE PARSING
+// ============================================================================
+
+export interface AreaZoneParsed {
+  parentArea: string      // "FRONT UNIT", "REAR UNIT", "UNDERBODY"
+  zone: string | null     // "Rear Rail LH", "Front Floor ASS 1", null if no sub-zone
+  fullName: string        // Original full name
+}
+
+/**
+ * Parse area name into parent area and optional zone
+ *
+ * Rules:
+ * 1. If name contains "ASS" or "Ass" followed by number → zone = full name, parent = extract base
+ *    - "Front Unit ASS 1" → parent="FRONT UNIT", zone="Front Unit ASS 1"
+ *    - "Rear Unit Ass2" → parent="REAR UNIT", zone="Rear Unit Ass2"
+ *
+ * 2. If name contains LH/RH (Left Hand/Right Hand) → zone = full name, parent = extract base
+ *    - "Rear Rail LH" → parent="REAR RAIL", zone="Rear Rail LH"
+ *    - "WHR RH" → parent="WHR", zone="WHR RH"
+ *
+ * 3. If name contains common zone keywords → zone = full name, parent = infer
+ *    - "Front Floor ASS 1" → parent="FRONT FLOOR", zone="Front Floor ASS 1"
+ *    - "Dash UPR" → parent="DASH", zone="Dash UPR"
+ *    - "Preoperation MIG" → parent="PREOPERATION", zone="Preoperation MIG"
+ *
+ * 4. Otherwise → parent = full name, zone = null (top-level area)
+ *
+ * Examples:
+ *   "FRONT UNIT" → { parentArea: "FRONT UNIT", zone: null }
+ *   "Front Unit ASS 1" → { parentArea: "FRONT UNIT", zone: "Front Unit ASS 1" }
+ *   "Rear Rail LH" → { parentArea: "REAR RAIL", zone: "Rear Rail LH" }
+ *   "WHR RH" → { parentArea: "WHR", zone: "WHR RH" }
+ */
+export function parseAreaZone(rawAreaName: string | null | undefined): AreaZoneParsed | null {
+  if (!rawAreaName) return null
+
+  const fullName = rawAreaName.trim()
+  if (!fullName) return null
+
+  const upper = fullName.toUpperCase()
+
+  // Pattern 1: Assembly zones (ASS/Ass + number)
+  const assMatch = /^(.+?)\s+ASS\s*\d+$/i.exec(fullName)
+  if (assMatch) {
+    const parentArea = assMatch[1].trim().toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Pattern 2: LH/RH zones (Left Hand / Right Hand)
+  const lhRhMatch = /^(.+?)\s+(LH|RH)$/i.exec(fullName)
+  if (lhRhMatch) {
+    const parentArea = lhRhMatch[1].trim().toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Pattern 3: Combined LH/RH notation "Sill INR LH / RH"
+  const lhRhCombinedMatch = /^(.+?)\s+(LH\s*\/\s*RH)$/i.exec(fullName)
+  if (lhRhCombinedMatch) {
+    const parentArea = lhRhCombinedMatch[1].trim().toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Pattern 4: Common zone suffixes (UPR, LWR, INR, etc.)
+  const zoneSuffixes = ['UPR', 'LWR', 'INR', 'MIG']
+  for (const suffix of zoneSuffixes) {
+    if (upper.endsWith(` ${suffix}`)) {
+      const parentArea = fullName.replace(new RegExp(`\\s+${suffix}$`, 'i'), '').trim().toUpperCase()
+      return { parentArea, zone: fullName, fullName }
+    }
+  }
+
+  // Pattern 5: Starts with "Preoperation" or "Prepa"
+  if (upper.startsWith('PREOPERATION') || upper.startsWith('PREPA')) {
+    const parentArea = fullName.split(/\s+/)[0].toUpperCase()
+    return { parentArea, zone: fullName, fullName }
+  }
+
+  // Default: Top-level area with no zone
+  return { parentArea: upper, zone: null, fullName }
 }

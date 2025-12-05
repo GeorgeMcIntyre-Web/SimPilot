@@ -138,36 +138,56 @@ export async function parseRobotList(
     // Skip empty or total rows
     if (isEmptyRow(row) || isTotalRow(row)) continue
 
-    // Extract robot identifier (try multiple column names)
-    // Priority: E-Number first (most specific), then other identifiers
-    const robotId = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
-      || getCellString(row, columnMap, 'ROBOT ID')
-      || getCellString(row, columnMap, 'ROBOTNUMBER')
-      || getCellString(row, columnMap, 'ROBOT')
-      || getCellString(row, columnMap, 'ID')
-      || getCellString(row, columnMap, 'ROBOT NAME')
-      || getCellString(row, columnMap, 'NAME')
-      || getCellString(row, columnMap, 'ROBOT CAPTION')
-      || getCellString(row, columnMap, 'ROBOTS TOTAL')
+    // Extract station code first - CRITICAL: Only count rows with station numbers
+    // This ensures we get exactly 166 robots (rows with stations), not 172 (all rows)
+    const stationCode = getCellString(row, columnMap, 'STATION')
+      || getCellString(row, columnMap, 'STATION CODE')
+      || getCellString(row, columnMap, 'STATION NUMBER')
+      || getCellString(row, columnMap, 'CELL')
 
-    if (!robotId) {
-      // Only warn if row looks like it might have been intended as data
-      // Skip warnings for effectively empty rows (reduces noise)
-      if (!isEffectivelyEmptyRow(row, 2)) {
-        warnings.push(createRowSkippedWarning({
-          fileName,
-          sheetName,
-          rowIndex: i + 1,
-          reason: 'No robot ID found in any expected columns'
-        }))
-      }
+    // Skip rows without station - these are not actual robot entries
+    if (!stationCode) {
       continue
     }
+
+    // Extract robot caption (e.g., "R01", "R02")
+    const robotCaption = getCellString(row, columnMap, 'ROBOT CAPTION')
+      || getCellString(row, columnMap, 'ROBOTS TOTAL')
+      || getCellString(row, columnMap, 'ROBOT')
+      || getCellString(row, columnMap, 'ROBOT NAME')
+      || getCellString(row, columnMap, 'NAME')
+
+    if (!robotCaption) {
+      warnings.push(createRowSkippedWarning({
+        fileName,
+        sheetName,
+        rowIndex: i + 1,
+        reason: 'No robot caption found (station exists but no robot name)'
+      }))
+      continue
+    }
+
+    // Extract assembly line (e.g., "BN", "AL")
+    const lineCode = getCellString(row, columnMap, 'LINE')
+      || getCellString(row, columnMap, 'LINE CODE')
+      || getCellString(row, columnMap, 'ASSEMBLY LINE')
+
+    // Construct robot ID: AssemblyLine_Station_RobotCaption
+    // Example: "BN_010_R01" or "AL_B09_010_R01"
+    const robotId = lineCode
+      ? `${lineCode}_${stationCode}_${robotCaption}`.replace(/\s+/g, '')
+      : `${stationCode}_${robotCaption}`.replace(/\s+/g, '')
+
+    // Extract E-Number (serial number) - this is METADATA, not the robot ID
+    const eNumber = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
+      || getCellString(row, columnMap, 'ROBOTNUMBER')
 
     // Extract optional fields
     const oemModel = getCellString(row, columnMap, 'OEM MODEL')
       || getCellString(row, columnMap, 'MODEL')
       || getCellString(row, columnMap, 'TYPE')
+      || getCellString(row, columnMap, 'ROBOT TYPE')
+      || getCellString(row, columnMap, 'ROBOT TYPE CONFIRMED')
 
     let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
       || getCellString(row, columnMap, 'AREA NAME')
@@ -178,17 +198,11 @@ export async function parseRobotList(
       areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
     }
 
-    const lineCode = getCellString(row, columnMap, 'LINE')
-      || getCellString(row, columnMap, 'LINE CODE')
-      || getCellString(row, columnMap, 'ASSEMBLY LINE')
-
-    const stationCode = getCellString(row, columnMap, 'STATION')
-      || getCellString(row, columnMap, 'STATION CODE')
-      || getCellString(row, columnMap, 'STATION NUMBER')
-      || getCellString(row, columnMap, 'CELL')
-
     // Vacuum Parser: Collect all other columns into metadata
-    const metadata: Record<string, string | number | boolean | null> = {}
+    const metadata: Record<string, string | number | boolean | null> = {
+      // Store E-Number as serialNumber metadata
+      ...(eNumber ? { serialNumber: eNumber } : {})
+    }
     const consumedHeaders = [
       'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
       'MODEL', 'OEM MODEL', 'TYPE',

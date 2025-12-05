@@ -159,6 +159,8 @@ export async function parseToolList(
     'STATUS',
     'COMMENTS',
     'COMMENT',
+    'NOTES',
+    'NOTE',
     'SUPPLY',
     'REFRESMENT OK'
   ])
@@ -192,13 +194,17 @@ export async function parseToolList(
     }
 
     // Extract tool identifier (try multiple column names)
-    const toolId = getCellString(row, columnMap, 'GUN ID')
+    // Priority order: specific IDs first, then broader names
+    // IMPORTANT: Check "EQUIPMENT NO SHOWN" before "TOOL" to avoid matching generic "Tool" column
+    const toolId = getCellString(row, columnMap, 'EQUIPMENT NO SHOWN')
+      || getCellString(row, columnMap, 'GUN ID')
       || getCellString(row, columnMap, 'GUN NUMBER')
-      || getCellString(row, columnMap, 'GUN')
       || getCellString(row, columnMap, 'TOOL ID')
+      || getCellString(row, columnMap, 'EQUIPMENT ID')
+      || getCellString(row, columnMap, 'GUN')
       || getCellString(row, columnMap, 'TOOL')
       || getCellString(row, columnMap, 'TOOL NAME')
-      || getCellString(row, columnMap, 'EQUIPMENT ID')
+      || getCellString(row, columnMap, 'EQUIPMENT NO')
       || getCellString(row, columnMap, 'EQUIPMENT')
       || getCellString(row, columnMap, 'ID')
       || getCellString(row, columnMap, 'NAME')
@@ -257,8 +263,15 @@ export async function parseToolList(
     const comments = getCellString(row, columnMap, 'COMMENTS')
       || getCellString(row, columnMap, 'COMMENT')
 
+    const notes = getCellString(row, columnMap, 'NOTES')
+      || getCellString(row, columnMap, 'NOTE')
+
     const supply = getCellString(row, columnMap, 'SUPPLY')
     const refreshment = getCellString(row, columnMap, 'REFRESMENT OK')
+
+    // Detect if tool is cancelled/inactive based on notes
+    // Strikethrough tools in Excel have specific markers in the NOTES column
+    const isActive = !isCancelledTool(notes)
 
     // Detect sourcing
     const sourcing = detectSourcing(reuseStatus, comments, supply, refreshment)
@@ -277,13 +290,14 @@ export async function parseToolList(
     const metadata: Record<string, string | number | boolean | null> = {}
     const consumedHeaders = [
       'GUN', 'GUN ID', 'GUN NUMBER', 'TOOL', 'TOOL ID', 'TOOL NAME', 'EQUIPMENT ID', 'EQUIPMENT', 'ID', 'NAME',
+      'EQUIPMENT NO SHOWN', 'EQUIPMENT NO', // Add Equipment No to consumed headers
       'TYPE', 'TOOL TYPE', 'GUN TYPE', 'SUBTYPE',
       'MODEL', 'OEM MODEL', 'MANUFACTURER', 'SUPPLIER',
       'AREA', 'AREA NAME',
       'LINE', 'LINE CODE', 'ASSEMBLY LINE',
       'STATION', 'STATION CODE', 'CELL',
       'REUSE', 'REUSE STATUS', 'STATUS',
-      'COMMENTS', 'COMMENT', 'SUPPLY', 'REFRESMENT OK'
+      'COMMENTS', 'COMMENT', 'NOTES', 'NOTE', 'SUPPLY', 'REFRESMENT OK'
     ]
 
     // Create a set of consumed indices based on the column map and consumed headers
@@ -322,10 +336,12 @@ export async function parseToolList(
       toolId: canonicalToolId,
       reuseStatus: reuseStatus || undefined,
       sourcing,
+      isActive, // Track if tool is active or cancelled (strikethrough in Excel)
       metadata: {
         ...metadata,
-        // Store lineCode in metadata for UnifiedAsset access
-        ...(lineCode ? { lineCode } : {})
+        // Store lineCode and notes in metadata for reference
+        ...(lineCode ? { lineCode } : {}),
+        ...(notes ? { notes } : {})
       },
       sourceFile: fileName,
       sheetName,
@@ -449,4 +465,30 @@ function detectKind(toolType: ToolType): AssetKind {
     default:
       return 'OTHER'
   }
+}
+
+/**
+ * Detect if a tool is cancelled/inactive based on NOTES column
+ *
+ * Strikethrough tools in Excel have specific markers in NOTES:
+ * - "REMOVED FROM BOM" - Tool explicitly removed
+ * - "SIM TO SPEC" - Simulation-only tool (not manufactured)
+ * - Possibly others that indicate historical/cancelled status
+ *
+ * These tools should be tracked for history but marked as inactive.
+ */
+function isCancelledTool(notes: string): boolean {
+  if (!notes) return false
+
+  const notesUpper = notes.toUpperCase().trim()
+
+  // Patterns indicating cancelled/inactive tools
+  const cancelPatterns = [
+    'REMOVED FROM BOM',
+    'SIM TO SPEC'
+    // Note: "DESIGN AND MANUFACTURE" and "DESIGN ONLY" are NOT cancelled
+    // They're valid tools, just happen to have strikethrough in some cases
+  ]
+
+  return cancelPatterns.some(pattern => notesUpper.includes(pattern))
 }
