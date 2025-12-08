@@ -823,7 +823,7 @@ export function AssetsPage() {
       <div className="grid grid-cols-1 gap-3 items-start min-w-0">
         {/* Assets Table */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden min-w-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto custom-scrollbar">
             <DataTable
               data={paginatedAssets}
               columns={columns}

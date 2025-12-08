@@ -96,6 +96,13 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
   const station = asset.stationNumber ?? extractMetadata<string>(asset, 'station');
   const robotNumber = extractMetadata<string>(asset, 'robotNumber');
   const gunId = extractMetadata<string>(asset, 'gunId');
+  const model = asset.oemModel ?? extractMetadata<string>(asset, 'model');
+  const description = asset.description ?? extractMetadata<string>(asset, 'description');
+  const supplier = asset.supplier ?? extractMetadata<string>(asset, 'supplier');
+  const referenceNumber = asset.referenceNumber ?? extractMetadata<string>(asset, 'referenceNumber');
+  const payloadClass = asset.payloadClass ?? extractMetadata<string>(asset, 'payloadClass');
+  const standNumber = asset.standNumber ?? extractMetadata<string>(asset, 'standNumber');
+  const isActive = asset.isActive ?? true;
 
   // Reuse location info
   const oldProject = extractMetadata<string>(asset, 'oldProject');
@@ -153,10 +160,26 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Open in Simulation Status
-          </button>
+        </button>
 
-          {/* Simulation Context */}
-          <section>
+        {/* Asset Overview */}
+        <section className="border border-gray-100 dark:border-gray-800 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50">
+          <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">Asset Overview</h3>
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+            <DetailItem label="Kind" value={asset.kind} />
+            <DetailItem label="Sourcing" value={asset.sourcing} />
+            <DetailItem label="Model" value={model} />
+            <DetailItem label="Supplier" value={supplier} />
+            <DetailItem label="Reference #" value={referenceNumber} />
+            <DetailItem label="Payload Class" value={payloadClass} />
+            <DetailItem label="Stand #" value={standNumber} />
+            <DetailItem label="Active" value={isActive ? 'Yes' : 'No'} />
+            <DetailItem label="Description" value={description} className="col-span-2" />
+          </dl>
+        </section>
+
+        {/* Simulation Context */}
+        <section>
             <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-white mb-2">
               <MapPin className="w-3.5 h-3.5 text-gray-400" />
               Simulation Context
@@ -274,6 +297,14 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
                     </div>
                   </div>
                 )}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs pt-2 border-t border-gray-100 dark:border-gray-800 mt-2">
+                  <DetailItem label="Source File" value={asset.sourceFile} />
+                  <DetailItem label="Sheet / Row" value={`${asset.sheetName ?? '—'}${asset.rowIndex !== undefined ? ` / ${asset.rowIndex}` : ''}`} />
+                  <DetailItem label="Station ID" value={asset.stationId} />
+                  <DetailItem label="Robot ID" value={asset.robotId} />
+                  <DetailItem label="Tool ID" value={asset.toolId} />
+                  <DetailItem label="Notes" value={asset.notes} className="col-span-2" />
+                </div>
               </div>
             </section>
           )}
