@@ -68,11 +68,11 @@ type DetailItemProps = {
 
 function DetailItem({ label, value, className }: DetailItemProps) {
   return (
-    <div className={cn('py-2', className)}>
-      <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+    <div className={cn('py-1.5', className)}>
+      <dt className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+      <dd className="mt-0.5 text-xs text-gray-900 dark:text-gray-100">
         {value || '—'}
       </dd>
     </div>
@@ -135,13 +135,13 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
         <div className="w-screen max-w-md transform transition-transform">
           <div className="flex h-full flex-col overflow-y-auto bg-white dark:bg-gray-900 shadow-xl">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+            <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                     {asset.name || 'Unnamed Asset'}
                   </h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
                     <SourcingBadge sourcing={asset.sourcing} />
                   </div>
@@ -151,29 +151,29 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
                   className="rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <span className="sr-only">Close panel</span>
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="flex-1 px-6 py-4 space-y-6">
+            <div className="flex-1 px-3 py-3 space-y-3">
               {/* Action Button */}
               <button
                 onClick={() => onOpenInSimulation(asset)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
               >
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5" />
                 Open in Simulation Status
               </button>
 
               {/* Simulation Context */}
               <section>
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  <MapPin className="w-4 h-4 text-gray-400" />
+                <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-white mb-2">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400" />
                   Simulation Context
                 </h3>
-                <dl className="grid grid-cols-2 gap-x-4 border-t border-gray-200 dark:border-gray-700">
+                <dl className="grid grid-cols-2 gap-x-3 border-t border-gray-200 dark:border-gray-700">
                   <DetailItem label="Program/Project" value={projectCode} />
                   <DetailItem label="Area" value={asset.areaName} />
                   <DetailItem label="Line" value={assemblyLine} />
@@ -190,39 +190,39 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
               {/* Reuse Information */}
               {hasReuseInfo && (
                 <section>
-                  <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                    <Recycle className="w-4 h-4 text-emerald-500" />
+                  <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-white mb-2">
+                    <Recycle className="w-3.5 h-3.5 text-emerald-500" />
                     Reuse Allocation
                   </h3>
-                  
+
                   {reuseStatus !== undefined && (
-                    <div className="mb-4">
+                    <div className="mb-3">
                       <ReuseStatusBadge status={reuseStatus} size="md" />
                     </div>
                   )}
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {/* Old Location */}
                     {hasOldLocation && (
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                        <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">
                           Original Location
                         </div>
-                        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                           {oldProject !== undefined && (
                             <div>
-                              <dt className="text-gray-500 dark:text-gray-400">Project</dt>
+                              <dt className="text-gray-500 dark:text-gray-400 text-[10px]">Project</dt>
                               <dd className="font-medium text-gray-900 dark:text-white">{oldProject}</dd>
                             </div>
                           )}
                           {oldArea !== undefined && (
                             <div>
-                              <dt className="text-gray-500 dark:text-gray-400">Area</dt>
+                              <dt className="text-gray-500 dark:text-gray-400 text-[10px]">Area</dt>
                               <dd className="font-medium text-gray-900 dark:text-white">{oldArea}</dd>
                             </div>
                           )}
                           <div className="col-span-2">
-                            <dt className="text-gray-500 dark:text-gray-400">Line / Station</dt>
+                            <dt className="text-gray-500 dark:text-gray-400 text-[10px]">Line / Station</dt>
                             <dd className="font-medium text-gray-900 dark:text-white">
                               {formatLocation(oldLine, oldStation)}
                             </dd>
@@ -234,31 +234,31 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
                     {/* Arrow between locations */}
                     {hasOldLocation && hasTargetLocation && (
                       <div className="flex justify-center">
-                        <ArrowRight className="w-5 h-5 text-gray-400" />
+                        <ArrowRight className="w-4 h-4 text-gray-400" />
                       </div>
                     )}
 
                     {/* Target Location */}
                     {hasTargetLocation && (
-                      <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-800">
-                        <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-2">
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 border border-emerald-200 dark:border-emerald-800">
+                        <div className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1.5">
                           Target Location
                         </div>
-                        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                           {targetProject !== undefined && (
                             <div>
-                              <dt className="text-emerald-600 dark:text-emerald-400">Project</dt>
+                              <dt className="text-emerald-600 dark:text-emerald-400 text-[10px]">Project</dt>
                               <dd className="font-medium text-emerald-800 dark:text-emerald-200">{targetProject}</dd>
                             </div>
                           )}
                           {targetSector !== undefined && (
                             <div>
-                              <dt className="text-emerald-600 dark:text-emerald-400">Sector</dt>
+                              <dt className="text-emerald-600 dark:text-emerald-400 text-[10px]">Sector</dt>
                               <dd className="font-medium text-emerald-800 dark:text-emerald-200">{targetSector}</dd>
                             </div>
                           )}
                           <div className="col-span-2">
-                            <dt className="text-emerald-600 dark:text-emerald-400">Line / Station</dt>
+                            <dt className="text-emerald-600 dark:text-emerald-400 text-[10px]">Line / Station</dt>
                             <dd className="font-medium text-emerald-800 dark:text-emerald-200">
                               {formatLocation(targetLine, targetStation)}
                             </dd>
@@ -272,8 +272,8 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
 
               {/* Provenance */}
               <section>
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  <FileSpreadsheet className="w-4 h-4 text-gray-400" />
+                <h3 className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-white mb-2">
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-gray-400" />
                   Provenance
                 </h3>
                 <dl className="border-t border-gray-200 dark:border-gray-700">
@@ -281,7 +281,7 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
                     label="Source File"
                     value={
                       asset.sourceFile !== undefined ? (
-                        <span className="font-mono text-xs break-all">
+                        <span className="font-mono text-[10px] break-all">
                           {asset.sourceFile.split(/[/\\]/).pop()}
                         </span>
                       ) : undefined
@@ -292,14 +292,14 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
                   {primaryWorkbookId !== undefined && (
                     <DetailItem
                       label="Workbook ID"
-                      value={<span className="font-mono text-xs">{primaryWorkbookId}</span>}
+                      value={<span className="font-mono text-[10px]">{primaryWorkbookId}</span>}
                     />
                   )}
                   {sourceWorkbookIds.length > 1 && (
                     <DetailItem
                       label="Also Found In"
                       value={
-                        <span className="text-xs text-gray-500">
+                        <span className="text-[10px] text-gray-500">
                           +{sourceWorkbookIds.length - 1} other workbook(s)
                         </span>
                       }
@@ -310,7 +310,7 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
 
               {/* Additional Metadata */}
               <section>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                <h3 className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
                   Additional Details
                 </h3>
                 <dl className="border-t border-gray-200 dark:border-gray-700">
