@@ -30,31 +30,36 @@ interface SummaryCardProps {
 // STYLES
 // ============================================================================
 
-const variantStyles: Record<SummaryVariant, { container: string; value: string; icon: string }> = {
+const variantStyles: Record<SummaryVariant, { border: string; value: string; iconContainer: string; accentBar: string }> = {
   default: {
-    container: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
+    border: 'border-gray-200 dark:border-gray-700',
     value: 'text-gray-900 dark:text-white',
-    icon: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+    iconContainer: 'bg-gray-100 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300',
+    accentBar: 'from-gray-100 via-gray-50 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600'
   },
   success: {
-    container: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
+    border: 'border-emerald-200/80 dark:border-emerald-800/80',
     value: 'text-emerald-700 dark:text-emerald-300',
-    icon: 'bg-emerald-100 dark:bg-emerald-800 text-emerald-600 dark:text-emerald-300'
+    iconContainer: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300',
+    accentBar: 'from-emerald-100 via-teal-100 to-blue-100 dark:from-emerald-900/50 dark:via-teal-900/40 dark:to-blue-900/40'
   },
   warning: {
-    container: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
+    border: 'border-amber-200/80 dark:border-amber-800/80',
     value: 'text-amber-700 dark:text-amber-300',
-    icon: 'bg-amber-100 dark:bg-amber-800 text-amber-600 dark:text-amber-300'
+    iconContainer: 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300',
+    accentBar: 'from-amber-100 via-amber-50 to-orange-100 dark:from-amber-900/40 dark:via-amber-900/30 dark:to-orange-900/40'
   },
   danger: {
-    container: 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800',
+    border: 'border-rose-200/80 dark:border-rose-800/80',
     value: 'text-rose-700 dark:text-rose-300',
-    icon: 'bg-rose-100 dark:bg-rose-800 text-rose-600 dark:text-rose-300'
+    iconContainer: 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-300',
+    accentBar: 'from-rose-100 via-rose-50 to-amber-100 dark:from-rose-900/40 dark:via-rose-900/30 dark:to-amber-900/40'
   },
   info: {
-    container: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+    border: 'border-blue-200/80 dark:border-blue-800/80',
     value: 'text-blue-700 dark:text-blue-300',
-    icon: 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
+    iconContainer: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300',
+    accentBar: 'from-blue-100 via-sky-100 to-indigo-100 dark:from-blue-900/40 dark:via-sky-900/40 dark:to-indigo-900/40'
   }
 }
 
@@ -66,7 +71,7 @@ const trendStyles = {
 
 const densityStyles = {
   standard: {
-    container: 'p-5 rounded-xl',
+    padding: 'p-4 md:p-5',
     gap: 'gap-4',
     icon: 'p-2.5',
     title: 'text-sm',
@@ -113,18 +118,20 @@ export function SummaryCard({
       onClick={onClick}
       data-testid={testId}
       className={cn(
-        'border transition-all duration-200',
-        densityStyle.container,
-        styles.container,
-        isClickable && 'cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
+        'relative overflow-hidden rounded-xl border bg-white dark:bg-gray-800 shadow-sm transition-all duration-200',
+        densityStyle.padding,
+        styles.border,
+        isClickable && 'cursor-pointer hover:shadow-md hover:-translate-y-[2px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
         className
       )}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
+      <div className={cn('absolute inset-y-0 right-0 w-1.5 bg-gradient-to-b', styles.accentBar)} />
+
       <div className={cn('flex items-start', densityStyle.gap)}>
         {icon && (
-          <div className={cn('flex-shrink-0 rounded-lg', densityStyle.icon, styles.icon)}>
+          <div className={cn('flex-shrink-0 rounded-lg', densityStyle.icon, styles.iconContainer)}>
             {icon}
           </div>
         )}
@@ -135,7 +142,7 @@ export function SummaryCard({
           </p>
           
           <div className="flex items-baseline gap-2">
-            <span className={cn('font-bold tracking-tight', styles.value, densityStyle.value)}>
+            <span className={cn('font-bold tracking-tight leading-tight', styles.value, densityStyle.value)}>
               {value}
             </span>
             

@@ -19,7 +19,6 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
-import { SummaryCard, SummaryCardsGrid } from '../../ui/components/SummaryCard';
 import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
 import { cn } from '../../ui/lib/utils';
 import { useCoreStore } from '../../domain/coreStore';
@@ -356,90 +355,212 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
   const reuseCount = counts.bySourcing.REUSE ?? 0;
 
   return (
-    <div className="space-y-1.5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-        <SummaryCard
-          title="New Buy"
-          value={counts.bySourcing.NEW_BUY ?? 0}
-          icon={<ShoppingCart className="w-4 h-4" />}
-          variant="info"
-          density="compact"
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div
           onClick={() => onFilterClick({ sourcing: 'NEW_BUY' })}
-        />
-        <SummaryCard
-          title="Reuse"
-          value={reuseCount}
-          icon={<Recycle className="w-4 h-4" />}
-          variant="success"
-          density="compact"
+          className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-4 transition-all hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 text-blue-500">
+              <ShoppingCart className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                  {counts.bySourcing.NEW_BUY ?? 0}
+                </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  New Buy
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
           onClick={() => onFilterClick({ sourcing: 'REUSE' })}
-        />
+          className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-4 transition-all hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 text-emerald-500">
+              <Recycle className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                  {reuseCount}
+                </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  Reuse
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-        <SummaryCard
-          title="Make"
-          value={counts.bySourcing.MAKE ?? 0}
-          icon={<Hammer className="w-4 h-4" />}
-          variant="default"
-          density="compact"
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div
           onClick={() => onFilterClick({ sourcing: 'MAKE' })}
-        />
-        <SummaryCard
-          title="Unknown Sourcing"
-          value={counts.unknownSourcingCount}
-          icon={<HelpCircle className="w-4 h-4" title={counts.unknownSourcingCount > 0 ? 'Needs attention' : undefined} />}
-          variant={counts.unknownSourcingCount > 0 ? 'warning' : 'default'}
-          density="compact"
+          className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-4 transition-all hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 text-gray-500 dark:text-gray-400">
+              <Hammer className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                  {counts.bySourcing.MAKE ?? 0}
+                </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  Make
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
           onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
+          className={cn(
+            "rounded-lg border p-4 transition-all hover:shadow-md cursor-pointer",
+            counts.unknownSourcingCount > 0
+              ? "border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800"
+              : "border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700"
+          )}
           data-testid="assets-unknown-sourcing"
-        />
+        >
+          <div className="flex items-start gap-3">
+            <div className={cn(
+              "mt-0.5",
+              counts.unknownSourcingCount > 0 ? "text-amber-500" : "text-gray-500 dark:text-gray-400"
+            )}>
+              <HelpCircle className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className={cn(
+                  "text-2xl font-bold",
+                  counts.unknownSourcingCount > 0
+                    ? "text-amber-700 dark:text-amber-300"
+                    : "text-gray-700 dark:text-gray-300"
+                )}>
+                  {counts.unknownSourcingCount}
+                </span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                  Unknown Sourcing
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Reuse Allocation Status (only show if there are reuse assets) */}
       {reuseCount > 0 && (
-        <div>
-          <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
             Reuse Equipment Allocation
           </h3>
-          <SummaryCardsGrid columns={4} className="gap-3">
-            <SummaryCard
-              title="Available"
-              value={counts.byReuseStatus.AVAILABLE ?? 0}
-              subtitle="Ready to allocate"
-              icon={<Package className="w-4 h-4" />}
-              variant="success"
-              density="compact"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'AVAILABLE' })}
-            />
-            <SummaryCard
-              title="Allocated"
-              value={counts.byReuseStatus.ALLOCATED ?? 0}
-              subtitle="Planned for new line"
-              icon={<Clock className="w-4 h-4" />}
-              variant="info"
-              density="compact"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-4 transition-all hover:shadow-md cursor-pointer"
+            >
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-emerald-500">
+                  <Package className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                      {counts.byReuseStatus.AVAILABLE ?? 0}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                      Available
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                    Ready to allocate
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'ALLOCATED' })}
-            />
-            <SummaryCard
-              title="In Use"
-              value={counts.byReuseStatus.IN_USE ?? 0}
-              subtitle="Installed on new line"
-              icon={<CheckCircle className="w-4 h-4" />}
-              variant="success"
-              density="compact"
+              className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-4 transition-all hover:shadow-md cursor-pointer"
+            >
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-blue-500">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      {counts.byReuseStatus.ALLOCATED ?? 0}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                      Allocated
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                    Planned for new line
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'IN_USE' })}
-            />
-            <SummaryCard
-              title="Reserved"
-              value={counts.byReuseStatus.RESERVED ?? 0}
-              subtitle="Reserved for project"
-              icon={<Lock className="w-4 h-4" />}
-              variant="warning"
-              density="compact"
+              className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-4 transition-all hover:shadow-md cursor-pointer"
+            >
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-emerald-500">
+                  <CheckCircle className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                      {counts.byReuseStatus.IN_USE ?? 0}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                      In Use
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                    Installed on new line
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'RESERVED' })}
-            />
-          </SummaryCardsGrid>
+              className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 transition-all hover:shadow-md cursor-pointer"
+            >
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 text-amber-500">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-amber-700 dark:text-amber-300">
+                      {counts.byReuseStatus.RESERVED ?? 0}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                      Reserved
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                    Reserved for project
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
