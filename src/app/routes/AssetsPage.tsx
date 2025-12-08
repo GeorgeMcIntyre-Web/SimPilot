@@ -516,7 +516,6 @@ export function AssetsPage() {
 
   // Detail panel state
   const [selectedAsset, setSelectedAsset] = useState<AssetWithMetadata | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Sort handler
   const handleSort = useCallback((key: SortKey) => {
@@ -602,12 +601,11 @@ export function AssetsPage() {
   // Row click handler
   const handleRowClick = useCallback((asset: AssetWithMetadata) => {
     setSelectedAsset(asset);
-    setIsDetailOpen(true);
   }, []);
 
   // Close detail panel
   const handleCloseDetail = useCallback(() => {
-    setIsDetailOpen(false);
+    setSelectedAsset(null);
   }, []);
 
   // Open in Simulation Status
@@ -635,7 +633,7 @@ export function AssetsPage() {
     navigate(path);
 
     // Close the detail panel
-    setIsDetailOpen(false);
+    setSelectedAsset(null);
   }, [navigate]);
 
   // Summary strip filter click handler
@@ -822,92 +820,95 @@ export function AssetsPage() {
         </div>
       )}
 
-      {/* Assets Table */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <DataTable
-          data={paginatedAssets}
-          columns={columns}
-          onRowClick={handleRowClick}
-          emptyMessage="No assets match the current filters."
-        />
+      <div className="grid grid-cols-1 gap-3 items-start min-w-0">
+        {/* Assets Table */}
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden min-w-0">
+          <div className="overflow-x-auto">
+            <DataTable
+              data={paginatedAssets}
+              columns={columns}
+              onRowClick={handleRowClick}
+              emptyMessage="No assets match the current filters."
+            />
+          </div>
 
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-900">
-            <div className="flex items-center justify-between">
-              {/* Results info */}
-              <div className="text-xs text-gray-600 dark:text-gray-400">
-                Showing {startIndex + 1}-{Math.min(endIndex, sortedAssets.length)} of {sortedAssets.length} results
-              </div>
-
-              {/* Page controls */}
-              <div className="flex items-center gap-2">
-                {/* Previous button */}
-                <button
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  Previous
-                </button>
-
-                {/* Page numbers */}
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // Show first page, last page, current page, and pages around current
-                    const showPage =
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1);
-
-                    if (!showPage) {
-                      // Show ellipsis
-                      if (page === currentPage - 2 || page === currentPage + 2) {
-                        return (
-                          <span key={page} className="px-2 text-xs text-gray-400">
-                            ...
-                          </span>
-                        );
-                      }
-                      return null;
-                    }
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`min-w-[2rem] px-2.5 py-1.5 text-xs font-medium rounded transition-colors ${
-                          page === currentPage
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3 bg-gray-50 dark:bg-gray-900">
+              <div className="flex items-center justify-between">
+                {/* Results info */}
+                <div className="text-xs text-gray-600 dark:text-gray-400">
+                  Showing {startIndex + 1}-{Math.min(endIndex, sortedAssets.length)} of {sortedAssets.length} results
                 </div>
 
-                {/* Next button */}
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                {/* Page controls */}
+                <div className="flex items-center gap-2">
+                  {/* Previous button */}
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Previous
+                  </button>
+
+                  {/* Page numbers */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      const showPage =
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1);
+
+                      if (!showPage) {
+                        // Show ellipsis
+                        if (page === currentPage - 2 || page === currentPage + 2) {
+                          return (
+                            <span key={page} className="px-2 text-xs text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`min-w-[2rem] px-2.5 py-1.5 text-xs font-medium rounded transition-colors ${
+                            page === currentPage
+                              ? 'bg-blue-600 text-white'
+                              : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next button */}
+                  <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Detail Panel */}
       <AssetDetailPanel
         asset={selectedAsset}
-        isOpen={isDetailOpen}
+        isOpen={selectedAsset !== null}
         onClose={handleCloseDetail}
         onOpenInSimulation={handleOpenInSimulation}
       />
