@@ -189,9 +189,11 @@ function FilterBar({
                 <option value="UNKNOWN">Unknown</option>
               </select>
             </div>
+          </div>
 
+          <div className={cn('grid gap-1.5', availableLines.length > 0 ? 'grid-cols-3' : 'grid-cols-2')}>
             {/* Reuse Status */}
-            <div className="col-span-2">
+            <div className={cn(availableLines.length > 0 ? '' : 'col-span-2')}>
               <label htmlFor="reuse-status-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
                 Reuse Status
               </label>
@@ -210,6 +212,65 @@ function FilterBar({
                 <option value="UNKNOWN">Unknown</option>
               </select>
             </div>
+
+            {/* Line Filter */}
+            {availableLines.length > 0 && (
+              <div>
+                <label htmlFor="line-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
+                  Line
+                </label>
+                <select
+                  id="line-filter"
+                  data-testid="line-filter"
+                  value={filters.line ?? ''}
+                  onChange={(e) => onLineChange(e.target.value === '' ? null : e.target.value)}
+                  className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                >
+                  <option value="">All Lines</option>
+                  {availableLines.map((line) => (
+                    <option key={line} value={line}>
+                      {line}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Bottleneck Toggle */}
+            {availableLines.length > 0 && (
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={() => onOnlyBottlenecksChange(!onlyBottlenecks)}
+                  aria-pressed={onlyBottlenecks}
+                  className={cn(
+                    'w-full inline-flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px] font-medium transition-colors',
+                    'border-gray-300 bg-white text-gray-700 hover:border-amber-400 hover:text-amber-600',
+                    'dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-amber-400 dark:hover:text-amber-300'
+                  )}
+                  data-testid="bottleneck-only-filter"
+                  title="Toggle to show only bottleneck tools"
+                >
+                  <span className="inline-flex items-center gap-1">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Only bottlenecks
+                  </span>
+                  <span
+                    className={cn(
+                      'relative inline-flex h-4 w-8 items-center rounded-full border border-gray-300 dark:border-gray-600 transition-colors',
+                      onlyBottlenecks ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-700'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'h-3.5 w-3.5 rounded-full bg-white shadow transform transition-transform',
+                        onlyBottlenecks ? 'translate-x-3.5' : 'translate-x-0.5'
+                      )}
+                    />
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -262,57 +323,6 @@ function FilterBar({
               </div>
             )}
 
-            {/* Line Filter */}
-            {availableLines.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <label htmlFor="line-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                    Line
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => onOnlyBottlenecksChange(!onlyBottlenecks)}
-                    aria-pressed={onlyBottlenecks}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors',
-                      'text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
-                    )}
-                    data-testid="bottleneck-only-filter"
-                    title="Toggle to show only bottleneck tools"
-                  >
-                    <AlertTriangle className="h-3.5 w-3.5" />
-                    <span>Only bottlenecks</span>
-                    <span
-                      className={cn(
-                        'relative inline-flex h-4 w-8 items-center rounded-full border border-gray-300 dark:border-gray-600 transition-colors',
-                        onlyBottlenecks ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-700'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'h-3.5 w-3.5 rounded-full bg-white shadow transform transition-transform',
-                          onlyBottlenecks ? 'translate-x-3.5' : 'translate-x-0.5'
-                        )}
-                      />
-                    </span>
-                  </button>
-                </div>
-                <select
-                  id="line-filter"
-                  data-testid="line-filter"
-                  value={filters.line ?? ''}
-                  onChange={(e) => onLineChange(e.target.value === '' ? null : e.target.value)}
-                  className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
-                >
-                  <option value="">All Lines</option>
-                  {availableLines.map((line) => (
-                    <option key={line} value={line}>
-                      {line}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         </div>
       </div>
