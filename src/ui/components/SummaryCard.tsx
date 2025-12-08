@@ -16,6 +16,7 @@ interface SummaryCardProps {
   subtitle?: string
   icon?: ReactNode
   variant?: SummaryVariant
+  density?: 'standard' | 'compact'
   trend?: {
     direction: 'up' | 'down' | 'neutral'
     value: string
@@ -63,6 +64,27 @@ const trendStyles = {
   neutral: 'text-gray-500 dark:text-gray-400'
 }
 
+const densityStyles = {
+  standard: {
+    container: 'p-5 rounded-xl',
+    gap: 'gap-4',
+    icon: 'p-2.5',
+    title: 'text-sm',
+    value: 'text-2xl',
+    subtitle: 'text-xs',
+    trend: 'text-sm'
+  },
+  compact: {
+    container: 'p-3 rounded-lg',
+    gap: 'gap-3',
+    icon: 'p-2',
+    title: 'text-xs',
+    value: 'text-xl',
+    subtitle: 'text-[11px]',
+    trend: 'text-xs'
+  }
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -76,12 +98,14 @@ export function SummaryCard({
   subtitle,
   icon,
   variant = 'default',
+  density = 'standard',
   trend,
   onClick,
   className,
   'data-testid': testId
 }: SummaryCardProps) {
   const styles = variantStyles[variant]
+  const densityStyle = densityStyles[density]
   const isClickable = Boolean(onClick)
 
   return (
@@ -89,7 +113,8 @@ export function SummaryCard({
       onClick={onClick}
       data-testid={testId}
       className={cn(
-        'rounded-xl border p-5 transition-all duration-200',
+        'border transition-all duration-200',
+        densityStyle.container,
         styles.container,
         isClickable && 'cursor-pointer hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
         className
@@ -97,25 +122,25 @@ export function SummaryCard({
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
     >
-      <div className="flex items-start gap-4">
+      <div className={cn('flex items-start', densityStyle.gap)}>
         {icon && (
-          <div className={cn('flex-shrink-0 p-2.5 rounded-lg', styles.icon)}>
+          <div className={cn('flex-shrink-0 rounded-lg', densityStyle.icon, styles.icon)}>
             {icon}
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+          <p className={cn('font-medium text-gray-500 dark:text-gray-400 mb-1', densityStyle.title)}>
             {title}
           </p>
           
           <div className="flex items-baseline gap-2">
-            <span className={cn('text-2xl font-bold tracking-tight', styles.value)}>
+            <span className={cn('font-bold tracking-tight', styles.value, densityStyle.value)}>
               {value}
             </span>
             
             {trend && (
-              <span className={cn('text-sm font-medium', trendStyles[trend.direction])}>
+              <span className={cn('font-medium', densityStyle.trend, trendStyles[trend.direction])}>
                 {trend.direction === 'up' && '↑'}
                 {trend.direction === 'down' && '↓'}
                 {trend.value}
@@ -124,7 +149,7 @@ export function SummaryCard({
           </div>
 
           {subtitle && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className={cn('text-gray-500 dark:text-gray-400 mt-1', densityStyle.subtitle)}>
               {subtitle}
             </p>
           )}

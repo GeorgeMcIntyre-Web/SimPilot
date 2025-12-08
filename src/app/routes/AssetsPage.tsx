@@ -21,6 +21,7 @@ import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { SummaryCard, SummaryCardsGrid } from '../../ui/components/SummaryCard';
 import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
+import { cn } from '../../ui/lib/utils';
 import { useCoreStore } from '../../domain/coreStore';
 import {
   useAssetsFilters,
@@ -121,7 +122,7 @@ function FilterBar({
   onClearFilters,
 }: FilterBarProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 space-y-3">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 space-y-2">
       {/* Search Bar */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
@@ -129,7 +130,7 @@ function FilterBar({
         </div>
         <input
           type="text"
-          className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-8 pr-8 py-1.5 text-xs border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-7 py-1 text-xs border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           placeholder="Search by name, station, area, model..."
           value={filters.searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -145,17 +146,13 @@ function FilterBar({
       </div>
 
       {/* Filter Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         {/* Left Column: Asset Filters */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-            <Package className="h-3.5 w-3.5" />
-            Asset Filters
-          </h3>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
             {/* Asset Type */}
             <div>
-              <label htmlFor="asset-type-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+              <label htmlFor="asset-type-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
                 Type
               </label>
               <select
@@ -163,7 +160,7 @@ function FilterBar({
                 data-testid="asset-type-filter"
                 value={filters.assetKind}
                 onChange={(e) => onKindChange(e.target.value as 'ALL' | 'ROBOT' | 'GUN' | 'TOOL' | 'OTHER')}
-                className="block w-full py-1.5 px-2.5 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
               >
                 <option value="ALL">All Types</option>
                 <option value="ROBOT">Robots</option>
@@ -175,7 +172,7 @@ function FilterBar({
 
             {/* Sourcing */}
             <div>
-              <label htmlFor="sourcing-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+              <label htmlFor="sourcing-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
                 Sourcing
               </label>
               <select
@@ -183,7 +180,7 @@ function FilterBar({
                 data-testid="sourcing-filter"
                 value={filters.sourcing}
                 onChange={(e) => onSourcingChange(e.target.value as EquipmentSourcing | 'ALL')}
-                className="block w-full py-1.5 px-2.5 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
               >
                 <option value="ALL">All Sourcing</option>
                 <option value="NEW_BUY">New Buy</option>
@@ -195,7 +192,7 @@ function FilterBar({
 
             {/* Reuse Status */}
             <div className="col-span-2">
-              <label htmlFor="reuse-status-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+              <label htmlFor="reuse-status-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
                 Reuse Status
               </label>
               <select
@@ -203,7 +200,7 @@ function FilterBar({
                 data-testid="reuse-status-filter"
                 value={filters.reuseStatus}
                 onChange={(e) => onReuseStatusChange(e.target.value as ReuseAllocationStatus | 'ALL')}
-                className="block w-full py-1.5 px-2.5 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
               >
                 <option value="ALL">All Statuses</option>
                 <option value="AVAILABLE">Available</option>
@@ -213,35 +210,16 @@ function FilterBar({
                 <option value="UNKNOWN">Unknown</option>
               </select>
             </div>
-
-            {/* Bottleneck Toggle */}
-            <div className="col-span-2 pt-1">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                <input
-                  type="checkbox"
-                  className="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                  checked={onlyBottlenecks}
-                  onChange={(e) => onOnlyBottlenecksChange(e.target.checked)}
-                  data-testid="bottleneck-only-filter"
-                />
-                <AlertTriangle className="h-3.5 w-3.5" />
-                Show only bottleneck tools
-              </label>
-            </div>
           </div>
         </div>
 
         {/* Right Column: Location Filters */}
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5" />
-            Location Hierarchy
-          </h3>
-          <div className="space-y-2">
+        <div className="space-y-1.5">
+          <div className="space-y-1.5">
             {/* Program/Project Filter */}
             {availablePrograms.length > 0 && (
               <div>
-                <label htmlFor="program-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                <label htmlFor="program-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
                   Program / Project
                 </label>
                 <select
@@ -249,7 +227,7 @@ function FilterBar({
                   data-testid="program-filter"
                   value={filters.program ?? ''}
                   onChange={(e) => onProgramChange(e.target.value === '' ? null : e.target.value)}
-                  className="block w-full py-1.5 px-2.5 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                  className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
                 >
                   <option value="">All Programs</option>
                   {availablePrograms.map((program) => (
@@ -264,7 +242,7 @@ function FilterBar({
             {/* Area Filter */}
             {availableAreas.length > 0 && (
               <div>
-                <label htmlFor="area-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
+                <label htmlFor="area-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
                   Area
                 </label>
                 <select
@@ -272,7 +250,7 @@ function FilterBar({
                   data-testid="area-filter"
                   value={filters.area ?? ''}
                   onChange={(e) => onAreaChange(e.target.value === '' ? null : e.target.value)}
-                  className="block w-full py-1.5 px-2.5 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                  className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
                 >
                   <option value="">All Areas</option>
                   {availableAreas.map((area) => (
@@ -287,15 +265,44 @@ function FilterBar({
             {/* Line Filter */}
             {availableLines.length > 0 && (
               <div>
-                <label htmlFor="line-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">
-                  Line
-                </label>
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <label htmlFor="line-filter" className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                    Line
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => onOnlyBottlenecksChange(!onlyBottlenecks)}
+                    aria-pressed={onlyBottlenecks}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors',
+                      'text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
+                    )}
+                    data-testid="bottleneck-only-filter"
+                    title="Toggle to show only bottleneck tools"
+                  >
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <span>Only bottlenecks</span>
+                    <span
+                      className={cn(
+                        'relative inline-flex h-4 w-8 items-center rounded-full border border-gray-300 dark:border-gray-600 transition-colors',
+                        onlyBottlenecks ? 'bg-amber-500' : 'bg-gray-200 dark:bg-gray-700'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'h-3.5 w-3.5 rounded-full bg-white shadow transform transition-transform',
+                          onlyBottlenecks ? 'translate-x-3.5' : 'translate-x-0.5'
+                        )}
+                      />
+                    </span>
+                  </button>
+                </div>
                 <select
                   id="line-filter"
                   data-testid="line-filter"
                   value={filters.line ?? ''}
                   onChange={(e) => onLineChange(e.target.value === '' ? null : e.target.value)}
-                  className="block w-full py-1.5 px-2.5 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
+                  className="block w-full py-1 px-2 border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-xs"
                 >
                   <option value="">All Lines</option>
                   {availableLines.map((line) => (
@@ -312,10 +319,10 @@ function FilterBar({
 
       {/* Clear Filters Button */}
       {hasActiveFilters && (
-        <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="pt-1.5 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={onClearFilters}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
           >
             <X className="w-3.5 h-3.5" />
             Clear All Filters
@@ -339,14 +346,15 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
   const reuseCount = counts.bySourcing.REUSE ?? 0;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Total and Sourcing Counts */}
-      <SummaryCardsGrid columns={5}>
+      <SummaryCardsGrid columns={5} className="gap-3">
         <SummaryCard
           title="Total Filtered"
           value={counts.total}
           icon={<Package className="w-4 h-4" />}
           variant="default"
+          density="compact"
           data-testid="assets-total-count"
         />
         <SummaryCard
@@ -354,6 +362,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
           value={counts.bySourcing.NEW_BUY ?? 0}
           icon={<ShoppingCart className="w-4 h-4" />}
           variant="info"
+          density="compact"
           onClick={() => onFilterClick({ sourcing: 'NEW_BUY' })}
         />
         <SummaryCard
@@ -361,6 +370,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
           value={reuseCount}
           icon={<Recycle className="w-4 h-4" />}
           variant="success"
+          density="compact"
           onClick={() => onFilterClick({ sourcing: 'REUSE' })}
         />
         <SummaryCard
@@ -368,14 +378,15 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
           value={counts.bySourcing.MAKE ?? 0}
           icon={<Hammer className="w-4 h-4" />}
           variant="default"
+          density="compact"
           onClick={() => onFilterClick({ sourcing: 'MAKE' })}
         />
         <SummaryCard
           title="Unknown Sourcing"
           value={counts.unknownSourcingCount}
-          icon={<HelpCircle className="w-4 h-4" />}
+          icon={<HelpCircle className="w-4 h-4" title={counts.unknownSourcingCount > 0 ? 'Needs attention' : undefined} />}
           variant={counts.unknownSourcingCount > 0 ? 'warning' : 'default'}
-          subtitle={counts.unknownSourcingCount > 0 ? 'Needs attention' : undefined}
+          density="compact"
           onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
           data-testid="assets-unknown-sourcing"
         />
@@ -387,13 +398,14 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
           <h3 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
             Reuse Equipment Allocation
           </h3>
-          <SummaryCardsGrid columns={4}>
+          <SummaryCardsGrid columns={4} className="gap-3">
             <SummaryCard
               title="Available"
               value={counts.byReuseStatus.AVAILABLE ?? 0}
               subtitle="Ready to allocate"
               icon={<Package className="w-4 h-4" />}
               variant="success"
+              density="compact"
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'AVAILABLE' })}
             />
             <SummaryCard
@@ -402,6 +414,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
               subtitle="Planned for new line"
               icon={<Clock className="w-4 h-4" />}
               variant="info"
+              density="compact"
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'ALLOCATED' })}
             />
             <SummaryCard
@@ -410,6 +423,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
               subtitle="Installed on new line"
               icon={<CheckCircle className="w-4 h-4" />}
               variant="success"
+              density="compact"
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'IN_USE' })}
             />
             <SummaryCard
@@ -418,6 +432,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
               subtitle="Reserved for project"
               icon={<Lock className="w-4 h-4" />}
               variant="warning"
+              density="compact"
               onClick={() => onFilterClick({ sourcing: 'REUSE', reuseStatus: 'RESERVED' })}
             />
           </SummaryCardsGrid>
