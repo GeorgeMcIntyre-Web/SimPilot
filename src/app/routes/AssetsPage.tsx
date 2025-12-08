@@ -356,17 +356,8 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
   const reuseCount = counts.bySourcing.REUSE ?? 0;
 
   return (
-    <div className="space-y-2">
-      {/* Total and Sourcing Counts */}
-      <SummaryCardsGrid columns={5} className="gap-3">
-        <SummaryCard
-          title="Total Filtered"
-          value={counts.total}
-          icon={<Package className="w-4 h-4" />}
-          variant="default"
-          density="compact"
-          data-testid="assets-total-count"
-        />
+    <div className="space-y-1.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         <SummaryCard
           title="New Buy"
           value={counts.bySourcing.NEW_BUY ?? 0}
@@ -383,6 +374,9 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
           density="compact"
           onClick={() => onFilterClick({ sourcing: 'REUSE' })}
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         <SummaryCard
           title="Make"
           value={counts.bySourcing.MAKE ?? 0}
@@ -400,7 +394,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
           onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
           data-testid="assets-unknown-sourcing"
         />
-      </SummaryCardsGrid>
+      </div>
 
       {/* Reuse Allocation Status (only show if there are reuse assets) */}
       {reuseCount > 0 && (
@@ -782,27 +776,30 @@ export function AssetsPage() {
         }`}
       />
 
-      {/* Filter Bar */}
-      <FilterBar
-        filters={filters}
-        availableAreas={availableAreas}
-        availableLines={availableLines}
-        availablePrograms={availablePrograms}
-        hasActiveFilters={hasActiveFilters}
-        onlyBottlenecks={onlyBottleneckAssets}
-        onSearchChange={setSearchTerm}
-        onKindChange={setKindFilter}
-        onSourcingChange={setSourcingFilter}
-        onReuseStatusChange={setReuseStatusFilter}
-        onAreaChange={setAreaFilter}
-        onLineChange={setLineFilter}
-        onProgramChange={setProgramFilter}
-        onOnlyBottlenecksChange={setOnlyBottleneckAssets}
-        onClearFilters={handleClearAllFilters}
-      />
+      {/* Filter Bar + Metrics */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-3 items-start">
+        <FilterBar
+          filters={filters}
+          availableAreas={availableAreas}
+          availableLines={availableLines}
+          availablePrograms={availablePrograms}
+          hasActiveFilters={hasActiveFilters}
+          onlyBottlenecks={onlyBottleneckAssets}
+          onSearchChange={setSearchTerm}
+          onKindChange={setKindFilter}
+          onSourcingChange={setSourcingFilter}
+          onReuseStatusChange={setReuseStatusFilter}
+          onAreaChange={setAreaFilter}
+          onLineChange={setLineFilter}
+          onProgramChange={setProgramFilter}
+          onOnlyBottlenecksChange={setOnlyBottleneckAssets}
+          onClearFilters={handleClearAllFilters}
+        />
 
-      {/* Summary Strip */}
-      <SummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-3">
+          <SummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
+        </div>
+      </div>
 
       {/* Active Filters Indicator */}
       {showActiveFilters && (
