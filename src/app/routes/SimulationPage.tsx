@@ -12,6 +12,7 @@ import {
   SimulationFiltersBar,
   SimulationBoardGrid,
   DaleTodayPanel,
+  SimulationDetailPanel,
   SimulationDetailDrawer,
   useSimulationSync,
   useSimulationLoading,
@@ -19,7 +20,8 @@ import {
   useSimulationBoardStations,
   useFilteredStationsSummary,
   type SimulationFilters,
-  type StationContext
+  type StationContext,
+  type SortOption
 } from '../../features/simulation'
 
 // ============================================================================
@@ -41,30 +43,38 @@ function SummaryStats({
   totalReuse,
   avgCompletion
 }: SummaryStatsProps) {
+  const renderCard = (stat: { label: string; value: number | string; accent: string }) => (
+    <div
+      key={stat.label}
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 h-full flex items-center justify-between shadow-sm"
+    >
+      <div>
+        <div className={`text-xl font-bold ${stat.accent}`}>{stat.value}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</div>
+      </div>
+      <div className="h-10 w-1 rounded-full bg-gradient-to-b from-blue-200 via-purple-200 to-emerald-200 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-emerald-900/40" />
+    </div>
+  )
+
+  const stats = [
+    { label: 'Stations', value: totalStations, accent: 'text-sky-600 dark:text-sky-400' },
+    { label: 'Robots', value: totalRobots, accent: 'text-purple-600 dark:text-purple-400' },
+    { label: 'Weld Guns', value: totalGuns, accent: 'text-amber-600 dark:text-amber-400' },
+    { label: 'Reuse Items', value: totalReuse, accent: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Avg Completion', value: avgCompletion !== null ? `${avgCompletion}%` : '—', accent: 'text-blue-600 dark:text-blue-400' }
+  ]
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalStations}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Stations</div>
+    <div className="grid grid-cols-1 gap-3 h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {renderCard(stats[0])}
+        {renderCard(stats[1])}
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{totalRobots}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Robots</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {renderCard(stats[2])}
+        {renderCard(stats[3])}
       </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{totalGuns}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Weld Guns</div>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{totalReuse}</div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Reuse Items</div>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-          {avgCompletion !== null ? `${avgCompletion}%` : '—'}
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Avg Completion</div>
-      </div>
+      {renderCard(stats[4])}
     </div>
   )
 }
@@ -156,7 +166,8 @@ export function SimulationPage() {
     searchTerm: searchParams.get('search') ?? ''
   })
   const [selectedStation, setSelectedStation] = useState<StationContext | null>(null)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<SortOption>('line-asc')
+  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set())
 
   // Filtered stations
   const stations = useSimulationBoardStations(filters)
@@ -165,6 +176,18 @@ export function SimulationPage() {
     plant: filters.plant,
     unit: filters.unit
   })
+
+  // Keep expanded lines in sync with current station set
+  useEffect(() => {
+    const validKeys = new Set(stations.map(station => `${station.unit}|${station.line}`))
+    setExpandedLines(prev => {
+      const next = new Set<string>()
+      prev.forEach(key => {
+        if (validKeys.has(key)) next.add(key)
+      })
+      return next
+    })
+  }, [stations])
 
   // Sync filters to URL
   useEffect(() => {
@@ -178,12 +201,40 @@ export function SimulationPage() {
 
   const handleStationClick = (station: StationContext) => {
     setSelectedStation(station)
-    setIsDrawerOpen(true)
   }
 
-  const handleDrawerClose = () => {
-    setIsDrawerOpen(false)
+  const handleToggleLine = (lineKey: string) => {
+    setExpandedLines(prev => {
+      const next = new Set(prev)
+      if (next.has(lineKey)) {
+        next.delete(lineKey)
+      } else {
+        next.add(lineKey)
+      }
+      return next
+    })
   }
+
+  const handleExpandAll = () => {
+    // Get all line keys from the filtered stations
+    const lineKeys = new Set<string>()
+    stations.forEach(station => {
+      const lineKey = `${station.unit}|${station.line}`
+      lineKeys.add(lineKey)
+    })
+    setExpandedLines(lineKeys)
+  }
+
+  const handleCollapseAll = () => {
+    setExpandedLines(new Set())
+  }
+
+  // Calculate if all lines are expanded or collapsed
+  const totalLineCount = new Set(
+    stations.map(station => `${station.unit}|${station.line}`)
+  ).size
+  const allExpanded = expandedLines.size === totalLineCount && totalLineCount > 0
+  const allCollapsed = expandedLines.size === 0
 
   // Loading state
   if (isLoading) {
@@ -246,11 +297,15 @@ export function SimulationPage() {
       {/* Error Banner */}
       <ErrorBanner errors={errors} />
 
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Summary Stats */}
+      {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
+      <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
+        {/* Dale's Today Panel - Takes 3 columns, full height */}
+        <div className="col-span-3">
+          <DaleTodayPanel onStationClick={handleStationClick} />
+        </div>
+
+        {/* Summary Stats - Takes 2 columns, full height */}
+        <div className="col-span-2 max-h-64 overflow-y-auto">
           <SummaryStats
             totalStations={summary.totalStations}
             totalRobots={summary.totalRobots}
@@ -258,35 +313,80 @@ export function SimulationPage() {
             totalReuse={summary.totalReuse}
             avgCompletion={summary.avgCompletion}
           />
+        </div>
+      </div>
 
-          {/* Filters */}
-          <SimulationFiltersBar
-            filters={filters}
-            onFiltersChange={setFilters}
-          />
+      {/* Mobile - Stacked Layout */}
+      <div className="lg:hidden space-y-6">
+        <SummaryStats
+          totalStations={summary.totalStations}
+          totalRobots={summary.totalRobots}
+          totalGuns={summary.totalGuns}
+          totalReuse={summary.totalReuse}
+          avgCompletion={summary.avgCompletion}
+        />
+      </div>
 
-          {/* Board Grid */}
+      {/* Filters */}
+      <SimulationFiltersBar
+        filters={filters}
+        onFiltersChange={setFilters}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        onExpandAll={handleExpandAll}
+        onCollapseAll={handleCollapseAll}
+        allExpanded={allExpanded}
+        allCollapsed={allCollapsed}
+      />
+
+      {/* Split View Layout - Desktop */}
+      <div className="hidden lg:flex lg:flex-row gap-6">
+        {/* Left Side - Station List (Master) */}
+        <div className="flex-1 lg:max-w-[60%] space-y-6">
           <SimulationBoardGrid
             stations={stations}
             onStationClick={handleStationClick}
             selectedStationKey={selectedStation?.contextKey}
+            sortBy={sortBy}
+            expandedLines={expandedLines}
+            onToggleLine={handleToggleLine}
           />
         </div>
 
-        {/* Sidebar - Dale's Today Panel */}
-        <div className="lg:col-span-1">
+        {/* Right Side - Detail Panel (Detail) */}
+        <div className="lg:w-[40%]">
           <div className="sticky top-4">
-            <DaleTodayPanel onStationClick={handleStationClick} />
+            {/* Station Detail Panel */}
+            <SimulationDetailPanel
+              station={selectedStation}
+              onClose={() => setSelectedStation(null)}
+            />
           </div>
         </div>
       </div>
 
-      {/* Detail Drawer */}
-      <SimulationDetailDrawer
-        station={selectedStation}
-        isOpen={isDrawerOpen}
-        onClose={handleDrawerClose}
-      />
+      {/* Mobile Layout - Drawer */}
+      <div className="lg:hidden space-y-6">
+        {/* Dale's Today Panel */}
+        <DaleTodayPanel onStationClick={handleStationClick} />
+
+        {/* Station List */}
+        <SimulationBoardGrid
+          stations={stations}
+          onStationClick={handleStationClick}
+          selectedStationKey={selectedStation?.contextKey}
+          sortBy={sortBy}
+          expandedLines={expandedLines}
+          onToggleLine={handleToggleLine}
+        />
+
+        {/* Detail Drawer for Mobile */}
+        <SimulationDetailDrawer
+          station={selectedStation}
+          isOpen={selectedStation !== null}
+          onClose={() => setSelectedStation(null)}
+        />
+      </div>
     </div>
   )
 }

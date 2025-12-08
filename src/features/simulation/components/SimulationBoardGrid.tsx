@@ -14,10 +14,15 @@ import type { StationContext } from '../simulationStore'
 // TYPES
 // ============================================================================
 
+type SortOption = 'line-asc' | 'line-desc' | 'stations-asc' | 'stations-desc' | 'robots-asc' | 'robots-desc'
+
 interface SimulationBoardGridProps {
   stations: StationContext[]
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
+  sortBy?: SortOption
+  expandedLines?: Set<string>
+  onToggleLine?: (lineKey: string) => void
 }
 
 interface LineGroupProps {
@@ -29,7 +34,8 @@ interface LineGroupProps {
   gunCount: number
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
-  defaultExpanded?: boolean
+  isExpanded: boolean
+  onToggle: () => void
 }
 
 // ============================================================================
@@ -45,16 +51,16 @@ function LineGroup({
   gunCount,
   onStationClick,
   selectedStationKey,
-  defaultExpanded = true
+  isExpanded,
+  onToggle
 }: LineGroupProps) {
   // _lineKey is for identification but not displayed directly
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
       {/* Line Header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={onToggle}
         className={cn(
           'w-full flex items-center justify-between px-4 py-3',
           'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50',
@@ -98,7 +104,7 @@ function LineGroup({
 
       {/* Stations Grid */}
       {isExpanded && (
-        <div className="p-4 bg-white dark:bg-gray-800">
+        <div className="p-4 bg-white dark:bg-gray-800 max-h-[600px] overflow-y-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {stations.map(station => (
               <StationCard
@@ -122,15 +128,62 @@ function LineGroup({
 export function SimulationBoardGrid({
   stations,
   onStationClick,
-  selectedStationKey
+  selectedStationKey,
+  sortBy: sortByProp,
+  expandedLines: expandedLinesProp,
+  onToggleLine: onToggleLineProp
 }: SimulationBoardGridProps) {
   const groupedByLine = useStationsGroupedByLine(stations)
   const lineAggregations = useLineAggregations(stations)
 
-  // Sort lines by key for consistent ordering
-  const sortedLines = Array.from(groupedByLine.entries()).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  )
+  // Use local state as fallback if props not provided (for backwards compatibility)
+  const [localExpandedLines, setLocalExpandedLines] = useState<Set<string>>(new Set())
+  const [localSortBy, setLocalSortBy] = useState<SortOption>('line-asc')
+
+  const expandedLines = expandedLinesProp ?? localExpandedLines
+  const sortBy = sortByProp ?? localSortBy
+
+  // Sort lines based on selected option
+  const sortedLines = Array.from(groupedByLine.entries()).sort((a, b) => {
+    const [keyA, stationsA] = a
+    const [keyB, stationsB] = b
+    const aggA = lineAggregations.find(agg => agg.lineKey === keyA)
+    const aggB = lineAggregations.find(agg => agg.lineKey === keyB)
+
+    switch (sortBy) {
+      case 'line-asc':
+        return keyA.localeCompare(keyB)
+      case 'line-desc':
+        return keyB.localeCompare(keyA)
+      case 'stations-asc':
+        return stationsA.length - stationsB.length
+      case 'stations-desc':
+        return stationsB.length - stationsA.length
+      case 'robots-asc':
+        return (aggA?.assetCounts.robots ?? 0) - (aggB?.assetCounts.robots ?? 0)
+      case 'robots-desc':
+        return (aggB?.assetCounts.robots ?? 0) - (aggA?.assetCounts.robots ?? 0)
+      default:
+        return keyA.localeCompare(keyB)
+    }
+  })
+
+  const handleToggleLine = (lineKey: string) => {
+    if (onToggleLineProp) {
+      onToggleLineProp(lineKey)
+    } else {
+      // Fallback to local state if no prop handler provided
+      setLocalExpandedLines(prev => {
+        const next = new Set(prev)
+        if (next.has(lineKey)) {
+          next.delete(lineKey)
+        } else {
+          next.add(lineKey)
+        }
+        return next
+      })
+    }
+  }
 
   if (stations.length === 0) {
     return (
@@ -148,24 +201,29 @@ export function SimulationBoardGrid({
 
   return (
     <div className="space-y-4">
-      {sortedLines.map(([lineKey, lineStations]) => {
-        const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
-        if (aggregation === undefined) return null
+      {/* Line Groups - Max 10 visible with scroll */}
+      <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
+        {sortedLines.map(([lineKey, lineStations]) => {
+          const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
+          if (aggregation === undefined) return null
 
-        return (
-          <LineGroup
-            key={lineKey}
-            lineKey={lineKey}
-            unit={aggregation.unit}
-            line={aggregation.line}
-            stations={lineStations}
-            robotCount={aggregation.assetCounts.robots}
-            gunCount={aggregation.assetCounts.guns}
-            onStationClick={onStationClick}
-            selectedStationKey={selectedStationKey}
-          />
-        )
-      })}
+          return (
+            <LineGroup
+              key={lineKey}
+              lineKey={lineKey}
+              unit={aggregation.unit}
+              line={aggregation.line}
+              stations={lineStations}
+              robotCount={aggregation.assetCounts.robots}
+              gunCount={aggregation.assetCounts.guns}
+              onStationClick={onStationClick}
+              selectedStationKey={selectedStationKey}
+              isExpanded={expandedLines.has(lineKey)}
+              onToggle={() => handleToggleLine(lineKey)}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

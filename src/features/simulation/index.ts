@@ -59,3 +59,7 @@ export { SimulationBoardGrid } from './components/SimulationBoardGrid'
 export { StationCard } from './components/StationCard'
 export { DaleTodayPanel } from './components/DaleTodayPanel'
 export { SimulationDetailDrawer } from './components/SimulationDetailDrawer'
+export { SimulationDetailPanel } from './components/SimulationDetailPanel'
+
+// Component types
+export type { SortOption } from './components/SimulationFiltersBar'

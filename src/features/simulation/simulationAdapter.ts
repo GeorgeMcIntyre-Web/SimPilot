@@ -222,13 +222,22 @@ export function transformToStationContexts(state: CoreStoreState): StationContex
  */
 export function useSimulationSync(): void {
   const coreState = useCoreStore()
-  
+
   const stationContexts = useMemo(
-    () => transformToStationContexts(coreState),
-    [coreState]
+    () => {
+      console.log('[useSimulationSync] Transforming station contexts', {
+        projects: coreState.projects.length,
+        areas: coreState.areas.length,
+        cells: coreState.cells.length,
+        assets: coreState.assets.length
+      })
+      return transformToStationContexts(coreState)
+    },
+    [coreState.projects, coreState.areas, coreState.cells, coreState.assets]
   )
-  
+
   useEffect(() => {
+    console.log('[useSimulationSync] Updating simulation store with', stationContexts.length, 'stations')
     simulationStore.setStations(stationContexts)
   }, [stationContexts])
 }

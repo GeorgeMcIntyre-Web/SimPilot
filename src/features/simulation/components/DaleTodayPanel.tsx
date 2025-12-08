@@ -2,7 +2,7 @@
 // Shows shortlist of stations needing attention
 // Uses selectors to find stations with issues
 
-import { AlertCircle, AlertTriangle, Info, ChevronRight, Sparkles } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Info, ChevronRight, Sparkles, Bot, Zap, Package } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { useStationsNeedingAttention, type StationAttentionItem } from '../simulationSelectors'
 import type { StationContext } from '../simulationStore'
@@ -13,7 +13,6 @@ import type { StationContext } from '../simulationStore'
 
 interface DaleTodayPanelProps {
   onStationClick?: (station: StationContext) => void
-  maxItems?: number
 }
 
 interface AttentionItemRowProps {
@@ -38,34 +37,66 @@ function SeverityIcon({ severity }: { severity: 'error' | 'warning' | 'info' }) 
 }
 
 function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
+  const { station } = item
+
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg',
+        'w-full grid grid-cols-[auto,1fr,auto,1fr,auto] items-center gap-3 px-3 py-2 rounded-lg',
         'text-left transition-colors',
         'hover:bg-gray-100 dark:hover:bg-gray-700/50',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
       )}
       data-testid={`attention-item-${item.station.contextKey}`}
     >
-      <SeverityIcon severity={item.severity} />
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
-            {item.station.station}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-            {item.station.line}
-          </span>
-        </div>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
-          {item.reason}
-        </p>
+      {/* Severity Icon - fixed width */}
+      <div className="flex-shrink-0 w-4 flex items-center justify-center">
+        <SeverityIcon severity={item.severity} />
       </div>
 
-      <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+      {/* Station info */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-900 dark:text-white leading-snug">
+          <span className="truncate">{station.station}</span>
+          <span className="text-gray-400 dark:text-gray-500">•</span>
+          <span className="text-gray-600 dark:text-gray-400 truncate">{station.line}</span>
+          <span className="text-gray-400 dark:text-gray-500">•</span>
+          <span className="text-gray-500 dark:text-gray-400 truncate">{station.unit}</span>
+        </div>
+      </div>
+
+      {/* Asset badges */}
+      <div className="flex items-center justify-end gap-1 text-[10px]">
+        {station.assetCounts.robots > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] font-medium">
+            <Bot className="h-2 w-2" />
+            {station.assetCounts.robots}
+          </span>
+        )}
+        {station.assetCounts.guns > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-medium">
+            <Zap className="h-2 w-2" />
+            {station.assetCounts.guns}
+          </span>
+        )}
+        {station.assetCounts.total > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-[10px] font-medium">
+            <Package className="h-2 w-2" />
+            {station.assetCounts.total}
+          </span>
+        )}
+      </div>
+
+      {/* Reason */}
+      <div className="text-[11px] text-gray-600 dark:text-gray-400 text-right truncate min-w-0">
+        {item.reason}
+      </div>
+
+      {/* Chevron - fixed width */}
+      <div className="flex-shrink-0 w-4 flex items-center justify-center">
+        <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+      </div>
     </button>
   )
 }
@@ -75,13 +106,11 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
 // ============================================================================
 
 export function DaleTodayPanel({
-  onStationClick,
-  maxItems = 5
+  onStationClick
 }: DaleTodayPanelProps) {
   const attentionItems = useStationsNeedingAttention()
-  const displayedItems = attentionItems.slice(0, maxItems)
 
-  if (displayedItems.length === 0) {
+  if (attentionItems.length === 0) {
     return (
       <div 
         className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
@@ -102,44 +131,47 @@ export function DaleTodayPanel({
     )
   }
 
-  const errorCount = displayedItems.filter(i => i.severity === 'error').length
-  const warningCount = displayedItems.filter(i => i.severity === 'warning').length
+  const errorCount = attentionItems.filter(i => i.severity === 'error').length
+  const warningCount = attentionItems.filter(i => i.severity === 'warning').length
 
   return (
     <div 
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
       data-testid="dale-today-panel"
     >
       {/* Header */}
-      <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
+      <div className="px-3 py-2 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b border-amber-200 dark:border-amber-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
               Today's Focus
             </h3>
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              ({attentionItems.length})
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {errorCount > 0 && (
-              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">
-                {errorCount} critical
+              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded-full">
+                {errorCount}
               </span>
             )}
             {warningCount > 0 && (
-              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
-                {warningCount} warning
+              <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-full">
+                {warningCount}
               </span>
             )}
           </div>
         </div>
-        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-          {attentionItems.length} station{attentionItems.length !== 1 ? 's' : ''} need attention
-        </p>
       </div>
 
       {/* Items */}
-      <div className="divide-y divide-gray-100 dark:divide-gray-700">
-        {displayedItems.map(item => (
+      <div
+        className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-64 custom-scrollbar"
+        aria-label="Today's focus station list"
+      >
+        {attentionItems.map(item => (
           <AttentionItemRow
             key={item.station.contextKey}
             item={item}
@@ -147,15 +179,6 @@ export function DaleTodayPanel({
           />
         ))}
       </div>
-
-      {/* Show more */}
-      {attentionItems.length > maxItems && (
-        <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 text-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            +{attentionItems.length - maxItems} more stations
-          </span>
-        </div>
-      )}
     </div>
   )
 }
