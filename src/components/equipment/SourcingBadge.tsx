@@ -41,7 +41,7 @@ export function SourcingBadge({ sourcing }: SourcingBadgeProps) {
     const { color, icon: Icon, label } = config[sourcing]
 
     return (
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${color}`}>
             <Icon className="w-3 h-3 mr-1" />
             {label}
         </span>

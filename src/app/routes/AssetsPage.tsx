@@ -36,13 +36,8 @@ import {
 import { AssetDetailPanel } from '../../features/assets/AssetDetailPanel';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes';
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
-// TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
-// import { useToolingBottleneckState } from '../../domain/toolingBottleneckStore';
-// import {
-//   selectBottleneckStageForAsset,
-//   type SimPilotSelectorState,
-//   type AssetBottleneckSummary,
-// } from '../../domain/simPilotSelectors';
+import { useToolingBottleneckState } from '../../domain/toolingBottleneckStore';
+import type { BottleneckSeverity, BottleneckReason, WorkflowStage } from '../../domain/toolingBottleneckStore';
 import {
   Search,
   X,
@@ -243,7 +238,7 @@ function FilterBar({
                   onClick={() => onOnlyBottlenecksChange(!onlyBottlenecks)}
                   aria-pressed={onlyBottlenecks}
                   className={cn(
-                    'w-full inline-flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px] font-medium transition-colors',
+                    'inline-flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px] font-medium transition-colors whitespace-nowrap',
                     'border-gray-300 bg-white text-gray-700 hover:border-amber-400 hover:text-amber-600',
                     'dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:border-amber-400 dark:hover:text-amber-300'
                   )}
@@ -575,8 +570,7 @@ export function AssetsPage() {
   const navigate = useNavigate();
   const state = useCoreStore();
   const allAssets = state.assets;
-  // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
-  // const toolingState = useToolingBottleneckState();
+  const toolingState = useToolingBottleneckState();
 
   // Filter state
   const {
@@ -599,27 +593,32 @@ export function AssetsPage() {
   const [onlyBottleneckAssets, setOnlyBottleneckAssets] = useState(false);
 
   // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
-  // const selectorState: SimPilotSelectorState = useMemo(
-  //   () => ({
-  //     toolingBottlenecks: toolingState,
-  //     assets: allAssets,
-  //   }),
-  //   [toolingState, allAssets]
-  // );
+  const assetBottleneckMap = useMemo(() => {
+    const map = new Map<string, { stage: WorkflowStage; reason: BottleneckReason; severity: BottleneckSeverity }>();
+    if (toolingState.statuses.length === 0) {
+      return map;
+    }
 
-  // const assetBottleneckMap = useMemo(() => {
-  //   const map = new Map<string, AssetBottleneckSummary>();
-  //   if (selectorState.toolingBottlenecks.statuses.length === 0) {
-  //     return map;
-  //   }
-  //   for (const asset of allAssets) {
-  //     const summary = selectBottleneckStageForAsset(selectorState, asset.id);
-  //     if (summary === null) continue;
-  //     map.set(asset.id, summary);
-  //   }
-  //   return map;
-  // }, [selectorState, allAssets]);
-  const assetBottleneckMap = new Map(); // Placeholder until bottleneck integration is re-enabled
+    for (const asset of allAssets) {
+      const toolingNumber = extractMetadata<string>(asset, 'toolingNumber');
+      if (toolingNumber === undefined) {
+        continue;
+      }
+
+      const bottleneck = toolingState.byToolingNumber[toolingNumber];
+      if (bottleneck === undefined) {
+        continue;
+      }
+
+      map.set(asset.id, {
+        stage: bottleneck.dominantStage,
+        reason: bottleneck.bottleneckReason,
+        severity: bottleneck.severity,
+      });
+    }
+
+    return map;
+  }, [allAssets, toolingState]);
 
   // Sort state
   const [sortKey, setSortKey] = useState<SortKey>('name');

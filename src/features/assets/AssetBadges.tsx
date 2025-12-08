@@ -82,7 +82,7 @@ export function SourcingBadge({ sourcing, showIcon = true, size = 'sm', classNam
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full font-medium border',
+        'inline-flex items-center gap-1.5 rounded-full font-medium border whitespace-nowrap',
         info.bgColor,
         info.color,
         info.borderColor,
@@ -174,7 +174,7 @@ export function ReuseStatusBadge({ status, showIcon = true, size = 'sm', classNa
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full font-medium border',
+        'inline-flex items-center gap-1.5 rounded-full font-medium border whitespace-nowrap',
         info.bgColor,
         info.color,
         info.borderColor,
@@ -372,13 +372,13 @@ export function BottleneckBadge({ stage, reason, severity, className }: Bottlene
 
   return (
     <span
-      className={cn(
-        'inline-flex flex-col rounded-lg border px-2 py-1 text-[11px] font-semibold leading-tight',
-        info.bgColor,
-        info.color,
-        info.borderColor,
-        className
-      )}
+    className={cn(
+      'inline-flex flex-col rounded-lg border px-2 py-1 text-[11px] font-semibold leading-tight whitespace-nowrap',
+      info.bgColor,
+      info.color,
+      info.borderColor,
+      className
+    )}
       title={getBottleneckReasonLabel(reason).description}
     >
       <span className="inline-flex items-center gap-1">
