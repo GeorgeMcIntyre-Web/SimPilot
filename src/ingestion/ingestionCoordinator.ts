@@ -23,6 +23,10 @@ import {
   VersionComparisonResult,
   hasSignificantChanges
 } from './versionComparison'
+import { buildCrossRef } from '../domain/crossRef/CrossRefEngine'
+import { setCrossRefData } from '../hooks/useCrossRefData'
+import type { CrossRefInput, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot } from '../domain/crossRef/CrossRefTypes'
+import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 import * as XLSX from 'xlsx'
 
 // ============================================================================
@@ -159,6 +163,66 @@ function getAllDetectedSheets(
 // ============================================================================
 // MAIN INGESTION API
 // ============================================================================
+
+// ============================================================================
+// CROSSREF TRANSFORMATION HELPERS
+// ============================================================================
+
+/**
+ * Convert ApplyResult to CrossRefInput format for dashboard consumption
+ */
+function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedData').ApplyResult): CrossRefInput {
+  // Convert Cells to SimulationStatusSnapshot
+  const simulationStatusRows: SimulationStatusSnapshot[] = applyResult.cells.map(cell => ({
+    stationKey: normalizeStationId(cell.code) || cell.code,
+    areaKey: cell.areaId, // Use areaId instead of areaName
+    lineCode: cell.lineCode, // Use lineCode field
+    application: undefined, // Not available in Cell type
+    firstStageCompletion: cell.simulation?.percentComplete, // From simulation status
+    finalDeliverablesCompletion: cell.simulation?.percentComplete, // Use same value
+    dcsConfigured: undefined, // Not available in Cell type
+    engineer: cell.assignedEngineer, // Use assignedEngineer
+    raw: cell
+  }))
+
+  // Convert Tools to ToolSnapshot
+  const toolingRows: ToolSnapshot[] = applyResult.tools.map(tool => ({
+    stationKey: normalizeStationId(tool.stationNumber || '') || tool.stationNumber || '',
+    areaKey: tool.areaName,
+    toolId: tool.id,
+    simLeader: undefined, // Not in Tool type
+    simEmployee: undefined,
+    teamLeader: undefined,
+    simDueDate: undefined,
+    toolType: tool.kind,
+    raw: tool
+  }))
+
+  // Convert Robots to RobotSnapshot
+  const robotSpecsRows: RobotSnapshot[] = applyResult.robots.map(robot => ({
+    stationKey: normalizeStationId(robot.stationNumber || '') || robot.stationNumber || '',
+    robotKey: robot.id,
+    caption: robot.name,
+    eNumber: undefined, // Not in Robot type
+    hasDressPackInfo: false, // Would need to check metadata
+    oemModel: robot.oemModel,
+    raw: robot
+  }))
+
+  // Empty arrays for data types not available in ApplyResult
+  const weldGunRows: any[] = []
+  const gunForceRows: any[] = []
+  const riserRows: any[] = []
+
+  return {
+    simulationStatusRows,
+    toolingRows,
+    robotSpecsRows,
+    weldGunRows,
+    gunForceRows,
+    riserRows
+  }
+}
 
 /**
  * High-level ingestion entry point.
@@ -373,6 +437,21 @@ export async function ingestFiles(
     tools: applyResult.tools,
     warnings: warningStrings
   }, input.dataSource)
+
+  // NEW: Build and populate CrossRef data for dashboard
+  try {
+    const crossRefInput = buildCrossRefInputFromApplyResult(applyResult)
+    const crossRefResult = buildCrossRef(crossRefInput)
+    setCrossRefData(crossRefResult)
+    console.log('[Ingestion] CrossRef data populated for dashboard:', {
+      cells: crossRefResult.cells.length,
+      flags: crossRefResult.globalFlags.length,
+      stats: crossRefResult.stats
+    })
+  } catch (error) {
+    console.error('[Ingestion] Failed to build CrossRef data:', error)
+    // Don't fail the entire ingestion if CrossRef fails
+  }
 
   // Get counts from store
   const state = coreStore.getState()
