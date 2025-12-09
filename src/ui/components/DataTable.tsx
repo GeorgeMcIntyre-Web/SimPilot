@@ -1,10 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { cn } from '../lib/utils';
 
 export interface Column<T> {
     header: ReactNode;
     accessor: (item: T) => ReactNode;
     className?: string;
+    sortValue?: (item: T) => string | number | null | undefined;
 }
 
 interface DataTableProps<T> {
@@ -12,9 +13,23 @@ interface DataTableProps<T> {
     columns: Column<T>[];
     onRowClick?: (item: T) => void;
     emptyMessage?: string;
+    enableSorting?: boolean;
+    defaultSortIndex?: number;
+    defaultSortDirection?: 'asc' | 'desc';
 }
 
-export function DataTable<T>({ data, columns, onRowClick, emptyMessage = "No data available" }: DataTableProps<T>) {
+export function DataTable<T>({
+    data,
+    columns,
+    onRowClick,
+    emptyMessage = "No data available",
+    enableSorting = false,
+    defaultSortIndex,
+    defaultSortDirection = 'asc'
+}: DataTableProps<T>) {
+    const [sortIndex, setSortIndex] = useState<number | null>(enableSorting ? defaultSortIndex ?? null : null);
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
+
     if (!data || data.length === 0) {
         return (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
@@ -22,6 +37,41 @@ export function DataTable<T>({ data, columns, onRowClick, emptyMessage = "No dat
             </div>
         );
     }
+
+    const sortedData = useMemo(() => {
+        if (!enableSorting || sortIndex === null || !columns[sortIndex]?.sortValue) {
+            return data;
+        }
+        const sorter = columns[sortIndex].sortValue;
+        return [...data].sort((a, b) => {
+            const va = sorter!(a);
+            const vb = sorter!(b);
+
+            // Normalize values for comparison
+            const normalize = (v: any) => {
+                if (v === null || v === undefined) return '';
+                if (typeof v === 'string') return v.toLowerCase();
+                return v;
+            };
+
+            const na = normalize(va);
+            const nb = normalize(vb);
+
+            if (na < nb) return sortDirection === 'asc' ? -1 : 1;
+            if (na > nb) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [data, columns, enableSorting, sortDirection, sortIndex]);
+
+    const handleSortClick = (idx: number) => {
+        if (!enableSorting) return;
+        if (sortIndex === idx) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortIndex(idx);
+            setSortDirection('asc');
+        }
+    };
 
     return (
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg h-full">
@@ -38,13 +88,26 @@ export function DataTable<T>({ data, columns, onRowClick, emptyMessage = "No dat
                                         col.className
                                     )}
                                 >
-                                    {col.header}
+                                    {enableSorting && col.sortValue ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSortClick(idx)}
+                                            className="inline-flex items-center gap-1 text-left hover:text-blue-600 focus:outline-none"
+                                        >
+                                            <span>{col.header}</span>
+                                            <span className="text-[11px] text-gray-400">
+                                                {sortIndex === idx ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        col.header
+                                    )}
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                        {data.map((item, rowIdx) => (
+                        {sortedData.map((item, rowIdx) => (
                             <tr
                                 key={rowIdx}
                                 onClick={() => onRowClick?.(item)}

@@ -28,13 +28,41 @@ export function ProjectDetailPage() {
         : cells.filter((c: Cell) => c.areaId === selectedAreaId);
 
     const columns: Column<Cell>[] = [
-        { header: 'Area', accessor: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '-' },
-        { header: 'Line', accessor: (c) => c.lineCode || '-' },
-        { header: 'Station', accessor: (c) => c.code },
-        { header: 'Station Name', accessor: (c) => <Link to={`/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link> },
-        { header: 'Engineer', accessor: (c) => c.assignedEngineer || '-' },
-        { header: '% Complete', accessor: (c) => c.simulation ? `${c.simulation.percentComplete}%` : '-' },
-        { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },
+        {
+            header: 'Area',
+            accessor: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '-',
+            sortValue: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || ''
+        },
+        {
+            header: 'Line',
+            accessor: (c) => c.lineCode || '-',
+            sortValue: (c) => c.lineCode || ''
+        },
+        {
+            header: 'Station',
+            accessor: (c) => c.code,
+            sortValue: (c) => c.code || ''
+        },
+        {
+            header: 'Station Name',
+            accessor: (c) => <Link to={`/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link>,
+            sortValue: (c) => c.name
+        },
+        {
+            header: 'Engineer',
+            accessor: (c) => c.assignedEngineer || '-',
+            sortValue: (c) => c.assignedEngineer || ''
+        },
+        {
+            header: '% Complete',
+            accessor: (c) => c.simulation ? `${c.simulation.percentComplete}%` : '-',
+            sortValue: (c) => c.simulation?.percentComplete ?? -1
+        },
+        {
+            header: 'Status',
+            accessor: (c) => <StatusPill status={c.status} />,
+            sortValue: (c) => c.status
+        },
     ];
 
     return (
@@ -110,6 +138,8 @@ export function ProjectDetailPage() {
                             <DataTable
                                 data={filteredCells}
                                 columns={columns}
+                                enableSorting
+                                defaultSortIndex={2}
                                 emptyMessage="No cells found for this area."
                             />
                         </div>
