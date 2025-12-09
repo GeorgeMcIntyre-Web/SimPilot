@@ -350,11 +350,11 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
   const reuseCount = counts.bySourcing.REUSE ?? 0;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="space-y-2 flex flex-col h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div
           onClick={() => onFilterClick({ sourcing: 'NEW_BUY' })}
-          className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-4 transition-all hover:shadow-md cursor-pointer"
+          className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3 transition-all hover:shadow-md cursor-pointer"
         >
           <div className="flex items-start gap-3">
             <div className="mt-0.5 text-blue-500">
@@ -362,7 +362,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
                   {counts.bySourcing.NEW_BUY ?? 0}
                 </span>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
@@ -375,7 +375,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
 
         <div
           onClick={() => onFilterClick({ sourcing: 'REUSE' })}
-          className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-4 transition-all hover:shadow-md cursor-pointer"
+          className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-3 transition-all hover:shadow-md cursor-pointer"
         >
           <div className="flex items-start gap-3">
             <div className="mt-0.5 text-emerald-500">
@@ -383,7 +383,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
                   {reuseCount}
                 </span>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
@@ -395,10 +395,10 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div
           onClick={() => onFilterClick({ sourcing: 'MAKE' })}
-          className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-4 transition-all hover:shadow-md cursor-pointer"
+          className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-3 transition-all hover:shadow-md cursor-pointer"
         >
           <div className="flex items-start gap-3">
             <div className="mt-0.5 text-gray-500 dark:text-gray-400">
@@ -406,7 +406,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">
+                <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
                   {counts.bySourcing.MAKE ?? 0}
                 </span>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
@@ -420,7 +420,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
         <div
           onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
           className={cn(
-            "rounded-lg border p-4 transition-all hover:shadow-md cursor-pointer",
+            "rounded-lg border p-3 transition-all hover:shadow-md cursor-pointer",
             counts.unknownSourcingCount > 0
               ? "border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800"
               : "border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700"
@@ -431,13 +431,13 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
             <div className={cn(
               "mt-0.5",
               counts.unknownSourcingCount > 0 ? "text-amber-500" : "text-gray-500 dark:text-gray-400"
-            )}>
+              )}>
               <HelpCircle className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
                 <span className={cn(
-                  "text-2xl font-bold",
+                  "text-xl font-bold",
                   counts.unknownSourcingCount > 0
                     ? "text-amber-700 dark:text-amber-300"
                     : "text-gray-700 dark:text-gray-300"
@@ -626,7 +626,7 @@ export function AssetsPage() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 8;
 
   // Detail panel state
   const [selectedAsset, setSelectedAsset] = useState<AssetWithMetadata | null>(null);
@@ -898,25 +898,27 @@ export function AssetsPage() {
 
       {/* Filter Bar + Metrics */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-3 items-start">
-        <FilterBar
-          filters={filters}
-          availableAreas={availableAreas}
-          availableLines={availableLines}
-          availablePrograms={availablePrograms}
-          hasActiveFilters={hasActiveFilters}
-          onlyBottlenecks={onlyBottleneckAssets}
-          onSearchChange={setSearchTerm}
-          onKindChange={setKindFilter}
-          onSourcingChange={setSourcingFilter}
-          onReuseStatusChange={setReuseStatusFilter}
-          onAreaChange={setAreaFilter}
-          onLineChange={setLineFilter}
-          onProgramChange={setProgramFilter}
-          onOnlyBottlenecksChange={setOnlyBottleneckAssets}
-          onClearFilters={handleClearAllFilters}
-        />
+        <div className="h-full">
+          <FilterBar
+            filters={filters}
+            availableAreas={availableAreas}
+            availableLines={availableLines}
+            availablePrograms={availablePrograms}
+            hasActiveFilters={hasActiveFilters}
+            onlyBottlenecks={onlyBottleneckAssets}
+            onSearchChange={setSearchTerm}
+            onKindChange={setKindFilter}
+            onSourcingChange={setSourcingFilter}
+            onReuseStatusChange={setReuseStatusFilter}
+            onAreaChange={setAreaFilter}
+            onLineChange={setLineFilter}
+            onProgramChange={setProgramFilter}
+            onOnlyBottlenecksChange={setOnlyBottleneckAssets}
+            onClearFilters={handleClearAllFilters}
+          />
+        </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-3">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-3 h-full flex">
           <SummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
         </div>
       </div>
