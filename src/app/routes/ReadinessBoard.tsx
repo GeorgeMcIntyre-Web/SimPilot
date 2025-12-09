@@ -125,35 +125,37 @@ export function ReadinessBoard() {
 
             {/* Kanban Board */}
             {filteredRisks.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-                    {groupedByPhase.map(({ phase, risks }) => (
-                        <div key={phase} className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-                            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-base">{PHASE_ICONS[phase]}</span>
-                                        <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                            {PHASE_LABELS[phase]}
-                                        </h3>
+                <div className="max-h-[900px] overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                        {groupedByPhase.map(({ phase, risks }) => (
+                            <div key={phase} className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+                                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base">{PHASE_ICONS[phase]}</span>
+                                            <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                                {PHASE_LABELS[phase]}
+                                            </h3>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                                            {risks.length}
+                                        </span>
                                     </div>
-                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-                                        {risks.length}
-                                    </span>
+                                </div>
+
+                                <div className="p-2 space-y-2">
+                                    {risks.map(risk => {
+                                        const cell = cells.find(c => c.id === risk.cellId)
+                                        if (!cell) return null
+
+                                        return (
+                                            <CellCard key={cell.id} cell={cell} risk={risk} />
+                                        )
+                                    })}
                                 </div>
                             </div>
-
-                            <div className="p-2 space-y-2">
-                                {risks.map(risk => {
-                                    const cell = cells.find(c => c.id === risk.cellId)
-                                    if (!cell) return null
-
-                                    return (
-                                        <CellCard key={cell.id} cell={cell} risk={risk} />
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             ) : (
                 <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
