@@ -64,7 +64,7 @@ export function useToolsFiltered(filter: { type?: ToolType; subType?: SpotWeldSu
         tools = tools.filter(t => t.toolType === 'OTHER');
     }
 
-    if (filter.subType) {
+    if (filter.subType && filter.subType !== 'ALL') {
         tools = tools.filter(t => t.subType === filter.subType);
     }
     return tools;

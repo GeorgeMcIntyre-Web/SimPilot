@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
@@ -27,6 +27,13 @@ export function ToolsPage() {
             (t.oemModel && t.oemModel.toLowerCase().includes(term))
         );
     }, [searchTerm, tools]);
+
+    // Keep subtype filter in sync with tool type to avoid invalid filtering
+    useEffect(() => {
+        if (typeFilter !== 'SPOT_WELD' && subTypeFilter !== 'ALL') {
+            setSubTypeFilter('ALL');
+        }
+    }, [typeFilter, subTypeFilter]);
 
     const columns: Column<Tool>[] = [
         {
