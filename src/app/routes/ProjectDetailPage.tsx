@@ -70,7 +70,7 @@ export function ProjectDetailPage() {
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Areas</h3>
                         </div>
-                        <div className="overflow-y-auto flex-1 p-4">
+                        <div className="overflow-y-auto flex-1 p-4 custom-scrollbar">
                             <div className="space-y-1">
                                 <button
                                     onClick={() => setSelectedAreaId('ALL')}
