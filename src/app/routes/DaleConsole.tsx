@@ -18,7 +18,7 @@ import { KpiTile } from '../../ui/components/KpiTile'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { Cell } from '../../domain/core'
 
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
+import { EmptyState } from '../../ui/components/EmptyState'
 import { FlowerAccent } from '../../ui/components/FlowerAccent'
 import { useTheme } from '../../ui/ThemeContext'
 import { PageHint } from '../../ui/components/PageHint'
@@ -56,9 +56,9 @@ export function DaleConsole() {
                         />
                     </div >
                 </div >
-                <FlowerEmptyState
-                    title="Garden is Empty"
-                    message="No simulation data found. Please load data to see your daily overview."
+                <EmptyState
+                    title="No data available"
+                    message="Load simulation data to see your daily overview."
                     ctaLabel="Go to Data Loader"
                     onCtaClick={() => navigate('/data-loader')}
                 />

@@ -13,7 +13,7 @@
 import { useState, useMemo } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { StatCard } from '../../ui/components/StatCard'
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
+import { EmptyState } from '../../ui/components/EmptyState'
 import { useCoreStore } from '../../domain/coreStore'
 import { useDataHealthStore, useReuseSummary, computeDataHealthMetrics } from '../../domain/dataHealthStore'
 import {
@@ -241,7 +241,7 @@ export function DataHealthPage() {
           title="Data Health"
           subtitle="Monitor ingestion quality and asset statistics"
         />
-        <FlowerEmptyState
+        <EmptyState
           title="No Data Loaded"
           message="Load some data from the Data Loader to see health metrics."
           ctaLabel="Go to Data Loader"

@@ -8,7 +8,7 @@ import { LayoutGrid, Table2 } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { FlowerAccent } from '../../ui/components/FlowerAccent'
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
+import { EmptyState } from '../../ui/components/EmptyState'
 import { FirstRunBanner } from '../../ui/components/FirstRunBanner'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { useHasSimulationData } from '../../ui/hooks/useDomainData'
@@ -153,7 +153,7 @@ export function DashboardPage() {
 
         <FirstRunBanner />
 
-        <FlowerEmptyState
+        <EmptyState
           title="Welcome to SimPilot"
           message="No data loaded yet. Plant some data by loading files in the Data Loader."
           ctaLabel="Go to Data Loader"

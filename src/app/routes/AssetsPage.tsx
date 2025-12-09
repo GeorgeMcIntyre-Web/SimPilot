@@ -19,7 +19,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
+import { EmptyState } from '../../ui/components/EmptyState';
 import { cn } from '../../ui/lib/utils';
 import { useCoreStore } from '../../domain/coreStore';
 import {
@@ -870,7 +870,7 @@ export function AssetsPage() {
     return (
       <div className="space-y-8">
         <PageHeader title="Assets" subtitle="View all robots, guns, and tools across projects" />
-        <FlowerEmptyState
+        <EmptyState
           title="No Assets Found"
           message="Please go to the Data Loader to import your equipment lists."
           ctaLabel="Go to Data Loader"

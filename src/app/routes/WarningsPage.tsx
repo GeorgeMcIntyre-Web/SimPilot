@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useWarnings } from '../../ui/hooks/useDomainData'
 import { AlertTriangle, FileText, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react'
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
+import { EmptyState } from '../../ui/components/EmptyState'
 import { PageHint } from '../../ui/components/PageHint'
 
 export function WarningsPage() {
@@ -80,8 +80,8 @@ export function WarningsPage() {
             {/* List */}
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
                 {Object.keys(grouped).length === 0 ? (
-                    <FlowerEmptyState
-                        title="Garden is Healthy"
+                    <EmptyState
+                        title="All Clear"
                         message="No warnings found"
                     />
                 ) : (

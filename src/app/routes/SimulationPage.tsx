@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Loader2, AlertCircle, LayoutGrid, RefreshCw } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState'
+import { EmptyState } from '../../ui/components/EmptyState'
 import {
   SimulationFiltersBar,
   SimulationBoardGrid,
@@ -257,7 +257,7 @@ export function SimulationPage() {
           title="Simulation Board"
           subtitle={<PageHint standardText="Manage simulations across all programs" flowerText="Plant some data to see your simulation garden" />}
         />
-        <FlowerEmptyState
+        <EmptyState
           title="No Simulation Data"
           message="Load simulation data from the Data Loader to see your simulation board."
           ctaLabel="Go to Data Loader"

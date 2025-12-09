@@ -12,6 +12,7 @@ export function ProjectDetailPage() {
     const areas = useAreas(projectId);
     const cells = useCells(projectId);
     const [selectedAreaId, setSelectedAreaId] = useState<string>('ALL');
+    const [areaSearch, setAreaSearch] = useState('');
 
     if (!project) {
         return (
@@ -23,6 +24,11 @@ export function ProjectDetailPage() {
     }
 
     // Filter cells by area
+    const normalizedSearch = areaSearch.trim().toLowerCase();
+    const visibleAreas = normalizedSearch
+        ? areas.filter((a: Area) => a.name.toLowerCase().includes(normalizedSearch))
+        : areas;
+
     const filteredCells = selectedAreaId === 'ALL'
         ? cells
         : cells.filter((c: Cell) => c.areaId === selectedAreaId);
@@ -98,6 +104,15 @@ export function ProjectDetailPage() {
                         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white">Areas</h3>
                         </div>
+                        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                            <input
+                                type="text"
+                                value={areaSearch}
+                                onChange={(e) => setAreaSearch(e.target.value)}
+                                placeholder="Search areas..."
+                                className="w-full text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
                         <div className="overflow-y-auto flex-1 p-4 custom-scrollbar">
                             <div className="space-y-1">
                                 <button
@@ -109,7 +124,7 @@ export function ProjectDetailPage() {
                                 >
                                     All Areas
                                 </button>
-                                {areas.map((area: Area) => (
+                                {visibleAreas.map((area: Area) => (
                                     <button
                                         key={area.id}
                                         onClick={() => setSelectedAreaId(area.id)}
@@ -121,6 +136,11 @@ export function ProjectDetailPage() {
                                         {area.name}
                                     </button>
                                 ))}
+                                {visibleAreas.length === 0 && (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 px-1 py-2">
+                                        No areas match your search.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

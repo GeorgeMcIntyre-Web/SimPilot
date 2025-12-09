@@ -7,7 +7,7 @@ import { useAllEngineerMetrics, useCells } from '../../ui/hooks/useDomainData';
 import { Search, ArrowUpDown, Copy, Check, AlertTriangle } from 'lucide-react';
 import { Cell } from '../../domain/core';
 import { useNavigate } from 'react-router-dom';
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
+import { EmptyState } from '../../ui/components/EmptyState';
 
 type SortKey = 'name' | 'cellCount' | 'atRiskCellsCount' | 'avgCompletion';
 type SortDirection = 'asc' | 'desc';
@@ -121,7 +121,7 @@ export function EngineersPage() {
         return (
             <div className="space-y-8">
                 <PageHeader title="Engineers" subtitle="Workload & risk overview" />
-                <FlowerEmptyState
+                <EmptyState
                     title="No Engineers Found"
                     message="Ensure 'PERSONS RESPONSIBLE' is filled in the Simulation Status Excel files."
                     ctaLabel="Go to Data Loader"

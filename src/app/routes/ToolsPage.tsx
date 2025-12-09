@@ -5,7 +5,7 @@ import { DataTable, Column } from '../../ui/components/DataTable';
 import { Tag } from '../../ui/components/Tag';
 import { useToolsFiltered, ToolType, SpotWeldSubType, Tool } from '../../ui/hooks/useDomainData';
 import { Search, ArrowUpDown, Wrench, Layers } from 'lucide-react';
-import { FlowerEmptyState } from '../../ui/components/FlowerEmptyState';
+import { EmptyState } from '../../ui/components/EmptyState';
 
 type SortKey = 'name' | 'stationCode' | 'toolType' | 'oemModel';
 type SortDirection = 'asc' | 'desc';
@@ -95,7 +95,7 @@ export function ToolsPage() {
         return (
             <div className="space-y-8">
                 <PageHeader title="Tools & Equipment" subtitle="Manage all tools across projects" />
-                <FlowerEmptyState
+                <EmptyState
                     title="No Tools Found"
                     message="Please go to the Data Loader to import your equipment lists."
                     ctaLabel="Go to Data Loader"
