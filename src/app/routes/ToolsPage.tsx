@@ -4,97 +4,71 @@ import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { Tag } from '../../ui/components/Tag';
 import { useToolsFiltered, ToolType, SpotWeldSubType, Tool } from '../../ui/hooks/useDomainData';
-import { Search, ArrowUpDown, Wrench, Layers } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { EmptyState } from '../../ui/components/EmptyState';
-
-type SortKey = 'name' | 'stationCode' | 'toolType' | 'oemModel';
-type SortDirection = 'asc' | 'desc';
+import { PageHint } from '../../ui/components/PageHint';
 
 export function ToolsPage() {
     const [typeFilter, setTypeFilter] = useState<ToolType | 'ALL'>('ALL');
     const [subTypeFilter, setSubTypeFilter] = useState<SpotWeldSubType | 'ALL'>('ALL');
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortKey, setSortKey] = useState<SortKey>('name');
-    const [sortDir, setSortDir] = useState<SortDirection>('asc');
 
     const tools = useToolsFiltered({
         type: typeFilter === 'ALL' ? undefined : typeFilter,
         subType: subTypeFilter === 'ALL' ? undefined : subTypeFilter
     });
 
-    // Filter by search term
     const filteredTools = useMemo(() => {
-        return tools.filter(t => {
-            if (!searchTerm) return true;
-            const term = searchTerm.toLowerCase();
-            return (
-                t.name.toLowerCase().includes(term) ||
-                (t.stationCode && t.stationCode.toLowerCase().includes(term)) ||
-                (t.oemModel && t.oemModel.toLowerCase().includes(term))
-            );
-        });
+        if (!searchTerm) return tools;
+        const term = searchTerm.toLowerCase();
+        return tools.filter(t =>
+            t.name.toLowerCase().includes(term) ||
+            (t.stationCode && t.stationCode.toLowerCase().includes(term)) ||
+            (t.oemModel && t.oemModel.toLowerCase().includes(term))
+        );
     }, [searchTerm, tools]);
 
-    // Sort
-    const sortedTools = [...filteredTools].sort((a, b) => {
-        let valA: string | number = '';
-        let valB: string | number = '';
-
-        if (sortKey === 'name') {
-            valA = a.name;
-            valB = b.name;
-        } else if (sortKey === 'stationCode') {
-            valA = a.stationCode || '';
-            valB = b.stationCode || '';
-        } else if (sortKey === 'toolType') {
-            valA = a.toolType;
-            valB = b.toolType;
-        } else if (sortKey === 'oemModel') {
-            valA = a.oemModel || '';
-            valB = b.oemModel || '';
-        }
-
-        if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-        if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-    });
-
-    const handleSort = (key: SortKey) => {
-        if (sortKey === key) {
-            setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortKey(key);
-            setSortDir('asc');
-        }
-    };
-
-    const SortHeader = ({ label, keyName }: { label: string, keyName: SortKey }) => (
-        <button
-            onClick={() => handleSort(keyName)}
-            className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 font-medium text-sm"
-        >
-            <span>{label}</span>
-            <ArrowUpDown className="h-3 w-3" />
-        </button>
-    );
-
     const columns: Column<Tool>[] = [
-        { header: <SortHeader label="Tool Name" keyName="name" />, accessor: (t) => t.name },
-        { header: <SortHeader label="Type" keyName="toolType" />, accessor: (t) => <Tag label={t.toolType} color="blue" /> },
-        { header: 'Subtype', accessor: (t) => t.subType ? <Tag label={t.subType} color="gray" /> : '-' },
-        { header: 'Line', accessor: (t) => t.lineCode || '-' },
-        { header: <SortHeader label="Station" keyName="stationCode" />, accessor: (t) => t.stationCode || '-' },
-        { header: <SortHeader label="Model" keyName="oemModel" />, accessor: (t) => t.oemModel || '-' },
-        { header: 'Reuse', accessor: (t) => t.reuseStatus || '-' },
-        { header: 'Source', accessor: (t) => t.sourceFile ? <span className="text-xs text-gray-500" title={t.sourceFile}>{t.sourceFile.split('/').pop()}</span> : '-' },
+        {
+            header: 'Tool Name',
+            accessor: (t) => t.name,
+            sortValue: (t) => t.name
+        },
+        {
+            header: 'Type',
+            accessor: (t) => <Tag label={t.toolType} color="blue" />,
+            sortValue: (t) => t.toolType
+        },
+        {
+            header: 'Subtype',
+            accessor: (t) => t.subType ? <Tag label={t.subType} color="gray" /> : '-',
+            sortValue: (t) => t.subType || ''
+        },
+        { header: 'Line', accessor: (t) => t.lineCode || '-', sortValue: (t) => t.lineCode || '' },
+        {
+            header: 'Station',
+            accessor: (t) => t.stationCode || '-',
+            sortValue: (t) => t.stationCode || ''
+        },
+        { header: 'Model', accessor: (t) => t.oemModel || '-', sortValue: (t) => t.oemModel || '' },
+        { header: 'Reuse', accessor: (t) => t.reuseStatus || '-', sortValue: (t) => t.reuseStatus || '' },
+        { header: 'Source', accessor: (t) => t.sourceFile ? <span className="text-xs text-gray-500" title={t.sourceFile}>{t.sourceFile.split('/').pop()}</span> : '-', sortValue: (t) => t.sourceFile || '' },
     ];
 
     const navigate = useNavigate();
 
     if (tools.length === 0 && typeFilter === 'ALL' && subTypeFilter === 'ALL' && !searchTerm) {
         return (
-            <div className="space-y-8">
-                <PageHeader title="Tools & Equipment" subtitle="Manage all tools across projects" />
+            <div className="space-y-4">
+                <PageHeader
+                    title="Tools & Equipment"
+                    subtitle={
+                        <PageHint
+                            standardText="Manage all tools across projects"
+                            flowerText="Where every gripper, gun, and gadget finds its purpose."
+                        />
+                    }
+                />
                 <EmptyState
                     title="No Tools Found"
                     message="Please go to the Data Loader to import your equipment lists."
@@ -105,94 +79,97 @@ export function ToolsPage() {
         );
     }
 
+    const hasActiveFilters = typeFilter !== 'ALL' || subTypeFilter !== 'ALL' || searchTerm.trim() !== '';
+
     return (
-        <div className="space-y-6">
-            <PageHeader title="Tools & Equipment" subtitle="Manage all tools across projects" />
+        <div className="space-y-4">
+            <PageHeader
+                title="Tools & Equipment"
+                subtitle={
+                    <PageHint
+                        standardText="Manage all tools across projects"
+                        flowerText="Where every gripper, gun, and gadget finds its purpose."
+                    />
+                }
+            />
 
-            {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-3 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div className="col-span-1 md:col-span-2">
-                        <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">Search</label>
-                        <div className="relative rounded-md">
-                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-gray-400" />
-                            </div>
-                            <input
-                                type="text"
-                                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                placeholder="Search by name, station, or model..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
+            {/* Filters Bar */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                        <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
 
-                    <div>
-                        <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">Tool Type</label>
-                        <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-md bg-gray-50 dark:bg-gray-700/60 text-gray-500 dark:text-gray-300">
-                                <Wrench className="h-4 w-4" />
-                            </div>
-                            <select
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value as ToolType | 'ALL')}
-                                className="block w-full py-2 px-2 border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                            >
-                                <option value="ALL">All Types</option>
-                                <option value="SPOT_WELD">Spot Weld</option>
-                                <option value="SEALER">Sealer</option>
-                                <option value="STUD_WELD">Stud Weld</option>
-                                <option value="GRIPPER">Gripper</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {typeFilter === 'SPOT_WELD' && (
-                        <div>
-                            <label className="block text-[11px] font-medium text-gray-600 dark:text-gray-400 mb-1 uppercase tracking-wide">Subtype</label>
-                            <div className="flex items-center gap-2">
-                                <div className="p-2 rounded-md bg-gray-50 dark:bg-gray-700/60 text-gray-500 dark:text-gray-300">
-                                    <Layers className="h-4 w-4" />
-                                </div>
-                                <select
-                                    value={subTypeFilter}
-                                    onChange={(e) => setSubTypeFilter(e.target.value as SpotWeldSubType | 'ALL')}
-                                    className="block w-full py-2 px-2 border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                >
-                                    <option value="ALL">All Subtypes</option>
-                                    <option value="PNEUMATIC">Pneumatic</option>
-                                    <option value="SERVO">Servo</option>
-                                    <option value="UNKNOWN">Unknown</option>
-                                </select>
+                        {/* Search */}
+                        <div className="flex-1 min-w-0">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    className="block w-full pl-8 pr-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Search by name, station, or model..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
                             </div>
                         </div>
-                    )}
-                </div>
 
-                <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-2">
-                    <span>Showing {sortedTools.length} of {tools.length} tools</span>
-                    {(typeFilter !== 'ALL' || (typeFilter === 'SPOT_WELD' && subTypeFilter !== 'ALL') || searchTerm) && (
-                        <button
-                            onClick={() => { setSearchTerm(''); setTypeFilter('ALL'); setSubTypeFilter('ALL'); }}
-                            className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                        {/* Tool Type */}
+                        <select
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value as ToolType | 'ALL')}
+                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                            Clear filters
-                        </button>
-                    )}
+                            <option value="ALL">All Types</option>
+                            <option value="SPOT_WELD">Spot Weld</option>
+                            <option value="SEALER">Sealer</option>
+                            <option value="STUD_WELD">Stud Weld</option>
+                            <option value="GRIPPER">Gripper</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+
+                        {/* Subtype (only for SPOT_WELD) */}
+                        {typeFilter === 'SPOT_WELD' && (
+                            <select
+                                value={subTypeFilter}
+                                onChange={(e) => setSubTypeFilter(e.target.value as SpotWeldSubType | 'ALL')}
+                                className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                                <option value="ALL">All Subtypes</option>
+                                <option value="PNEUMATIC">Pneumatic</option>
+                                <option value="SERVO">Servo</option>
+                                <option value="UNKNOWN">Unknown</option>
+                            </select>
+                        )}
+
+                        <div className="flex-1" />
+
+                        {/* Count & Clear */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                                {filteredTools.length} {filteredTools.length === 1 ? 'tool' : 'tools'}
+                            </span>
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={() => { setSearchTerm(''); setTypeFilter('ALL'); setSubTypeFilter('ALL'); }}
+                                    className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline whitespace-nowrap"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Tools Table */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <DataTable
-                        data={sortedTools}
-                        columns={columns}
-                        emptyMessage="No tools found matching current filters."
-                    />
-                </div>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow rounded-lg overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 20rem)' }}>
+                <DataTable
+                    data={filteredTools}
+                    columns={columns}
+                    enableSorting
+                    defaultSortIndex={0}
+                    emptyMessage="No tools found matching current filters."
+                />
             </div>
         </div>
     );

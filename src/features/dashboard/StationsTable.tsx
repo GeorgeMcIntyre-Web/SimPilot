@@ -163,6 +163,8 @@ export function StationsTable({
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all')
   const [sortKey, setSortKey] = useState<SortKey>('risk')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   // Apply filters and sorting
   const filteredCells = useMemo(() => {
@@ -180,8 +182,20 @@ export function StationsTable({
     // Apply sorting
     result = sortCells(result, sortKey, sortDirection)
 
+    setPage(1) // reset page when filters change
     return result
   }, [cells, selectedArea, severityFilter, searchTerm, sortKey, sortDirection])
+
+  const totalPages = Math.max(1, Math.ceil(filteredCells.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const pagedCells = filteredCells.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const handlePageChange = (direction: 'prev' | 'next') => {
+    setPage(prev => {
+      if (direction === 'prev') return Math.max(1, prev - 1)
+      return Math.min(totalPages, prev + 1)
+    })
+  }
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -217,7 +231,7 @@ export function StationsTable({
       />
 
       <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[560px] overflow-y-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
@@ -279,7 +293,7 @@ export function StationsTable({
                   </td>
                 </tr>
               ) : (
-                filteredCells.map(cell => (
+                pagedCells.map(cell => (
                   <StationRow
                     key={cell.stationKey}
                     cell={cell}
@@ -289,6 +303,27 @@ export function StationsTable({
               )}
             </tbody>
           </table>
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400">
+          <span>
+            Page {currentPage} of {totalPages} • Showing {pagedCells.length} of {filteredCells.length} rows
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange('prev')}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => handlePageChange('next')}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>
