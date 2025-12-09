@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
@@ -14,6 +14,7 @@ import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
+    const location = useLocation();
     const cell = useCellById(cellId);
     const robots = useRobotsByCell(cellId || '');
     const tools = useToolsByCell(cellId || '');
@@ -35,6 +36,10 @@ export function CellDetailPage() {
             });
         }
     });
+
+    const { from: fromPath, fromLabel } = (location.state || {}) as { from?: string; fromLabel?: string };
+    const breadcrumbRootHref = fromPath || '/projects';
+    const breadcrumbRootLabel = fromLabel || 'Projects';
 
     if (!cell) {
         return (
@@ -113,7 +118,7 @@ export function CellDetailPage() {
             {/* Header */}
             <div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
-                    <Link to="/projects" className="hover:text-blue-600">Projects</Link>
+                    <Link to={breadcrumbRootHref} className="hover:text-blue-600">{breadcrumbRootLabel}</Link>
                     <span>/</span>
                     {cell.projectId && <Link to={`/projects/${cell.projectId}`} className="hover:text-blue-600">Project</Link>}
                     <span>/</span>
