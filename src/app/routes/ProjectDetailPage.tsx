@@ -63,48 +63,56 @@ export function ProjectDetailPage() {
                 />
             </div>
 
-            <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col md:flex-row gap-6" style={{ height: 'calc(100vh - 20rem)' }}>
                 {/* Left Sidebar: Areas */}
-                <div className="w-full md:w-64 flex-shrink-0">
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-                        <h3 className="font-medium text-gray-900 dark:text-white mb-3">Areas</h3>
-                        <div className="space-y-1">
-                            <button
-                                onClick={() => setSelectedAreaId('ALL')}
-                                className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === 'ALL'
-                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                                    }`}
-                            >
-                                All Areas
-                            </button>
-                            {areas.map((area: Area) => (
+                <div className="w-full md:w-64 flex-shrink-0 flex flex-col">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden flex flex-col h-full">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Areas</h3>
+                        </div>
+                        <div className="overflow-y-auto flex-1 p-4">
+                            <div className="space-y-1">
                                 <button
-                                    key={area.id}
-                                    onClick={() => setSelectedAreaId(area.id)}
-                                    className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === area.id
+                                    onClick={() => setSelectedAreaId('ALL')}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === 'ALL'
                                         ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
                                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                                         }`}
                                 >
-                                    {area.name}
+                                    All Areas
                                 </button>
-                            ))}
+                                {areas.map((area: Area) => (
+                                    <button
+                                        key={area.id}
+                                        onClick={() => setSelectedAreaId(area.id)}
+                                        className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedAreaId === area.id
+                                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            }`}
+                                    >
+                                        {area.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Content: Stations Table */}
-                <div className="flex-1">
-                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            Stations ({filteredCells.length})
-                        </h3>
-                        <DataTable
-                            data={filteredCells}
-                            columns={columns}
-                            emptyMessage="No cells found for this area."
-                        />
+                <div className="flex-1 flex flex-col">
+                    <div className="bg-white dark:bg-gray-800 shadow rounded-lg flex flex-col h-full overflow-hidden">
+                        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                Stations ({filteredCells.length})
+                            </h3>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <DataTable
+                                data={filteredCells}
+                                columns={columns}
+                                emptyMessage="No cells found for this area."
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

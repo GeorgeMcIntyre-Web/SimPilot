@@ -1,29 +1,43 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
-import { DataTable, Column } from '../../ui/components/DataTable';
-import { StatusPill } from '../../ui/components/StatusPill';
 import { useAllProjectMetrics } from '../../ui/hooks/useDomainData';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Building2, Users, AlertTriangle, TrendingUp, Grid, List } from 'lucide-react';
+import { cn } from '../../ui/lib/utils';
+import { PageHint } from '../../ui/components/PageHint';
 
-type SortKey = 'name' | 'avgCompletion' | 'atRiskCellsCount';
+type SortKey = 'name' | 'avgCompletion' | 'atRiskCellsCount' | 'cellCount';
 type SortDirection = 'asc' | 'desc';
+type ViewMode = 'grid' | 'list';
 
 export function ProjectsPage() {
     const projects = useAllProjectMetrics();
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDirection>('asc');
+    const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
     if (projects.length === 0) {
         return (
-            <div className="space-y-8">
-                <PageHeader title="Projects" subtitle="Manage all simulation projects" />
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
-                    <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">No Projects Found</h3>
-                    <p className="text-blue-700 dark:text-blue-300 mb-4">
+            <div className="space-y-4">
+                <PageHeader
+                    title="Projects"
+                    subtitle={
+                        <PageHint
+                            standardText="Manage all simulation projects"
+                            flowerText="Where manufacturing dreams take shape."
+                        />
+                    }
+                />
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 text-center">
+                    <Building2 className="h-12 w-12 text-blue-400 mx-auto mb-3" />
+                    <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100 mb-2">No Projects Found</h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
                         Please go to the Data Loader to import your simulation files.
                     </p>
-                    <Link to="/data-loader" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <Link
+                        to="/data-loader"
+                        className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                    >
                         Go to Data Loader
                     </Link>
                 </div>
@@ -40,12 +54,15 @@ export function ProjectsPage() {
         setSortDir('asc');
     };
 
+    type ProjectWithMetrics = typeof projects[0];
+
     const getSortedProjects = () => {
         return [...projects].sort((a, b) => {
             const getValue = (project: ProjectWithMetrics, key: SortKey): any => {
                 if (key === 'name') return project.name;
                 if (key === 'avgCompletion') return project.avgCompletion;
                 if (key === 'atRiskCellsCount') return project.atRiskCellsCount;
+                if (key === 'cellCount') return project.cellCount;
                 return '';
             };
 
@@ -58,37 +75,226 @@ export function ProjectsPage() {
         });
     };
 
-    const SortHeader = ({ label, keyName }: { label: string, keyName: SortKey }) => (
-        <button
-            onClick={() => handleSort(keyName)}
-            className="flex items-center space-x-1 hover:text-blue-600 font-medium"
-        >
-            <span>{label}</span>
-            <ArrowUpDown className="h-3 w-3" />
-        </button>
-    );
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'active':
+                return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800';
+            case 'onHold':
+                return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800';
+            case 'completed':
+                return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800';
+            default:
+                return 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700';
+        }
+    };
 
-    // We need to define the type of the item in the table, which includes metrics
-    type ProjectWithMetrics = typeof projects[0];
-
-    const columns: Column<ProjectWithMetrics>[] = [
-        { header: <SortHeader label="Project Name" keyName="name" />, accessor: (p) => <Link to={`/projects/${p.id}`} className="text-blue-600 hover:underline font-medium">{p.name}</Link> },
-        { header: 'Customer', accessor: (p) => p.customer },
-        { header: 'Station Count', accessor: (p) => p.cellCount },
-        { header: <SortHeader label="Avg % Complete" keyName="avgCompletion" />, accessor: (p) => `${p.avgCompletion}%` },
-        {
-            header: <SortHeader label="At Risk" keyName="atRiskCellsCount" />,
-            accessor: (p) => p.atRiskCellsCount > 0
-                ? <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">{p.atRiskCellsCount} Stations</span>
-                : <span className="text-gray-400">-</span>
-        },
-        { header: 'Status', accessor: (p) => <StatusPill status={p.status} /> },
-    ];
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case 'active': return 'Active';
+            case 'onHold': return 'On Hold';
+            case 'completed': return 'Completed';
+            default: return status;
+        }
+    };
 
     return (
-        <div className="space-y-6">
-            <PageHeader title="Projects" subtitle="Manage all simulation projects" />
-            <DataTable data={getSortedProjects()} columns={columns} />
+        <div className="space-y-4">
+            <PageHeader
+                title="Projects"
+                subtitle={
+                    <PageHint
+                        standardText="Manage all simulation projects"
+                        flowerText="Where manufacturing dreams take shape."
+                    />
+                }
+            />
+
+            {/* Controls Bar */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {/* Sort Dropdown */}
+                        <select
+                            value={sortKey}
+                            onChange={(e) => {
+                                setSortKey(e.target.value as SortKey);
+                                setSortDir('asc');
+                            }}
+                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="name">Sort by Name</option>
+                            <option value="cellCount">Sort by Station Count</option>
+                            <option value="avgCompletion">Sort by Completion</option>
+                            <option value="atRiskCellsCount">Sort by At Risk</option>
+                        </select>
+
+                        <button
+                            onClick={() => setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')}
+                            className="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                            title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+                        >
+                            <ArrowUpDown className={cn("h-4 w-4 text-gray-600 dark:text-gray-300 transition-transform", sortDir === 'desc' && 'rotate-180')} />
+                        </button>
+
+                        {/* View Toggle */}
+                        <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={cn(
+                                    "p-1.5 transition-colors",
+                                    viewMode === 'grid'
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                )}
+                                title="Grid View"
+                            >
+                                <Grid className="h-4 w-4" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={cn(
+                                    "p-1.5 transition-colors border-l border-gray-300 dark:border-gray-600",
+                                    viewMode === 'list'
+                                        ? "bg-blue-600 text-white"
+                                        : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+                                )}
+                                title="List View"
+                            >
+                                <List className="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Projects Grid/List */}
+            {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {getSortedProjects().map((project) => (
+                        <Link
+                            key={project.id}
+                            to={`/projects/${project.id}`}
+                            className="block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                        >
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-b border-blue-200 dark:border-blue-800 px-4 py-3">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                                        <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                        <div className="min-w-0 flex-1">
+                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                                {project.name}
+                                            </h3>
+                                            {project.customer && (
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate mt-0.5">
+                                                    {project.customer}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded border whitespace-nowrap", getStatusColor(project.status))}>
+                                        {getStatusLabel(project.status)}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-4 space-y-3">
+                                {/* Metrics Row */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-2">
+                                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-1">
+                                            <Users className="h-3 w-3" />
+                                            <span className="text-[10px] font-medium">Stations</span>
+                                        </div>
+                                        <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                            {project.cellCount}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-2">
+                                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-1">
+                                            <TrendingUp className="h-3 w-3" />
+                                            <span className="text-[10px] font-medium">Completion</span>
+                                        </div>
+                                        <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                            {project.avgCompletion}%
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* At Risk */}
+                                {project.atRiskCellsCount > 0 && (
+                                    <div className="flex items-center gap-1.5 px-2 py-1.5 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-md">
+                                        <AlertTriangle className="h-3 w-3 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+                                        <span className="text-xs font-medium text-rose-700 dark:text-rose-400">
+                                            {project.atRiskCellsCount} {project.atRiskCellsCount === 1 ? 'station' : 'stations'} at risk
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                    {getSortedProjects().map((project, idx) => (
+                        <Link
+                            key={project.id}
+                            to={`/projects/${project.id}`}
+                            className={cn(
+                                "flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors",
+                                idx !== projects.length - 1 && "border-b border-gray-200 dark:border-gray-700"
+                            )}
+                        >
+                            <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                        {project.name}
+                                    </h3>
+                                    <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap", getStatusColor(project.status))}>
+                                        {getStatusLabel(project.status)}
+                                    </span>
+                                </div>
+                                {project.customer && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                        {project.customer}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-4 flex-shrink-0">
+                                <div className="text-right">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">Stations</div>
+                                    <div className="text-sm font-bold text-gray-900 dark:text-white">{project.cellCount}</div>
+                                </div>
+
+                                <div className="text-right">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">Complete</div>
+                                    <div className="text-sm font-bold text-gray-900 dark:text-white">{project.avgCompletion}%</div>
+                                </div>
+
+                                {project.atRiskCellsCount > 0 && (
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded">
+                                        <AlertTriangle className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                                        <span className="text-xs font-medium text-rose-700 dark:text-rose-400 whitespace-nowrap">
+                                            {project.atRiskCellsCount} at risk
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

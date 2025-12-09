@@ -24,8 +24,8 @@ export function DataTable<T>({ data, columns, onRowClick, emptyMessage = "No dat
     }
 
     return (
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-            <div className="overflow-y-auto max-h-[calc(100vh-24rem)]">
+        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg h-full">
+            <div className="overflow-y-auto h-full">
                 <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                         <tr>
