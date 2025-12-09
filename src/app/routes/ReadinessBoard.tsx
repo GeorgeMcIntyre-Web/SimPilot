@@ -4,23 +4,53 @@ import { PageHeader } from '../../ui/components/PageHeader'
 import { useCells, useProjects } from '../../domain/coreStore'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { SchedulePhase, Cell } from '../../domain/core'
-import { Filter, Calendar, User } from 'lucide-react'
+import { Filter, Calendar, User, Clock } from 'lucide-react'
 import { PageHint } from '../../ui/components/PageHint'
+import { cn } from '../../ui/lib/utils'
 
 const PHASE_LABELS: Record<SchedulePhase, string> = {
     unspecified: 'Unspecified',
-    presim: '🌱 Pre-Simulation',
-    offline: '🌿 Offline Programming',
-    onsite: '🌷 On-Site',
-    rampup: '🌻 Ramp-Up',
-    handover: '💐 Handover'
+    presim: 'Pre-Simulation',
+    offline: 'Offline Programming',
+    onsite: 'On-Site',
+    rampup: 'Ramp-Up',
+    handover: 'Handover'
 }
 
-const STATUS_COLORS = {
-    onTrack: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    atRisk: 'bg-amber-100 text-amber-800 border-amber-200',
-    late: 'bg-rose-100 text-rose-800 border-rose-200',
-    unknown: 'bg-gray-100 text-gray-600 border-gray-200'
+const PHASE_ICONS: Record<SchedulePhase, string> = {
+    unspecified: '⚪',
+    presim: '🌱',
+    offline: '🌿',
+    onsite: '🌷',
+    rampup: '🌻',
+    handover: '💐'
+}
+
+const STATUS_STYLES = {
+    onTrack: {
+        bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+        text: 'text-emerald-700 dark:text-emerald-400',
+        border: 'border-emerald-200 dark:border-emerald-800',
+        dot: 'bg-emerald-500'
+    },
+    atRisk: {
+        bg: 'bg-amber-50 dark:bg-amber-950/30',
+        text: 'text-amber-700 dark:text-amber-400',
+        border: 'border-amber-200 dark:border-amber-800',
+        dot: 'bg-amber-500'
+    },
+    late: {
+        bg: 'bg-rose-50 dark:bg-rose-950/30',
+        text: 'text-rose-700 dark:text-rose-400',
+        border: 'border-rose-200 dark:border-rose-800',
+        dot: 'bg-rose-500'
+    },
+    unknown: {
+        bg: 'bg-gray-50 dark:bg-gray-800/30',
+        text: 'text-gray-600 dark:text-gray-400',
+        border: 'border-gray-200 dark:border-gray-700',
+        dot: 'bg-gray-400'
+    }
 }
 
 export function ReadinessBoard() {
@@ -47,7 +77,7 @@ export function ReadinessBoard() {
     }).filter(g => g.risks.length > 0)
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <PageHeader
                 title="Readiness Board"
                 subtitle={
@@ -59,25 +89,25 @@ export function ReadinessBoard() {
             />
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-                <div className="flex items-center space-x-4">
-                    <Filter className="h-5 w-5 text-gray-400" />
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                    <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
 
                     <select
                         value={filterPhase}
                         onChange={(e) => setFilterPhase(e.target.value as SchedulePhase | 'all')}
-                        className="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                         <option value="all">All Phases</option>
                         {phases.map(p => (
-                            <option key={p} value={p}>{PHASE_LABELS[p]}</option>
+                            <option key={p} value={p}>{PHASE_ICONS[p]} {PHASE_LABELS[p]}</option>
                         ))}
                     </select>
 
                     <select
                         value={filterProject}
                         onChange={(e) => setFilterProject(e.target.value)}
-                        className="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                         <option value="all">All Projects</option>
                         {projects.map(p => (
@@ -87,43 +117,49 @@ export function ReadinessBoard() {
 
                     <div className="flex-1" />
 
-                    <div className="text-sm text-gray-500">
-                        {filteredRisks.length} cells
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        {filteredRisks.length} {filteredRisks.length === 1 ? 'cell' : 'cells'}
                     </div>
                 </div>
             </div>
 
             {/* Kanban Board */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {groupedByPhase.map(({ phase, risks }) => (
-                    <div key={phase} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {PHASE_LABELS[phase]}
-                            <span className="ml-auto text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
-                                {risks.length}
-                            </span>
-                        </h3>
+            {filteredRisks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                    {groupedByPhase.map(({ phase, risks }) => (
+                        <div key={phase} className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
+                            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-base">{PHASE_ICONS[phase]}</span>
+                                        <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                            {PHASE_LABELS[phase]}
+                                        </h3>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                                        {risks.length}
+                                    </span>
+                                </div>
+                            </div>
 
-                        <div className="space-y-2">
-                            {risks.map(risk => {
-                                const cell = cells.find(c => c.id === risk.cellId)
-                                if (!cell) return null
+                            <div className="p-2 space-y-2">
+                                {risks.map(risk => {
+                                    const cell = cells.find(c => c.id === risk.cellId)
+                                    if (!cell) return null
 
-                                return (
-                                    <CellCard key={cell.id} cell={cell} risk={risk} />
-                                )
-                            })}
+                                    return (
+                                        <CellCard key={cell.id} cell={cell} risk={risk} />
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
-                ))}
-            </div>
-
-            {filteredRisks.length === 0 && (
-                <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">No Cells Found</h3>
-                    <p className="text-gray-500 mt-2">Adjust your filters to see more cells.</p>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <Calendar className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">No Cells Found</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Adjust your filters to see more cells.</p>
                 </div>
             )}
         </div>
@@ -137,57 +173,63 @@ interface CellCardProps {
 
 function CellCard({ cell, risk }: CellCardProps) {
     const project = useProjects().find(p => p.id === cell.projectId)
+    const styles = STATUS_STYLES[risk.status]
 
     return (
         <Link
             to={`/projects/${cell.projectId}/cells/${cell.id}`}
-            className="block bg-white dark:bg-gray-800 rounded border-l-4 shadow-sm hover:shadow-md transition-shadow p-3"
-            style={{
-                borderLeftColor:
-                    risk.status === 'late' ? '#ef4444' :
-                        risk.status === 'atRisk' ? '#f97316' :
-                            risk.status === 'onTrack' ? '#22c55e' : '#6b7280'
-            }}
+            className={cn(
+                "block rounded-md border transition-all hover:shadow-sm",
+                "bg-white dark:bg-gray-800",
+                styles.border
+            )}
         >
-            <div className="flex items-start justify-between mb-2">
-                <div className="font-medium text-sm text-gray-900 dark:text-white">
-                    {cell.name}
+            {/* Header with status */}
+            <div className={cn("px-2.5 py-1.5 border-b", styles.border, styles.bg)}>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", styles.dot)} />
+                        <span className={cn("text-[11px] font-semibold truncate", styles.text)}>
+                            {cell.name}
+                        </span>
+                    </div>
+                    {risk.completion !== null && (
+                        <span className={cn("text-[10px] font-bold flex-shrink-0", styles.text)}>
+                            {risk.completion}%
+                        </span>
+                    )}
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded border ${STATUS_COLORS[risk.status]}`}>
-                    {risk.status}
-                </span>
             </div>
 
-            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            {/* Content */}
+            <div className="px-2.5 py-2 space-y-1.5">
+                {/* Project */}
                 {project && (
-                    <div className="truncate">{project.name}</div>
+                    <div className="text-[10px] text-gray-600 dark:text-gray-400 truncate font-medium">
+                        {project.name}
+                    </div>
                 )}
 
+                {/* Engineer */}
                 {cell.assignedEngineer && (
-                    <div className="flex items-center">
-                        <User className="h-3 w-3 mr-1" />
-                        {cell.assignedEngineer}
+                    <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-500">
+                        <User className="h-2.5 w-2.5 flex-shrink-0" />
+                        <span className="truncate">{cell.assignedEngineer}</span>
                     </div>
                 )}
 
-                {risk.completion !== null && (
-                    <div className="flex items-center justify-between mt-2">
-                        <span>Progress</span>
-                        <span className="font-medium">{risk.completion}%</span>
+                {/* Due Date or Days Late */}
+                {risk.daysLate && risk.daysLate > 0 ? (
+                    <div className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
+                        <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+                        <span>{risk.daysLate}d late</span>
                     </div>
-                )}
-
-                {risk.daysLate && risk.daysLate > 0 && (
-                    <div className="text-red-600 font-medium mt-1">
-                        {risk.daysLate} days late
+                ) : cell.schedule?.dueDate ? (
+                    <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-500">
+                        <Clock className="h-2.5 w-2.5 flex-shrink-0" />
+                        <span>{new Date(cell.schedule.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </div>
-                )}
-
-                {cell.schedule?.dueDate && (
-                    <div className="text-xs text-gray-400 mt-1">
-                        Due: {new Date(cell.schedule.dueDate).toLocaleDateString()}
-                    </div>
-                )}
+                ) : null}
             </div>
         </Link>
     )
