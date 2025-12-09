@@ -2,10 +2,9 @@ import { useTheme, type ThemeMode } from '../ThemeContext';
 import { FlowerAccent } from './FlowerAccent';
 import { cn } from '../lib/utils';
 
-const modes: ThemeMode[] = ['flower', 'standard', 'professional'];
+const modes: ThemeMode[] = ['flower', 'professional'];
 const labels: Record<ThemeMode, string> = {
     flower: "Dale's Flow",
-    standard: 'Standard',
     professional: 'Professional'
 };
 
@@ -30,9 +29,7 @@ export function ThemeToggle() {
                             isActive
                                 ? (mode === 'flower'
                                     ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-200 shadow"
-                                    : mode === 'professional'
-                                        ? "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100 shadow"
-                                        : "bg-white text-gray-900 dark:bg-gray-600 dark:text-white shadow")
+                                    : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100 shadow")
                                 : "text-gray-600 dark:text-gray-300 hover:bg-white/60 dark:hover:bg-gray-600/60"
                         )}
                         title={`Switch to ${labels[mode]} mode`}
@@ -43,9 +40,6 @@ export function ThemeToggle() {
                             ) : (
                                 <span className="w-3 h-3 rounded-full bg-rose-300 inline-block" aria-hidden="true" />
                             )
-                        )}
-                        {mode === 'standard' && (
-                            <span className="w-4 h-4 rounded-full bg-gray-400 inline-block" aria-hidden="true" />
                         )}
                         {mode === 'professional' && (
                             <span className="w-4 h-4 rounded-full bg-slate-600 inline-block" aria-hidden="true" />

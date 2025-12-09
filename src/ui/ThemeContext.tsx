@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getUserPreference, setUserPreference } from '../utils/prefsStorage';
 
-export type ThemeMode = 'standard' | 'flower' | 'professional';
+export type ThemeMode = 'flower' | 'professional';
 
 interface ThemeContextType {
     themeMode: ThemeMode;
@@ -11,9 +11,10 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [themeMode, setThemeModeState] = useState<ThemeMode>(() =>
-        getUserPreference<ThemeMode>('themeMode', 'flower')
-    );
+    const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
+        const saved = getUserPreference<string>('themeMode', 'flower');
+        return saved === 'professional' ? 'professional' : 'flower';
+    });
 
     useEffect(() => {
         setUserPreference('themeMode', themeMode);

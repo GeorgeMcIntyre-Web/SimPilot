@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, User, Settings, Palette, Briefcase } from 'lucide-react';
+import { ChevronDown, LogOut, User, Settings, Briefcase } from 'lucide-react';
 import { useTheme, type ThemeMode } from '../../../ThemeContext';
 import { FlowerAccent } from '../../FlowerAccent';
 
@@ -45,14 +45,11 @@ export function UserProfileDropdown({
 
     const themeLabel: Record<ThemeMode, string> = {
         flower: "Dale's Flow",
-        standard: 'Standard',
         professional: 'Professional',
     };
 
     const nextTheme = (current: ThemeMode): ThemeMode => {
-        if (current === 'flower') return 'standard';
-        if (current === 'standard') return 'professional';
-        return 'flower';
+        return current === 'flower' ? 'professional' : 'flower';
     };
 
     return (
@@ -154,10 +151,8 @@ export function UserProfileDropdown({
                             <div className="flex items-center">
                                 {themeMode === 'flower' ? (
                                     <FlowerAccent className="w-3.5 h-3.5 mr-2 text-rose-500" />
-                                ) : themeMode === 'professional' ? (
-                                    <Briefcase className="w-3.5 h-3.5 mr-2 text-slate-600 dark:text-slate-300" />
                                 ) : (
-                                    <Palette className="w-3.5 h-3.5 mr-2" />
+                                    <Briefcase className="w-3.5 h-3.5 mr-2 text-slate-600 dark:text-slate-300" />
                                 )}
                                 Theme
                             </div>
