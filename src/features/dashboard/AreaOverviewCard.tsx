@@ -1,10 +1,12 @@
 // Area Overview Card
 // Card showing station health breakdown for an area
 
-import { Layers } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Layers, AlertTriangle } from 'lucide-react'
 import { cn } from '../../ui/lib/utils'
 import { AreaCounts } from './dashboardUtils'
 import { EmptyState } from '../../ui/components/EmptyState'
+import { FixedSizeGrid as VirtualGrid } from 'react-window'
 
 interface AreaOverviewCardProps {
   areaKey: string
@@ -22,6 +24,24 @@ export function AreaOverviewCard({
   density = 'comfortable'
 }: AreaOverviewCardProps) {
   const { total, critical, atRisk, ok } = counts
+  const healthState =
+    critical > 0
+      ? {
+          label: 'Critical',
+          badge: 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800',
+          iconClass: 'text-rose-500'
+        }
+      : atRisk > 0
+        ? {
+            label: 'Watch',
+            badge: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800',
+            iconClass: 'text-amber-500'
+          }
+        : {
+            label: 'Healthy',
+            badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
+            iconClass: 'text-emerald-500'
+          }
 
   // Calculate percentage for progress bar
   const okPercent = total > 0 ? (ok / total) * 100 : 0
@@ -69,6 +89,12 @@ export function AreaOverviewCard({
             </div>
             <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-indigo-100 dark:border-indigo-700">
               {total} total
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold', healthState.badge)}>
+              <AlertTriangle className={cn('h-3.5 w-3.5', healthState.iconClass)} />
+              {healthState.label}
             </span>
           </div>
         </div>
@@ -155,6 +181,32 @@ export function AreaCardsGrid({
   onSelectArea,
   density = 'comfortable'
 }: AreaCardsGridProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [containerWidth, setContainerWidth] = useState<number>(0)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width
+      if (width) setContainerWidth(width)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const gap = 12 // matches gap-3
+  const cardHeight = density === 'compact' ? 138 : 158
+
+  const columns = useMemo(() => {
+    if (containerWidth >= 1400) return 4
+    if (containerWidth >= 1100) return 3
+    if (containerWidth >= 640) return 2
+    return 1
+  }, [containerWidth])
+
+  const virtualize = containerWidth > 0 && areas.length > 20
+
   const handleCardClick = (areaKey: string) => {
     // Toggle selection
     if (selectedArea === areaKey) {
@@ -173,18 +225,70 @@ export function AreaCardsGrid({
     )
   }
 
+  if (!virtualize) {
+    return (
+      <div
+        ref={containerRef}
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3"
+      >
+        {areas.map(({ areaKey, counts }) => (
+          <AreaOverviewCard
+            key={areaKey}
+            areaKey={areaKey}
+            counts={counts}
+            isSelected={selectedArea === areaKey}
+            density={density}
+            onClick={() => handleCardClick(areaKey)}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  // Virtualized grid for large datasets
+  const usableWidth = Math.max(containerWidth - gap * (columns - 1), 0)
+  const itemWidth = Math.max(Math.floor(usableWidth / columns), 120)
+  const columnWidth = itemWidth + gap
+  const rowHeight = cardHeight + gap
+  const rowCount = Math.ceil(areas.length / columns)
+  const height = Math.min(460, rowCount * rowHeight)
+  const gridWidth = containerWidth
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
-      {areas.map(({ areaKey, counts }) => (
-        <AreaOverviewCard
-          key={areaKey}
-          areaKey={areaKey}
-          counts={counts}
-          isSelected={selectedArea === areaKey}
-          density={density}
-          onClick={() => handleCardClick(areaKey)}
-        />
-      ))}
+    <div ref={containerRef}>
+      <VirtualGrid
+        columnCount={columns}
+        columnWidth={columnWidth}
+        height={height}
+        rowCount={rowCount}
+        rowHeight={rowHeight}
+        width={gridWidth}
+        className="custom-scrollbar"
+      >
+        {({ columnIndex, rowIndex, style }) => {
+          const idx = rowIndex * columns + columnIndex
+          if (idx >= areas.length) return null
+          const { areaKey, counts } = areas[idx]
+
+          const adjustedStyle = {
+            ...style,
+            width: itemWidth,
+            height: cardHeight
+          }
+
+          return (
+            <div style={adjustedStyle}>
+              <AreaOverviewCard
+                areaKey={areaKey}
+                counts={counts}
+                isSelected={selectedArea === areaKey}
+                density={density}
+                onClick={() => handleCardClick(areaKey)}
+              />
+            </div>
+          )
+        }}
+      </VirtualGrid>
     </div>
   )
 }
