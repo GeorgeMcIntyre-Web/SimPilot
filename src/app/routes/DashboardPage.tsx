@@ -357,14 +357,14 @@ export function DashboardPage() {
             </div>
 
             <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex items-center gap-2 w-full md:max-w-xs">
+              <div className="flex items-center gap-2 w-full md:flex-1 min-w-0">
                 <div className="relative flex-1">
-                  <Search className="h-4 w-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     value={areaSearch}
                     onChange={(e) => setAreaSearch(e.target.value)}
                     placeholder="Search areas..."
-                    className="w-full pl-8 pr-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                   />
                 </div>
                 {areaSearch && (
