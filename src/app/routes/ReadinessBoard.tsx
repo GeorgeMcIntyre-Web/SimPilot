@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useCells, useProjects } from '../../domain/coreStore'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
@@ -7,6 +7,7 @@ import { SchedulePhase, Cell } from '../../domain/core'
 import { Filter, Calendar, User, Clock } from 'lucide-react'
 import { PageHint } from '../../ui/components/PageHint'
 import { cn } from '../../ui/lib/utils'
+import { EmptyState } from '../../ui/components/EmptyState'
 
 const PHASE_LABELS: Record<SchedulePhase, string> = {
     unspecified: 'Unspecified',
@@ -57,6 +58,7 @@ export function ReadinessBoard() {
     const cells = useCells()
     const projects = useProjects()
     const cellRisks = getAllCellScheduleRisks()
+    const navigate = useNavigate()
 
     const [filterPhase, setFilterPhase] = useState<SchedulePhase | 'all'>('all')
     const [filterProject, setFilterProject] = useState<string>('all')
@@ -75,6 +77,30 @@ export function ReadinessBoard() {
         const phaseRisks = filteredRisks.filter(r => r.phase === phase)
         return { phase, risks: phaseRisks }
     }).filter(g => g.risks.length > 0)
+
+    // No data loaded across the board
+    if (cellRisks.length === 0) {
+        return (
+            <div className="space-y-4">
+                <PageHeader
+                    title="Readiness Board"
+                    subtitle={
+                        <PageHint
+                            standardText="Track cells by schedule phase and status"
+                            flowerText="Where every cell lives in the presim → handover journey."
+                        />
+                    }
+                />
+                <EmptyState
+                    title="No Cells Found"
+                    message="Please go to the Data Loader to import your simulation files."
+                    ctaLabel="Go to Data Loader"
+                    onCtaClick={() => navigate('/data-loader')}
+                    icon={<Calendar className="h-7 w-7" />}
+                />
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-4">

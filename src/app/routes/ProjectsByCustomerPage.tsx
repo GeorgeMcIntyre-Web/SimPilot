@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
+import { PageHint } from '../../ui/components/PageHint';
+import { EmptyState } from '../../ui/components/EmptyState';
 import { useProjects, useAreas } from '../../domain/coreStore';
 import { Project, Area } from '../../domain/core';
 import { StatusPill } from '../../ui/components/StatusPill';
@@ -17,6 +19,7 @@ interface CustomerGroup {
 export function ProjectsByCustomerPage() {
   const projects = useProjects();
   const allAreas = useAreas();
+  const navigate = useNavigate();
 
   // Group projects by customer
   const customerGroups = useMemo(() => {
@@ -46,17 +49,22 @@ export function ProjectsByCustomerPage() {
 
   if (customerGroups.length === 0) {
     return (
-      <div className="space-y-8">
-        <PageHeader title="Projects by Customer" subtitle="View all projects organized by customer" />
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
-          <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">No Projects Found</h3>
-          <p className="text-blue-700 dark:text-blue-300 mb-4">
-            Please go to the Data Loader to import your simulation files.
-          </p>
-          <Link to="/data-loader" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-            Go to Data Loader
-          </Link>
-        </div>
+      <div className="space-y-4">
+        <PageHeader
+          title="Projects by Customer"
+          subtitle={
+            <PageHint
+              standardText="View all projects organized by customer"
+              flowerText="Where relationships steer the program portfolio."
+            />
+          }
+        />
+        <EmptyState
+          title="No Projects Found"
+          message="Please go to the Data Loader to import your simulation files."
+          ctaLabel="Go to Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+        />
       </div>
     );
   }

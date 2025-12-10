@@ -11,13 +11,15 @@ interface AreaOverviewCardProps {
   counts: AreaCounts
   isSelected?: boolean
   onClick?: () => void
+  density?: 'comfortable' | 'compact'
 }
 
 export function AreaOverviewCard({
   areaKey,
   counts,
   isSelected = false,
-  onClick
+  onClick,
+  density = 'comfortable'
 }: AreaOverviewCardProps) {
   const { total, critical, atRisk, ok } = counts
 
@@ -30,7 +32,8 @@ export function AreaOverviewCard({
     <div
       onClick={onClick}
       className={cn(
-        'rounded-xl border p-4 transition-all duration-200 cursor-pointer',
+        'rounded-xl border transition-all duration-200 cursor-pointer',
+        density === 'compact' ? 'p-2.5' : 'p-3',
         'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600',
         isSelected
           ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-500 ring-2 ring-indigo-500/20'
@@ -40,9 +43,9 @@ export function AreaOverviewCard({
       tabIndex={0}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-start gap-3 mb-3">
         <div className={cn(
-          'p-2 rounded-lg',
+          'p-2 rounded-lg flex items-center justify-center',
           isSelected
             ? 'bg-indigo-100 dark:bg-indigo-800'
             : 'bg-gray-100 dark:bg-gray-700'
@@ -54,18 +57,25 @@ export function AreaOverviewCard({
               : 'text-gray-500 dark:text-gray-400'
           )} />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-            {areaKey}
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {total} station{total === 1 ? '' : 's'}
-          </p>
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                {areaKey}
+              </h3>
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                {ok} healthy · {atRisk} risk · {critical} critical
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-indigo-100 dark:border-indigo-700">
+              {total} total
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden flex">
+      <div className="h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden flex">
         {okPercent > 0 && (
           <div
             className="bg-emerald-500 transition-all duration-300"
@@ -87,20 +97,40 @@ export function AreaOverviewCard({
       </div>
 
       {/* Legend */}
-      <div className="mt-3 flex items-center gap-4 text-xs">
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          <span className="text-gray-600 dark:text-gray-400">{ok} OK</span>
+      {density === 'comfortable' ? (
+        <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            <span className="text-gray-700 dark:text-gray-300 font-semibold">{ok}</span>
+            <span className="text-gray-500 dark:text-gray-400">OK</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            <span className="text-gray-700 dark:text-gray-300 font-semibold">{atRisk}</span>
+            <span className="text-gray-500 dark:text-gray-400">Risk</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+            <span className="text-gray-700 dark:text-gray-300 font-semibold">{critical}</span>
+            <span className="text-gray-500 dark:text-gray-400">Crit</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-amber-500" />
-          <span className="text-gray-600 dark:text-gray-400">{atRisk} Risk</span>
+      ) : (
+        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="font-semibold text-gray-700 dark:text-gray-200">{ok}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-amber-500" />
+            <span className="font-semibold text-gray-700 dark:text-gray-200">{atRisk}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-rose-500" />
+            <span className="font-semibold text-gray-700 dark:text-gray-200">{critical}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-rose-500" />
-          <span className="text-gray-600 dark:text-gray-400">{critical} Crit</span>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -116,12 +146,14 @@ interface AreaCardsGridProps {
   }>
   selectedArea: string | null
   onSelectArea: (areaKey: string | null) => void
+  density?: 'comfortable' | 'compact'
 }
 
 export function AreaCardsGrid({
   areas,
   selectedArea,
-  onSelectArea
+  onSelectArea,
+  density = 'comfortable'
 }: AreaCardsGridProps) {
   const handleCardClick = (areaKey: string) => {
     // Toggle selection
@@ -142,13 +174,14 @@ export function AreaCardsGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
       {areas.map(({ areaKey, counts }) => (
         <AreaOverviewCard
           key={areaKey}
           areaKey={areaKey}
           counts={counts}
           isSelected={selectedArea === areaKey}
+          density={density}
           onClick={() => handleCardClick(areaKey)}
         />
       ))}

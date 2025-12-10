@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LayoutGrid, Table2 } from 'lucide-react'
+import { LayoutGrid, Table2, Search, ArrowUpDown } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { FlowerAccent } from '../../ui/components/FlowerAccent'
@@ -33,6 +33,8 @@ import {
 // ============================================================================
 
 type ViewMode = 'overview' | 'table'
+type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
+type AreaDensity = 'comfortable' | 'compact'
 
 interface ViewModeToggleProps {
   mode: ViewMode
@@ -79,6 +81,9 @@ export function DashboardPage() {
   const { themeMode } = useTheme()
   const [viewMode, setViewMode] = useState<ViewMode>('overview')
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
+  const [areaSearch, setAreaSearch] = useState<string>('')
+  const [areaSort, setAreaSort] = useState<AreaSort>('total-desc')
+  const [areaDensity, setAreaDensity] = useState<AreaDensity>('comfortable')
 
   // Data from CrossRef
   const { cells, byArea, hasData: hasCrossRefData } = useCrossRefData()
@@ -99,6 +104,26 @@ export function DashboardPage() {
       counts: countByRisk(areaCells)
     }))
   }, [byArea])
+
+  const filteredAreas = useMemo(() => {
+    const term = areaSearch.trim().toLowerCase()
+    const list = term
+      ? areaData.filter(({ areaKey }) => areaKey.toLowerCase().includes(term))
+      : areaData
+
+    const sorted = [...list].sort((a, b) => {
+      if (areaSort === 'alpha') return a.areaKey.localeCompare(b.areaKey)
+      if (areaSort === 'risk-desc') {
+        const score = (counts: ReturnType<typeof countByRisk>) =>
+          counts.critical * 1000 + counts.atRisk * 10 + counts.total
+        return score(b.counts) - score(a.counts)
+      }
+      // default total-desc
+      return b.counts.total - a.counts.total
+    })
+
+    return sorted
+  }, [areaData, areaSearch, areaSort])
 
   const stats = useMemo(() => {
     const withFlags = cells.filter(c => c.flags.length > 0).length
@@ -311,15 +336,86 @@ export function DashboardPage() {
       {viewMode === 'overview' ? (
         <>
           {/* Area Overview Cards */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Areas Overview
-            </h3>
-            <AreaCardsGrid
-              areas={areaData}
-              selectedArea={selectedArea}
-              onSelectArea={setSelectedArea}
-            />
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+            <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Areas Overview
+              </h3>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
+              </span>
+            </div>
+
+            <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex items-center gap-2 w-full md:max-w-xs">
+                <div className="relative flex-1">
+                  <Search className="h-4 w-4 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" />
+                  <input
+                    value={areaSearch}
+                    onChange={(e) => setAreaSearch(e.target.value)}
+                    placeholder="Search areas..."
+                    className="w-full pl-8 pr-2 py-1.5 text-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+                {areaSearch && (
+                  <button
+                    onClick={() => setAreaSearch('')}
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                  <select
+                    value={areaSort}
+                    onChange={(e) => setAreaSort(e.target.value as AreaSort)}
+                    className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="total-desc">Sort by Total</option>
+                    <option value="risk-desc">Sort by Risk</option>
+                    <option value="alpha">Sort A → Z</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
+                  <button
+                    onClick={() => setAreaDensity('comfortable')}
+                    className={cn(
+                      'px-2 py-1 text-xs font-semibold transition-colors',
+                      areaDensity === 'comfortable'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    )}
+                  >
+                    Comfy
+                  </button>
+                  <button
+                    onClick={() => setAreaDensity('compact')}
+                    className={cn(
+                      'px-2 py-1 text-xs font-semibold border-l border-gray-300 dark:border-gray-600 transition-colors',
+                      areaDensity === 'compact'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    )}
+                  >
+                    Compact
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-h-[460px] overflow-y-auto px-4 pb-4 custom-scrollbar">
+              <AreaCardsGrid
+                areas={filteredAreas}
+                selectedArea={selectedArea}
+                onSelectArea={setSelectedArea}
+                density={areaDensity}
+              />
+            </div>
           </section>
 
           {/* Stations Table */}

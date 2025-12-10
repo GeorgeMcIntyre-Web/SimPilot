@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { useAllProjectMetrics } from '../../ui/hooks/useDomainData';
 import { ArrowUpDown, Building2, Users, AlertTriangle, TrendingUp, Grid, List } from 'lucide-react';
 import { cn } from '../../ui/lib/utils';
 import { PageHint } from '../../ui/components/PageHint';
+import { EmptyState } from '../../ui/components/EmptyState';
 
 type SortKey = 'name' | 'avgCompletion' | 'atRiskCellsCount' | 'cellCount';
 type SortDirection = 'asc' | 'desc';
@@ -15,6 +16,7 @@ export function ProjectsPage() {
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDirection>('asc');
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
+    const navigate = useNavigate();
 
     if (projects.length === 0) {
         return (
@@ -28,19 +30,13 @@ export function ProjectsPage() {
                         />
                     }
                 />
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 text-center">
-                    <Building2 className="h-12 w-12 text-blue-400 mx-auto mb-3" />
-                    <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100 mb-2">No Projects Found</h3>
-                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                        Please go to the Data Loader to import your simulation files.
-                    </p>
-                    <Link
-                        to="/data-loader"
-                        className="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                    >
-                        Go to Data Loader
-                    </Link>
-                </div>
+                <EmptyState
+                    title="No Projects Found"
+                    message="Please go to the Data Loader to import your simulation files."
+                    ctaLabel="Go to Data Loader"
+                    onCtaClick={() => navigate('/data-loader')}
+                    icon={<Building2 className="h-7 w-7" />}
+                />
             </div>
         );
     }
