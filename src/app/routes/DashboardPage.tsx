@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom'
 import { Search, ArrowUpDown } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
-import { FlowerAccent } from '../../ui/components/FlowerAccent'
 import { EmptyState } from '../../ui/components/EmptyState'
 import { FirstRunBanner } from '../../ui/components/FirstRunBanner'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
@@ -159,122 +158,11 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8 relative" data-testid="dashboard-root">
-      {/* Large background flower decorations - both sides, only in flower mode */}
-      {themeMode === 'flower' && (
-        <>
-          {/* Right side - Purple/Violet flower */}
-          <div className="fixed top-1/2 right-0 -translate-y-1/2 translate-x-1/4 pointer-events-none z-0 opacity-20 dark:opacity-15">
-            <svg
-              viewBox="0 0 400 400"
-              className="w-[600px] h-[600px]"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              {/* HUGE beautiful purple/violet flower */}
-              <g transform="translate(200, 150)">
-                {/* Outer petals - massive - purple shades */}
-                <ellipse cx="0" cy="-40" rx="35" ry="50" fill="#A855F7" opacity="0.9" transform="rotate(-20 0 -40)" />
-                <ellipse cx="35" cy="-20" rx="35" ry="50" fill="#A855F7" opacity="0.9" transform="rotate(20 35 -20)" />
-                <ellipse cx="35" cy="20" rx="35" ry="50" fill="#A855F7" opacity="0.9" transform="rotate(70 35 20)" />
-                <ellipse cx="0" cy="40" rx="35" ry="50" fill="#A855F7" opacity="0.9" transform="rotate(110 0 40)" />
-                <ellipse cx="-35" cy="20" rx="35" ry="50" fill="#9333EA" opacity="0.85" transform="rotate(160 -35 20)" />
-                <ellipse cx="-35" cy="-20" rx="35" ry="50" fill="#9333EA" opacity="0.85" transform="rotate(200 -35 -20)" />
-                <ellipse cx="-20" cy="-30" rx="35" ry="50" fill="#9333EA" opacity="0.85" transform="rotate(50 -20 -30)" />
-                <ellipse cx="20" cy="-30" rx="35" ry="50" fill="#9333EA" opacity="0.85" transform="rotate(-50 20 -30)" />
-                <ellipse cx="20" cy="30" rx="35" ry="50" fill="#9333EA" opacity="0.85" transform="rotate(130 20 30)" />
-                <ellipse cx="-20" cy="30" rx="35" ry="50" fill="#9333EA" opacity="0.85" transform="rotate(160 -20 30)" />
-                
-                {/* Middle layer petals */}
-                <ellipse cx="0" cy="-25" rx="25" ry="35" fill="#C084FC" opacity="0.9" transform="rotate(-15 0 -25)" />
-                <ellipse cx="25" cy="-10" rx="25" ry="35" fill="#C084FC" opacity="0.9" transform="rotate(15 25 -10)" />
-                <ellipse cx="25" cy="10" rx="25" ry="35" fill="#C084FC" opacity="0.9" transform="rotate(75 25 10)" />
-                <ellipse cx="0" cy="25" rx="25" ry="35" fill="#C084FC" opacity="0.9" transform="rotate(105 0 25)" />
-                <ellipse cx="-25" cy="10" rx="25" ry="35" fill="#C084FC" opacity="0.9" transform="rotate(165 -25 10)" />
-                <ellipse cx="-25" cy="-10" rx="25" ry="35" fill="#C084FC" opacity="0.9" transform="rotate(195 -25 -10)" />
-                
-                {/* Inner petals */}
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#DDD6FE" opacity="0.95" transform="rotate(45 0 0)" />
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#DDD6FE" opacity="0.95" transform="rotate(-45 0 0)" />
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#DDD6FE" opacity="0.95" transform="rotate(90 0 0)" />
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#DDD6FE" opacity="0.95" transform="rotate(-90 0 0)" />
-                
-                {/* Center */}
-                <circle cx="0" cy="0" r="15" fill="#9333EA" />
-                <circle cx="0" cy="0" r="8" fill="#7E22CE" />
-              </g>
-              
-              {/* Stem - long and elegant */}
-              <path d="M 200 200 L 200 350" stroke="#10B981" strokeWidth="8" strokeLinecap="round" />
-              
-              {/* Large leaves */}
-              <ellipse cx="160" cy="280" rx="20" ry="15" fill="#10B981" opacity="0.7" transform="rotate(-30 160 280)" />
-              <ellipse cx="240" cy="300" rx="20" ry="15" fill="#10B981" opacity="0.7" transform="rotate(30 240 300)" />
-              <ellipse cx="170" cy="320" rx="18" ry="14" fill="#10B981" opacity="0.6" transform="rotate(-45 170 320)" />
-            </svg>
-          </div>
-          
-          {/* Left side - Blue/Indigo flower */}
-          <div className="fixed top-1/2 left-0 -translate-y-1/2 -translate-x-1/4 pointer-events-none z-0 opacity-20 dark:opacity-15">
-            <svg
-              viewBox="0 0 400 400"
-              className="w-[600px] h-[600px]"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              {/* HUGE beautiful blue/indigo flower */}
-              <g transform="translate(200, 150)">
-                {/* Outer petals - massive - blue shades */}
-                <ellipse cx="0" cy="-40" rx="35" ry="50" fill="#6366F1" opacity="0.9" transform="rotate(-20 0 -40)" />
-                <ellipse cx="35" cy="-20" rx="35" ry="50" fill="#6366F1" opacity="0.9" transform="rotate(20 35 -20)" />
-                <ellipse cx="35" cy="20" rx="35" ry="50" fill="#6366F1" opacity="0.9" transform="rotate(70 35 20)" />
-                <ellipse cx="0" cy="40" rx="35" ry="50" fill="#6366F1" opacity="0.9" transform="rotate(110 0 40)" />
-                <ellipse cx="-35" cy="20" rx="35" ry="50" fill="#4F46E5" opacity="0.85" transform="rotate(160 -35 20)" />
-                <ellipse cx="-35" cy="-20" rx="35" ry="50" fill="#4F46E5" opacity="0.85" transform="rotate(200 -35 -20)" />
-                <ellipse cx="-20" cy="-30" rx="35" ry="50" fill="#4F46E5" opacity="0.85" transform="rotate(50 -20 -30)" />
-                <ellipse cx="20" cy="-30" rx="35" ry="50" fill="#4F46E5" opacity="0.85" transform="rotate(-50 20 -30)" />
-                <ellipse cx="20" cy="30" rx="35" ry="50" fill="#4F46E5" opacity="0.85" transform="rotate(130 20 30)" />
-                <ellipse cx="-20" cy="30" rx="35" ry="50" fill="#4F46E5" opacity="0.85" transform="rotate(160 -20 30)" />
-                
-                {/* Middle layer petals */}
-                <ellipse cx="0" cy="-25" rx="25" ry="35" fill="#818CF8" opacity="0.9" transform="rotate(-15 0 -25)" />
-                <ellipse cx="25" cy="-10" rx="25" ry="35" fill="#818CF8" opacity="0.9" transform="rotate(15 25 -10)" />
-                <ellipse cx="25" cy="10" rx="25" ry="35" fill="#818CF8" opacity="0.9" transform="rotate(75 25 10)" />
-                <ellipse cx="0" cy="25" rx="25" ry="35" fill="#818CF8" opacity="0.9" transform="rotate(105 0 25)" />
-                <ellipse cx="-25" cy="10" rx="25" ry="35" fill="#818CF8" opacity="0.9" transform="rotate(165 -25 10)" />
-                <ellipse cx="-25" cy="-10" rx="25" ry="35" fill="#818CF8" opacity="0.9" transform="rotate(195 -25 -10)" />
-                
-                {/* Inner petals */}
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#C7D2FE" opacity="0.95" transform="rotate(45 0 0)" />
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#C7D2FE" opacity="0.95" transform="rotate(-45 0 0)" />
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#C7D2FE" opacity="0.95" transform="rotate(90 0 0)" />
-                <ellipse cx="0" cy="0" rx="18" ry="25" fill="#C7D2FE" opacity="0.95" transform="rotate(-90 0 0)" />
-                
-                {/* Center */}
-                <circle cx="0" cy="0" r="15" fill="#4F46E5" />
-                <circle cx="0" cy="0" r="8" fill="#4338CA" />
-              </g>
-              
-              {/* Stem - long and elegant */}
-              <path d="M 200 200 L 200 350" stroke="#10B981" strokeWidth="8" strokeLinecap="round" />
-              
-              {/* Large leaves */}
-              <ellipse cx="160" cy="280" rx="20" ry="15" fill="#10B981" opacity="0.7" transform="rotate(-30 160 280)" />
-              <ellipse cx="240" cy="300" rx="20" ry="15" fill="#10B981" opacity="0.7" transform="rotate(30 240 300)" />
-              <ellipse cx="170" cy="320" rx="18" ry="14" fill="#10B981" opacity="0.6" transform="rotate(-45 170 320)" />
-            </svg>
-          </div>
-        </>
-      )}
-      
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <PageHeader
           title={
-            <span className="flex items-center">
-              Dashboard <FlowerAccent className="ml-3 h-12 w-12 text-rose-400" />
-            </span>
+            'Dashboard'
           }
           subtitle={
             <PageHint
