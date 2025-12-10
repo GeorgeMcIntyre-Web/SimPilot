@@ -35,6 +35,7 @@ import {
 type ViewMode = 'overview' | 'table'
 type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
 type AreaDensity = 'comfortable' | 'compact'
+type AreaFilter = 'all' | 'with-risk' | 'critical-only' | 'healthy-only'
 
 interface ViewModeToggleProps {
   mode: ViewMode
@@ -84,6 +85,7 @@ export function DashboardPage() {
   const [areaSearch, setAreaSearch] = useState<string>('')
   const [areaSort, setAreaSort] = useState<AreaSort>('total-desc')
   const [areaDensity, setAreaDensity] = useState<AreaDensity>('comfortable')
+  const [areaFilter, setAreaFilter] = useState<AreaFilter>('all')
 
   // Data from CrossRef
   const { cells, byArea, hasData: hasCrossRefData } = useCrossRefData()
@@ -107,9 +109,17 @@ export function DashboardPage() {
 
   const filteredAreas = useMemo(() => {
     const term = areaSearch.trim().toLowerCase()
-    const list = term
+    let list = term
       ? areaData.filter(({ areaKey }) => areaKey.toLowerCase().includes(term))
       : areaData
+
+    if (areaFilter === 'with-risk') {
+      list = list.filter(({ counts }) => counts.atRisk + counts.critical > 0)
+    } else if (areaFilter === 'critical-only') {
+      list = list.filter(({ counts }) => counts.critical > 0)
+    } else if (areaFilter === 'healthy-only') {
+      list = list.filter(({ counts }) => counts.critical === 0 && counts.atRisk === 0)
+    }
 
     const sorted = [...list].sort((a, b) => {
       if (areaSort === 'alpha') return a.areaKey.localeCompare(b.areaKey)
@@ -381,6 +391,17 @@ export function DashboardPage() {
                   </select>
                 </div>
 
+                <select
+                  value={areaFilter}
+                  onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
+                  className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="all">All Areas</option>
+                  <option value="with-risk">With Risk</option>
+                  <option value="critical-only">Critical Only</option>
+                  <option value="healthy-only">Healthy Only</option>
+                </select>
+
                 <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
                   <button
                     onClick={() => setAreaDensity('comfortable')}
@@ -408,7 +429,7 @@ export function DashboardPage() {
               </div>
             </div>
 
-            <div className="max-h-[460px] overflow-y-auto px-4 pb-4 custom-scrollbar">
+            <div className="max-h-[560px] overflow-y-auto px-4 pb-4 custom-scrollbar">
               <AreaCardsGrid
                 areas={filteredAreas}
                 selectedArea={selectedArea}

@@ -61,6 +61,7 @@ export function AreaOverviewCard({
       )}
       role="button"
       tabIndex={0}
+      title={areaKey}
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
@@ -80,7 +81,10 @@ export function AreaOverviewCard({
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+              <h3
+                className="font-semibold text-gray-900 dark:text-white leading-tight whitespace-normal line-clamp-2"
+                title={areaKey}
+              >
                 {areaKey}
               </h3>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
@@ -196,7 +200,7 @@ export function AreaCardsGrid({
   }, [])
 
   const gap = 12 // matches gap-3
-  const cardHeight = density === 'compact' ? 138 : 158
+  const cardHeight = density === 'compact' ? 148 : 172
 
   const columns = useMemo(() => {
     if (containerWidth >= 1400) return 4
@@ -248,10 +252,10 @@ export function AreaCardsGrid({
   // Virtualized grid for large datasets
   const usableWidth = Math.max(containerWidth - gap * (columns - 1), 0)
   const itemWidth = Math.max(Math.floor(usableWidth / columns), 120)
-  const columnWidth = itemWidth + gap
+  const columnWidth = itemWidth
   const rowHeight = cardHeight + gap
   const rowCount = Math.ceil(areas.length / columns)
-  const height = Math.min(460, rowCount * rowHeight)
+  const height = Math.max(rowCount * rowHeight, cardHeight)
   const gridWidth = containerWidth
 
   return (
@@ -273,7 +277,9 @@ export function AreaCardsGrid({
           const adjustedStyle = {
             ...style,
             width: itemWidth,
-            height: cardHeight
+            height: cardHeight,
+            padding: gap / 2,
+            boxSizing: 'border-box'
           }
 
           return (
