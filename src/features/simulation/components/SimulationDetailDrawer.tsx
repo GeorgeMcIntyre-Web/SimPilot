@@ -368,7 +368,7 @@ export function SimulationDetailDrawer({
             )}
 
             {activeTab === 'assets' && (
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[620px] overflow-y-auto pr-1 custom-scrollbar">
                 <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5" />
                   Asset List ({station.assets.length})

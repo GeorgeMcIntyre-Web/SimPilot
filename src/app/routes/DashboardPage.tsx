@@ -116,7 +116,7 @@ export function DashboardPage() {
     })
 
     if (matchingCell) {
-      navigate(`/cells/${matchingCell.id}`)
+      navigate(`/cells/${encodeURIComponent(matchingCell.id)}`)
     } else {
       // If no legacy cell found, try to navigate using stationKey directly
       // This might work if there's a route that accepts stationKey

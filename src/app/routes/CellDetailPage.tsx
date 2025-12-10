@@ -16,9 +16,10 @@ import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
     const location = useLocation();
-    const cell = useCellById(cellId);
-    const robots = useRobotsByCell(cellId || '');
-    const tools = useToolsByCell(cellId || '');
+    const decodedCellId = cellId ? decodeURIComponent(cellId) : undefined;
+    const cell = useCellById(decodedCellId);
+    const robots = useRobotsByCell(decodedCellId || '');
+    const tools = useToolsByCell(decodedCellId || '');
     const allEngineers = useAllEngineerMetrics();
     const { pushBusy, popBusy } = useGlobalBusy();
 

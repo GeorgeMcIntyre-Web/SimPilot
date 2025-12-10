@@ -123,7 +123,7 @@ export function TimelineView() {
                                     {/* Cell info */}
                                     <div className="flex items-center space-x-2 mb-1">
                                         <Link
-                                            to={`/projects/${projectId}/cells/${cell.id}`}
+                                            to={`/projects/${projectId}/cells/${encodeURIComponent(cell.id)}`}
                                             className="text-sm font-medium text-blue-600 hover:underline min-w-[120px]"
                                         >
                                             {cell.name}
@@ -186,7 +186,7 @@ export function TimelineView() {
                         {cellsWithoutData.map(cell => (
                             <Link
                                 key={cell.id}
-                                to={`/projects/${projectId}/cells/${cell.id}`}
+                                to={`/projects/${projectId}/cells/${encodeURIComponent(cell.id)}`}
                                 className="text-sm text-blue-600 hover:underline"
                             >
                                 {cell.name}

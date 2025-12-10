@@ -107,7 +107,7 @@ export function EngineersPage() {
         : [];
 
     const cellColumns: Column<Cell>[] = [
-        { header: 'Cell Name', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${c.id}`} className="text-blue-600 hover:underline">{c.name}</Link> },
+        { header: 'Cell Name', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline">{c.name}</Link> },
         { header: 'Station', accessor: (c) => c.code || '-' },
         { header: 'Line', accessor: (c) => c.lineCode || '-' },
         { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },

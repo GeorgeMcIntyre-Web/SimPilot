@@ -51,7 +51,7 @@ export function ProjectDetailPage() {
         },
         {
             header: 'Station Name',
-            accessor: (c) => <Link to={`/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link>,
+            accessor: (c) => <Link to={`/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link>,
             sortValue: (c) => c.name
         },
         {

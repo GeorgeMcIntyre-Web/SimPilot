@@ -340,7 +340,7 @@ export function SimulationDetailPanel({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 max-h-[620px] overflow-y-auto pr-1 custom-scrollbar">
                   {station.assets.map((asset, idx) => (
                     <div
                       key={idx}

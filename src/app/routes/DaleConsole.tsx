@@ -125,7 +125,7 @@ export function DaleConsole() {
 
     const atRiskColumns: Column<Cell>[] = [
         { header: 'Project', accessor: (c) => c.projectId }, // Ideally map to name, but ID is available on cell
-        { header: 'Cell', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${c.id}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link> },
+        { header: 'Cell', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link> },
         { header: '% Complete', accessor: (c) => c.simulation ? `${c.simulation.percentComplete}%` : '-' },
         { header: 'Engineer', accessor: (c) => c.assignedEngineer || '-' },
         { header: 'Issues', accessor: (c) => c.simulation?.hasIssues ? <span className="text-red-600 font-bold">Yes</span> : 'No' },

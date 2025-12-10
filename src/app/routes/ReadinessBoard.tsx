@@ -205,7 +205,7 @@ function CellCard({ cell, risk }: CellCardProps) {
 
     return (
         <Link
-            to={`/projects/${cell.projectId}/cells/${cell.id}`}
+            to={`/projects/${cell.projectId}/cells/${encodeURIComponent(cell.id)}`}
             state={{ from: '/readiness', fromLabel: 'Readiness' }}
             className={cn(
                 "block rounded-md border transition-all hover:shadow-sm",

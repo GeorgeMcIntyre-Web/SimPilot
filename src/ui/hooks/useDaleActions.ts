@@ -44,7 +44,7 @@ export function useDaleActions(): DaleAction[] {
                 id: 'cell-late',
                 title: `Focus on ${cell.name}`,
                 detail: `This cell is late. It was planned to start on ${worstLate.plannedStart ? new Date(worstLate.plannedStart).toLocaleDateString() : 'unknown date'}.`,
-                link: { label: 'View Cell', to: `/projects/${cell.projectId}/cells/${cell.id}` },
+                link: { label: 'View Cell', to: `/projects/${cell.projectId}/cells/${encodeURIComponent(cell.id)}` },
                 severity: 'high'
             });
         }
@@ -64,7 +64,7 @@ export function useDaleActions(): DaleAction[] {
                 id: 'cell-blocked',
                 title: `Unblock ${worst.name}`,
                 detail: `Current status is ${worst.status} with ${worst.simulation?.percentComplete}% completion.`,
-                link: { label: 'View Cell', to: `/projects/${worst.projectId}/cells/${worst.id}` },
+                link: { label: 'View Cell', to: `/projects/${worst.projectId}/cells/${encodeURIComponent(worst.id)}` },
                 severity: 'medium'
             });
         }
