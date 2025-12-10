@@ -92,6 +92,7 @@ export function DashboardPage() {
 
     return sorted
   }, [areaData, areaSearch, areaSort, areaFilter])
+  const hasAreas = filteredAreas.length > 0
 
   const stats = useMemo(() => {
     const withFlags = cells.filter(c => c.flags.length > 0).length
@@ -293,18 +294,20 @@ export function DashboardPage() {
       />
 
       {/* Area Overview Cards */}
-      <section className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2 bg-white dark:bg-gray-800 rounded-t-xl border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Areas Overview
-          </h3>
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-            {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
-          </span>
+      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Areas Overview
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
+            </p>
+          </div>
         </div>
 
-        {filteredAreas.length > 0 && (
-          <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white dark:bg-gray-800">
+        {hasAreas && (
+          <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex items-center gap-2 w-full md:flex-1 min-w-0">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -378,7 +381,7 @@ export function DashboardPage() {
           </div>
         )}
 
-        <div className="max-h-[560px] overflow-y-auto px-4 pb-4 custom-scrollbar bg-white dark:bg-gray-800 rounded-b-xl">
+        <div className="px-4 pb-4">
           <AreaCardsGrid
             areas={filteredAreas}
             selectedArea={selectedArea}
@@ -412,11 +415,17 @@ export function DashboardPage() {
       </section>
 
       {/* Tooling bottlenecks */}
-      <section>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Tooling Bottlenecks Overview
-        </h3>
-        <DashboardBottlenecksPanel />
+      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Tooling Bottlenecks Overview
+            </h3>
+          </div>
+        </div>
+        <div className="px-4 pb-4">
+          <DashboardBottlenecksPanel variant="embedded" />
+        </div>
       </section>
     </div>
   )

@@ -20,7 +20,11 @@ interface ReasonOption {
   label: string
 }
 
-export function DashboardBottlenecksPanel() {
+interface DashboardBottlenecksPanelProps {
+  variant?: 'standalone' | 'embedded'
+}
+
+export function DashboardBottlenecksPanel({ variant = 'standalone' }: DashboardBottlenecksPanelProps = {}) {
   const navigate = useNavigate()
   const simPilotState = useSimPilotStore()
   const [stageFilter, setStageFilter] = useState<WorkflowStage | 'ALL'>('ALL')
@@ -82,31 +86,29 @@ export function DashboardBottlenecksPanel() {
     return { high, medium, low }
   }, [worstBottlenecks])
 
+  const ContentWrapper = variant === 'embedded' ? 'div' : PanelCard
+
   if (simPilotState.isLoading === true) {
-    return (
-      <PanelCard data-testid="bottlenecks-loading">
-        <div className="flex items-center justify-center py-12 gap-3 text-gray-500 dark:text-gray-400">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Loading tooling bottlenecks…</span>
-        </div>
-      </PanelCard>
+    const loadingContent = (
+      <div className="flex items-center justify-center py-12 gap-3 text-gray-500 dark:text-gray-400">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        <span>Loading tooling bottlenecks…</span>
+      </div>
     )
+    return variant === 'embedded' ? loadingContent : <ContentWrapper data-testid="bottlenecks-loading">{loadingContent}</ContentWrapper>
   }
 
   const hasSnapshot = simPilotState.snapshot !== null
   const hasAnyBottlenecks = worstBottlenecks.length > 0
 
   if (hasSnapshot === false || hasAnyBottlenecks === false) {
-    return (
-      <PanelCard data-testid="bottlenecks-empty">
-        <EmptyState
-          title="No tooling bottlenecks"
-          message="Load data in the Data Loader to see bottleneck trends across tooling workflows."
-          ctaLabel="Go to Data Loader"
-          onCtaClick={() => navigate('/data-loader')}
-        />
-      </PanelCard>
+    const emptyContent = (
+      <EmptyState
+        title="No tooling bottlenecks"
+        message="Load data in the Data Loader to see bottleneck trends across tooling workflows."
+      />
     )
+    return variant === 'embedded' ? emptyContent : <ContentWrapper data-testid="bottlenecks-empty">{emptyContent}</ContentWrapper>
   }
 
   const handleOpenSimulation = (status: WorkflowBottleneckStatus) => {
@@ -133,9 +135,8 @@ export function DashboardBottlenecksPanel() {
 
   const updatedAt = simPilotState.snapshot?.workflowBottleneckSnapshot.generatedAt
 
-  return (
-    <PanelCard data-testid="bottlenecks-panel">
-      <div className="space-y-6">
+  const content = (
+    <div className="space-y-6" data-testid="bottlenecks-panel">
         <DashboardBottlenecksSummary
           total={worstBottlenecks.length}
           highCount={summaryCounts.high}
@@ -178,10 +179,20 @@ export function DashboardBottlenecksPanel() {
             ))}
           </div>
         )}
-      </div>
+    </div>
+  )
 
+  return (
+    <>
+      {variant === 'embedded' ? (
+        content
+      ) : (
+        <PanelCard data-testid="bottlenecks-panel-wrapper">
+          {content}
+        </PanelCard>
+      )}
       <WorkflowDetailDrawer workflow={activeWorkflow} onClose={handleCloseDrawer} />
-    </PanelCard>
+    </>
   )
 }
 
