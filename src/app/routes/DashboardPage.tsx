@@ -440,27 +440,50 @@ export function DashboardPage() {
           </section>
 
           {/* Stations Table */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
-            </h3>
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+            <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {cells.length} {cells.length === 1 ? 'station' : 'stations'}
+                </p>
+              </div>
+            </div>
+            <div className="px-4 pb-4">
+              <StationsTable
+                variant="plain"
+                cells={cells}
+                selectedArea={selectedArea}
+                onSelectStation={handleSelectStation}
+                onClearAreaFilter={handleClearAreaFilter}
+              />
+            </div>
+          </section>
+        </>
+      ) : (
+        /* Full table view */
+        <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+          <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {cells.length} {cells.length === 1 ? 'station' : 'stations'}
+              </p>
+            </div>
+          </div>
+          <div className="px-4 pb-4">
             <StationsTable
+              variant="plain"
               cells={cells}
               selectedArea={selectedArea}
               onSelectStation={handleSelectStation}
               onClearAreaFilter={handleClearAreaFilter}
             />
-          </section>
-        </>
-      ) : (
-        /* Full table view */
-        <section>
-          <StationsTable
-            cells={cells}
-            selectedArea={selectedArea}
-            onSelectStation={handleSelectStation}
-            onClearAreaFilter={handleClearAreaFilter}
-          />
+          </div>
         </section>
       )}
     </div>

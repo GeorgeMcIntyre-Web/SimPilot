@@ -28,6 +28,7 @@ interface StationsTableProps {
   selectedArea: string | null
   onSelectStation: (cell: CellSnapshot) => void
   onClearAreaFilter?: () => void
+  variant?: 'card' | 'plain'
 }
 
 type Density = 'comfortable' | 'compact'
@@ -191,7 +192,8 @@ export function StationsTable({
   cells,
   selectedArea,
   onSelectStation,
-  onClearAreaFilter
+  onClearAreaFilter,
+  variant = 'card'
 }: StationsTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all')
@@ -267,9 +269,12 @@ export function StationsTable({
         onDensityChange={setDensity}
       />
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="overflow-x-auto max-h-[560px] overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <div className={cn(
+        variant === 'card' &&
+          'overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+      )}>
+        <div className="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
             <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
               <tr>
                 <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm sm:pl-6">
