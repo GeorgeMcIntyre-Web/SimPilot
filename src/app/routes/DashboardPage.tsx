@@ -54,16 +54,6 @@ export function DashboardPage() {
   const hasLegacyData = useHasSimulationData()
   const hasData = hasCrossRefData || hasLegacyData
 
-  // Debug logging
-  console.log('[DashboardPage] Data status:', {
-    hasCrossRefData,
-    hasLegacyData,
-    hasData,
-    cellsCount: cells.length,
-    areasCount: Object.keys(byArea).length,
-    legacyCellsCount: legacyCells.length
-  })
-
   // Derived data
   const focusItems = useMemo(() => generateFocusItems(cells), [cells])
 
