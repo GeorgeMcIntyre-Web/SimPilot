@@ -30,6 +30,8 @@ interface StationsTableProps {
   onClearAreaFilter?: () => void
 }
 
+type Density = 'comfortable' | 'compact'
+
 // ============================================================================
 // FILTER CONTROLS
 // ============================================================================
@@ -43,6 +45,8 @@ interface FilterControlsProps {
   onClearAreaFilter?: () => void
   resultCount: number
   totalCount: number
+  density: Density
+  onDensityChange: (density: Density) => void
 }
 
 function FilterControls({
@@ -53,35 +57,65 @@ function FilterControls({
   selectedArea,
   onClearAreaFilter,
   resultCount,
-  totalCount
+  totalCount,
+  density,
+  onDensityChange
 }: FilterControlsProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mb-4">
-      {/* Search */}
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search stations..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-        />
-      </div>
+    <div className="flex flex-col gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        {/* Search */}
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search stations..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+        </div>
 
-      {/* Severity filter */}
-      <div className="flex items-center gap-2">
-        <Filter className="h-4 w-4 text-gray-400" />
-        <select
-          value={severityFilter}
-          onChange={(e) => onSeverityChange(e.target.value as SeverityFilter)}
-          className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="all">All Stations</option>
-          <option value="error">Critical Only</option>
-          <option value="warning">At Risk Only</option>
-          <option value="none">On Track Only</option>
-        </select>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-400" />
+            <select
+              value={severityFilter}
+              onChange={(e) => onSeverityChange(e.target.value as SeverityFilter)}
+              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="all">All Stations</option>
+              <option value="error">Critical Only</option>
+              <option value="warning">At Risk Only</option>
+              <option value="none">On Track Only</option>
+            </select>
+          </div>
+
+          <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
+            <button
+              onClick={() => onDensityChange('comfortable')}
+              className={cn(
+                'px-3 py-1.5 text-xs font-semibold transition-colors',
+                density === 'comfortable'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              )}
+            >
+              Comfy
+            </button>
+            <button
+              onClick={() => onDensityChange('compact')}
+              className={cn(
+                'px-3 py-1.5 text-xs font-semibold border-l border-gray-200 dark:border-gray-700 transition-colors',
+                density === 'compact'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              )}
+            >
+              Compact
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Active area filter badge */}
@@ -164,6 +198,7 @@ export function StationsTable({
   const [sortKey, setSortKey] = useState<SortKey>('risk')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [page, setPage] = useState(1)
+  const [density, setDensity] = useState<Density>('comfortable')
   const pageSize = 10
 
   // Apply filters and sorting
@@ -228,12 +263,14 @@ export function StationsTable({
         onClearAreaFilter={onClearAreaFilter}
         resultCount={filteredCells.length}
         totalCount={cells.length}
+        density={density}
+        onDensityChange={setDensity}
       />
 
       <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="overflow-x-auto max-h-[560px] overflow-y-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
+            <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
               <tr>
                 <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm sm:pl-6">
                   <SortableHeader
@@ -297,6 +334,7 @@ export function StationsTable({
                   <StationRow
                     key={cell.stationKey}
                     cell={cell}
+                    density={density}
                     onClick={() => onSelectStation(cell)}
                   />
                 ))
@@ -336,34 +374,37 @@ export function StationsTable({
 
 interface StationRowProps {
   cell: CellSnapshot
+  density: Density
   onClick: () => void
 }
 
-function StationRow({ cell, onClick }: StationRowProps) {
+function StationRow({ cell, onClick, density }: StationRowProps) {
   const riskLevel = getRiskLevel(cell.flags)
   const completion = getCompletionPercent(cell)
   const application = cell.simulationStatus?.application ?? '-'
+  const rowPad = density === 'compact' ? 'py-3' : 'py-4'
+  const textSize = density === 'compact' ? 'text-xs' : 'text-sm'
 
   return (
     <tr
       onClick={onClick}
       className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
     >
-      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-        <span className="font-medium text-gray-900 dark:text-white">
+      <td className={cn('whitespace-nowrap pl-4 pr-3 sm:pl-6', rowPad, textSize)}>
+        <span className="font-medium text-gray-900 dark:text-white block truncate max-w-[200px]">
           {cell.stationKey}
         </span>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+      <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {cell.areaKey ?? 'Unknown'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+      <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {application}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm">
+      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {completion !== null ? (
           <div className="flex items-center gap-2">
-            <div className="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div className={cn('rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden', density === 'compact' ? 'w-14 h-1.5' : 'w-16 h-1.5')}>
               <div
                 className={cn(
                   'h-full rounded-full transition-all',
@@ -381,7 +422,7 @@ function StationRow({ cell, onClick }: StationRowProps) {
           <span className="text-gray-400">-</span>
         )}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm">
+      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {cell.flags.length > 0 ? (
           <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
             {cell.flags.length}
@@ -390,7 +431,7 @@ function StationRow({ cell, onClick }: StationRowProps) {
           <span className="text-gray-400">0</span>
         )}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm">
+      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         <RiskBadge riskLevel={riskLevel} />
       </td>
     </tr>
