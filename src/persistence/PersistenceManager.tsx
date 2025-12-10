@@ -3,9 +3,7 @@ import { coreStore } from '../domain/coreStore'
 import { persistenceService } from './indexedDbService'
 import { useGlobalBusy } from '../ui/GlobalBusyContext'
 import { setCrossRefData } from '../hooks/useCrossRefData'
-import { buildCrossRef } from '../domain/crossRef/CrossRefBuilder'
-import { SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot } from '../domain/crossRef/CrossRefTypes'
-import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
+import { buildCrossRef, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot, normalizeStationId } from '../domain/crossRef'
 
 const SAVE_DEBOUNCE_MS = 2000
 
