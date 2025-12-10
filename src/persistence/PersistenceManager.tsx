@@ -2,8 +2,73 @@ import { useEffect, useRef } from 'react'
 import { coreStore } from '../domain/coreStore'
 import { persistenceService } from './indexedDbService'
 import { useGlobalBusy } from '../ui/GlobalBusyContext'
+import { setCrossRefData } from '../hooks/useCrossRefData'
+import { buildCrossRef } from '../domain/crossRef/CrossRefBuilder'
+import { SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot } from '../domain/crossRef/CrossRefTypes'
+import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 
 const SAVE_DEBOUNCE_MS = 2000
+
+/**
+ * Build CrossRefInput from current coreStore state
+ */
+function buildCrossRefFromCoreStore() {
+    const state = coreStore.getState()
+
+    // Build area ID to name mapping
+    const areaIdToName = new Map<string, string>()
+    state.areas.forEach(area => {
+        areaIdToName.set(area.id, area.name)
+    })
+
+    // Convert Cells to SimulationStatusSnapshot
+    const simulationStatusRows: SimulationStatusSnapshot[] = state.cells.map(cell => ({
+        stationKey: normalizeStationId(cell.code) || cell.code,
+        areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
+        lineCode: cell.lineCode,
+        application: undefined,
+        firstStageCompletion: cell.simulation?.percentComplete,
+        finalDeliverablesCompletion: cell.simulation?.percentComplete,
+        dcsConfigured: undefined,
+        engineer: cell.assignedEngineer,
+        raw: cell
+    }))
+
+    // Convert Tools to ToolSnapshot
+    const tools = state.assets.filter(a => a.kind !== 'ROBOT')
+    const toolingRows: ToolSnapshot[] = tools.map(tool => ({
+        stationKey: normalizeStationId(tool.stationNumber || '') || tool.stationNumber || '',
+        areaKey: tool.areaName || '',
+        toolId: tool.id,
+        simLeader: undefined,
+        simEmployee: undefined,
+        teamLeader: undefined,
+        simDueDate: undefined,
+        toolType: tool.kind,
+        raw: tool
+    }))
+
+    // Convert Robots to RobotSnapshot
+    const robots = state.assets.filter(a => a.kind === 'ROBOT')
+    const robotSpecsRows: RobotSnapshot[] = robots.map(robot => ({
+        stationKey: normalizeStationId(robot.stationNumber || '') || robot.stationNumber || '',
+        robotKey: robot.id,
+        caption: robot.name,
+        eNumber: undefined,
+        hasDressPackInfo: false,
+        oemModel: robot.oemModel,
+        raw: robot
+    }))
+
+    return {
+        simulationStatusRows,
+        toolingRows,
+        robotSpecsRows,
+        weldGunRows: [],
+        gunForceRows: [],
+        riserRows: []
+    }
+}
 
 export function PersistenceManager() {
     const { pushBusy, popBusy } = useGlobalBusy()
@@ -22,6 +87,16 @@ export function PersistenceManager() {
                 if (result.success && result.snapshot) {
                     console.log('Restoring snapshot from', result.snapshot.meta.lastSavedAt)
                     coreStore.loadSnapshot(result.snapshot)
+
+                    // Rebuild CrossRef data from restored coreStore
+                    console.log('[PersistenceManager] Rebuilding CrossRef data from persisted state')
+                    const crossRefInput = buildCrossRefFromCoreStore()
+                    const crossRefResult = buildCrossRef(crossRefInput)
+                    setCrossRefData(crossRefResult)
+                    console.log('[PersistenceManager] CrossRef data rebuilt:', {
+                        cells: crossRefResult.cells.length,
+                        areas: crossRefResult.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
+                    })
                 }
             } catch (err) {
                 console.error('Failed to load persistence:', err)
