@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LayoutGrid, Table2, Search, ArrowUpDown } from 'lucide-react'
+import { Search, ArrowUpDown } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { FlowerAccent } from '../../ui/components/FlowerAccent'
@@ -28,50 +28,9 @@ import {
   getRiskLevel
 } from '../../features/dashboard'
 
-// ============================================================================
-// VIEW MODE TOGGLE
-// ============================================================================
-
-type ViewMode = 'overview' | 'table'
 type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
 type AreaDensity = 'comfortable' | 'compact'
 type AreaFilter = 'all' | 'with-risk' | 'critical-only' | 'healthy-only'
-
-interface ViewModeToggleProps {
-  mode: ViewMode
-  onModeChange: (mode: ViewMode) => void
-}
-
-function ViewModeToggle({ mode, onModeChange }: ViewModeToggleProps) {
-  return (
-    <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-      <button
-        onClick={() => onModeChange('overview')}
-        className={cn(
-          'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-          mode === 'overview'
-            ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-        )}
-      >
-        <LayoutGrid className="h-4 w-4" />
-        <span className="hidden sm:inline">Overview</span>
-      </button>
-      <button
-        onClick={() => onModeChange('table')}
-        className={cn(
-          'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors',
-          mode === 'table'
-            ? 'bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-        )}
-      >
-        <Table2 className="h-4 w-4" />
-        <span className="hidden sm:inline">Table</span>
-      </button>
-    </div>
-  )
-}
 
 // ============================================================================
 // MAIN COMPONENT
@@ -80,7 +39,6 @@ function ViewModeToggle({ mode, onModeChange }: ViewModeToggleProps) {
 export function DashboardPage() {
   const navigate = useNavigate()
   const { themeMode } = useTheme()
-  const [viewMode, setViewMode] = useState<ViewMode>('overview')
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [areaSearch, setAreaSearch] = useState<string>('')
   const [areaSort, setAreaSort] = useState<AreaSort>('total-desc')
@@ -133,7 +91,7 @@ export function DashboardPage() {
     })
 
     return sorted
-  }, [areaData, areaSearch, areaSort])
+  }, [areaData, areaSearch, areaSort, areaFilter])
 
   const stats = useMemo(() => {
     const withFlags = cells.filter(c => c.flags.length > 0).length
@@ -324,7 +282,6 @@ export function DashboardPage() {
             />
           }
         />
-        <ViewModeToggle mode={viewMode} onModeChange={setViewMode} />
       </div>
 
       {/* Today for Dale Strip */}
@@ -335,6 +292,125 @@ export function DashboardPage() {
         totalStations={stats.total}
       />
 
+      {/* Area Overview Cards */}
+      <section className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2 bg-white dark:bg-gray-800 rounded-t-xl border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Areas Overview
+          </h3>
+          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
+          </span>
+        </div>
+
+        {filteredAreas.length > 0 && (
+          <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white dark:bg-gray-800">
+            <div className="flex items-center gap-2 w-full md:flex-1 min-w-0">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  value={areaSearch}
+                  onChange={(e) => setAreaSearch(e.target.value)}
+                  placeholder="Search areas..."
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                />
+              </div>
+              {areaSearch && (
+                <button
+                  onClick={() => setAreaSearch('')}
+                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-gray-400" />
+                <select
+                  value={areaSort}
+                  onChange={(e) => setAreaSort(e.target.value as AreaSort)}
+                  className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="total-desc">Sort by Total</option>
+                  <option value="risk-desc">Sort by Risk</option>
+                  <option value="alpha">Sort A → Z</option>
+                </select>
+              </div>
+
+              <select
+                value={areaFilter}
+                onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
+                className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="all">All Areas</option>
+                <option value="with-risk">With Risk</option>
+                <option value="critical-only">Critical Only</option>
+                <option value="healthy-only">Healthy Only</option>
+              </select>
+
+              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
+                <button
+                  onClick={() => setAreaDensity('comfortable')}
+                  className={cn(
+                    'px-2 py-1 text-xs font-semibold transition-colors',
+                    areaDensity === 'comfortable'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  )}
+                >
+                  Comfy
+                </button>
+                <button
+                  onClick={() => setAreaDensity('compact')}
+                  className={cn(
+                    'px-2 py-1 text-xs font-semibold border-l border-gray-300 dark:border-gray-600 transition-colors',
+                    areaDensity === 'compact'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  )}
+                >
+                  Compact
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="max-h-[560px] overflow-y-auto px-4 pb-4 custom-scrollbar bg-white dark:bg-gray-800 rounded-b-xl">
+          <AreaCardsGrid
+            areas={filteredAreas}
+            selectedArea={selectedArea}
+            onSelectArea={setSelectedArea}
+            density={areaDensity}
+          />
+        </div>
+      </section>
+
+      {/* Stations Table */}
+      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {cells.length} {cells.length === 1 ? 'station' : 'stations'}
+            </p>
+          </div>
+        </div>
+        <div className="px-4 pb-4">
+          <StationsTable
+            variant="plain"
+            cells={cells}
+            selectedArea={selectedArea}
+            onSelectStation={handleSelectStation}
+            onClearAreaFilter={handleClearAreaFilter}
+          />
+        </div>
+      </section>
+
       {/* Tooling bottlenecks */}
       <section>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -342,150 +418,6 @@ export function DashboardPage() {
         </h3>
         <DashboardBottlenecksPanel />
       </section>
-
-      {viewMode === 'overview' ? (
-        <>
-          {/* Area Overview Cards */}
-          <section className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-            <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2 bg-white dark:bg-gray-800 rounded-t-xl border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Areas Overview
-              </h3>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
-              </span>
-            </div>
-
-            <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white dark:bg-gray-800">
-              <div className="flex items-center gap-2 w-full md:flex-1 min-w-0">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    value={areaSearch}
-                    onChange={(e) => setAreaSearch(e.target.value)}
-                    placeholder="Search areas..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                  />
-                </div>
-                {areaSearch && (
-                  <button
-                    onClick={() => setAreaSearch('')}
-                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="h-4 w-4 text-gray-400" />
-                  <select
-                    value={areaSort}
-                    onChange={(e) => setAreaSort(e.target.value as AreaSort)}
-                    className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  >
-                    <option value="total-desc">Sort by Total</option>
-                    <option value="risk-desc">Sort by Risk</option>
-                    <option value="alpha">Sort A → Z</option>
-                  </select>
-                </div>
-
-                <select
-                  value={areaFilter}
-                  onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
-                  className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="all">All Areas</option>
-                  <option value="with-risk">With Risk</option>
-                  <option value="critical-only">Critical Only</option>
-                  <option value="healthy-only">Healthy Only</option>
-                </select>
-
-                <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
-                  <button
-                    onClick={() => setAreaDensity('comfortable')}
-                    className={cn(
-                      'px-2 py-1 text-xs font-semibold transition-colors',
-                      areaDensity === 'comfortable'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    )}
-                  >
-                    Comfy
-                  </button>
-                  <button
-                    onClick={() => setAreaDensity('compact')}
-                    className={cn(
-                      'px-2 py-1 text-xs font-semibold border-l border-gray-300 dark:border-gray-600 transition-colors',
-                      areaDensity === 'compact'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    )}
-                  >
-                    Compact
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="max-h-[560px] overflow-y-auto px-4 pb-4 custom-scrollbar bg-white dark:bg-gray-800 rounded-b-xl">
-              <AreaCardsGrid
-                areas={filteredAreas}
-                selectedArea={selectedArea}
-                onSelectArea={setSelectedArea}
-                density={areaDensity}
-              />
-            </div>
-          </section>
-
-          {/* Stations Table */}
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-            <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {cells.length} {cells.length === 1 ? 'station' : 'stations'}
-                </p>
-              </div>
-            </div>
-            <div className="px-4 pb-4">
-              <StationsTable
-                variant="plain"
-                cells={cells}
-                selectedArea={selectedArea}
-                onSelectStation={handleSelectStation}
-                onClearAreaFilter={handleClearAreaFilter}
-              />
-            </div>
-          </section>
-        </>
-      ) : (
-        /* Full table view */
-        <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {cells.length} {cells.length === 1 ? 'station' : 'stations'}
-              </p>
-            </div>
-          </div>
-          <div className="px-4 pb-4">
-            <StationsTable
-              variant="plain"
-              cells={cells}
-              selectedArea={selectedArea}
-              onSelectStation={handleSelectStation}
-              onClearAreaFilter={handleClearAreaFilter}
-            />
-          </div>
-        </section>
-      )}
     </div>
   )
 }

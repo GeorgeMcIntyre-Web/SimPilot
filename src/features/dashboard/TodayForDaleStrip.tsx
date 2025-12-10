@@ -70,6 +70,10 @@ export function TodayForDaleStrip({
     ? Math.round((stationsHealthy / totalStations) * 100)
     : 0
 
+  if (totalStations === 0) {
+    return null
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}

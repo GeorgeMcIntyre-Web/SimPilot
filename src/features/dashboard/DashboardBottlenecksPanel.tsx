@@ -5,6 +5,8 @@ import { Filter, Loader2, SlidersHorizontal, ExternalLink } from 'lucide-react'
 import { DashboardBottlenecksSummary } from './DashboardBottlenecksSummary'
 import { selectWorstWorkflowBottlenecks } from '../../domain/simPilotSelectors'
 import { useSimPilotStore } from '../../domain/simPilotStore'
+import { EmptyState } from '../../ui/components/EmptyState'
+import { cn } from '../../ui/lib/utils'
 import type {
   WorkflowBottleneckStatus,
   WorkflowStage,
@@ -97,15 +99,12 @@ export function DashboardBottlenecksPanel() {
   if (hasSnapshot === false || hasAnyBottlenecks === false) {
     return (
       <PanelCard data-testid="bottlenecks-empty">
-        <div className="space-y-2 text-center py-10">
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
-            No tooling bottlenecks detected
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-            Load the latest SimPilot snapshot or adjust the filters to see DESIGN, SIMULATION, or
-            MANUFACTURE blockers.
-          </p>
-        </div>
+        <EmptyState
+          title="No tooling bottlenecks"
+          message="Load data in the Data Loader to see bottleneck trends across tooling workflows."
+          ctaLabel="Go to Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+        />
       </PanelCard>
     )
   }
@@ -191,7 +190,10 @@ interface PanelCardProps extends HTMLAttributes<HTMLDivElement> {}
 function PanelCard({ className, ...rest }: PanelCardProps) {
   return (
     <section
-      className={`rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm ${className ?? ''}`}
+      className={cn(
+        'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm',
+        className
+      )}
       {...rest}
     />
   )
