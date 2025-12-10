@@ -172,10 +172,16 @@ function getAllDetectedSheets(
  * Convert ApplyResult to CrossRefInput format for dashboard consumption
  */
 function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedData').ApplyResult): CrossRefInput {
+  // Build area ID to name mapping
+  const areaIdToName = new Map<string, string>()
+  applyResult.areas.forEach(area => {
+    areaIdToName.set(area.id, area.name)
+  })
+
   // Convert Cells to SimulationStatusSnapshot
   const simulationStatusRows: SimulationStatusSnapshot[] = applyResult.cells.map(cell => ({
     stationKey: normalizeStationId(cell.code) || cell.code,
-    areaKey: cell.areaId, // Use areaId instead of areaName
+    areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
     lineCode: cell.lineCode, // Use lineCode field
     application: undefined, // Not available in Cell type
     firstStageCompletion: cell.simulation?.percentComplete, // From simulation status
