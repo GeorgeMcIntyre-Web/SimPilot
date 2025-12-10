@@ -4,7 +4,8 @@ import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { Tag } from '../../ui/components/Tag';
-import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics, coreStore } from '../../domain/coreStore';
+import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics } from '../../ui/hooks/useDomainData';
+import { coreStore } from '../../domain/coreStore';
 import { Robot, Tool } from '../../domain/core';
 import { createCellEngineerAssignmentChange } from '../../domain/changeLog';
 import { FileSpreadsheet, AlertTriangle, User, Check, X, MonitorPlay } from 'lucide-react';
@@ -194,7 +195,7 @@ export function CellDetailPage() {
                                 />
                                 <datalist id="engineers-list">
                                     {allEngineers.map(e => (
-                                        <option key={e.engineerName} value={e.engineerName} />
+                                        <option key={e.name} value={e.name} />
                                     ))}
                                 </datalist>
                                 <div className="flex items-center gap-2">
