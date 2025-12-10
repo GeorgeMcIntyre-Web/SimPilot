@@ -63,8 +63,14 @@ const crossRefSubscribers = new Set<() => void>()
  * Set cross-reference data (called by ingestion pipeline)
  */
 export const setCrossRefData = (result: CrossRefResult): void => {
+  console.log('[setCrossRefData] Setting CrossRef data:', {
+    cellsCount: result.cells.length,
+    subscribersCount: crossRefSubscribers.size,
+    areas: result.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
+  })
   crossRefStore = result
   crossRefSubscribers.forEach(cb => cb())
+  console.log('[setCrossRefData] Notified all subscribers')
 }
 
 /**
@@ -215,15 +221,21 @@ export function useCrossRefData(): CrossRefDataResult {
   const [data, setData] = useState<CrossRefResult | null>(crossRefStore)
 
   useEffect(() => {
+    console.log('[useCrossRefData] Hook mounted, initial data:', crossRefStore ? `${crossRefStore.cells.length} cells` : 'null')
+
     // Sync with current store state
     setData(crossRefStore)
 
     // Subscribe to future changes
     const unsubscribe = subscribeToCrossRef(() => {
+      console.log('[useCrossRefData] Store updated, refreshing component')
       setData(getCrossRefData())
     })
 
-    return unsubscribe
+    return () => {
+      console.log('[useCrossRefData] Hook unmounting')
+      unsubscribe()
+    }
   }, [])
 
   // Memoize derived data to avoid recalculation on every render
