@@ -201,7 +201,7 @@ export function AssetsFilterBar({
 export function AssetsSummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
   return (
     <div className="space-y-2.5 flex flex-col h-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
         <StatTile
           label="Total Assets"
           value={counts.total}
@@ -225,15 +225,17 @@ export function AssetsSummaryStrip({ counts, onFilterClick }: SummaryStripProps)
           accent="text-slate-700 dark:text-slate-200"
           onClick={() => onFilterClick({ sourcing: 'MAKE' })}
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <StatTile
           label="Unknown"
           value={counts.bySourcing.UNKNOWN ?? 0}
           accent="text-amber-600 dark:text-amber-300"
           onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
         />
+        <AlertTile value={counts.byReuseStatus.UNKNOWN ?? 0} />
       </div>
-
-      <AlertTile value={counts.byReuseStatus.UNKNOWN ?? 0} />
     </div>
   )
 }
@@ -241,7 +243,7 @@ export function AssetsSummaryStrip({ counts, onFilterClick }: SummaryStripProps)
 function StatTile({ label, value, accent, onClick }: { label: string; value: number | string; accent: string; onClick?: () => void }) {
   const interactive = Boolean(onClick)
   const body = (
-    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 h-full flex items-center justify-between shadow-sm">
+    <div className="bg-white dark:bg-[#202937] rounded-lg border border-gray-200 dark:border-gray-700 p-3 h-full flex items-center justify-between shadow-sm">
       <div>
         <div className={"text-xl font-bold " + accent}>{value}</div>
         <div className="text-[11px] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400 font-semibold">{label}</div>
@@ -265,7 +267,7 @@ function StatTile({ label, value, accent, onClick }: { label: string; value: num
 
 function AlertTile({ value }: { value: number }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-lg border border-amber-200 dark:border-amber-700 p-3 h-full flex items-center justify-between shadow-sm">
+    <div className="bg-white dark:bg-[#202937] rounded-lg border border-amber-200 dark:border-amber-700 p-3 h-full flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-3 min-w-0">
         <div className="h-9 w-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-300">
           <AlertTriangle className="h-4 w-4" />

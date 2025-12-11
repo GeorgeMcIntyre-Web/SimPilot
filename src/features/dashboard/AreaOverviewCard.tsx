@@ -287,7 +287,6 @@ export function AreaCardsGrid({
             padding: gap / 2,
             boxSizing: 'border-box'
           }
-
           return (
             <div style={adjustedStyle}>
               <AreaOverviewCard
