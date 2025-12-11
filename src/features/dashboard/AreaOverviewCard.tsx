@@ -202,8 +202,8 @@ export function AreaCardsGrid({
   const gap = 12 // matches gap-3
   const cardHeight = density === 'compact' ? 148 : 172
   const rowHeight = cardHeight + gap
-  const maxRowsVisible = 3
-  const maxGridHeight = rowHeight * maxRowsVisible - gap
+  const maxRowsVisible = 2.85 
+  const maxGridHeight = rowHeight * maxRowsVisible
 
   const columns = useMemo(() => {
     if (containerWidth >= 1400) return 4
@@ -280,7 +280,7 @@ export function AreaCardsGrid({
           if (idx >= areas.length) return null
           const { areaKey, counts } = areas[idx]
 
-          const adjustedStyle = {
+          const adjustedStyle: React.CSSProperties = {
             ...style,
             width: itemWidth,
             height: cardHeight,

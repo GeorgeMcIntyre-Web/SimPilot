@@ -28,7 +28,6 @@ import {
 } from '../../features/dashboard'
 
 type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
-type AreaDensity = 'comfortable' | 'compact'
 type AreaFilter = 'all' | 'with-risk' | 'critical-only' | 'healthy-only'
 
 // ============================================================================
@@ -41,7 +40,6 @@ export function DashboardPage() {
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [areaSearch, setAreaSearch] = useState<string>('')
   const [areaSort, setAreaSort] = useState<AreaSort>('total-desc')
-  const [areaDensity, setAreaDensity] = useState<AreaDensity>('comfortable')
   const [areaFilter, setAreaFilter] = useState<AreaFilter>('all')
 
   // Data from CrossRef
@@ -240,31 +238,6 @@ export function DashboardPage() {
                 <option value="critical-only">Critical Only</option>
                 <option value="healthy-only">Healthy Only</option>
               </select>
-
-              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
-                <button
-                  onClick={() => setAreaDensity('comfortable')}
-                  className={cn(
-                    'px-2 py-1 text-xs font-semibold transition-colors',
-                    areaDensity === 'comfortable'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  )}
-                >
-                  Comfy
-                </button>
-                <button
-                  onClick={() => setAreaDensity('compact')}
-                  className={cn(
-                    'px-2 py-1 text-xs font-semibold border-l border-gray-300 dark:border-gray-600 transition-colors',
-                    areaDensity === 'compact'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  )}
-                >
-                  Compact
-                </button>
-              </div>
             </div>
           </div>
         )}
@@ -274,7 +247,7 @@ export function DashboardPage() {
             areas={filteredAreas}
             selectedArea={selectedArea}
             onSelectArea={setSelectedArea}
-            density={areaDensity}
+            density="comfortable"
           />
         </div>
       </section>
