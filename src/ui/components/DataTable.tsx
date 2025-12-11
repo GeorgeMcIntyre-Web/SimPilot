@@ -30,14 +30,6 @@ export function DataTable<T>({
     const [sortIndex, setSortIndex] = useState<number | null>(enableSorting ? defaultSortIndex ?? null : null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
 
-    if (!data || data.length === 0) {
-        return (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                <p className="text-gray-500 dark:text-gray-400">{emptyMessage}</p>
-            </div>
-        );
-    }
-
     const sortedData = useMemo(() => {
         if (!enableSorting || sortIndex === null || !columns[sortIndex]?.sortValue) {
             return data;
@@ -72,6 +64,14 @@ export function DataTable<T>({
             setSortDirection('asc');
         }
     };
+
+    if (!data || data.length === 0) {
+        return (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <p className="text-gray-500 dark:text-gray-400">{emptyMessage}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg h-full">
