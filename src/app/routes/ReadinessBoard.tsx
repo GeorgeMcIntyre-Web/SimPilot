@@ -32,25 +32,29 @@ const STATUS_STYLES = {
         bg: 'bg-emerald-50 dark:bg-emerald-950/30',
         text: 'text-emerald-700 dark:text-emerald-400',
         border: 'border-emerald-200 dark:border-emerald-800',
-        dot: 'bg-emerald-500'
+        dot: 'bg-emerald-500',
+        accent: 'border-l-4 border-l-emerald-500/70'
     },
     atRisk: {
         bg: 'bg-amber-50 dark:bg-amber-950/30',
         text: 'text-amber-700 dark:text-amber-400',
         border: 'border-amber-200 dark:border-amber-800',
-        dot: 'bg-amber-500'
+        dot: 'bg-amber-500',
+        accent: 'border-l-4 border-l-amber-500/70'
     },
     late: {
         bg: 'bg-rose-50 dark:bg-rose-950/30',
         text: 'text-rose-700 dark:text-rose-400',
         border: 'border-rose-200 dark:border-rose-800',
-        dot: 'bg-rose-500'
+        dot: 'bg-rose-500',
+        accent: 'border-l-4 border-l-rose-500/70'
     },
     unknown: {
         bg: 'bg-gray-50 dark:bg-gray-800/30',
         text: 'text-gray-600 dark:text-gray-400',
         border: 'border-gray-200 dark:border-gray-700',
-        dot: 'bg-gray-400'
+        dot: 'bg-gray-400',
+        accent: 'border-l-4 border-l-gray-400/70'
     }
 }
 
@@ -154,22 +158,30 @@ export function ReadinessBoard() {
                 <div className="max-h-[900px] overflow-y-auto custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                         {groupedByPhase.map(({ phase, risks }) => (
-                            <div key={phase} className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden">
-                                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-                                    <div className="flex items-center justify-between">
+                            <div
+                                key={phase}
+                                className="relative bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden flex flex-col shadow-sm backdrop-blur-sm"
+                            >
+                                <div className="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 px-3 py-2.5 flex-shrink-0">
+                                    <div className="flex items-center justify-between gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className="text-base">{PHASE_ICONS[phase]}</span>
-                                            <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                                {PHASE_LABELS[phase]}
-                                            </h3>
+                                            <div className="leading-tight">
+                                                <div className="text-[10px] uppercase tracking-[0.06em] text-gray-400 dark:text-gray-500 font-semibold">
+                                                    Phase
+                                                </div>
+                                                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                    {PHASE_LABELS[phase]}
+                                                </h3>
+                                            </div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-                                            {risks.length}
+                                        <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-700 shadow-sm">
+                                            {risks.length} {risks.length === 1 ? 'cell' : 'cells'}
                                         </span>
                                     </div>
                                 </div>
 
-                                <div className="p-2 space-y-2">
+                                <div className="p-2.5 space-y-2.5 overflow-y-auto custom-scrollbar max-h-[70vh]">
                                     {risks.map(risk => {
                                         const cell = cells.find(c => c.id === risk.cellId)
                                         if (!cell) return null
@@ -208,13 +220,14 @@ function CellCard({ cell, risk }: CellCardProps) {
             to={`/projects/${cell.projectId}/cells/${encodeURIComponent(cell.id)}`}
             state={{ from: '/readiness', fromLabel: 'Readiness' }}
             className={cn(
-                "block rounded-md border transition-all hover:shadow-sm",
+                "group relative block rounded-md border transition-all hover:-translate-y-0.5 hover:shadow-md",
                 "bg-white dark:bg-gray-800",
-                styles.border
+                styles.border,
+                styles.accent
             )}
         >
             {/* Header with status */}
-            <div className={cn("px-2.5 py-1.5 border-b", styles.border, styles.bg)}>
+            <div className={cn("px-3 py-2 border-b", styles.border, styles.bg)}>
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", styles.dot)} />
@@ -231,17 +244,17 @@ function CellCard({ cell, risk }: CellCardProps) {
             </div>
 
             {/* Content */}
-            <div className="px-2.5 py-2 space-y-1.5">
+            <div className="px-3 py-2.5 space-y-2">
                 {/* Project */}
                 {project && (
-                    <div className="text-[10px] text-gray-600 dark:text-gray-400 truncate font-medium">
+                    <div className="text-[10px] text-gray-600 dark:text-gray-400 truncate font-semibold">
                         {project.name}
                     </div>
                 )}
 
                 {/* Engineer */}
                 {cell.assignedEngineer && (
-                    <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-500">
+                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-500">
                         <User className="h-2.5 w-2.5 flex-shrink-0" />
                         <span className="truncate">{cell.assignedEngineer}</span>
                     </div>
