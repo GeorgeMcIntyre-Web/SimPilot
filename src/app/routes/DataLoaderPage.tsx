@@ -505,8 +505,8 @@ export function DataLoaderPage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center" data-testid="demo-loader">
-              <FlowerAccent className="w-5 h-5 mr-2 text-rose-500" />
-              <span className="mr-2">🌸</span> Quick Start: Load Demo Data
+     
+              Quick Start: Load Demo Data
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Quickly load sample data for demonstration purposes without needing Excel files.
