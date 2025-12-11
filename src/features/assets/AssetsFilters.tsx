@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import type { EquipmentSourcing } from '../../domain/UnifiedModel'
 import type { ReuseAllocationStatus } from '../../ingestion/excelIngestionTypes'
-import type { UseAssetsFiltersReturn } from './types'
+import type { UseAssetsFiltersReturn } from './useAssetsFilters'
 
 type FilterBarProps = {
   filters: UseAssetsFiltersReturn['filters']
