@@ -201,6 +201,9 @@ export function AreaCardsGrid({
 
   const gap = 12 // matches gap-3
   const cardHeight = density === 'compact' ? 148 : 172
+  const rowHeight = cardHeight + gap
+  const maxRowsVisible = 3
+  const maxGridHeight = rowHeight * maxRowsVisible - gap
 
   const columns = useMemo(() => {
     if (containerWidth >= 1400) return 4
@@ -233,18 +236,21 @@ export function AreaCardsGrid({
     return (
       <div
         ref={containerRef}
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3"
+        className="overflow-y-auto custom-scrollbar"
+        style={{ maxHeight: maxGridHeight }}
       >
-        {areas.map(({ areaKey, counts }) => (
-          <AreaOverviewCard
-            key={areaKey}
-            areaKey={areaKey}
-            counts={counts}
-            isSelected={selectedArea === areaKey}
-            density={density}
-            onClick={() => handleCardClick(areaKey)}
-          />
-        ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+          {areas.map(({ areaKey, counts }) => (
+            <AreaOverviewCard
+              key={areaKey}
+              areaKey={areaKey}
+              counts={counts}
+              isSelected={selectedArea === areaKey}
+              density={density}
+              onClick={() => handleCardClick(areaKey)}
+            />
+          ))}
+        </div>
       </div>
     )
   }
@@ -253,9 +259,9 @@ export function AreaCardsGrid({
   const usableWidth = Math.max(containerWidth - gap * (columns - 1), 0)
   const itemWidth = Math.max(Math.floor(usableWidth / columns), 120)
   const columnWidth = itemWidth
-  const rowHeight = cardHeight + gap
   const rowCount = Math.ceil(areas.length / columns)
-  const height = Math.max(rowCount * rowHeight, cardHeight)
+  const fullHeight = Math.max(rowCount * rowHeight - gap, cardHeight)
+  const height = Math.min(fullHeight, maxGridHeight)
   const gridWidth = containerWidth
 
   return (
