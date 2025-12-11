@@ -199,121 +199,84 @@ export function AssetsFilterBar({
 }
 
 export function AssetsSummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
-  const reuseCount = counts.bySourcing.REUSE ?? 0
+  return (
+    <div className="space-y-2.5 flex flex-col h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
+        <StatTile
+          label="Total Assets"
+          value={counts.total}
+          accent="text-sky-600 dark:text-sky-300"
+        />
+        <StatTile
+          label="New Buy"
+          value={counts.bySourcing.NEW_BUY ?? 0}
+          accent="text-blue-600 dark:text-blue-300"
+          onClick={() => onFilterClick({ sourcing: 'NEW_BUY' })}
+        />
+        <StatTile
+          label="Reuse"
+          value={counts.bySourcing.REUSE ?? 0}
+          accent="text-emerald-600 dark:text-emerald-300"
+          onClick={() => onFilterClick({ sourcing: 'REUSE' })}
+        />
+        <StatTile
+          label="Make"
+          value={counts.bySourcing.MAKE ?? 0}
+          accent="text-slate-700 dark:text-slate-200"
+          onClick={() => onFilterClick({ sourcing: 'MAKE' })}
+        />
+        <StatTile
+          label="Unknown"
+          value={counts.bySourcing.UNKNOWN ?? 0}
+          accent="text-amber-600 dark:text-amber-300"
+          onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
+        />
+      </div>
+
+      <AlertTile value={counts.byReuseStatus.UNKNOWN ?? 0} />
+    </div>
+  )
+}
+
+function StatTile({ label, value, accent, onClick }: { label: string; value: number | string; accent: string; onClick?: () => void }) {
+  const interactive = Boolean(onClick)
+  const body = (
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-3 h-full flex items-center justify-between shadow-sm">
+      <div>
+        <div className={"text-xl font-bold " + accent}>{value}</div>
+        <div className="text-[11px] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400 font-semibold">{label}</div>
+      </div>
+      <div className="h-10 w-1 rounded-full bg-gradient-to-b from-sky-200 via-indigo-200 to-emerald-200 dark:from-sky-900/40 dark:via-indigo-900/40 dark:to-emerald-900/40" />
+    </div>
+  )
+
+  if (!interactive) return body
 
   return (
-    <div className="space-y-2 flex flex-col h-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div
-          onClick={() => onFilterClick({ sourcing: 'NEW_BUY' })}
-          className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3 transition-all hover:shadow-md cursor-pointer"
-        >
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-blue-500">
-              <ShoppingCart className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                  {counts.bySourcing.NEW_BUY ?? 0}
-                </span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                  New Buy
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-lg"
+    >
+      {body}
+    </button>
+  )
+}
 
-        <div
-          onClick={() => onFilterClick({ sourcing: 'REUSE' })}
-          className="rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 p-3 transition-all hover:shadow-md cursor-pointer"
-        >
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-emerald-500">
-              <Recycle className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
-                  {reuseCount}
-                </span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                  Reuse
-                </span>
-              </div>
-            </div>
-          </div>
+function AlertTile({ value }: { value: number }) {
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-amber-200 dark:border-amber-700 p-3 h-full flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-9 w-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-300">
+          <AlertTriangle className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-xl font-bold text-amber-800 dark:text-amber-200">{value}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-amber-800 dark:text-amber-200 truncate">Unassigned reuse</div>
+          <p className="text-[11px] text-amber-700/80 dark:text-amber-200/80 truncate">Assign reuse to track spend.</p>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div
-          onClick={() => onFilterClick({ sourcing: 'MAKE' })}
-          className="rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-3 transition-all hover:shadow-md cursor-pointer"
-        >
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-gray-500 dark:text-gray-400">
-              <Hammer className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                  {counts.bySourcing.MAKE ?? 0}
-                </span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                  Make
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          onClick={() => onFilterClick({ sourcing: 'UNKNOWN' })}
-          className={cn(
-            'rounded-lg border border-gray-200 bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 p-3 transition-all hover:shadow-md cursor-pointer',
-            counts.bySourcing.UNKNOWN ? 'ring-1 ring-amber-300 dark:ring-amber-400/60' : ''
-          )}
-        >
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 text-gray-500 dark:text-gray-400">
-              <HelpCircle className="h-5 w-5" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
-                  {counts.bySourcing.UNKNOWN ?? 0}
-                </span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                  Unknown
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 shadow-sm">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 text-amber-500">
-            <AlertTriangle className="h-5 w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                {counts.byReuseStatus.UNKNOWN ?? 0}
-              </span>
-              <span className="text-sm font-medium text-amber-700 dark:text-amber-300 truncate">
-                Unassigned tooling (unknown reuse)
-              </span>
-            </div>
-            <p className="text-xs text-amber-700/80 dark:text-amber-200/80 mt-1">
-              Assign a reuse status to track spend vs reuse targets.
-            </p>
-          </div>
-        </div>
-      </div>
+      <div className="h-10 w-1 rounded-full bg-gradient-to-b from-amber-200 via-amber-300 to-amber-400 dark:from-amber-900/50 dark:via-amber-800/50 dark:to-amber-700/50" />
     </div>
   )
 }
