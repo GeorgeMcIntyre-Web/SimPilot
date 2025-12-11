@@ -51,7 +51,7 @@ export type {
 } from './simulationSelectors'
 
 // Adapter
-export { useSimulationSync, transformToStationContexts } from './simulationAdapter'
+export { useSimulationSync, transformToStationContexts, syncSimulationStore } from './simulationAdapter'
 
 // Components
 export { SimulationFiltersBar } from './components/SimulationFiltersBar'

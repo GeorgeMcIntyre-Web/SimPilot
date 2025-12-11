@@ -28,6 +28,7 @@ import { setCrossRefData } from '../hooks/useCrossRefData'
 import type { CrossRefInput, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot } from '../domain/crossRef/CrossRefTypes'
 import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 import * as XLSX from 'xlsx'
+import { syncSimulationStore } from '../features/simulation'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -443,6 +444,7 @@ export async function ingestFiles(
     tools: applyResult.tools,
     warnings: warningStrings
   }, input.dataSource)
+  syncSimulationStore()
 
   // NEW: Build and populate CrossRef data for dashboard
   try {

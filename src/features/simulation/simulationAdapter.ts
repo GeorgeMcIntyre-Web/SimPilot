@@ -3,7 +3,7 @@
 // Transforms cells/assets into StationContext hierarchy
 
 import { useMemo, useEffect } from 'react'
-import { useCoreStore, type CoreStoreState } from '../../domain/coreStore'
+import { coreStore, useCoreStore, type CoreStoreState } from '../../domain/coreStore'
 import {
   simulationStore,
   generateContextKey,
@@ -247,6 +247,7 @@ export function useSimulationSync(): void {
  * Note: This is a placeholder for imperative sync if needed
  */
 export function syncSimulationStore(): void {
-  // This function is a placeholder
-  // Use useSimulationSync hook for reactive sync
+  const state = coreStore.getState()
+  const stationContexts = transformToStationContexts(state)
+  simulationStore.setStations(stationContexts)
 }

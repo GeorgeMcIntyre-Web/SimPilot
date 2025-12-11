@@ -13,6 +13,7 @@ import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 
 import { useHasSimulationData } from '../../ui/hooks/useDomainData';
 import { clearCrossRefData } from '../../hooks/useCrossRefData';
+import { syncSimulationStore } from '../../features/simulation';
 import { simBridgeClient, SimBridgeStatus } from '../../integrations/simbridge/SimBridgeClient';
 import { Radio } from 'lucide-react';
 import { VersionComparisonModal } from '../components/VersionComparisonModal';
@@ -363,6 +364,7 @@ export function DataLoaderPage() {
     // Simulate a small delay for effect
     setTimeout(() => {
       loadDemoScenario(selectedDemoId)
+      syncSimulationStore()
 
       const state = coreStore.getState()
       setResult({
@@ -405,6 +407,7 @@ export function DataLoaderPage() {
       // Clear store first to avoid duplicates
       coreStore.clear()
       coreStore.loadSnapshot(deduplicatedSnapshot)
+      syncSimulationStore()
       
       const state = coreStore.getState()
       // Convert string warnings to IngestionWarning format
@@ -457,6 +460,7 @@ export function DataLoaderPage() {
 
   const confirmClearData = () => {
     coreStore.clear()
+    syncSimulationStore()
     clearCrossRefData()
     setResult(null)
     setError(null)
