@@ -12,6 +12,7 @@ import { getUserPreference, setUserPreference } from '../../utils/prefsStorage';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 
 import { useHasSimulationData } from '../../ui/hooks/useDomainData';
+import { clearCrossRefData } from '../../hooks/useCrossRefData';
 import { simBridgeClient, SimBridgeStatus } from '../../integrations/simbridge/SimBridgeClient';
 import { Radio } from 'lucide-react';
 import { VersionComparisonModal } from '../components/VersionComparisonModal';
@@ -456,6 +457,7 @@ export function DataLoaderPage() {
 
   const confirmClearData = () => {
     coreStore.clear()
+    clearCrossRefData()
     setResult(null)
     setError(null)
     setM365Error(null)
