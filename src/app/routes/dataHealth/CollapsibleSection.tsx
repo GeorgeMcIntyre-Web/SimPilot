@@ -34,7 +34,7 @@ export function CollapsibleSection({
         </div>
       </button>
       {isExpanded && (
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50">
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50 max-h-[300px] overflow-y-auto custom-scrollbar">
           {children}
         </div>
       )}
