@@ -16,13 +16,19 @@ const gradient: Record<FocusItem['severity'], string> = {
 
 interface FocusSummaryCardsProps {
   items: FocusItem[]
+  className?: string
 }
 
-export function FocusSummaryCards({ items }: FocusSummaryCardsProps) {
+export function FocusSummaryCards({ items, className }: FocusSummaryCardsProps) {
   if (items.length === 0) return null
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+    <div
+      className={cn(
+        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 w-full",
+        className
+      )}
+    >
       {items.map(item => (
         <div
           key={item.id}
