@@ -30,12 +30,10 @@ export function StationsTable({
     severityFilter,
     sortKey,
     sortDirection,
-    density,
     currentPage,
     totalPages,
     setSearchTerm,
     setSeverityFilter,
-    setDensity,
     handleSort,
     handlePageChange,
     filteredCells,
@@ -63,8 +61,6 @@ export function StationsTable({
         onClearAreaFilter={onClearAreaFilter}
         resultCount={filteredCells.length}
         totalCount={cells.length}
-        density={density}
-        onDensityChange={setDensity}
       />
 
       <div
@@ -139,7 +135,7 @@ export function StationsTable({
                   <StationRow
                     key={cell.stationKey}
                     cell={cell}
-                    density={density}
+                    density="compact"
                     onClick={() => onSelectStation(cell)}
                   />
                 ))

@@ -60,6 +60,7 @@ export { StationCard } from './components/StationCard'
 export { DaleTodayPanel } from './components/DaleTodayPanel'
 export { SimulationDetailDrawer } from './components/SimulationDetailDrawer'
 export { SimulationDetailPanel } from './components/SimulationDetailPanel'
+export { SummaryStats } from './components/SummaryStats'
 
 // Component types
 export type { SortOption } from './components/SimulationFiltersBar'

@@ -1,8 +1,5 @@
 import { Search, Filter, X } from 'lucide-react';
-import { cn } from '../../../ui/lib/utils';
 import { SeverityFilter } from '../dashboardUtils';
-
-type Density = 'comfortable' | 'compact';
 
 interface FilterControlsProps {
   searchTerm: string;
@@ -13,8 +10,6 @@ interface FilterControlsProps {
   onClearAreaFilter?: () => void;
   resultCount: number;
   totalCount: number;
-  density: Density;
-  onDensityChange: (density: Density) => void;
 }
 
 export function FilterControls({
@@ -26,8 +21,6 @@ export function FilterControls({
   onClearAreaFilter,
   resultCount,
   totalCount,
-  density,
-  onDensityChange,
 }: FilterControlsProps) {
   return (
     <div className="flex flex-col gap-3 mb-4">
@@ -57,31 +50,6 @@ export function FilterControls({
               <option value="warning">At Risk Only</option>
               <option value="none">On Track Only</option>
             </select>
-          </div>
-
-          <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
-            <button
-              onClick={() => onDensityChange('comfortable')}
-              className={cn(
-                'px-3 py-1.5 text-xs font-semibold transition-colors',
-                density === 'comfortable'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              )}
-            >
-              Comfy
-            </button>
-            <button
-              onClick={() => onDensityChange('compact')}
-              className={cn(
-                'px-3 py-1.5 text-xs font-semibold border-l border-gray-200 dark:border-gray-700 transition-colors',
-                density === 'compact'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              )}
-            >
-              Compact
-            </button>
           </div>
         </div>
       </div>

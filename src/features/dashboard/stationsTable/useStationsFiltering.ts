@@ -10,8 +10,6 @@ import {
   SeverityFilter,
 } from '../dashboardUtils';
 
-type Density = 'comfortable' | 'compact';
-
 const PAGE_SIZE = 10;
 
 export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string | null) {
@@ -20,7 +18,7 @@ export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string
   const [sortKey, setSortKey] = useState<SortKey>('risk');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
-  const [density, setDensity] = useState<Density>('comfortable');
+  const density: 'compact' = 'compact';
 
   // Apply filters and sorting
   const filteredCells = useMemo(() => {
@@ -69,14 +67,12 @@ export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string
     severityFilter,
     sortKey,
     sortDirection,
-    density,
     currentPage,
     totalPages,
 
     // Setters
     setSearchTerm,
     setSeverityFilter,
-    setDensity,
 
     // Handlers
     handleSort,
