@@ -211,7 +211,7 @@ export const sortCells = (
 }
 
 // ============================================================================
-// FOCUS ITEMS (Today for Dale)
+// FOCUS ITEMS (Today s Overview)
 // ============================================================================
 
 export interface FocusItem {
@@ -223,7 +223,7 @@ export interface FocusItem {
 }
 
 /**
- * Generate focus items for "Today for Dale" section
+ * Generate focus items for "Today s Overview" section
  */
 export const generateFocusItems = (cells: CellSnapshot[]): FocusItem[] => {
   const items: FocusItem[] = []

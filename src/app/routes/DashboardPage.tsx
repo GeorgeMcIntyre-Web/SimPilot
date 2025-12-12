@@ -1,6 +1,6 @@
 // Dashboard Page
 // Main dashboard view for Dale (Simulation Manager)
-// Shows Today for Dale strip, Area overview cards, and Stations table
+// Shows Today s Overview strip, Area overview cards, and Stations table
 
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -171,7 +171,7 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Today for Dale Strip */}
+      {/* Today s Overview Strip */}
       <TodayForDaleStrip
         focusItems={focusItems}
         stationsWithFlags={stats.withFlags}

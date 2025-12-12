@@ -1,4 +1,4 @@
-// Today For Dale Strip
+// Today s Overview Strip
 // Top section showing curated focus items for the day
 
 import { AlertTriangle, Target, Zap, CheckCircle2 } from 'lucide-react'
@@ -84,7 +84,7 @@ export function TodayForDaleStrip({
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Today for Dale
+              Today s Overview
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Quick overview of what needs attention

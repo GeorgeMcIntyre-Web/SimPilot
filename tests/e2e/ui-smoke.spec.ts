@@ -58,8 +58,8 @@ test.describe('UI Smoke Tests', () => {
     await expect(page.getByTestId('kpi-robots')).toBeVisible();
     await expect(page.getByTestId('kpi-tools')).toBeVisible();
     
-    // Verify "Today for Dale" section is present
-    await expect(page.getByText('Today for Dale')).toBeVisible();
+    // Verify "Today s Overview" section is present
+    await expect(page.getByText('Today s Overview')).toBeVisible();
     
     // Verify Areas Overview section is present
     await expect(page.getByText('Areas Overview')).toBeVisible();

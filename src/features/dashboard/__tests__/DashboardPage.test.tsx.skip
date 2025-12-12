@@ -150,11 +150,11 @@ describe.skip('DashboardPage', () => {
       expect(onTrackElements.length).toBeGreaterThan(0)
     })
 
-    it('shows "Today for Dale" section with focus items when risks exist', () => {
+    it('shows "Today s Overview" section with focus items when risks exist', () => {
       renderDashboard()
 
-      // Should show Today for Dale header
-      expect(screen.getByText('Today for Dale')).toBeInTheDocument()
+      // Should show Today s Overview header
+      expect(screen.getByText('Today s Overview')).toBeInTheDocument()
 
       // Should have at least one focus tile for the issues we created
       // (guns without force or tools without owner)

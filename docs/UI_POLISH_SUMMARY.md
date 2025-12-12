@@ -15,7 +15,7 @@ This document summarizes the UI/UX improvements made to the SimPilot application
   - Weld Guns count
   - Risers count
   
-- **"Today for Dale" Strip**: Curated focus items showing what needs attention
+- **"Today s Overview" Strip**: Curated focus items showing what needs attention
   - Missing simulation status
   - Guns without force data
   - Robots missing dress pack info
