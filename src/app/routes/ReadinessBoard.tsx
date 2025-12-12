@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useCells, useProjects } from '../../domain/coreStore'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { SchedulePhase, Cell } from '../../domain/core'
-import { Filter, Calendar, User, Clock } from 'lucide-react'
+import { Filter, Calendar, User, Clock, Search, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { PageHint } from '../../ui/components/PageHint'
 import { cn } from '../../ui/lib/utils'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -66,13 +66,47 @@ export function ReadinessBoard() {
 
     const [filterPhase, setFilterPhase] = useState<SchedulePhase | 'all'>('all')
     const [filterProject, setFilterProject] = useState<string>('all')
+    const [filterStatus, setFilterStatus] = useState<'all' | 'onTrack' | 'atRisk' | 'late'>('all')
+    const [searchTerm, setSearchTerm] = useState('')
 
     // Get filtered cells with risk data
-    const filteredRisks = cellRisks.filter(risk => {
-        if (filterPhase !== 'all' && risk.phase !== filterPhase) return false
-        if (filterProject !== 'all' && risk.projectId !== filterProject) return false
-        return true
-    })
+    const filteredRisks = useMemo(() => {
+        return cellRisks.filter(risk => {
+            // Phase filter
+            if (filterPhase !== 'all' && risk.phase !== filterPhase) return false
+
+            // Project filter
+            if (filterProject !== 'all' && risk.projectId !== filterProject) return false
+
+            // Status filter
+            if (filterStatus !== 'all' && risk.status !== filterStatus) return false
+
+            // Search filter
+            if (searchTerm) {
+                const cell = cells.find(c => c.id === risk.cellId)
+                if (!cell) return false
+
+                const term = searchTerm.toLowerCase()
+                const matchesName = cell.name.toLowerCase().includes(term)
+                const matchesEngineer = cell.assignedEngineer?.toLowerCase().includes(term)
+                const project = projects.find(p => p.id === cell.projectId)
+                const matchesProject = project?.name.toLowerCase().includes(term)
+
+                return matchesName || matchesEngineer || matchesProject
+            }
+
+            return true
+        })
+    }, [cellRisks, filterPhase, filterProject, filterStatus, searchTerm, cells, projects])
+
+    // Calculate statistics
+    const stats = useMemo(() => {
+        const total = cellRisks.length
+        const onTrack = cellRisks.filter(r => r.status === 'onTrack').length
+        const atRisk = cellRisks.filter(r => r.status === 'atRisk').length
+        const late = cellRisks.filter(r => r.status === 'late').length
+        return { total, onTrack, atRisk, late }
+    }, [cellRisks])
 
     // Group by phase
     const phases: SchedulePhase[] = ['presim', 'offline', 'onsite', 'rampup', 'handover', 'unspecified']
@@ -118,39 +152,168 @@ export function ReadinessBoard() {
                 }
             />
 
-            {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                    <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            {/* Statistics Cards */}
+            {cellRisks.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="space-y-0.5">
+                                <div className="text-xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
+                                <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">Total Cells</div>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
+                                <Calendar className="h-4 w-4 text-gray-600" />
+                            </div>
+                        </div>
+                    </div>
 
-                    <select
-                        value={filterPhase}
-                        onChange={(e) => setFilterPhase(e.target.value as SchedulePhase | 'all')}
-                        className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="all">All Phases</option>
-                        {phases.map(p => (
-                            <option key={p} value={p}>{PHASE_ICONS[p]} {PHASE_LABELS[p]}</option>
-                        ))}
-                    </select>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="space-y-0.5">
+                                <div className="text-xl font-bold text-emerald-700">{stats.onTrack}</div>
+                                <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">On Track</div>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            </div>
+                        </div>
+                    </div>
 
-                    <select
-                        value={filterProject}
-                        onChange={(e) => setFilterProject(e.target.value)}
-                        className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="all">All Projects</option>
-                        {projects.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="space-y-0.5">
+                                <div className="text-xl font-bold text-amber-700">{stats.atRisk}</div>
+                                <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">At Risk</div>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
+                                <AlertCircle className="h-4 w-4 text-amber-600" />
+                            </div>
+                        </div>
+                    </div>
 
-                    <div className="flex-1" />
-
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                        {filteredRisks.length} {filteredRisks.length === 1 ? 'cell' : 'cells'}
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="space-y-0.5">
+                                <div className="text-xl font-bold text-rose-700">{stats.late}</div>
+                                <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">Late</div>
+                            </div>
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800">
+                                <Clock className="h-4 w-4 text-rose-600" />
+                            </div>
+                        </div>
                     </div>
                 </div>
+            )}
+
+            {/* Filters */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
+                    {/* Search */}
+                    <div className="flex-1 max-w-md">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search cells, engineers, or projects..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
+
+                        <select
+                            value={filterPhase}
+                            onChange={(e) => setFilterPhase(e.target.value as SchedulePhase | 'all')}
+                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        >
+                            <option value="all">All Phases</option>
+                            {phases.map(p => (
+                                <option key={p} value={p}>{PHASE_ICONS[p]} {PHASE_LABELS[p]}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filterProject}
+                            onChange={(e) => setFilterProject(e.target.value)}
+                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        >
+                            <option value="all">All Projects</option>
+                            {projects.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="onTrack">On Track</option>
+                            <option value="atRisk">At Risk</option>
+                            <option value="late">Late</option>
+                        </select>
+
+                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                            {filteredRisks.length} {filteredRisks.length === 1 ? 'cell' : 'cells'}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Active Filters */}
+                {(filterPhase !== 'all' || filterProject !== 'all' || filterStatus !== 'all' || searchTerm) && (
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-500">Active filters:</span>
+                        {filterPhase !== 'all' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                Phase: {PHASE_LABELS[filterPhase]}
+                                <button
+                                    onClick={() => setFilterPhase('all')}
+                                    className="hover:text-indigo-900 dark:hover:text-indigo-100"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {filterProject !== 'all' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                Project: {projects.find(p => p.id === filterProject)?.name}
+                                <button
+                                    onClick={() => setFilterProject('all')}
+                                    className="hover:text-indigo-900 dark:hover:text-indigo-100"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {filterStatus !== 'all' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                Status: {filterStatus}
+                                <button
+                                    onClick={() => setFilterStatus('all')}
+                                    className="hover:text-indigo-900 dark:hover:text-indigo-100"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                        {searchTerm && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+                                Search: {searchTerm}
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="hover:text-indigo-900 dark:hover:text-indigo-100"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Kanban Board */}
