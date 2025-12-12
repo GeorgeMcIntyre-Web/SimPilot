@@ -15,8 +15,8 @@
  * - No any types
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable } from '../../ui/components/DataTable';
 import { EmptyState } from '../../ui/components/EmptyState';
@@ -53,6 +53,7 @@ function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefine
 
 export function AssetsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const state = useCoreStore();
   const allAssets = state.assets;
 
@@ -70,11 +71,14 @@ export function AssetsPage() {
     setReuseStatusFilter,
     setAreaFilter,
     setLineFilter,
+    setStationFilter,
     setProgramFilter,
     clearFilters,
   } = useAssetsFilters(allAssets);
 
   const [onlyBottleneckAssets, setOnlyBottleneckAssets] = useState(false);
+  const [linkedContextLabel, setLinkedContextLabel] = useState<string | null>(null);
+  const appliedLinkKeyRef = useRef<string | null>(null);
 
   // Bottleneck integration
   const { assetBottleneckMap } = useAssetBottlenecks(allAssets);
@@ -175,6 +179,56 @@ export function AssetsPage() {
     setOnlyBottleneckAssets(false);
   }, [clearFilters]);
 
+  // Apply deep-link filters coming from Simulation/Station views
+  useEffect(() => {
+    const stationParam = searchParams.get('station');
+    const lineParam = searchParams.get('line');
+    const programParam = searchParams.get('program');
+    const areaParam = searchParams.get('area');
+
+    const linkKey = [stationParam, lineParam, programParam, areaParam].filter(Boolean).join('|');
+    if (!linkKey) {
+      return;
+    }
+    if (appliedLinkKeyRef.current === linkKey) {
+      return;
+    }
+
+    if (stationParam) {
+      setStationFilter(stationParam);
+      setSearchTerm(stationParam);
+    }
+    if (lineParam) {
+      setLineFilter(lineParam);
+    }
+    if (programParam) {
+      setProgramFilter(programParam);
+    }
+    if (areaParam) {
+      setAreaFilter(areaParam);
+    }
+    setOnlyBottleneckAssets(false);
+    setLinkedContextLabel(
+      ['Station', stationParam, lineParam ? `Line ${lineParam}` : null, programParam]
+        .filter(Boolean)
+        .join(' · ')
+    );
+    appliedLinkKeyRef.current = linkKey;
+  }, [
+    searchParams,
+    setStationFilter,
+    setSearchTerm,
+    setLineFilter,
+    setProgramFilter,
+    setAreaFilter,
+  ]);
+
+  const handleClearLinkedContext = () => {
+    setLinkedContextLabel(null);
+    setSearchParams(new URLSearchParams());
+    handleClearAllFilters();
+  };
+
   return (
     <div className="space-y-6" data-testid="assets-page">
       <PageHeader
@@ -183,6 +237,20 @@ export function AssetsPage() {
           showActiveFilters ? ' (filtered)' : ''
         }`}
       />
+
+      {linkedContextLabel && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg px-3 py-2">
+          <div className="text-sm text-blue-900 dark:text-blue-100">
+            Linked from Simulation: {linkedContextLabel}
+          </div>
+          <button
+            onClick={handleClearLinkedContext}
+            className="text-xs font-semibold text-blue-700 dark:text-blue-300 hover:underline"
+          >
+            Clear link
+          </button>
+        </div>
+      )}
 
       {/* Filter Bar + Metrics */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-3 items-stretch">

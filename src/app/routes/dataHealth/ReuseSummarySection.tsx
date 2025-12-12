@@ -33,17 +33,17 @@ export function ReuseSummarySection({ reuseSummary }: ReuseSummarySectionProps) 
   const maxTypeValue = Math.max(...Object.values(reuseSummary.byType), 1);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* By Status */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-blue-500" />
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+          <Activity className="h-4 w-4 text-blue-500" />
           Reuse by Status
         </h3>
         {reuseSummary.total === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">No reuse records loaded.</p>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
             {Object.entries(reuseSummary.byStatus).map(([status, count]) => (
               <BarChartRow
                 key={status}
@@ -58,15 +58,15 @@ export function ReuseSummarySection({ reuseSummary }: ReuseSummarySectionProps) 
       </div>
 
       {/* By Type */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Package className="h-5 w-5 text-purple-500" />
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+          <Package className="h-4 w-4 text-purple-500" />
           Reuse by Type
         </h3>
         {Object.keys(reuseSummary.byType).length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">No reuse records loaded.</p>
         ) : (
-          <div className="space-y-1">
+          <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
             {Object.entries(reuseSummary.byType).map(([type, count]) => (
               <BarChartRow
                 key={type}

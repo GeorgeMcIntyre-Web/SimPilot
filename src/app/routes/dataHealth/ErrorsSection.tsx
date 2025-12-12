@@ -38,7 +38,7 @@ export function ErrorsSection({
         </h3>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 max-h-[420px] overflow-y-auto custom-scrollbar">
         {totalErrors === 0 ? (
           <div className="text-center py-8">
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
