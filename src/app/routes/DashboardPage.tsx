@@ -18,15 +18,14 @@ import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils'
 import { useCells } from '../../domain/coreStore'
 
 import {
-  TodayForDaleStrip,
   AreaCardsGrid,
   StationsTable,
   DashboardBottlenecksPanel,
+  FocusSummaryCards,
   generateFocusItems,
   countByRisk,
   getRiskLevel
 } from '../../features/dashboard'
-import { SummaryStats, useFilteredStationsSummary } from '../../features/simulation'
 
 type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
 type AreaFilter = 'all' | 'with-risk' | 'critical-only' | 'healthy-only'
@@ -91,14 +90,6 @@ export function DashboardPage() {
     return sorted
   }, [areaData, areaSearch, areaSort, areaFilter])
   const hasAreas = filteredAreas.length > 0
-
-  const stats = useMemo(() => {
-    const withFlags = cells.filter(c => c.flags.length > 0).length
-    const healthy = cells.filter(c => getRiskLevel(c.flags) === 'OK').length
-    return { withFlags, healthy, total: cells.length }
-  }, [cells])
-
-  const simSummary = useFilteredStationsSummary({})
 
   // Handlers
   const handleSelectStation = (cell: CellSnapshot) => {
@@ -175,25 +166,7 @@ export function DashboardPage() {
       </div>
 
       {/* Top summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
-        <div className="lg:col-span-3">
-          <TodayForDaleStrip
-            focusItems={focusItems}
-            stationsWithFlags={stats.withFlags}
-            stationsHealthy={stats.healthy}
-            totalStations={stats.total}
-          />
-        </div>
-        <div className="lg:col-span-2">
-          <SummaryStats
-            totalStations={simSummary.totalStations}
-            totalRobots={simSummary.totalRobots}
-            totalGuns={simSummary.totalGuns}
-            totalReuse={simSummary.totalReuse}
-            avgCompletion={simSummary.avgCompletion}
-          />
-        </div>
-      </div>
+      <FocusSummaryCards items={focusItems} />
 
       {/* Area Overview Cards */}
       <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
