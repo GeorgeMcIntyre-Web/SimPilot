@@ -206,9 +206,7 @@ export function AssetsPage() {
           />
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-3 h-full flex">
-          <AssetsSummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
-        </div>
+        <AssetsSummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
       </div>
 
       {/* Active Filters Indicator */}

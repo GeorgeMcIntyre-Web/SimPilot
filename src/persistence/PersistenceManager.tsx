@@ -4,6 +4,7 @@ import { persistenceService } from './indexedDbService'
 import { useGlobalBusy } from '../ui/GlobalBusyContext'
 import { setCrossRefData } from '../hooks/useCrossRefData'
 import { buildCrossRef, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot, normalizeStationId } from '../domain/crossRef'
+import { syncSimulationStore } from '../features/simulation'
 
 const SAVE_DEBOUNCE_MS = 2000
 
@@ -85,6 +86,9 @@ export function PersistenceManager() {
                 if (result.success && result.snapshot) {
                     console.log('Restoring snapshot from', result.snapshot.meta.lastSavedAt)
                     coreStore.loadSnapshot(result.snapshot)
+
+                    // Keep the simulation store in sync with the restored core store data
+                    syncSimulationStore()
 
                     // Rebuild CrossRef data from restored coreStore
                     console.log('[PersistenceManager] Rebuilding CrossRef data from persisted state')
