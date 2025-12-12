@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, User, Settings, Briefcase } from 'lucide-react';
+import { ChevronDown, LogOut, Briefcase } from 'lucide-react';
 import { useTheme, type ThemeMode } from '../../../ThemeContext';
 import { FlowerAccent } from '../../FlowerAccent';
 
@@ -120,28 +120,6 @@ export function UserProfileDropdown({
 
                     {/* Menu Items */}
                     <div className="py-0.5">
-                        <button
-                            onClick={() => {
-                                setIsOpen(false);
-                                // Could navigate to profile page
-                            }}
-                            className="w-full flex items-center px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                            <User className="w-3.5 h-3.5 mr-2" />
-                            View Profile
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                setIsOpen(false);
-                                // Could navigate to settings page
-                            }}
-                            className="w-full flex items-center px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                            <Settings className="w-3.5 h-3.5 mr-2" />
-                            Settings
-                        </button>
-
                         <button
                             onClick={() => {
                                 setThemeMode(nextTheme(themeMode));

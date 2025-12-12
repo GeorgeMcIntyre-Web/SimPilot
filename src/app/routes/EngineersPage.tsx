@@ -362,6 +362,7 @@ export function EngineersPage() {
                     data={sortedMetrics}
                     columns={columns}
                     emptyMessage="No engineers match your filter."
+                    density="compact"
                     onRowClick={(row) => setSelectedEngineerName(row.name === selectedEngineerName ? null : row.name)}
                 />
             </div>
@@ -384,6 +385,7 @@ export function EngineersPage() {
                     <DataTable
                         data={selectedEngineerCells}
                         columns={cellColumns}
+                        density="compact"
                         emptyMessage="No cells assigned to this engineer."
                     />
                 </div>

@@ -16,6 +16,7 @@ interface DataTableProps<T> {
     enableSorting?: boolean;
     defaultSortIndex?: number;
     defaultSortDirection?: 'asc' | 'desc';
+    density?: 'default' | 'compact';
 }
 
 export function DataTable<T>({
@@ -25,10 +26,14 @@ export function DataTable<T>({
     emptyMessage = "No data available",
     enableSorting = false,
     defaultSortIndex,
-    defaultSortDirection = 'asc'
+    defaultSortDirection = 'asc',
+    density = 'default'
 }: DataTableProps<T>) {
     const [sortIndex, setSortIndex] = useState<number | null>(enableSorting ? defaultSortIndex ?? null : null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
+    const paddingClasses = density === 'compact'
+        ? { head: 'py-2.5', cell: 'py-2' }
+        : { head: 'py-3.5', cell: 'py-4' };
 
     const sortedData = useMemo(() => {
         if (!enableSorting || sortIndex === null || !columns[sortIndex]?.sortValue) {
@@ -84,7 +89,7 @@ export function DataTable<T>({
                                     key={idx}
                                     scope="col"
                                     className={cn(
-                                        "py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6",
+                                        `${paddingClasses.head} pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6`,
                                         col.className
                                     )}
                                 >
@@ -119,7 +124,7 @@ export function DataTable<T>({
                                     <td
                                         key={colIdx}
                                         className={cn(
-                                            "whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 dark:text-gray-300 sm:pl-6",
+                                            `whitespace-nowrap ${paddingClasses.cell} pl-4 pr-3 text-sm text-gray-500 dark:text-gray-300 sm:pl-6`,
                                             col.className
                                         )}
                                     >
