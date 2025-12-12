@@ -185,7 +185,7 @@ export function AssetsPage() {
       />
 
       {/* Filter Bar + Metrics */}
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-3 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)] gap-3 items-stretch">
         <div className="h-full">
           <AssetsFilterBar
             filters={filters}
@@ -206,7 +206,9 @@ export function AssetsPage() {
           />
         </div>
 
-        <AssetsSummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
+        <div className="h-full flex">
+          <AssetsSummaryStrip counts={displayCounts} onFilterClick={handleSummaryFilterClick} />
+        </div>
       </div>
 
       {/* Active Filters Indicator */}
