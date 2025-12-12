@@ -5,7 +5,6 @@ interface DemoScenarioSectionProps {
   demoScenarios: Array<{ id: DemoScenarioId; label: string }>;
   onDemoIdChange: (id: DemoScenarioId) => void;
   onLoadDemo: () => void;
-  onLoadExportedData: () => void;
   onClearData: () => void;
 }
 
@@ -14,7 +13,6 @@ export function DemoScenarioSection({
   demoScenarios,
   onDemoIdChange,
   onLoadDemo,
-  onLoadExportedData,
   onClearData
 }: DemoScenarioSectionProps) {
   return (
@@ -48,12 +46,6 @@ export function DemoScenarioSection({
             className="inline-flex items-center justify-center px-3 py-1.5 w-32 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors whitespace-nowrap"
           >
             Load Demo
-          </button>
-          <button
-            onClick={onLoadExportedData}
-            className="inline-flex items-center justify-center px-3 py-1.5 w-40 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors whitespace-nowrap"
-          >
-            Load Excel Data
           </button>
           <button
             onClick={onClearData}

@@ -94,19 +94,6 @@ export function DataLoaderPage() {
     );
   };
 
-  const handleLoadExportedData = () => {
-    demoScenario.handleLoadExportedData(
-      (res) => {
-        localIngest.setResult(res);
-        m365Ingest.setResult(res);
-      },
-      (err) => {
-        localIngest.setError(err);
-        m365Ingest.setM365Error(err);
-      }
-    );
-  };
-
   return (
     <div className="space-y-6" data-testid="data-loader-root">
       <PageHeader
@@ -134,7 +121,6 @@ export function DataLoaderPage() {
         demoScenarios={demoScenario.demoScenarios}
         onDemoIdChange={demoScenario.setSelectedDemoId}
         onLoadDemo={handleLoadDemo}
-        onLoadExportedData={handleLoadExportedData}
         onClearData={handleClearData}
       />
 
