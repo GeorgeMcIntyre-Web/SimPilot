@@ -1,4 +1,3 @@
-import React from 'react'
 import { cn } from '../../ui/lib/utils'
 import { FocusItem } from './dashboardUtils'
 
@@ -25,14 +24,14 @@ export function FocusSummaryCards({ items, className }: FocusSummaryCardsProps) 
   return (
     <div
       className={cn(
-        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 w-full",
+        "flex flex-wrap gap-3 w-full",
         className
       )}
     >
       {items.map(item => (
         <div
           key={item.id}
-          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 h-full shadow-sm flex items-center justify-between gap-3"
+          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm flex items-center justify-between gap-3 flex-1 min-w-[200px]"
         >
           <div className="space-y-0.5 leading-tight">
             <div className={cn('text-2xl font-bold', severityAccent[item.severity])}>

@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Loader2, AlertCircle, LayoutGrid, RefreshCw } from 'lucide-react'
+import { Loader2, AlertCircle, LayoutGrid } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -231,13 +231,6 @@ export function SimulationPage() {
             />
           }
         />
-        <button
-          onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </button>
       </div>
 
       {/* Error Banner */}
