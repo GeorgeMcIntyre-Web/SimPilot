@@ -116,11 +116,17 @@ export function AssetsPage() {
   // Open in Simulation Status
   const handleOpenInSimulation = useCallback((asset: AssetWithMetadata) => {
     const params = new URLSearchParams();
-
+    const stationId =
+      asset.stationId ??
+      extractMetadata<string>(asset, 'stationId');
     const areaName = asset.areaName ?? extractMetadata<string>(asset, 'areaName');
     const lineCode = extractMetadata<string>(asset, 'lineCode') ?? extractMetadata<string>(asset, 'assemblyLine');
     const station = asset.stationNumber ?? extractMetadata<string>(asset, 'station');
 
+    // Prefer navigating directly to Simulation tab with station preselected
+    if (stationId) {
+      params.set('stationId', stationId);
+    }
     if (areaName !== undefined) {
       params.set('area', areaName);
     }
@@ -132,7 +138,7 @@ export function AssetsPage() {
     }
 
     const queryString = params.toString();
-    const path = queryString.length > 0 ? `/dashboard?${queryString}` : '/dashboard';
+    const path = queryString.length > 0 ? `/simulation?${queryString}` : '/simulation';
     navigate(path);
 
     setSelectedAsset(null);

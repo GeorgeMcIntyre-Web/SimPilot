@@ -182,6 +182,51 @@ export function SimulationPage() {
   const allExpanded = expandedLines.size === totalLineCount && totalLineCount > 0
   const allCollapsed = expandedLines.size === 0
 
+  // Auto-select station when navigated with line/station params
+  useEffect(() => {
+    if (selectedStation !== null) return
+    if (stations.length === 0) return
+
+    const targetLine = searchParams.get('line')
+    const targetStation = searchParams.get('station')
+    const targetStationId = searchParams.get('stationId')
+
+    let match: StationContext | undefined
+
+    if (targetStationId) {
+      match = stations.find(
+        s => s.contextKey === targetStationId || s.station === targetStationId
+      )
+    }
+
+    if (!match && (targetLine || targetStation)) {
+      match = stations.find(s => {
+        const stationMatch = targetStation
+          ? s.station.toLowerCase() === targetStation.toLowerCase()
+          : true
+        const lineMatch = targetLine
+          ? s.line.toLowerCase() === targetLine.toLowerCase()
+          : true
+        return stationMatch && lineMatch
+      })
+    }
+
+    if (!match && targetStation) {
+      match = stations.find(
+        s => s.station.toLowerCase() === targetStation.toLowerCase()
+      )
+    }
+
+    if (match) {
+      setSelectedStation(match)
+      setExpandedLines(prev => {
+        const next = new Set(prev)
+        next.add(`${match.unit}|${match.line}`)
+        return next
+      })
+    }
+  }, [stations, selectedStation, searchParams, setExpandedLines])
+
   // Loading state
   if (isLoading) {
     return (
