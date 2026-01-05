@@ -1,6 +1,8 @@
 // End-to-End Ingestion Tests
 // Comprehensive tests for the full ingestion pipeline
 
+// @vitest-environment jsdom
+
 import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
 import {

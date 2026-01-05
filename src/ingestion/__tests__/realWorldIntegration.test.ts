@@ -2,6 +2,8 @@
 // Tests ingestion pipeline with EXACT headers from production Excel files
 // Verifies: Station linking, vacuum parser, reference data population
 
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach } from 'vitest'
 import * as XLSX from 'xlsx'
 import { ingestFiles } from '../ingestionCoordinator'

@@ -44,7 +44,7 @@ function buildCrossRefFromCoreStore() {
         teamLeader: undefined,
         simDueDate: undefined,
         toolType: tool.kind,
-        raw: tool
+        raw: tool as unknown as Record<string, unknown>
     }))
 
     // Convert Robots to RobotSnapshot
@@ -56,7 +56,7 @@ function buildCrossRefFromCoreStore() {
         eNumber: undefined,
         hasDressPackInfo: false,
         oemModel: robot.oemModel,
-        raw: robot
+        raw: robot as unknown as Record<string, unknown>
     }))
 
     return {

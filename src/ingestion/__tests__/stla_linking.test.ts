@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, it, expect, beforeEach } from 'vitest'
 import * as XLSX from 'xlsx'
 import { ingestFiles } from '../ingestionCoordinator'

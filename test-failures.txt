@@ -1,0 +1,152 @@
+
+  
+   ├ù src/ingestion/__tests__/normalizers.test.ts > normalizeAreaName > should normalize area names consistently 12ms
+>    ΓåÆ expected 'REAR UNIT' to be 'RR UN 1' // Object.is equality
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > normalizeAreaName > should return null for empty or null input 1ms
+   ├ù src/ingestion/__tests__/normalizers.test.ts > normalizeAreaName > should collapse multiple spaces 2ms
+>    ΓåÆ expected 'REAR UNIT' to be 'RR UN 1' // Object.is equality
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > normalizeStationCode > should normalize station codes consistently 3ms
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > normalizeStationCode > should handle alphanumeric codes 0ms
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > normalizeStationCode > should strip leading zeros from numeric parts 0ms
+   ├ù src/ingestion/__tests__/normalizers.test.ts > buildStationId > should build station ID from area and station 1ms
+>    ΓåÆ expected 'REAR UNIT|CA8' to be 'RR UN 1|CA8' // Object.is equality
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > buildStationId > should handle only station present 0ms
+   ├ù src/ingestion/__tests__/normalizers.test.ts > buildStationId > should handle only area present 1ms
+>    ΓåÆ expected 'REAR UNIT|__NO_STATION__' to be 'RR UN 1|__NO_STATION__' // Object.is equality
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > buildStationId > should return null when both missing 0ms
+   ├ù src/ingestion/__tests__/normalizers.test.ts > buildStationId > should normalize inputs before building 1ms
+>    ΓåÆ expected 'REAR UNIT|CA8' to be 'RR UN 1|CA8' // Object.is equality
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > buildRobotId > should build robot ID from station ID and caption 0ms
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > buildRobotId > should return null if stationId is missing 0ms
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > extractRawStationCodeFromAssembliesLabel > should extract station codes with various lengths 0ms
+   ├ù src/ingestion/__tests__/normalizers.test.ts > Integration: End-to-end ID building > should build consistent IDs for real-world data 1ms
+>    ΓåÆ expected 'REAR UNIT|CA8' to be 'RR UN 1|CA8' // Object.is equality
+   ├ù src/ingestion/__tests__/normalizers.test.ts > Integration: End-to-end ID building > should handle different area/station formats from different OEMs 1ms
+>    ΓåÆ expected 'FRONT UNIT|10' to be 'FR FL 1|10' // Object.is equality
+   Γ£ô src/ingestion/__tests__/normalizers.test.ts > Integration: End-to-end ID building > should build consistent IDs for Assemblies List data 0ms
+   Γ£ô src/ingestion/performance/__tests__/concurrency.test.ts > runWithConcurrencyLimit > basic functionality > should return results in order 57ms
+  System.Management.Automation.RemoteException
+  stderr | src/ingestion/__tests__/workbookLoader.test.ts > loadWorkbookFromBuffer > error handling > handles corrupted xlsx gracefully
+> [WorkbookLoader] Failed to parse corrupted.xlsx: Error: Unsupported ZIP file
+      at parse_zip (C:\Users\georgem\source\repos\SimPilot\node_modules\xlsx\xlsx.js:23114:9)
+      at read_zip (C:\Users\georgem\source\repos\SimPilot\node_modules\xlsx\xlsx.js:23644:9)
+   Γ£ô src/ingestion/__tests__/workbookLoader.test.ts > toAnalyzedSheet > successful analysis > handles header row after title rows 0ms
+   Γ£ô src/ingestion/__tests__/workbookLoader.test.ts > toAnalyzedSheet > successful analysis > drops trailing empty data rows 0ms
+>  Γ£ô src/ingestion/__tests__/workbookLoader.test.ts > toAnalyzedSheet > failed analysis > returns null when no header row found 0ms
+>  Γ£ô src/ingestion/__tests__/workbookLoader.test.ts > toAnalyzedSheet > failed analysis > returns null for empty sheet 0ms
+   Γ£ô src/ingestion/__tests__/workbookLoader.test.ts > analyzeWorkbook > analyzes all sheets with valid headers 1ms
+   Γ£ô src/ingestion/__tests__/workbookLoader.test.ts > analyzeWorkbook > skips sheets without valid headers 1ms
+   Γ£ô src/ingestion/performance/__tests__/concurrency.test.ts > withTiming > should time fast operations 0ms
+   Γ£ô src/ingestion/__tests__/sheetSniffer.test.ts > CATEGORY_KEYWORDS > contains the exact typo signatures from real files 2ms
+>  Γ£ô src/ingestion/__tests__/sheetSniffer.test.ts > CATEGORY_KEYWORDS > has SIMULATION_STATUS with expected strong keywords 1ms
+   Γ£ô src/ingestion/__tests__/sheetSniffer.test.ts > CATEGORY_KEYWORDS > has IN_HOUSE_TOOLING with Sim. Leader pattern 0ms
+   Γ£ô src/ingestion/__tests__/sheetSniffer.test.ts > CATEGORY_KEYWORDS > has GUN_FORCE with Gun Force pattern 1ms
+   Γ£ô src/ingestion/performance/__tests__/parallelIngestion.test.ts > ingestFilesInParallel > metrics > should track cache hits in metrics 30ms
+  stderr | src/ingestion/performance/__tests__/parallelIngestion.test.ts > ingestFilesInParallel > error handling > should handle corrupted files gracefully
+> [WorkbookLoader] Failed to parse corrupted.xlsx: Error: Unsupported ZIP file
+      at parse_zip (C:\Users\georgem\source\repos\SimPilot\node_modules\xlsx\xlsx.js:23114:9)
+      at read_zip (C:\Users\georgem\source\repos\SimPilot\node_modules\xlsx\xlsx.js:23644:9)
+   Γ£ô src/domain/crossRef/__tests__/workflowBottlenecks.test.ts > Bottleneck Statistics > getBottleneckStats > handles empty input 0ms
+   Γ£ô src/domain/crossRef/__tests__/workflowBottlenecks.test.ts > Bottleneck Data Shape > WorkflowBottleneckStatus has all required fields 1ms
+>  Γ£ô src/domain/crossRef/__tests__/workflowBottlenecks.test.ts > Bottleneck Data Shape > severity values are from expected enum 1ms
+>  Γ£ô src/domain/crossRef/__tests__/workflowBottlenecks.test.ts > Bottleneck Data Shape > dominantStage values are from expected enum 0ms
+   Γ£ô src/ingestion/parsers/__tests__/reuseLinker.test.ts > reuseLinker > attachReuseToAssets > should match reuse record to asset by target location 4ms
+   Γ£ô src/ingestion/parsers/__tests__/reuseLinker.test.ts > reuseLinker > attachReuseToAssets > should match by part number when locations match 1ms
+   Γ£ô src/ingestion/parsers/__tests__/reuseListCoordinator.test.ts > reuseListCoordinator > loadAllReuseLists - precedence logic > should include DesignOS-only records 1ms
+   ├ù src/features/simulation/__tests__/DaleTodayPanel.test.tsx > DaleTodayPanel > respects maxItems prop 17ms
+>    ΓåÆ expected 3 to be 1 // Object.is equality
+   Γ£ô src/features/simulation/__tests__/DaleTodayPanel.test.tsx > DaleTodayPanel > shows severity indicators 15ms
+   Γ£ô src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > renders children when there is no error 34ms
+   Γ£ô src/ingestion/__tests__/stlaSData.e2e.test.ts > STLA-S E2E Ingestion > should have simulation cells from all 5 Simulation Status files 1326ms
+  System.Management.Automation.RemoteException
+> ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Suites 4 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/ingestionCoordinator.test.ts [ src/ingestion/__tests__/ingestionCoordinator.test.ts ]
+>  FAIL  src/ingestion/__tests__/ingestion_e2e.test.ts [ src/ingestion/__tests__/ingestion_e2e.test.ts ]
+>  FAIL  src/ingestion/__tests__/realWorldIntegration.test.ts [ src/ingestion/__tests__/realWorldIntegration.test.ts ]
+>  FAIL  src/ingestion/__tests__/stla_linking.test.ts [ src/ingestion/__tests__/stla_linking.test.ts ]
+  SyntaxError: Cannot use import statement outside a module
+   Γ¥» node_modules/react-router-dom/dist/index.js:38:18
+  System.Management.Automation.RemoteException
+  System.Management.Automation.RemoteException
+> ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Tests 10 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > normalizeAreaName > should normalize area names consistently
+> AssertionError: expected 'REAR UNIT' to be 'RR UN 1' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "RR UN 1"
+  Received: "REAR UNIT"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[2/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > normalizeAreaName > should collapse multiple spaces
+> AssertionError: expected 'REAR UNIT' to be 'RR UN 1' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "RR UN 1"
+  Received: "REAR UNIT"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[3/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > buildStationId > should build station ID from area and station
+> AssertionError: expected 'REAR UNIT|CA8' to be 'RR UN 1|CA8' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "RR UN 1|CA8"
+  Received: "REAR UNIT|CA8"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[4/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > buildStationId > should handle only area present
+> AssertionError: expected 'REAR UNIT|__NO_STATION__' to be 'RR UN 1|__NO_STATION__' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "RR UN 1|__NO_STATION__"
+  Received: "REAR UNIT|__NO_STATION__"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[5/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > buildStationId > should normalize inputs before building
+> AssertionError: expected 'REAR UNIT|CA8' to be 'RR UN 1|CA8' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "RR UN 1|CA8"
+  Received: "REAR UNIT|CA8"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[6/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > Integration: End-to-end ID building > should build consistent IDs for real-world data
+> AssertionError: expected 'REAR UNIT|CA8' to be 'RR UN 1|CA8' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "RR UN 1|CA8"
+  Received: "REAR UNIT|CA8"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[7/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/ingestion/__tests__/normalizers.test.ts > Integration: End-to-end ID building > should handle different area/station formats from different OEMs
+> AssertionError: expected 'FRONT UNIT|10' to be 'FR FL 1|10' // Object.is equality
+  System.Management.Automation.RemoteException
+> Expected: "FR FL 1|10"
+  Received: "FRONT UNIT|10"
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[8/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/features/simulation/__tests__/DaleTodayPanel.test.tsx > DaleTodayPanel > shows count of stations needing attention
+  TestingLibraryElementError: Unable to find an element with the text: /station.*need attention/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[9/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/features/simulation/__tests__/DaleTodayPanel.test.tsx > DaleTodayPanel > respects maxItems prop
+> AssertionError: expected 3 to be 1 // Object.is equality
+  System.Management.Automation.RemoteException
+> - Expected
+  + Received
+  System.Management.Automation.RemoteException
+  ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[10/14]ΓÄ»
+  System.Management.Automation.RemoteException
+>  FAIL  src/features/simulation/__tests__/SimulationFiltersBar.test.tsx > SimulationFiltersBar > updates search term on input
+  TestingLibraryElementError: Unable to find an element with the placeholder text of: /station, line, engineer/i
+  System.Management.Automation.RemoteException
+  System.Management.Automation.RemoteException
+  
+>  Test Files  7 failed | 40 passed (47)
+>       Tests  10 failed | 784 passed | 2 skipped (796)
+     Start at  08:47:37
+     Duration  6.60s (transform 5.23s, setup 8.57s, import 7.26s, tests 9.06s, environment 11.91s)
+

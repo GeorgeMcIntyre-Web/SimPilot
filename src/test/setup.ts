@@ -7,6 +7,9 @@ import '@testing-library/jest-dom'
 // Import testing-library matchers
 import '@testing-library/jest-dom/vitest'
 
+// Import vi for mocking
+import { vi } from 'vitest'
+
 // Mock sessionStorage for Node.js test environment (when jsdom is not available)
 // jsdom provides sessionStorage automatically, but we ensure it exists for node environment
 if (typeof sessionStorage === 'undefined' && typeof window === 'undefined') {
@@ -73,3 +76,26 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.arrayBuffer) {
         })
     }
 }
+
+// Mock simulation feature to prevent React Router ESM import errors in non-component tests
+vi.mock('../features/simulation', () => ({
+    syncSimulationStore: vi.fn(),
+    simulationStore: {
+        clear: vi.fn(),
+        setStations: vi.fn(),
+        getState: vi.fn(() => ({ stations: [], loading: false, errors: [] }))
+    },
+    useSimulationStore: vi.fn(),
+    useAllStations: vi.fn(() => []),
+    useSimulationLoading: vi.fn(() => false),
+    useSimulationErrors: vi.fn(() => []),
+    usePrograms: vi.fn(() => []),
+    usePlants: vi.fn(() => []),
+    useUnits: vi.fn(() => []),
+    useLines: vi.fn(() => []),
+    useFilteredStations: vi.fn(() => []),
+    useStationByKey: vi.fn(() => null),
+    useHierarchyTree: vi.fn(() => []),
+    generateContextKey: vi.fn((program, plant, unit, line, station) => `${program}|${plant}|${unit}|${line}|${station}`),
+    parseContextKey: vi.fn(() => ({ program: '', plant: '', unit: '', line: '', station: '' }))
+}))
