@@ -37,12 +37,12 @@ This document tracks known technical debt and deferred improvements from code re
 ---
 
 ### 3. TypeScript Strict Checks
-**Status**: 16 violations remaining (down from 29, 10 fixed)
+**Status**: 10 violations remaining (down from 29, 16 fixed)
 **Location**: [tsconfig.json:21-22](tsconfig.json#L21-L22)
 
 **Description**: `noUnusedLocals` and `noUnusedParameters` are disabled due to remaining violations.
 
-**Files with violations** (remaining):
+**Files with violations** (fixed):
 - ✅ ~~src/app/components/VersionComparisonModal.tsx~~ - Fixed (Week 3)
 - ✅ ~~src/app/routes/DashboardPage.tsx~~ - Fixed (Week 3)
 - ✅ ~~src/app/routes/ProjectsPage.tsx~~ - Fixed (Week 3 & Week 3+)
@@ -52,13 +52,22 @@ This document tracks known technical debt and deferred improvements from code re
 - ✅ ~~src/app/hooks/useM365Ingest.ts~~ - Fixed (Week 3+)
 - ✅ ~~src/app/hooks/useSimBridge.ts~~ - Fixed (Week 3+)
 - ✅ ~~src/integrations/simbridge/SimBridgeClient.ts~~ - Fixed (Week 3+)
-- src/features/simulation/components/ (multiple)
-- src/ingestion/ (multiple)
+- ✅ ~~src/features/dashboard/stationsTable/useStationsFiltering.ts~~ - Fixed (Week 3+)
+- ✅ ~~src/features/simulation/components/SimulationBoardGrid.tsx~~ - Fixed (Week 3+)
+- ✅ ~~src/features/simulation/components/SimulationDetailDrawer.tsx~~ - Fixed (Week 3+)
+- ✅ ~~src/features/simulation/components/SimulationFiltersBar.tsx~~ - Fixed (Week 3+)
+- ✅ ~~src/features/simulation/components/StationCard.tsx~~ - Fixed (Week 3+)
+- ✅ ~~src/ingestion/versionComparison.ts~~ - Fixed (Week 3+)
+- ✅ ~~src/ui/components/FlowerAccent.tsx~~ - Fixed (Week 3+)
+
+**Files with violations** (remaining ~10):
+- src/excel/engineBridge.ts (3 unused types)
+- src/ingestion/ (multiple files)
 
 **Acceptance Criteria**:
-- [x] Fix or remove unused imports (10/29 fixed - 38% complete)
+- [x] Fix or remove unused imports (16/29 fixed - 62% complete)
 - [x] Prefix intentionally unused error parameters with `_`
-- [ ] Continue fixing remaining 16 violations
+- [ ] Continue fixing remaining 10 violations
 - [ ] Enable `noUnusedLocals: true`
 - [ ] Enable `noUnusedParameters: true`
 
