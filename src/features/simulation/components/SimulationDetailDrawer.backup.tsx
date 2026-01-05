@@ -22,7 +22,8 @@ import {
   Package,
   CheckCircle2,
   Clock,
-  AlertCircle
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { Section, MetricRow, AssetCountRow } from './SimulationDetailPieces'
