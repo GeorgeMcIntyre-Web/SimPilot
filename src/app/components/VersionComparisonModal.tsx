@@ -1,7 +1,7 @@
 // Version Comparison Modal
 // Displays changes between current and incoming data before import
 
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { VersionComparisonResult, EntityChange, FieldConflict } from '../../ingestion/versionComparison'
 import { Project, Area, Cell, UnifiedAsset } from '../../domain/core'
 

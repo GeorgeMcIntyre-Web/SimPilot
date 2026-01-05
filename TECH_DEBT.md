@@ -37,21 +37,23 @@ This document tracks known technical debt and deferred improvements from code re
 ---
 
 ### 3. TypeScript Strict Checks
-**Status**: 29+ violations found
+**Status**: 26 violations remaining (down from 29)
 **Location**: [tsconfig.json:21-22](tsconfig.json#L21-L22)
 
-**Description**: `noUnusedLocals` and `noUnusedParameters` are disabled due to 29+ violations.
+**Description**: `noUnusedLocals` and `noUnusedParameters` are disabled due to remaining violations.
 
-**Files with violations**:
-- src/app/components/VersionComparisonModal.tsx
-- src/app/routes/DashboardPage.tsx
-- src/app/routes/ProjectsPage.tsx
+**Files with violations** (remaining):
+- ✅ ~~src/app/components/VersionComparisonModal.tsx~~ - Fixed
+- ✅ ~~src/app/routes/DashboardPage.tsx~~ - Fixed
+- ✅ ~~src/app/routes/ProjectsPage.tsx~~ - Fixed
+- src/app/routes/ReadinessBoard.tsx
 - src/features/assets/AssetsFilters.tsx
 - src/features/simulation/components/ (multiple)
 - src/ingestion/ (multiple)
 
 **Acceptance Criteria**:
-- [ ] Fix or remove unused imports
+- [x] Fix or remove unused imports (3/29 fixed)
+- [ ] Continue fixing remaining violations
 - [ ] Prefix intentionally unused parameters with `_`
 - [ ] Enable `noUnusedLocals: true`
 - [ ] Enable `noUnusedParameters: true`
