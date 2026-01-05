@@ -1,6 +1,6 @@
 // Test setup file for Vitest
 // Includes jest-dom matchers for DOM assertions
-import '@testing-library/jest-dom'
+// Includes jest-dom matchers for DOM assertions
 
 // Polyfills for File/Blob APIs that may be missing in jsdom
 
@@ -78,24 +78,4 @@ if (typeof Blob !== 'undefined' && !Blob.prototype.arrayBuffer) {
 }
 
 // Mock simulation feature to prevent React Router ESM import errors in non-component tests
-vi.mock('../features/simulation', () => ({
-    syncSimulationStore: vi.fn(),
-    simulationStore: {
-        clear: vi.fn(),
-        setStations: vi.fn(),
-        getState: vi.fn(() => ({ stations: [], loading: false, errors: [] }))
-    },
-    useSimulationStore: vi.fn(),
-    useAllStations: vi.fn(() => []),
-    useSimulationLoading: vi.fn(() => false),
-    useSimulationErrors: vi.fn(() => []),
-    usePrograms: vi.fn(() => []),
-    usePlants: vi.fn(() => []),
-    useUnits: vi.fn(() => []),
-    useLines: vi.fn(() => []),
-    useFilteredStations: vi.fn(() => []),
-    useStationByKey: vi.fn(() => null),
-    useHierarchyTree: vi.fn(() => []),
-    generateContextKey: vi.fn((program, plant, unit, line, station) => `${program}|${plant}|${unit}|${line}|${station}`),
-    parseContextKey: vi.fn(() => ({ program: '', plant: '', unit: '', line: '', station: '' }))
-}))
+// Mock removed as react-router issue is resolved in vitest.config.ts

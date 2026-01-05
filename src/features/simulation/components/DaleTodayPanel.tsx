@@ -13,6 +13,7 @@ import type { StationContext } from '../simulationStore'
 
 interface DaleTodayPanelProps {
   onStationClick?: (station: StationContext) => void
+  maxItems?: number
 }
 
 interface AttentionItemRowProps {
@@ -106,13 +107,15 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
 // ============================================================================
 
 export function DaleTodayPanel({
-  onStationClick
+  onStationClick,
+  maxItems
 }: DaleTodayPanelProps) {
-  const attentionItems = useStationsNeedingAttention()
+  const allAttentionItems = useStationsNeedingAttention()
+  const attentionItems = maxItems ? allAttentionItems.slice(0, maxItems) : allAttentionItems
 
   if (attentionItems.length === 0) {
     return (
-      <div 
+      <div
         className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
         data-testid="dale-today-panel-empty"
       >
@@ -135,7 +138,7 @@ export function DaleTodayPanel({
   const warningCount = attentionItems.filter(i => i.severity === 'warning').length
 
   return (
-    <div 
+    <div
       className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col"
       data-testid="dale-today-panel"
     >

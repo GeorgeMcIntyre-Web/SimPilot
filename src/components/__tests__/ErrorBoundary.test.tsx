@@ -3,7 +3,7 @@
  */
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 // Component that throws an error when rendered
@@ -17,15 +17,16 @@ function ThrowingComponent({ shouldThrow }: { shouldThrow: boolean }): JSX.Eleme
 // Suppress console.error during error boundary tests
 const originalConsoleError = console.error;
 
-beforeEach(() => {
-  console.error = vi.fn();
-});
-
-afterEach(() => {
-  console.error = originalConsoleError;
-});
-
 describe('ErrorBoundary', () => {
+  beforeEach(() => {
+    console.error = vi.fn();
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
+    cleanup();
+  });
+
   it('renders children when there is no error', () => {
     render(
       <ErrorBoundary>
