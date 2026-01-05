@@ -439,3 +439,5 @@ function CellCard({ cell, risk }: CellCardProps) {
         </Link>
     )
 }
+
+export default ReadinessBoard

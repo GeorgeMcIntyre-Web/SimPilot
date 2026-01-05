@@ -181,3 +181,5 @@ export function ToolsPage() {
         </div>
     );
 }
+
+export default ToolsPage

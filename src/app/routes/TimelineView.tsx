@@ -418,3 +418,5 @@ export function TimelineView() {
         </div>
     )
 }
+
+export default TimelineView

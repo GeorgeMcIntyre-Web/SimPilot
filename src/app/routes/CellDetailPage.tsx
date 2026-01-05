@@ -347,3 +347,5 @@ function StatPill({ label, value, tone }: StatPillProps) {
         </div>
     );
 }
+
+export default CellDetailPage

@@ -61,7 +61,9 @@
       "Bash(ls:*)",
       "Bash(node scripts/analyze_robot_excel.cjs:*)",
       "Bash(node scripts/analyze_tool_list_headers.cjs:*)",
-      "Bash(node scripts/test_stla_toollist.cjs:*)"
+      "Bash(node scripts/test_stla_toollist.cjs:*)",
+      "Bash(rm:*)",
+      "Bash(npm update:*)"
     ],
     "deny": [],
     "ask": []
