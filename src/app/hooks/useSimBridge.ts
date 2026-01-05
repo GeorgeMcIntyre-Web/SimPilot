@@ -29,7 +29,7 @@ export function useSimBridge(isActive: boolean) {
       } else {
         setSbError('Failed to connect to SimBridge. Ensure the server is running.');
       }
-    } catch (e) {
+    } catch (_e) {
       setSbError('Connection error.');
     } finally {
       popBusy();
@@ -47,7 +47,7 @@ export function useSimBridge(isActive: boolean) {
       } else {
         setSbError('Failed to load study.');
       }
-    } catch (e) {
+    } catch (_e) {
       setSbError('Error loading study.');
     } finally {
       popBusy();

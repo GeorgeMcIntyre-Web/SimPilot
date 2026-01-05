@@ -5,7 +5,7 @@ export function getUserPreference<T>(key: string, fallback: T): T {
             return fallback
         }
         return JSON.parse(item) as T
-    } catch (e) {
+    } catch (_e) {
         return fallback
     }
 }
@@ -14,7 +14,7 @@ export function setUserPreference<T>(key: string, value: T): void {
     try {
         const str = JSON.stringify(value)
         localStorage.setItem(key, str)
-    } catch (e) {
+    } catch (_e) {
         // Ignore errors
     }
 }

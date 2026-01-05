@@ -2,11 +2,7 @@ import { cn } from '../../ui/lib/utils'
 import {
   Search,
   X,
-  AlertTriangle,
-  ShoppingCart,
-  Recycle,
-  Hammer,
-  HelpCircle
+  AlertTriangle
 } from 'lucide-react'
 import type { EquipmentSourcing } from '../../domain/UnifiedModel'
 import type { ReuseAllocationStatus } from '../../ingestion/excelIngestionTypes'

@@ -29,7 +29,7 @@ export function useM365Ingest(hasData: boolean) {
         setM365Error("No Excel files found in the configured SharePoint folder.");
       }
       setM365Items(files);
-    } catch (e) {
+    } catch (_e) {
       setM365Error("Failed to list files from Microsoft 365.");
     } finally {
       setIsLoadingM365(false);
