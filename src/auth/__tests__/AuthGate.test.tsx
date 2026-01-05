@@ -4,9 +4,9 @@
  */
 
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import '@testing-library/jest-dom'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+
 import { AuthGate } from '../AuthGate'
 import { AuthContext } from '../AuthContext'
 import { AuthContextValue, AuthUser } from '../AuthTypes'
@@ -48,6 +48,8 @@ function MockAuthProvider({
 describe('AuthGate', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+        cleanup()
+        document.body.innerHTML = ''
     })
 
     describe('loading state', () => {

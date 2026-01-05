@@ -1,10 +1,10 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig, configDefaults } from 'vitest/config'
 
 export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['src/test/setup.ts'],
-    exclude: ['tests/e2e/**'],
+    exclude: [...configDefaults.exclude, 'tests/e2e/**'],
     server: {
       deps: {
         inline: ['react-router', 'react-router-dom'],
