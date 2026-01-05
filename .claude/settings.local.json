@@ -63,7 +63,8 @@
       "Bash(node scripts/analyze_tool_list_headers.cjs:*)",
       "Bash(node scripts/test_stla_toollist.cjs:*)",
       "Bash(rm:*)",
-      "Bash(npm update:*)"
+      "Bash(npm update:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []
