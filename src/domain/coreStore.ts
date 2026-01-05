@@ -67,6 +67,40 @@ function notifySubscribers() {
 }
 
 // ============================================================================
+// VALIDATION HELPERS
+// ============================================================================
+
+function validateSetDataInput(data: unknown): void {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid data: must be an object')
+  }
+
+  const d = data as Record<string, unknown>
+
+  // Validate required array fields
+  const requiredArrayFields = ['projects', 'areas', 'cells', 'robots', 'tools', 'warnings']
+  for (const field of requiredArrayFields) {
+    if (!Array.isArray(d[field])) {
+      throw new Error(`Invalid data: ${field} must be an array`)
+    }
+  }
+
+  // Validate referenceData structure if provided
+  if (d.referenceData !== undefined) {
+    const refData = d.referenceData as Record<string, unknown>
+    if (!refData || typeof refData !== 'object') {
+      throw new Error('Invalid data: referenceData must be an object')
+    }
+    if (!Array.isArray(refData.employees)) {
+      throw new Error('Invalid data: referenceData.employees must be an array')
+    }
+    if (!Array.isArray(refData.suppliers)) {
+      throw new Error('Invalid data: referenceData.suppliers must be an array')
+    }
+  }
+}
+
+// ============================================================================
 // STORE ACTIONS
 // ============================================================================
 
@@ -80,6 +114,7 @@ export const coreStore = {
 
   /**
    * Replace all entities with new data
+   * @throws {Error} If data structure is invalid
    */
   setData(data: {
     projects: Project[]
@@ -93,6 +128,9 @@ export const coreStore = {
       suppliers: SupplierRecord[]
     }
   }, source?: 'Demo' | 'Local' | 'MS365'): void {
+    // Validate input structure
+    validateSetDataInput(data)
+
     storeState = {
       projects: [...data.projects],
       areas: [...data.areas],

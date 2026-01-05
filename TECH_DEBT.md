@@ -77,36 +77,35 @@ This document tracks known technical debt and deferred improvements from code re
 ---
 
 ### 5. State Mutation Risk
-**Status**: Identified in code review
-**Location**: [src/domain/crossRef/CrossRefEngine.ts](src/domain/crossRef/CrossRefEngine.ts)
+**Status**: ✅ **COMPLETED**
+**Location**: [src/domain/crossRef/CrossRefEngine.ts:84-129](src/domain/crossRef/CrossRefEngine.ts#L84-L129)
 
-**Description**: Direct state mutation in several functions could cause subtle bugs.
+**Description**: ~~Direct state mutation in several functions could cause subtle bugs.~~ **FIXED**
 
-**Example**:
-```typescript
-const existing = stations.get(key)
-if (existing) {
-  existing.areaKey = rawArea // Mutating!
-}
-```
+**Completed**:
+- [x] Refactored `getOrCreateCell()` to use immutable updates
+- [x] Creates new object with spread operator instead of mutating
+- [x] Only updates Map when changes are needed
+- [x] Added documentation comment explaining immutable pattern
 
-**Acceptance Criteria**:
-- [ ] Refactor to use immutable updates
-- [ ] Add tests to catch mutation bugs
-- [ ] Consider using Immer.js for complex state
+**Impact**: Prevents subtle bugs from state mutations, easier debugging
 
 ---
 
 ### 6. Input Validation Missing
-**Status**: Identified in code review
-**Location**: [src/domain/coreStore.ts:84-108](src/domain/coreStore.ts#L84-L108)
+**Status**: ✅ **COMPLETED**
+**Location**: [src/domain/coreStore.ts:73-146](src/domain/coreStore.ts#L73-L146)
 
-**Description**: `setData()` doesn't validate input structure before overwriting store.
+**Description**: ~~`setData()` doesn't validate input structure before overwriting store.~~ **FIXED**
 
-**Acceptance Criteria**:
-- [ ] Add validation for required fields
-- [ ] Throw errors for invalid data
-- [ ] Add tests for validation logic
+**Completed**:
+- [x] Added `validateSetDataInput()` helper function
+- [x] Validates all required array fields (projects, areas, cells, robots, tools, warnings)
+- [x] Validates referenceData structure if provided
+- [x] Throws descriptive errors for invalid data
+- [x] Added test file with 11 test cases
+
+**Impact**: Prevents corrupt data from breaking the application state
 
 ---
 
