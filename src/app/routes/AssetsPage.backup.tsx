@@ -38,7 +38,7 @@ import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/e
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
 import { useToolingBottleneckState } from '../../domain/toolingBottleneckStore';
 import type { BottleneckSeverity, BottleneckReason, WorkflowStage } from '../../domain/toolingBottleneckStore';
-import { Search, X, Package, CheckCircle, Clock, Lock, Filter, ArrowUpDown, MapPin } from 'lucide-react';
+import { Search, X, Package, CheckCircle, Clock, Lock, Filter, ArrowUpDown, MapPin, AlertTriangle, ChevronRight, ShoppingCart, Recycle, Hammer, HelpCircle } from 'lucide-react';
 import { AssetsFilterBar, AssetsSummaryStrip } from '../../features/assets/AssetsFilters';
 
 // ============================================================================
@@ -415,7 +415,7 @@ function SummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
             <div className={cn(
               "mt-0.5",
               counts.unknownSourcingCount > 0 ? "text-amber-500" : "text-gray-500 dark:text-gray-400"
-              )}>
+            )}>
               <HelpCircle className="h-5 w-5" />
             </div>
             <div className="flex-1 min-w-0">
@@ -850,9 +850,8 @@ export function AssetsPage() {
     <div className="space-y-6" data-testid="assets-page">
       <PageHeader
         title="Assets"
-        subtitle={`${displayCounts.total} of ${allAssets.length} assets${
-          showActiveFilters ? ' (filtered)' : ''
-        }`}
+        subtitle={`${displayCounts.total} of ${allAssets.length} assets${showActiveFilters ? ' (filtered)' : ''
+          }`}
       />
 
       {/* Filter Bar + Metrics */}

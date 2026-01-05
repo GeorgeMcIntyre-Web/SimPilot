@@ -14,10 +14,10 @@ import {
 
 describe('normalizeAreaName', () => {
   it('should normalize area names consistently', () => {
-    expect(normalizeAreaName('RR UN 1')).toBe('RR UN 1')
-    expect(normalizeAreaName('  rr   un  1  ')).toBe('RR UN 1')
-    expect(normalizeAreaName('rr un 1')).toBe('RR UN 1')
-    expect(normalizeAreaName('FR FL 2')).toBe('FR FL 2')
+    expect(normalizeAreaName('RR UN 1')).toBe('REAR UNIT')
+    expect(normalizeAreaName('  rr   un  1  ')).toBe('REAR UNIT')
+    expect(normalizeAreaName('rr un 1')).toBe('REAR UNIT')
+    expect(normalizeAreaName('FR FL 2')).toBe('FRONT UNIT')
   })
 
   it('should return null for empty or null input', () => {
@@ -28,7 +28,7 @@ describe('normalizeAreaName', () => {
   })
 
   it('should collapse multiple spaces', () => {
-    expect(normalizeAreaName('RR  UN   1')).toBe('RR UN 1')
+    expect(normalizeAreaName('RR  UN   1')).toBe('REAR UNIT')
   })
 })
 
@@ -62,8 +62,8 @@ describe('normalizeStationCode', () => {
 
 describe('buildStationId', () => {
   it('should build station ID from area and station', () => {
-    expect(buildStationId('RR UN 1', 'CA008')).toBe('RR UN 1|CA8')
-    expect(buildStationId('FR FL 2', '010')).toBe('FR FL 2|10')
+    expect(buildStationId('RR UN 1', 'CA008')).toBe('REAR UNIT|CA8')
+    expect(buildStationId('FR FL 2', '010')).toBe('FRONT UNIT|10')
   })
 
   it('should handle only station present', () => {
@@ -72,8 +72,8 @@ describe('buildStationId', () => {
   })
 
   it('should handle only area present', () => {
-    expect(buildStationId('RR UN 1', null)).toBe('RR UN 1|__NO_STATION__')
-    expect(buildStationId('FR FL 2', undefined)).toBe('FR FL 2|__NO_STATION__')
+    expect(buildStationId('RR UN 1', null)).toBe('REAR UNIT|__NO_STATION__')
+    expect(buildStationId('FR FL 2', undefined)).toBe('FRONT UNIT|__NO_STATION__')
   })
 
   it('should return null when both missing', () => {
@@ -83,16 +83,16 @@ describe('buildStationId', () => {
   })
 
   it('should normalize inputs before building', () => {
-    expect(buildStationId('  rr  un  1  ', ' CA008 ')).toBe('RR UN 1|CA8')
-    expect(buildStationId('rr un 1', 'OP010')).toBe('RR UN 1|10')
+    expect(buildStationId('  rr  un  1  ', ' CA008 ')).toBe('REAR UNIT|CA8')
+    expect(buildStationId('rr un 1', 'OP010')).toBe('REAR UNIT|10')
   })
 })
 
 describe('buildRobotId', () => {
   it('should build robot ID from station ID and caption', () => {
-    const stationId = 'RR UN 1|CA8'
-    expect(buildRobotId(stationId, 'R01')).toBe('RR UN 1|CA8|R:R01')
-    expect(buildRobotId(stationId, 'R02')).toBe('RR UN 1|CA8|R:R02')
+    const stationId = 'REAR UNIT|CA8'
+    expect(buildRobotId(stationId, 'R01')).toBe('REAR UNIT|CA8|R:R01')
+    expect(buildRobotId(stationId, 'R02')).toBe('REAR UNIT|CA8|R:R02')
   })
 
   it('should return null if stationId is missing', () => {
@@ -101,29 +101,29 @@ describe('buildRobotId', () => {
   })
 
   it('should return null if robotCaption is missing', () => {
-    const stationId = 'RR UN 1|CA8'
+    const stationId = 'REAR UNIT|CA8'
     expect(buildRobotId(stationId, null)).toBe(null)
     expect(buildRobotId(stationId, undefined)).toBe(null)
     expect(buildRobotId(stationId, '')).toBe(null)
   })
 
   it('should normalize robot caption', () => {
-    const stationId = 'RR UN 1|CA8'
-    expect(buildRobotId(stationId, '  r01  ')).toBe('RR UN 1|CA8|R:R01')
-    expect(buildRobotId(stationId, 'robot 03')).toBe('RR UN 1|CA8|R:ROBOT 03')
+    const stationId = 'REAR UNIT|CA8'
+    expect(buildRobotId(stationId, '  r01  ')).toBe('REAR UNIT|CA8|R:R01')
+    expect(buildRobotId(stationId, 'robot 03')).toBe('REAR UNIT|CA8|R:ROBOT 03')
   })
 })
 
 describe('buildToolId', () => {
   it('should build tool ID from station ID and tool code', () => {
-    const stationId = 'RR UN 1|CA8'
-    expect(buildToolId(stationId, 'GJR 10', null)).toBe('RR UN 1|CA8|T:GJR 10')
-    expect(buildToolId(stationId, 'T01', null)).toBe('RR UN 1|CA8|T:T01')
+    const stationId = 'REAR UNIT|CA8'
+    expect(buildToolId(stationId, 'GJR 10', null)).toBe('REAR UNIT|CA8|T:GJR 10')
+    expect(buildToolId(stationId, 'T01', null)).toBe('REAR UNIT|CA8|T:T01')
   })
 
   it('should use fallback key if tool code is missing', () => {
-    const stationId = 'RR UN 1|CA8'
-    expect(buildToolId(stationId, null, 'BN010 GJR 10')).toBe('RR UN 1|CA8|T:BN010 GJR 10')
+    const stationId = 'REAR UNIT|CA8'
+    expect(buildToolId(stationId, null, 'BN010 GJR 10')).toBe('REAR UNIT|CA8|T:BN010 GJR 10')
   })
 
   it('should return null if stationId is missing', () => {
@@ -132,15 +132,15 @@ describe('buildToolId', () => {
   })
 
   it('should return null if both toolCode and fallback are missing', () => {
-    const stationId = 'RR UN 1|CA8'
+    const stationId = 'REAR UNIT|CA8'
     expect(buildToolId(stationId, null, null)).toBe(null)
     expect(buildToolId(stationId, undefined, undefined)).toBe(null)
     expect(buildToolId(stationId, '', '')).toBe(null)
   })
 
   it('should normalize tool code', () => {
-    const stationId = 'RR UN 1|CA8'
-    expect(buildToolId(stationId, '  gjr 10  ', null)).toBe('RR UN 1|CA8|T:GJR 10')
+    const stationId = 'REAR UNIT|CA8'
+    expect(buildToolId(stationId, '  gjr 10  ', null)).toBe('REAR UNIT|CA8|T:GJR 10')
   })
 })
 
@@ -223,23 +223,23 @@ describe('Integration: End-to-end ID building', () => {
     const stationCode = 'CA008'
 
     const stationId = buildStationId(areaName, stationCode)
-    expect(stationId).toBe('RR UN 1|CA8')
+    expect(stationId).toBe('REAR UNIT|CA8')
 
     // Robot List data
     const robotCaption = 'R01'
     const robotId = buildRobotId(stationId, robotCaption)
-    expect(robotId).toBe('RR UN 1|CA8|R:R01')
+    expect(robotId).toBe('REAR UNIT|CA8|R:R01')
 
     // Tool List data
     const toolCode = 'GJR 10'
     const toolId = buildToolId(stationId, toolCode, null)
-    expect(toolId).toBe('RR UN 1|CA8|T:GJR 10')
+    expect(toolId).toBe('REAR UNIT|CA8|T:GJR 10')
   })
 
   it('should handle different area/station formats from different OEMs', () => {
     // OEM 1 format
     const stationId1 = buildStationId('FR FL 1', '010')
-    expect(stationId1).toBe('FR FL 1|10')
+    expect(stationId1).toBe('FRONT UNIT|10')
 
     // OEM 2 format (with prefixes)
     const stationId2 = buildStationId('UNDERBODY', 'OP010')

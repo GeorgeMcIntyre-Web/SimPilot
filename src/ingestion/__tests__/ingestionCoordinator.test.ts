@@ -2,6 +2,8 @@
 // Comprehensive tests for file classification and routing
 // Target: Prove header sniffing works regardless of filename
 
+// @vitest-environment jsdom
+
 import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
 import { ingestFiles } from '../ingestionCoordinator'

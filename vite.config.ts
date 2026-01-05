@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
@@ -27,5 +27,24 @@ export default defineConfig({
         include: ['**/*.test.ts', '**/*.test.tsx'],
         pool: 'vmThreads',
         setupFiles: ['./src/test/setup.ts'],
+        deps: {
+            optimizer: {
+                ssr: {
+                    include: ['react-router-dom', 'react-router']
+                }
+            }
+        },
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json', 'html'],
+            include: ['src/**/*.ts', 'src/**/*.tsx'],
+            exclude: [
+                'src/**/*.test.ts',
+                'src/**/*.test.tsx',
+                'src/test/**',
+                'src/**/__tests__/**',
+                'src/**/__fixtures__/**',
+            ],
+        },
     },
 })

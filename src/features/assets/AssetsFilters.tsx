@@ -198,6 +198,11 @@ export function AssetsFilterBar({
   )
 }
 
+type SummaryStripProps = {
+  counts: UseAssetsFiltersReturn['counts']
+  onFilterClick: (filter: { sourcing?: EquipmentSourcing; reuseStatus?: ReuseAllocationStatus }) => void
+}
+
 export function AssetsSummaryStrip({ counts, onFilterClick }: SummaryStripProps) {
   return (
     <div className="space-y-2.5 flex flex-col h-full">

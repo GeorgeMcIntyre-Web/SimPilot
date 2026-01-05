@@ -80,7 +80,7 @@ const densityStyles = {
     trend: 'text-sm'
   },
   compact: {
-    container: 'p-3 rounded-lg',
+    padding: 'p-3',
     gap: 'gap-3',
     icon: 'p-2',
     title: 'text-xs',
@@ -140,12 +140,12 @@ export function SummaryCard({
           <p className={cn('font-medium text-gray-500 dark:text-gray-400 mb-1', densityStyle.title)}>
             {title}
           </p>
-          
+
           <div className="flex items-baseline gap-2">
             <span className={cn('font-bold tracking-tight leading-tight', styles.value, densityStyle.value)}>
               {value}
             </span>
-            
+
             {trend && (
               <span className={cn('font-medium', densityStyle.trend, trendStyles[trend.direction])}>
                 {trend.direction === 'up' && '↑'}
