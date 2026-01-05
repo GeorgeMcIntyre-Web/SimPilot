@@ -25,7 +25,7 @@ export function SimulationDetailDrawer({
   onClose,
 }: SimulationDetailDrawerProps) {
   const [activeTab, setActiveTab] = useState<TabView>('overview');
-  const [isToolingDrawerOpen, setIsToolingDrawerOpen] = useState(false);
+  const [_isToolingDrawerOpen, setIsToolingDrawerOpen] = useState(false);
 
   const { handleViewAssets } = useDrawerNavigation(onClose);
 

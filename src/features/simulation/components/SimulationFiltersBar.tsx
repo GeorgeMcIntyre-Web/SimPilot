@@ -2,7 +2,7 @@
 // Filter controls for Program, Plant, Unit hierarchy
 // Uses derived selectors for filter options
 
-import { Search, X, Filter, ArrowUpDown, Maximize2, Minimize2 } from 'lucide-react'
+import { Search, Filter, ArrowUpDown, Maximize2, Minimize2 } from 'lucide-react'
 import { usePrograms, usePlants, useUnits } from '../simulationStore'
 import type { SimulationFilters } from '../simulationSelectors'
 import { cn } from '../../../ui/lib/utils'

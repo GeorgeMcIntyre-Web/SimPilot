@@ -2,7 +2,6 @@
 // Compact card showing station summary for the simulation board
 // Displays asset counts, sourcing breakdown, and simulation status
 
-import { useMemo } from 'react'
 import { Bot, Zap, Wrench, Box, RefreshCw, ShoppingCart, HelpCircle, AlertTriangle } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'

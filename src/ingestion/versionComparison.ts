@@ -1,7 +1,7 @@
 // Version Comparison & Conflict Detection
 // Compares incoming data with existing data to detect changes
 
-import { Project, Area, Cell, Tool, Robot, UnifiedAsset } from '../domain/core'
+import { Project, Area, Cell, Robot, UnifiedAsset } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
 
 // ============================================================================
