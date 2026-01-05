@@ -37,24 +37,28 @@ This document tracks known technical debt and deferred improvements from code re
 ---
 
 ### 3. TypeScript Strict Checks
-**Status**: 26 violations remaining (down from 29)
+**Status**: 16 violations remaining (down from 29, 10 fixed)
 **Location**: [tsconfig.json:21-22](tsconfig.json#L21-L22)
 
 **Description**: `noUnusedLocals` and `noUnusedParameters` are disabled due to remaining violations.
 
 **Files with violations** (remaining):
-- ✅ ~~src/app/components/VersionComparisonModal.tsx~~ - Fixed
-- ✅ ~~src/app/routes/DashboardPage.tsx~~ - Fixed
-- ✅ ~~src/app/routes/ProjectsPage.tsx~~ - Fixed
-- src/app/routes/ReadinessBoard.tsx
-- src/features/assets/AssetsFilters.tsx
+- ✅ ~~src/app/components/VersionComparisonModal.tsx~~ - Fixed (Week 3)
+- ✅ ~~src/app/routes/DashboardPage.tsx~~ - Fixed (Week 3)
+- ✅ ~~src/app/routes/ProjectsPage.tsx~~ - Fixed (Week 3 & Week 3+)
+- ✅ ~~src/app/routes/ReadinessBoard.tsx~~ - Fixed (Week 3+)
+- ✅ ~~src/features/assets/AssetsFilters.tsx~~ - Fixed (Week 3+)
+- ✅ ~~src/utils/prefsStorage.ts~~ - Fixed (Week 3+)
+- ✅ ~~src/app/hooks/useM365Ingest.ts~~ - Fixed (Week 3+)
+- ✅ ~~src/app/hooks/useSimBridge.ts~~ - Fixed (Week 3+)
+- ✅ ~~src/integrations/simbridge/SimBridgeClient.ts~~ - Fixed (Week 3+)
 - src/features/simulation/components/ (multiple)
 - src/ingestion/ (multiple)
 
 **Acceptance Criteria**:
-- [x] Fix or remove unused imports (3/29 fixed)
-- [ ] Continue fixing remaining violations
-- [ ] Prefix intentionally unused parameters with `_`
+- [x] Fix or remove unused imports (10/29 fixed - 38% complete)
+- [x] Prefix intentionally unused error parameters with `_`
+- [ ] Continue fixing remaining 16 violations
 - [ ] Enable `noUnusedLocals: true`
 - [ ] Enable `noUnusedParameters: true`
 
