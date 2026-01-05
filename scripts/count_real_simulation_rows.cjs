@@ -8,25 +8,26 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 
+const DATA_ROOT = process.env.SIMPILOT_DATA_PATH || path.resolve(process.cwd(), 'SimPilot_Data');
 const FILES = {
   desRear: {
-    path: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\00_Simulation_Status\STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx`,
+    path: path.join(DATA_ROOT, '03_Simulation', '00_Simulation_Status', 'STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx'),
     name: 'REAR UNIT (DES)'
   },
   desUnderbody: {
-    path: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\00_Simulation_Status\STLA-S_UNDERBODY_Simulation_Status_DES.xlsx`,
+    path: path.join(DATA_ROOT, '03_Simulation', '00_Simulation_Status', 'STLA-S_UNDERBODY_Simulation_Status_DES.xlsx'),
     name: 'UNDERBODY (DES)'
   },
   csgFront: {
-    path: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\DesignOS\05_Status_Sheets\STLA-S_FRONT_UNIT_Simulation_Status_CSG.xlsx`,
+    path: path.join(DATA_ROOT, 'DesignOS', '05_Status_Sheets', 'STLA-S_FRONT_UNIT_Simulation_Status_CSG.xlsx'),
     name: 'FRONT UNIT (CSG)'
   },
   csgRear: {
-    path: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\DesignOS\05_Status_Sheets\STLA-S_REAR_UNIT_Simulation_Status_CSG.xlsx`,
+    path: path.join(DATA_ROOT, 'DesignOS', '05_Status_Sheets', 'STLA-S_REAR_UNIT_Simulation_Status_CSG.xlsx'),
     name: 'REAR UNIT (CSG)'
   },
   csgUnderbody: {
-    path: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\DesignOS\05_Status_Sheets\STLA-S_UNDERBODY_Simulation_Status_CSG.xlsx`,
+    path: path.join(DATA_ROOT, 'DesignOS', '05_Status_Sheets', 'STLA-S_UNDERBODY_Simulation_Status_CSG.xlsx'),
     name: 'UNDERBODY (CSG)'
   }
 };

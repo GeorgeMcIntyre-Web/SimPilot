@@ -299,14 +299,13 @@ export function AssetsPage() {
         {/* Assets Table */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden min-w-0">
           <div className="overflow-x-auto custom-scrollbar">
-            <div className="max-h-[520px] overflow-y-auto custom-scrollbar">
-              <DataTable
-                data={sortedAssets}
-                columns={columns}
-                onRowClick={handleRowClick}
-                emptyMessage="No assets match the current filters."
-              />
-            </div>
+            <DataTable
+              data={sortedAssets}
+              columns={columns}
+              onRowClick={handleRowClick}
+              emptyMessage="No assets match the current filters."
+              maxHeight={520}
+            />
           </div>
         </div>
       </div>

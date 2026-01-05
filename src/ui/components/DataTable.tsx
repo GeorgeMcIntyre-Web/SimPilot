@@ -17,6 +17,7 @@ interface DataTableProps<T> {
     defaultSortIndex?: number;
     defaultSortDirection?: 'asc' | 'desc';
     density?: 'default' | 'compact';
+    maxHeight?: number | string;
 }
 
 export function DataTable<T>({
@@ -27,7 +28,8 @@ export function DataTable<T>({
     enableSorting = false,
     defaultSortIndex,
     defaultSortDirection = 'asc',
-    density = 'default'
+    density = 'default',
+    maxHeight
 }: DataTableProps<T>) {
     const [sortIndex, setSortIndex] = useState<number | null>(enableSorting ? defaultSortIndex ?? null : null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
@@ -79,8 +81,14 @@ export function DataTable<T>({
     }
 
     return (
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg h-full">
-            <div className="overflow-y-auto h-full custom-scrollbar">
+        <div
+            className="overflow-hidden shadow sm:rounded-lg h-full border"
+            style={{ borderColor: 'rgb(55, 64, 81)' }}
+        >
+            <div
+                className="overflow-y-auto h-full custom-scrollbar"
+                style={maxHeight ? { maxHeight } : undefined}
+            >
                 <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                         <tr>

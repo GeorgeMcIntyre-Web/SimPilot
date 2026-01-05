@@ -12,16 +12,18 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 
+const DATA_ROOT = process.env.SIMPILOT_DATA_PATH || path.resolve(process.cwd(), 'SimPilot_Data');
+
 // File paths
 const FILES = {
-    toolList: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\STLA_S_ZAR Tool List.xlsx`,
-    simStatusRear: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\00_Simulation_Status\STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx`,
-    simStatusUnderbody: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\00_Simulation_Status\STLA-S_UNDERBODY_Simulation_Status_DES.xlsx`,
-    robotList: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx`,
-    assembliesBottomTray: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\J11006_TMS_STLA_S_BOTTOM_TRAY_Assemblies_List.xlsm`,
-    assembliesFrontUnit: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\J11006_TMS_STLA_S_FRONT_UNIT_Assemblies_List.xlsm`,
-    assembliesRearUnit: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\J11006_TMS_STLA_S_REAR_UNIT_Assemblies_List.xlsm`,
-    assembliesUnderbody: String.raw`C:\Users\georgem\source\repos\SimPilot_Data\J11006_TMS_STLA_S_UNDERBODY_Assemblies_List.xlsm`
+    toolList: path.join(DATA_ROOT, 'STLA_S_ZAR Tool List.xlsx'),
+    simStatusRear: path.join(DATA_ROOT, '03_Simulation', '00_Simulation_Status', 'STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx'),
+    simStatusUnderbody: path.join(DATA_ROOT, '03_Simulation', '00_Simulation_Status', 'STLA-S_UNDERBODY_Simulation_Status_DES.xlsx'),
+    robotList: path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'),
+    assembliesBottomTray: path.join(DATA_ROOT, 'J11006_TMS_STLA_S_BOTTOM_TRAY_Assemblies_List.xlsm'),
+    assembliesFrontUnit: path.join(DATA_ROOT, 'J11006_TMS_STLA_S_FRONT_UNIT_Assemblies_List.xlsm'),
+    assembliesRearUnit: path.join(DATA_ROOT, 'J11006_TMS_STLA_S_REAR_UNIT_Assemblies_List.xlsm'),
+    assembliesUnderbody: path.join(DATA_ROOT, 'J11006_TMS_STLA_S_UNDERBODY_Assemblies_List.xlsm')
 };
 
 function analyzeWorkbook(filePath, title) {

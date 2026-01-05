@@ -1,9 +1,16 @@
 import { readFileSync } from 'fs';
+import path from 'path';
 import { read } from 'xlsx';
 import { parseRobotList } from '../src/ingestion/robotListParser';
 import { coreStore } from '../src/domain/coreStore';
 
-const filePath = String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx`;
+const DATA_ROOT = process.env.SIMPILOT_DATA_PATH ?? path.resolve(process.cwd(), 'SimPilot_Data');
+const filePath = path.join(
+  DATA_ROOT,
+  '03_Simulation',
+  '01_Equipment_List',
+  'Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'
+);
 const targetSheetName = 'STLA-S';
 
 async function verifyDataFlow() {

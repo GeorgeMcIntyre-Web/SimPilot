@@ -437,15 +437,16 @@ function generateReport(analyses: FileAnalysis[]): string {
 // ============================================================================
 
 async function main() {
+  const DATA_ROOT = process.env.SIMPILOT_DATA_PATH ?? path.resolve(process.cwd(), 'SimPilot_Data')
   const filePaths = [
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\00_Simulation_Status\STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\00_Simulation_Status\STLA-S_UNDERBODY_Simulation_Status_DES.xlsx`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\GLOBAL_ZA_REUSE_LIST_RISERS.xlsx`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\GLOBAL_ZA_REUSE_LIST_TIP_DRESSER.xlsx`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\GLOBAL_ZA_REUSE_LIST_TMS_WG.xlsx`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\P1MX_Reuse Equipment -STLA-S_2025_10_29_REV00.xlsm`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx`,
-    String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\Zangenpool_TMS_Rev01_Quantity_Force_Info.xls`
+    path.join(DATA_ROOT, '03_Simulation', '00_Simulation_Status', 'STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx'),
+    path.join(DATA_ROOT, '03_Simulation', '00_Simulation_Status', 'STLA-S_UNDERBODY_Simulation_Status_DES.xlsx'),
+    path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'GLOBAL_ZA_REUSE_LIST_RISERS.xlsx'),
+    path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'GLOBAL_ZA_REUSE_LIST_TIP_DRESSER.xlsx'),
+    path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'GLOBAL_ZA_REUSE_LIST_TMS_WG.xlsx'),
+    path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'P1MX_Reuse Equipment -STLA-S_2025_10_29_REV00.xlsm'),
+    path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'),
+    path.join(DATA_ROOT, '03_Simulation', '01_Equipment_List', 'Zangenpool_TMS_Rev01_Quantity_Force_Info.xls')
   ]
 
   console.log('🔍 Starting file preprocessing analysis...\n')

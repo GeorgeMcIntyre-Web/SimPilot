@@ -22,7 +22,11 @@ import { parseAssembliesList } from '../assembliesListParser'
 // CONFIGURATION
 // ============================================================================
 
-const BASE_PATH = 'C:\\Users\\georgem\\source\\repos\\SimPilot_Data\\TestData'
+// Allow overriding the data location via env to avoid hard-coded local paths
+// Resolve data path from env, or fall back to a repo-relative folder.
+const BASE_PATH =
+  process.env.STLA_S_DATA_PATH ??
+  path.resolve(process.cwd(), 'SimPilot_Data', 'TestData')
 
 const STLA_S_FILES = {
   simStatus: [
@@ -45,6 +49,19 @@ const STLA_S_FILES = {
     'Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'
   ]
 }
+
+const REQUIRED_FILES = [
+  ...STLA_S_FILES.simStatus,
+  ...STLA_S_FILES.toolList,
+  ...STLA_S_FILES.assemblies,
+  ...STLA_S_FILES.robotList
+]
+
+const DATA_AVAILABLE =
+  fs.existsSync(BASE_PATH) &&
+  REQUIRED_FILES.some(file => fs.existsSync(path.join(BASE_PATH, file)))
+
+const describeFn = DATA_AVAILABLE ? describe : describe.skip
 
 // ============================================================================
 // TYPES
@@ -185,7 +202,14 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
 // TESTS
 // ============================================================================
 
-describe('STLA-S E2E Ingestion', () => {
+describeFn('STLA-S E2E Ingestion', () => {
+  if (!DATA_AVAILABLE) {
+    console.warn(
+      `[STLA-S E2E] Test data not found at ${BASE_PATH}. ` +
+      'Set STLA_S_DATA_PATH to a directory containing the STLA-S workbooks to run this suite.'
+    )
+  }
+
   it('should ingest all files and have correct project/area/station/robot counts', async () => {
     const result = await ingestStlaSData()
 

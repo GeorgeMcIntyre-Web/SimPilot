@@ -4,11 +4,13 @@
 
 const XLSX = require('xlsx');
 const fs = require('fs');
+const path = require('path');
 
+const DATA_ROOT = process.env.SIMPILOT_DATA_PATH || path.resolve(process.cwd(), 'SimPilot_Data');
 const CSG_FILES = {
-    frontUnit: 'C:\Users\georgem\source\repos\SimPilot_Data\DesignOS\00_Simulation_Status\STLA-S_FRONT_UNIT_Simulation_Status_CSG.xlsx',
-    rearUnit: 'C:\Users\georgem\source\repos\SimPilot_Data\DesignOS\00_Simulation_Status\STLA-S_REAR_UNIT_Simulation_Status_CSG.xlsx',
-    underbody: 'C:\Users\georgem\source\repos\SimPilot_Data\DesignOS\00_Simulation_Status\STLA-S_UNDERBODY_Simulation_Status_CSG.xlsx'
+    frontUnit: path.join(DATA_ROOT, 'DesignOS', '00_Simulation_Status', 'STLA-S_FRONT_UNIT_Simulation_Status_CSG.xlsx'),
+    rearUnit: path.join(DATA_ROOT, 'DesignOS', '00_Simulation_Status', 'STLA-S_REAR_UNIT_Simulation_Status_CSG.xlsx'),
+    underbody: path.join(DATA_ROOT, 'DesignOS', '00_Simulation_Status', 'STLA-S_UNDERBODY_Simulation_Status_CSG.xlsx')
 };
 
 function getColumnNames(sheet, range) {

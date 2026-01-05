@@ -8,7 +8,13 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 const path = require('path');
 
-const ROBOT_LIST_FILE = String.raw`C:\Users\georgem\source\repos\SimPilot_Data\03_Simulation\01_Equipment_List\Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx`;
+const DATA_ROOT = process.env.SIMPILOT_DATA_PATH || path.resolve(process.cwd(), 'SimPilot_Data');
+const ROBOT_LIST_FILE = path.join(
+  DATA_ROOT,
+  '03_Simulation',
+  '01_Equipment_List',
+  'Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'
+);
 
 function analyzeRobotList() {
   console.log('🔍 Investigating Robot List File Structure\n');
