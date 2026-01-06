@@ -170,53 +170,9 @@ export class OpenAILLMMapper implements LLMMapper {
     return this.apiKey !== null && this.apiKey.length > 0
   }
 
-  /**
-   * Build the system prompt for the LLM
-   * @internal Reserved for future OpenAI implementation
-   */
-  private _getSystemPrompt(): string {
-    return `You are an expert at analyzing Excel spreadsheet columns and mapping them to known field definitions.
-
-Given a sheet's headers and sample data, suggest the best field mapping for each column.
-
-Available fields:
-${JSON.stringify(DEFAULT_FIELD_REGISTRY.map(f => ({
-  id: f.id,
-  name: f.name,
-  description: f.semanticDescription
-})), null, 2)}
-
-For each column, provide:
-- suggestedFieldId: The field ID that best matches, or "unknown" if no match
-- rationale: A brief explanation of why this mapping is appropriate
-- confidence: A confidence score from 0 to 1
-
-Consider:
-- Header text (may contain typos or abbreviations)
-- Data types in samples
-- Context of the sheet category
-- Domain knowledge about manufacturing/simulation data`
-  }
-
-  /**
-   * Build the user prompt with sheet data
-   * @internal Reserved for future OpenAI implementation
-   */
-  private _buildPrompt(input: SheetSemanticModel[]): string {
-    return JSON.stringify({
-      task: 'Suggest field mappings for the following sheets',
-      sheets: input.map(sheet => ({
-        sheetName: sheet.sheetName,
-        category: sheet.sheetCategory,
-        columns: sheet.headers.map((header, i) => ({
-          header,
-          existingMatch: sheet.existingMatches[i]?.fieldId ?? null,
-          existingConfidence: sheet.existingMatches[i]?.confidence ?? 0,
-          samples: sheet.sampleRows.slice(0, 3).map(row => row[header])
-        }))
-      }))
-    }, null, 2)
-  }
+  // NOTE: _getSystemPrompt() and _buildPrompt() methods removed
+  // They were placeholders for future OpenAI implementation
+  // See git history if needed for restoration
 }
 
 // ============================================================================

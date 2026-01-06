@@ -8,7 +8,6 @@
 import '@testing-library/jest-dom/vitest'
 
 // Import vi for mocking
-import { vi } from 'vitest'
 
 // Mock sessionStorage for Node.js test environment (when jsdom is not available)
 // jsdom provides sessionStorage automatically, but we ensure it exists for node environment

@@ -6,7 +6,6 @@ import * as XLSX from 'xlsx'
 import {
   Tool,
   ToolType,
-  ToolMountType,
   generateId,
   IngestionWarning
 } from '../domain/core'
@@ -18,7 +17,7 @@ import {
   isEffectivelyEmptyRow,
   CellValue
 } from './excelUtils'
-import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
+import { createRowSkippedWarning } from './warningUtils'
 import {
   buildStationId,
   buildToolId,

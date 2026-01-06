@@ -10,7 +10,6 @@ import {
   getCellString,
   isEmptyRow,
   isTotalRow,
-  isEffectivelyEmptyRow,
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'

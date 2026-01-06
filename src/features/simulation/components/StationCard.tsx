@@ -218,7 +218,7 @@ interface StationBottleneckSummaryProps {
   stationKey: string
 }
 
-function StationBottleneckSummary({ stationKey }: StationBottleneckSummaryProps) {
+function StationBottleneckSummary({ stationKey: _stationKey }: StationBottleneckSummaryProps) {
   // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
   // const bottleneckState = useToolingBottleneckState()
   // const matches = useMemo(
@@ -278,6 +278,6 @@ function StationBottleneckSummary({ stationKey }: StationBottleneckSummaryProps)
 //   return `${parts.join(', ')} ${noun}`
 // }
 
-function formatBottleneckSummary(matches: any[]): string {
+function formatBottleneckSummary(_matches: any[]): string {
   return 'Tooling bottleneck' // Placeholder until bottleneck integration is re-enabled
 }

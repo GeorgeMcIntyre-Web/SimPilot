@@ -20,8 +20,7 @@ import {
 } from './sheetSniffer'
 import {
   compareVersions,
-  VersionComparisonResult,
-  hasSignificantChanges
+  VersionComparisonResult
 } from './versionComparison'
 import { buildCrossRef } from '../domain/crossRef/CrossRefEngine'
 import { setCrossRefData } from '../hooks/useCrossRefData'
