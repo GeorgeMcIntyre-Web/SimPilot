@@ -9,6 +9,8 @@ import { createLinkingMissingTargetWarning, createParserErrorWarning } from './w
 import { linkAssetsToSimulation } from './relationshipLinker'
 import { buildStationId, normalizeAreaName, normalizeStationCode } from './normalizers'
 import { log } from '../lib/log'
+import { deduplicateAll, logDeduplicationStats } from './entityDeduplicator'
+import { coreStore } from '../domain/coreStore'
 
 // ============================================================================
 // TYPES
@@ -49,20 +51,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
   // Add simulation data
   if (data.simulation) {
-    // Merge multiple Simulation Status files into a single unified project
-    // Each file (CSG, DES, Front Unit, etc.) creates its own project, but they should be unified
-    const projectMap = new Map<string, Project>()
-
-    for (const project of data.simulation.projects) {
-      const key = `${project.customer}:${project.name}`
-
-      if (!projectMap.has(key)) {
-        projectMap.set(key, project)
-      }
-      // If duplicate, keep the first one (they're identical anyway)
-    }
-
-    projects.push(...projectMap.values())
+    projects.push(...data.simulation.projects)
     areas.push(...data.simulation.areas)
     cells.push(...data.simulation.cells)
     warnings.push(...data.simulation.warnings)
@@ -82,6 +71,58 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     tools.push(...activeTools)
     warnings.push(...data.tools.warnings)
   }
+
+  // Deduplicate against existing store data
+  const currentState = coreStore.getState()
+  const deduplicationResults = deduplicateAll(
+    {
+      projects: currentState.projects,
+      areas: currentState.areas,
+      cells: currentState.cells,
+      robots: currentState.assets.filter(a => a.kind === 'ROBOT') as Robot[],
+      tools: currentState.assets.filter(a => a.kind !== 'ROBOT') as Tool[]
+    },
+    {
+      projects,
+      areas,
+      cells,
+      robots,
+      tools
+    }
+  )
+
+  // Log deduplication statistics
+  logDeduplicationStats(deduplicationResults)
+
+  // Add warnings for ID collisions
+  const totalCollisions =
+    deduplicationResults.projects.stats.idCollisions +
+    deduplicationResults.areas.stats.idCollisions +
+    deduplicationResults.cells.stats.idCollisions +
+    deduplicationResults.robots.stats.idCollisions +
+    deduplicationResults.tools.stats.idCollisions
+
+  if (totalCollisions > 0) {
+    warnings.push({
+      id: 'id-collisions',
+      kind: 'PARSER_ERROR',
+      fileName: '',
+      message: `Detected ${totalCollisions} ID collisions (same ID, different data). Keeping existing data to prevent overwrites.`,
+      createdAt: new Date().toISOString()
+    })
+  }
+
+  // Use deduplicated entities
+  projects.length = 0
+  projects.push(...deduplicationResults.projects.deduplicated)
+  areas.length = 0
+  areas.push(...deduplicationResults.areas.deduplicated)
+  cells.length = 0
+  cells.push(...deduplicationResults.cells.deduplicated)
+  robots.length = 0
+  robots.push(...deduplicationResults.robots.deduplicated)
+  tools.length = 0
+  tools.push(...deduplicationResults.tools.deduplicated)
 
   // Validate we have simulation data
   if (projects.length === 0) {
