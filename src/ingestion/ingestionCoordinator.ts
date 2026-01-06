@@ -13,6 +13,7 @@ import { createUnknownFileTypeWarning, createParserErrorWarning, createDuplicate
 import { generateFileHash, isDuplicateFile, trackUploadedFile, getUploadInfo, clearFileTrackingHistory } from './fileTracker'
 import { withTransaction } from './transactionManager'
 import { validateReferentialIntegrity, logIntegrityErrors, findOrphanedAssets } from './referentialIntegrityValidator'
+import { diagnoseOrphanedAssets, logLinkingReport } from './linkingDiagnostics'
 import {
   scanWorkbook,
   SheetDetection,
@@ -461,11 +462,19 @@ async function ingestFilesInternal(
 
   if (orphans.robots.length > 0 || orphans.tools.length > 0) {
     console.warn(`[Integrity] Found ${orphans.robots.length} orphaned robots and ${orphans.tools.length} orphaned tools`)
+
+    // Run diagnostics on orphaned assets
+    const allOrphans = [...orphans.robots, ...orphans.tools]
+    const diagnostics = diagnoseOrphanedAssets(allOrphans, applyResult.cells)
+
+    // Log detailed diagnostic report
+    logLinkingReport(diagnostics)
+
     allWarnings.push({
       id: 'orphaned-assets',
       kind: 'LINKING_MISSING_TARGET',
       fileName: '',
-      message: `Found ${orphans.robots.length + orphans.tools.length} orphaned assets (not linked to any cell)`,
+      message: `Found ${orphans.robots.length + orphans.tools.length} orphaned assets (not linked to any cell). Check console for detailed diagnostics.`,
       createdAt: new Date().toISOString()
     })
   }
