@@ -33,7 +33,7 @@ export function DataLoaderPage() {
   const hasData = useHasSimulationData();
   const { enabled: msEnabled, isSignedIn, login } = useMsAccount();
 
-  // Custom hooks
+  // Custom hooks 
   const localIngest = useLocalFileIngest(hasData);
   const m365Ingest = useM365Ingest(hasData);
   const simBridge = useSimBridge(activeTab === 'simbridge');
