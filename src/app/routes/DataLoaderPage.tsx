@@ -8,6 +8,7 @@ import { clearCrossRefData } from '../../hooks/useCrossRefData';
 import { syncSimulationStore } from '../../features/simulation';
 import { coreStore } from '../../domain/coreStore';
 import { VersionComparisonModal } from '../components/VersionComparisonModal';
+import { log } from '../../lib/log';
 
 // Hooks
 import { useLocalFileIngest } from '../hooks/useLocalFileIngest';
@@ -74,7 +75,7 @@ export function DataLoaderPage() {
     m365Ingest.setResult(null);
     m365Ingest.setM365Error(null);
     setShowClearDialog(false);
-    console.log('✅ Data cleared');
+    log.info('✅ Data cleared');
   };
 
   const cancelClearData = () => {

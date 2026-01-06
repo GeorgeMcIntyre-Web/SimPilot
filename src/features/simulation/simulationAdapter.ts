@@ -13,6 +13,7 @@ import {
   type SimulationStatusInfo
 } from './simulationStore'
 import type { Cell, Project, Area, UnifiedAsset } from '../../domain/core'
+import { log } from '../../lib/log'
 
 // ============================================================================
 // TYPES
@@ -225,7 +226,7 @@ export function useSimulationSync(): void {
 
   const stationContexts = useMemo(
     () => {
-      console.log('[useSimulationSync] Transforming station contexts', {
+      log.debug('[useSimulationSync] Transforming station contexts', {
         projects: coreState.projects.length,
         areas: coreState.areas.length,
         cells: coreState.cells.length,
@@ -237,7 +238,7 @@ export function useSimulationSync(): void {
   )
 
   useEffect(() => {
-    console.log('[useSimulationSync] Updating simulation store with', stationContexts.length, 'stations')
+    log.debug('[useSimulationSync] Updating simulation store with', stationContexts.length, 'stations')
     simulationStore.setStations(stationContexts)
   }, [stationContexts])
 }

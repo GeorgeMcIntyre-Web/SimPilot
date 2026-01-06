@@ -4,6 +4,7 @@ import { syncSimulationStore } from '../../features/simulation';
 import { getUserPreference, setUserPreference } from '../../utils/prefsStorage';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { IngestFilesResult } from '../../ingestion/ingestionCoordinator';
+import { log } from '../../lib/log';
 
 export function useDemoScenario() {
   const [selectedDemoId, setSelectedDemoIdState] = useState<DemoScenarioId>(
@@ -90,7 +91,7 @@ export function useDemoScenario() {
 
       onSuccess(result);
 
-      console.log('✅ Exported data loaded (deduplicated):', {
+      log.info('✅ Exported data loaded (deduplicated):', {
         projects: state.projects.length,
         areas: state.areas.length,
         cells: state.cells.length,
