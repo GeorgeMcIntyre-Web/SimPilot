@@ -61,8 +61,8 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-non-null-assertion': 'warn',
 
-      // Console statements - warn only
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      // Console statements - error (use log wrapper from src/lib/log.ts)
+      'no-console': ['error', { allow: ['warn', 'error'] }],
 
       // Code quality
       'no-debugger': 'warn',
