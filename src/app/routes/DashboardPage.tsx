@@ -11,8 +11,6 @@ import { EmptyState } from '../../ui/components/EmptyState'
 import { FirstRunBanner } from '../../ui/components/FirstRunBanner'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { useHasSimulationData } from '../../ui/hooks/useDomainData'
-import { useTheme } from '../../ui/ThemeContext'
-import { cn } from '../../ui/lib/utils'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils'
 import { useCells } from '../../domain/coreStore'
@@ -23,8 +21,7 @@ import {
   DashboardBottlenecksPanel,
   FocusSummaryCards,
   generateFocusItems,
-  countByRisk,
-  getRiskLevel
+  countByRisk
 } from '../../features/dashboard'
 
 type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
@@ -36,7 +33,6 @@ type AreaFilter = 'all' | 'with-risk' | 'critical-only' | 'healthy-only'
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { themeMode } = useTheme()
   const [selectedArea, setSelectedArea] = useState<string | null>(null)
   const [areaSearch, setAreaSearch] = useState<string>('')
   const [areaSort, setAreaSort] = useState<AreaSort>('total-desc')
@@ -280,3 +276,5 @@ export function DashboardPage() {
     </div>
   )
 }
+
+export default DashboardPage

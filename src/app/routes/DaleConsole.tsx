@@ -362,3 +362,5 @@ export function DaleConsole() {
         </div>
     )
 }
+
+export default DaleConsole

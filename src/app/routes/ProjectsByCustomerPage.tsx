@@ -148,3 +148,5 @@ export function ProjectsByCustomerPage() {
 
 
 
+
+export default ProjectsByCustomerPage

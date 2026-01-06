@@ -18,8 +18,8 @@
     "jsx": "react-jsx",
     /* Linting */
     "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noUnusedLocals": false, // TODO: Enable after fixing 29+ unused variables
+    "noUnusedParameters": false, // TODO: Enable after fixing unused parameters
     "noFallthroughCasesInSwitch": true
   },
   "include": [

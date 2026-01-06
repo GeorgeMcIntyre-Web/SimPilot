@@ -83,6 +83,7 @@ const buildIndices = (input: CrossRefInput): Indices => {
 
 /**
  * Get or create a cell snapshot for a station
+ * Uses immutable updates to avoid mutation bugs
  */
 const getOrCreateCell = (
   stations: Map<StationKey, CellSnapshot>,
@@ -95,13 +96,19 @@ const getOrCreateCell = (
 
   const existing = stations.get(key)
   if (existing) {
-    // Update area/line if not already set
-    if (!existing.areaKey && rawArea) {
-      existing.areaKey = rawArea
+    // Immutable update: create new object if fields need updating
+    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode)
+
+    if (needsUpdate) {
+      const updated: CellSnapshot = {
+        ...existing,
+        areaKey: existing.areaKey || rawArea,
+        lineCode: existing.lineCode || lineCode
+      }
+      stations.set(key, updated)
+      return updated
     }
-    if (!existing.lineCode && lineCode) {
-      existing.lineCode = lineCode
-    }
+
     return existing
   }
 

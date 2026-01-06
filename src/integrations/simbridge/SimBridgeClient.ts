@@ -48,7 +48,7 @@ class SimBridgeClientImpl implements SimBridgeClient {
             const response = await fetch(this.getUrl('/status'));
             if (!response.ok) throw new Error('Failed to get status');
             return await response.json();
-        } catch (e) {
+        } catch (_e) {
             return { isConnected: false, version: 'unknown' };
         }
     }

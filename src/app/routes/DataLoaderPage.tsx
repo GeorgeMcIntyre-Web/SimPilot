@@ -235,3 +235,5 @@ export function DataLoaderPage() {
     </div>
   );
 }
+
+export default DataLoaderPage

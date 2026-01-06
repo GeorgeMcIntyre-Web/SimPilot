@@ -138,7 +138,7 @@ export function SimulationBoardGrid({
 
   // Use local state as fallback if props not provided (for backwards compatibility)
   const [localExpandedLines, setLocalExpandedLines] = useState<Set<string>>(new Set())
-  const [localSortBy, setLocalSortBy] = useState<SortOption>('line-asc')
+  const [localSortBy, _setLocalSortBy] = useState<SortOption>('line-asc')
 
   const expandedLines = expandedLinesProp ?? localExpandedLines
   const sortBy = sortByProp ?? localSortBy

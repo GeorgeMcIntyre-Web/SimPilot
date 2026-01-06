@@ -53,15 +53,6 @@ export function ProjectsPage() {
         );
     }
 
-    const handleSort = (key: SortKey) => {
-        if (sortKey === key) {
-            setSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
-            return;
-        }
-        setSortKey(key);
-        setSortDir('asc');
-    };
-
     type ProjectWithMetrics = typeof projects[0];
 
     const getSortedProjects = () => {
@@ -398,3 +389,5 @@ export function ProjectsPage() {
         </div>
     );
 }
+
+export default ProjectsPage

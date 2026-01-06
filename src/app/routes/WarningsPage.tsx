@@ -126,3 +126,5 @@ export function WarningsPage() {
         </div>
     )
 }
+
+export default WarningsPage

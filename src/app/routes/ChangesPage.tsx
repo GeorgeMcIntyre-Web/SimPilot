@@ -91,3 +91,5 @@ export function ChangesPage() {
         </div>
     )
 }
+
+export default ChangesPage

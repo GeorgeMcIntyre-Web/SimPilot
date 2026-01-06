@@ -18,7 +18,6 @@ export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string
   const [sortKey, setSortKey] = useState<SortKey>('risk');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
-  const density: 'compact' = 'compact';
 
   // Apply filters and sorting
   const filteredCells = useMemo(() => {
