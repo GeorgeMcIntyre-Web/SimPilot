@@ -5,6 +5,7 @@ import { useGlobalBusy } from '../ui/GlobalBusyContext'
 import { setCrossRefData } from '../hooks/useCrossRefData'
 import { buildCrossRef, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot, normalizeStationId } from '../domain/crossRef'
 import { syncSimulationStore } from '../features/simulation'
+import { log } from '../lib/log'
 
 const SAVE_DEBOUNCE_MS = 2000
 
@@ -84,18 +85,18 @@ export function PersistenceManager() {
                 const result = await persistenceService.load()
 
                 if (result.success && result.snapshot) {
-                    console.log('Restoring snapshot from', result.snapshot.meta.lastSavedAt)
+                    log.info('Restoring snapshot from', result.snapshot.meta.lastSavedAt)
                     coreStore.loadSnapshot(result.snapshot)
 
                     // Keep the simulation store in sync with the restored core store data
                     syncSimulationStore()
 
                     // Rebuild CrossRef data from restored coreStore
-                    console.log('[PersistenceManager] Rebuilding CrossRef data from persisted state')
+                    log.debug('[PersistenceManager] Rebuilding CrossRef data from persisted state')
                     const crossRefInput = buildCrossRefFromCoreStore()
                     const crossRefResult = buildCrossRef(crossRefInput)
                     setCrossRefData(crossRefResult)
-                    console.log('[PersistenceManager] CrossRef data rebuilt:', {
+                    log.debug('[PersistenceManager] CrossRef data rebuilt:', {
                         cells: crossRefResult.cells.length,
                         areas: crossRefResult.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
                     })
@@ -124,7 +125,7 @@ export function PersistenceManager() {
                 try {
                     const snapshot = coreStore.getSnapshot()
                     await persistenceService.save(snapshot)
-                    console.log('Session saved automatically')
+                    log.info('Session saved automatically')
                 } catch (err) {
                     console.error('Failed to auto-save:', err)
                 }
