@@ -2,7 +2,6 @@
 // Connects the new schema-agnostic engine to existing ingestion modules.
 // Provides adapters and utilities for gradual migration.
 
-import { ColumnProfile, profileColumn, RawColumnContext } from './columnProfiler'
 import { SheetProfile, profileSheet, RawSheet } from './sheetProfiler'
 import {
   FieldMatchResult,
