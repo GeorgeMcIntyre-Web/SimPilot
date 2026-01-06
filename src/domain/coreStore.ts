@@ -16,6 +16,7 @@ import {
 import { getDemoScenarioData, DemoScenarioId, DEMO_SCENARIOS } from './demoData'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from './storeSnapshot'
 import { ChangeRecord } from './changeLog'
+import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun } from './uidTypes'
 
 export { DEMO_SCENARIOS }
 export type { DemoScenarioId, DemoScenarioSummary } from './demoData'
@@ -42,6 +43,12 @@ export interface CoreStoreState {
     employees: EmployeeRecord[]
     suppliers: SupplierRecord[]
   }
+  // Schema v3: UID-backed linking collections
+  stationRecords: StationRecord[]
+  toolRecords: ToolRecord[]
+  robotRecords: RobotRecord[]
+  aliasRules: AliasRule[]
+  importRuns: ImportRun[]
 }
 
 let storeState: CoreStoreState = {
@@ -56,7 +63,12 @@ let storeState: CoreStoreState = {
   referenceData: {
     employees: [],
     suppliers: []
-  }
+  },
+  stationRecords: [],
+  toolRecords: [],
+  robotRecords: [],
+  aliasRules: [],
+  importRuns: []
 }
 
 // Subscribers for reactive updates

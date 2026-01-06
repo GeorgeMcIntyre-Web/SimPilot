@@ -1,8 +1,9 @@
 import { Project, Area, Cell, Robot, Tool, UnifiedAsset } from './core'
 import { CoreStoreState } from './coreStore'
 import { ChangeRecord } from './changeLog'
+import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun } from './uidTypes'
 
-export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 2
+export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 3
 
 export interface StoreSnapshotMeta {
     lastSavedAt: string // ISO string
@@ -28,6 +29,12 @@ export interface StoreSnapshot {
         employees: { id: string; name: string; role?: string; department?: string }[]
         suppliers: { id: string; name: string; contact?: string }[]
     }
+    // Schema v3: UID-backed linking collections
+    stationRecords?: StationRecord[]
+    toolRecords?: ToolRecord[]
+    robotRecords?: RobotRecord[]
+    aliasRules?: AliasRule[]
+    importRuns?: ImportRun[]
 }
 
 /**
@@ -49,12 +56,20 @@ export function createSnapshotFromState(
         cells: state.cells,
         assets: state.assets,
         warnings: state.warnings,
-        changeLog: state.changeLog
+        changeLog: state.changeLog,
+        referenceData: state.referenceData,
+        // Schema v3 collections
+        stationRecords: state.stationRecords,
+        toolRecords: state.toolRecords,
+        robotRecords: state.robotRecords,
+        aliasRules: state.aliasRules,
+        importRuns: state.importRuns
     }
 }
 
 /**
  * Converts a snapshot back into a store state object.
+ * Handles migration from v2 -> v3 by initializing new collections as empty.
  */
 export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
     // Map sourceKind to dataSource format
@@ -70,6 +85,13 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         ...(snapshot.tools || [])
     ]
 
+    // Schema v2 -> v3 migration: Initialize new collections as empty arrays
+    const stationRecords = snapshot.stationRecords || []
+    const toolRecords = snapshot.toolRecords || []
+    const robotRecords = snapshot.robotRecords || []
+    const aliasRules = snapshot.aliasRules || []
+    const importRuns = snapshot.importRuns || []
+
     return {
         projects: snapshot.projects,
         areas: snapshot.areas,
@@ -79,6 +101,11 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         changeLog: snapshot.changeLog,
         lastUpdated: snapshot.meta.lastSavedAt,
         dataSource,
-        referenceData: snapshot.referenceData || { employees: [], suppliers: [] }
+        referenceData: snapshot.referenceData || { employees: [], suppliers: [] },
+        stationRecords,
+        toolRecords,
+        robotRecords,
+        aliasRules,
+        importRuns
     }
 }
