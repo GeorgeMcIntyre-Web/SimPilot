@@ -1,5 +1,18 @@
 // UID-Backed Linking Domain Types
 // Supports Excel-first, UID-backed linking with rename/move detection
+// and multi-plant carry-over tooling
+
+// ============================================================================
+// PLANT CONTEXT
+// ============================================================================
+
+export type PlantKey = string // "PLANT_A", "PLANT_B", "PLANT_UNKNOWN"
+
+/**
+ * Sentinel value for unknown plant context
+ * Used when plant cannot be derived from filename, metadata, or user input
+ */
+export const PLANT_UNKNOWN: PlantKey = 'PLANT_UNKNOWN'
 
 // ============================================================================
 // UID TYPES
@@ -68,12 +81,13 @@ export interface RobotLabels {
 // ============================================================================
 
 /**
- * StationRecord with stable UID
- * Tracks a real-world manufacturing station
+ * StationRecord with stable UID (plant-scoped)
+ * Tracks a real-world manufacturing station at a specific plant
  */
 export interface StationRecord {
   uid: StationUid
-  key: string                      // Current canonical key
+  key: string                      // Current canonical key (plant-scoped)
+  plantKey: PlantKey               // Plant context for this record
   labels: StationLabels            // Raw source fields
   attributes: Record<string, any>  // Metadata (equipment, counts, etc.)
   status: EntityStatus
@@ -87,13 +101,21 @@ export interface StationRecord {
 }
 
 /**
- * ToolRecord with stable UID
- * Tracks a real-world tool/gun/gripper
+ * ToolRecord with stable UID (multi-plant aware)
+ * Tracks a real-world tool/gun/gripper across plants
+ * The UID represents the PHYSICAL equipment, not plant-specific labels
  */
 export interface ToolRecord {
   uid: ToolUid
-  key: string                      // Current canonical key
-  stationUid?: StationUid | null   // Foreign key to station
+  key: string                      // Current canonical key (plant-scoped)
+  plantKey: PlantKey               // Plant context for this record
+  stationUid?: StationUid | null   // Foreign key to station (current plant)
+
+  // Multi-plant support
+  labelsByPlant?: Record<PlantKey, ToolLabels>      // Different labels per plant
+  stationUidByPlant?: Record<PlantKey, StationUid>  // Station mapping per plant
+
+  // Single-plant fields (legacy/convenience)
   labels: ToolLabels
   attributes: Record<string, any>
   status: EntityStatus
@@ -107,12 +129,13 @@ export interface ToolRecord {
 }
 
 /**
- * RobotRecord with stable UID
- * Tracks a real-world robot
+ * RobotRecord with stable UID (plant-scoped)
+ * Tracks a real-world robot at a specific plant
  */
 export interface RobotRecord {
   uid: RobotUid
-  key: string                      // Current canonical key
+  key: string                      // Current canonical key (plant-scoped)
+  plantKey: PlantKey               // Plant context for this record
   stationUid?: StationUid | null   // Foreign key to station
   labels: RobotLabels
   attributes: Record<string, any>
@@ -131,15 +154,17 @@ export interface RobotRecord {
 // ============================================================================
 
 /**
- * AliasRule: User-confirmed mapping from old key to UID
+ * AliasRule: User-confirmed mapping from old key to UID (plant-scoped)
  * Created when user resolves ambiguous rename/move
  */
 export interface AliasRule {
   id: string               // Unique ID for the rule
-  fromKey: string          // Old canonical key
+  fromKey: string          // Old canonical key (plant-scoped)
   toUid: EntityUid         // Target entity UID
   entityType: EntityType
-  reason: string           // "User confirmed station renumber"
+  plantKey?: PlantKey      // Plant scope (if omitted, treated as global)
+  isGlobal?: boolean       // True if alias applies across all plants
+  reason: string           // "User confirmed station renumber" / "Carry-over from Plant A"
   createdAt: string
   createdBy?: string       // User ID if available
 }
@@ -151,12 +176,14 @@ export interface AliasRule {
 export type ImportSourceType = 'toolList' | 'robotList' | 'simulationStatus'
 
 /**
- * ImportRun: Record of each ingestion operation
+ * ImportRun: Record of each ingestion operation (plant-aware)
  */
 export interface ImportRun {
   id: string               // Unique ID
   sourceFileName: string
   sourceType: ImportSourceType
+  plantKey: PlantKey       // Plant context for this import
+  plantKeySource: 'filename' | 'metadata' | 'user_selected' | 'unknown'
   importedAt: string
   fileHash?: string        // SHA-256 of file content for deduplication
   counts: {
@@ -166,6 +193,7 @@ export interface ImportRun {
     renamed: number
     ambiguous: number
   }
+  warnings?: string[]      // e.g., "Plant context unknown; collisions possible"
   userDecisions?: {       // Alias rules created during this import
     ruleIds: string[]
   }
@@ -177,6 +205,7 @@ export interface ImportRun {
 
 export interface DiffCreate {
   key: string
+  plantKey: PlantKey
   attributes: Record<string, any>
   suggestedName?: string
 }
@@ -184,6 +213,7 @@ export interface DiffCreate {
 export interface DiffUpdate {
   uid: EntityUid
   key: string
+  plantKey: PlantKey
   oldAttributes: Record<string, any>
   newAttributes: Record<string, any>
   changedFields: string[]
@@ -192,19 +222,24 @@ export interface DiffUpdate {
 export interface DiffDelete {
   uid: EntityUid
   key: string
+  plantKey: PlantKey
   lastSeen: string       // ISO timestamp
 }
 
 export interface DiffRenameOrMove {
   oldKey?: string
   newKey: string
-  uid?: EntityUid        // If already resolved
-  confidence: number     // 0-100
-  matchReasons: string[] // ["Same tool codes", "Same robot", "Same area"]
+  plantKey: PlantKey
+  oldPlantKey?: PlantKey  // If cross-plant carryover
+  uid?: EntityUid         // If already resolved
+  confidence: number      // 0-100
+  matchReasons: string[]  // ["Same tool codes", "Same robot", "Same E-number"]
   requiresUserDecision: boolean
-  candidates?: Array<{   // Possible matches if ambiguous
+  isCrossPlant?: boolean  // True if suspected carry-over between plants
+  candidates?: Array<{    // Possible matches if ambiguous
     uid: EntityUid
     key: string
+    plantKey: PlantKey
     matchScore: number
     reasons: string[]
   }>
@@ -212,10 +247,12 @@ export interface DiffRenameOrMove {
 
 export interface DiffAmbiguous {
   newKey: string
+  plantKey: PlantKey
   newAttributes: Record<string, any>
   candidates: Array<{
     uid: EntityUid
     key: string
+    plantKey: PlantKey
     matchScore: number
     reasons: string[]
   }>
@@ -223,12 +260,13 @@ export interface DiffAmbiguous {
 }
 
 /**
- * DiffResult: Complete diff from import
+ * DiffResult: Complete diff from import (plant-aware)
  */
 export interface DiffResult {
   importRunId: string
   sourceFile: string
   sourceType: ImportSourceType
+  plantKey: PlantKey
   computedAt: string
 
   creates: DiffCreate[]
@@ -246,4 +284,5 @@ export interface DiffResult {
     ambiguous: number
     skipped: number
   }
+  warnings?: string[]  // e.g., "Plant context PLANT_UNKNOWN; collisions possible"
 }

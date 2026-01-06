@@ -2,14 +2,16 @@
 
 ## Problem Statement
 
-Manufacturing stations are referenced inconsistently across documents and time:
+Manufacturing stations and tools are referenced inconsistently across documents, time, and plants:
 
 - **Identity is split across columns**: Line + Bay + StationNo (e.g., "AL", "010") vs shortened labels (e.g., "AL010")
 - **Labels change over time**: Station renumbering during planning-to-as-built transitions
 - **Multiple source documents**: Tool List, Robot List, Simulation Status must link reliably
-- **No stable identifier**: Excel files lack a canonical "Station_ID" column
+- **No stable identifier**: Excel files lack a canonical "Station_ID" or "Tool_ID" column
+- **Multi-plant projects**: Same physical tooling carried over between plants, renamed per plant
+- **Cross-plant ambiguity**: "Tool GJR10 at Plant A" vs "Gun 10 at Plant B" - same physical tool?
 
-Current canonical IDs (`buildStationId("AREA", "STATION")` → `"AREA|STATION"`) are **labels, not identities**. When station numbers change, these IDs break, causing tools and robots to become orphaned.
+Current canonical IDs (`buildStationId("AREA", "STATION")` → `"AREA|STATION"`) are **labels, not identities**. When station numbers change or tooling moves between plants, these IDs break, causing tools and robots to become orphaned.
 
 ## Solution: Stable UIDs + Derived Keys + Alias Rules
 
@@ -18,18 +20,40 @@ Current canonical IDs (`buildStationId("AREA", "STATION")` → `"AREA|STATION"`)
 **1. UID (Unique Identifier)** - Immutable, opaque identifier assigned on first import
 - Format: `st_<uuid>` (stations), `tl_<uuid>` (tools), `rb_<uuid>` (robots)
 - Generated using `crypto.randomUUID()` with entity-type prefix
-- Never changes, even when entity is renamed/moved/renumbered
+- Never changes, even when entity is renamed/moved/renumbered **or used at different plants**
+- ToolUid represents the **physical equipment**, not the plant-specific label
 
-**2. Canonical Key** - Deterministic string derived from Excel columns
+**2. PlantKey** - First-class dimension for multi-plant projects
+- Format: `"PLANT_A"`, `"PLANT_B"`, or `"PLANT_UNKNOWN"` (sentinel)
+- Derived from:
+  - Workbook filename conventions (e.g., "STLA_S_PLANT_TORINO_...")
+  - Sheet header metadata
+  - User selection at import time (fallback)
+- Keys are **plant-scoped** to avoid collisions
+- Same tool at different plants has different keys but same UID
+
+**3. Canonical Key** - Deterministic string derived from Excel columns (plant-aware)
 - Built from available columns using deterministic rules
-- Examples: `"AL_010-010"` (line_bay-station), `"REAR UNIT|010"` (area|station)
+- **Plant-scoped** to prevent collisions:
+  - Station: `"${plantKey}::${line}_${bay}-${station3}"` or `"${plantKey}::${area}|${station}"`
+  - Tool: `"${stationKey}::${toolIdentifier}"`
+- Examples: `"PLANT_A::AL_010-010"`, `"PLANT_B::REAR UNIT|010"`
 - Used for matching during import
 - **Can and will change over time** (this is expected and handled)
 
-**3. Alias Rules** - User-confirmed mappings from old keys to UIDs
-- When a key changes but entity is the same, user confirms: `{fromKey: "CA_008-010", toUid: "st_abc123"}`
+**4. Alias Rules** - User-confirmed mappings from old keys to UIDs (plant-scoped)
+- When a key changes but entity is the same, user confirms: `{fromKey: "PLANT_A::CA_008-010", toUid: "st_abc123", plantKey: "PLANT_A"}`
+- **Plant scope**: Alias applies only within that plant (unless explicitly marked global)
 - Enables human-in-the-loop resolution of ambiguous renames
 - Persisted in database so future imports don't re-ask
+
+**5. Cross-Plant Tool Identity** - Same physical tool, multiple plant labels
+- ToolRecord stores:
+  - `uid`: Stable across plants
+  - `currentKey`: Plant-specific key
+  - `labelsByPlant`: Different labels per plant
+  - `stationUidByPlant`: Station mapping per plant (tools can move!)
+- User decides: "Is this the same physical tool carried over?"
 
 ### What Exists Today (Before This Feature)
 
