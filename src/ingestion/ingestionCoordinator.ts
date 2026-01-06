@@ -28,6 +28,7 @@ import type { CrossRefInput, SimulationStatusSnapshot, ToolSnapshot, RobotSnapsh
 import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 import * as XLSX from 'xlsx'
 import { syncSimulationStore } from '../features/simulation'
+import { log } from '../lib/log'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -295,7 +296,7 @@ export async function ingestFiles(
               const simRows = sheetToMatrix(workbook, 'SIMULATION')
               if (simRows.length > testRows.length) {
                 targetSheet = 'SIMULATION'
-                console.log(`[Ingestion] Using SIMULATION sheet instead of ${sheetName} (more rows)`)
+                log.debug(`[Ingestion] Using SIMULATION sheet instead of ${sheetName} (more rows)`)
               }
             }
           } catch {
@@ -351,7 +352,7 @@ export async function ingestFiles(
 
       // Note: Metadata files are currently logged and skipped
       if (kind === 'Metadata') {
-        console.log(`[Ingestion] Detected Metadata file: ${file.name} (sheet: ${sheetName}). Skipping for now.`)
+        log.info(`[Ingestion] Detected Metadata file: ${file.name} (sheet: ${sheetName}). Skipping for now.`)
       }
     } catch (error) {
       console.error(`[Ingestion] Error processing file ${file.name}:`, error)
@@ -417,7 +418,7 @@ export async function ingestFiles(
       newAssets
     )
 
-    console.log('[Version Comparison]', versionComparison.summary)
+    log.info('[Version Comparison]', versionComparison.summary)
   }
 
   // If previewOnly mode, return comparison without applying data
@@ -450,7 +451,7 @@ export async function ingestFiles(
     const crossRefInput = buildCrossRefInputFromApplyResult(applyResult)
     const crossRefResult = buildCrossRef(crossRefInput)
     setCrossRefData(crossRefResult)
-    console.log('[Ingestion] CrossRef data populated for dashboard:', {
+    log.debug('[Ingestion] CrossRef data populated for dashboard:', {
       cells: crossRefResult.cells.length,
       flags: crossRefResult.globalFlags.length,
       stats: crossRefResult.stats

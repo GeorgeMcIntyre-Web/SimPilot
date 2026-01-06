@@ -3,6 +3,7 @@
 // Handles spot weld guns (pneumatic/servo), sealers, grippers, etc.
 
 import * as XLSX from 'xlsx'
+import { log } from '../lib/log'
 import { Tool, ToolType, ToolMountType, SpotWeldSubType, generateId, IngestionWarning, EquipmentSourcing, AssetKind } from '../domain/core'
 import {
   sheetToMatrix,
@@ -359,7 +360,7 @@ export async function parseToolList(
     }))
   }
 
-  console.log(`[Tool List Parser] ${fileName} - Parsed ${tools.length} tools`)
+  log.info(`[Tool List Parser] ${fileName} - Parsed ${tools.length} tools`)
 
   return {
     tools,

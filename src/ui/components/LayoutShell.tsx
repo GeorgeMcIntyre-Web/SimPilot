@@ -5,6 +5,7 @@ import { useAuth } from '../../auth';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { useTheme } from '../ThemeContext';
 import { Header } from './Header';
+import { log } from '../../lib/log';
 
 export function LayoutShell() {
     const hasData = useHasSimulationData();
@@ -16,7 +17,7 @@ export function LayoutShell() {
     const lastUpdated = useLastUpdated();
     const dataSource = useDataSource();
     const hasUnsyncedChanges = useHasUnsyncedChanges();
-    console.log('LayoutShell render. hasData:', hasData);
+    log.debug('LayoutShell render. hasData:', hasData);
 
     return (
         <div data-testid="app-shell" className="min-h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col relative overflow-hidden">

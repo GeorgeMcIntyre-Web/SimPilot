@@ -3,6 +3,7 @@
 // Uses vacuum parsing to capture all progress metrics without hardcoded columns
 
 import * as XLSX from 'xlsx'
+import { log } from '../lib/log'
 import {
   Tool,
   ToolType,
@@ -413,7 +414,7 @@ export async function parseAssembliesList(
     tools.push(tool)
   }
 
-  console.log(`[Assemblies Parser] ${fileName} - Parsed ${tools.length} tools`)
+  log.info(`[Assemblies Parser] ${fileName} - Parsed ${tools.length} tools`)
 
   return {
     tools,

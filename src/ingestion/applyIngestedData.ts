@@ -8,6 +8,7 @@ import { ToolListResult } from './toolListParser'
 import { createLinkingMissingTargetWarning, createParserErrorWarning } from './warningUtils'
 import { linkAssetsToSimulation } from './relationshipLinker'
 import { buildStationId, normalizeAreaName, normalizeStationCode } from './normalizers'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -111,7 +112,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
     linkCount = linkResult.linkCount
 
-    console.log(`[Relational Linker] Linked ${linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed)`)
+    log.info(`[Relational Linker] Linked ${linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed)`)
   }
 
   // Link robots to cells and areas

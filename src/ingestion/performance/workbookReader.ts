@@ -9,6 +9,7 @@
  */
 
 import type { NormalizedWorkbook } from '../workbookLoader'
+import { log } from '../../lib/log'
 import { loadWorkbookFromBuffer } from '../workbookLoader'
 
 // ============================================================================
@@ -246,7 +247,7 @@ export function createWorkbookReader(
 
   // Use streaming reader for large files if enabled
   if (config.enableStreaming && buffer.byteLength > config.streamingThreshold) {
-    console.log(`[WorkbookReader] Using streaming reader for large file: ${fileName} (${(buffer.byteLength / 1024 / 1024).toFixed(2)} MB)`)
+    log.info(`[WorkbookReader] Using streaming reader for large file: ${fileName} (${(buffer.byteLength / 1024 / 1024).toFixed(2)} MB)`)
     return new StreamingWorkbookReader(buffer, fileName)
   }
 

@@ -3,6 +3,7 @@
 // Uses vacuum parsing to capture all metrics without hardcoded column lists
 
 import * as XLSX from 'xlsx'
+import { log } from '../lib/log'
 import {
   Project,
   Area,
@@ -356,13 +357,13 @@ export async function parseSimulationStatus(
 
   // Find header row
   const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
-  console.log(`[Parser] Header row index: ${headerRowIndex}`)
+  log.debug(`[Parser] Header row index: ${headerRowIndex}`)
 
   if (headerRowIndex === null) {
     throw new Error(`Could not find header row with required columns: ${REQUIRED_HEADERS.join(', ')}`)
   }
 
-  console.log(`[Parser] Header row content: ${JSON.stringify(rows[headerRowIndex])}`)
+  log.debug(`[Parser] Header row content: ${JSON.stringify(rows[headerRowIndex])}`)
 
   // Use vacuum parser
   const { rows: vacuumRows, warnings: parseWarnings } = vacuumParseSimulationSheet(

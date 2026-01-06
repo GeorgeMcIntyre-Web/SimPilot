@@ -64,7 +64,16 @@
       "Bash(node scripts/test_stla_toollist.cjs:*)",
       "Bash(rm:*)",
       "Bash(npm update:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(npm run preview:*)",
+      "Bash(npm run test:*)",
+      "Bash(npx tsx:*)",
+      "Bash(NODE_OPTIONS=\"--trace-warnings\" npx vitest:*)",
+      "Bash(DEBUG=vitest:*)",
+      "Bash(nvm --version:*)",
+      "Bash(gh run list:*)",
+      "Bash(node scripts/fix_console_statements.js:*)",
+      "Bash(node scripts/fix_console_statements.cjs:*)"
     ],
     "deny": [],
     "ask": []
