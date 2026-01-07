@@ -297,7 +297,8 @@ Model (vehicle program) is context metadata, NOT part of the physical hierarchy.
 - ✅ Station/Tool/Robot identity stable across Model changes
 - ✅ No Excel changes required (Model inferred from filename/metadata or user-selected)
 - ⚠️ Model not used for filtering by default (Area/Plant are primary filters)
-- ⚠️ Future: StationModelAssignment records may track "Station X runs Model Y during timeframe Z"
+- ⚠️ Future: AssetModelAssignment records track "Asset X used for Model Y" (make/buy/free-issue sourcing)
+- ❌ Station-Model assignments NOT tracked (stations are locations, not configurations; no business value)
 
 **Alternatives Considered:**
 - Nest Area under Model → rejected: physically incorrect, fragments identity across Models

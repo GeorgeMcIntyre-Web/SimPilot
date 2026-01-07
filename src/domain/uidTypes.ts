@@ -323,84 +323,49 @@ export interface DiffResult {
 }
 
 // ============================================================================
-// MODEL ASSIGNMENTS (Future-Ready Types - Phase 2+)
+// ASSET-MODEL ASSIGNMENTS (Future-Ready Types - Phase 2+)
 // ============================================================================
 
 /**
- * StationModelAssignment: Tracks which Models run on which Stations over time.
+ * AssetModelAssignment: Tracks which Assets (tools/robots) are used for which Models.
  *
- * Purpose: Historical tracking of "Station X ran Model Y from time T1 to T2"
+ * Purpose: Understanding asset allocation across vehicle programs.
+ * Assets can be: make (SimPilot spec), buy (OEM procured), or free-issue.
  *
- * IMPORTANT: This does NOT affect station identity.
- * - Station UID remains stable regardless of Model assignments
- * - Assignments are temporal metadata on top of physical entities
+ * Business value:
+ * - Reuse planning: "Can Tool GUN10 be carried over from STLA-S to GLC X254?"
+ * - Procurement: "Which robots are Model-specific vs. shared across Models?"
+ * - Capacity planning: "How many spot weld guns needed for Model B ramp-up?"
+ * - Analytics: "What's the asset reuse rate across Models?"
+ * - Cost tracking: "Which assets are dedicated to which program?"
  *
- * Future use cases:
- * - Analytics: "How many stations ran STLA-S in Q1 2026?"
- * - Planning: "Which stations can we reconfigure for Model B?"
- * - Audit: "When did Station 010 switch from Model A to Model B?"
+ * IMPORTANT: This tracks Equipment-Model relationships, NOT Station-Model.
+ * - Stations are physical locations (no value in tracking Station ↔ Model)
+ * - Assets are equipment configurations (high value in tracking Asset ↔ Model)
+ * - Station involvement is derived: "Which stations for Model X?" =
+ *   SELECT DISTINCT stationUid FROM AssetModelAssignment WHERE modelKey = 'X'
  *
  * Note: Not yet implemented. Type defined for forward compatibility.
  */
-export interface StationModelAssignment {
+export interface AssetModelAssignment {
   id: string                    // Unique ID
-  stationUid: StationUid        // Foreign key to StationRecord
+  assetUid: ToolUid | RobotUid  // Foreign key to ToolRecord or RobotRecord
+  assetType: 'tool' | 'robot'   // Asset type
   modelKey: ModelKey            // Vehicle program (e.g., "STLA-S", "GLC_X254")
   plantKey: PlantKey            // Plant context
-  areaKey?: string              // Area context (optional)
+  stationUid?: StationUid       // Current station assignment (can change)
   status: 'active' | 'inactive' // Current assignment status
+
+  // Asset sourcing (make/buy/free-issue)
+  sourcingType?: 'make' | 'buy' | 'free_issue'
+  procuredBy?: 'simpilot' | 'oem' | 'supplier'
+
+  // Temporal tracking
   effectiveFrom?: string        // ISO timestamp when assignment started
   effectiveTo?: string          // ISO timestamp when assignment ended (null = ongoing)
+
+  // Audit trail
   createdAt: string
   createdBy?: string            // User ID if available
-  notes?: string                // Optional rationale (e.g., "Line reconfiguration for Model X")
-}
-
-/**
- * ToolModelAssignment: Tracks which Models use which Tools over time.
- *
- * Purpose: Same as StationModelAssignment but for tools/guns.
- *
- * Use cases:
- * - Reuse planning: "Can this tool be carried over to Model B?"
- * - Procurement: "Which tools are Model-specific vs. multi-Model?"
- * - Analytics: "What's the tool reuse rate across Models?"
- *
- * Note: Not yet implemented. Type defined for forward compatibility.
- */
-export interface ToolModelAssignment {
-  id: string                    // Unique ID
-  toolUid: ToolUid              // Foreign key to ToolRecord
-  modelKey: ModelKey            // Vehicle program
-  plantKey: PlantKey            // Plant context
-  status: 'active' | 'inactive' // Current assignment status
-  effectiveFrom?: string        // ISO timestamp
-  effectiveTo?: string          // ISO timestamp (null = ongoing)
-  createdAt: string
-  createdBy?: string
-  notes?: string
-}
-
-/**
- * RobotModelAssignment: Tracks which Models use which Robots over time.
- *
- * Purpose: Same as StationModelAssignment but for robots.
- *
- * Use cases:
- * - Robot utilization: "Is Robot R01 dedicated to Model A or shared?"
- * - Capacity planning: "How many robots needed for Model B ramp-up?"
- *
- * Note: Not yet implemented. Type defined for forward compatibility.
- */
-export interface RobotModelAssignment {
-  id: string                    // Unique ID
-  robotUid: RobotUid            // Foreign key to RobotRecord
-  modelKey: ModelKey            // Vehicle program
-  plantKey: PlantKey            // Plant context
-  status: 'active' | 'inactive' // Current assignment status
-  effectiveFrom?: string        // ISO timestamp
-  effectiveTo?: string          // ISO timestamp (null = ongoing)
-  createdAt: string
-  createdBy?: string
-  notes?: string
+  notes?: string                // e.g., "Reused from previous Model", "OEM-procured for this program"
 }

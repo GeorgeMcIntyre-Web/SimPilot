@@ -91,26 +91,37 @@ Project {
 
 **Problem**: Physical entities cannot be nested under transient product assignments.
 
-## Future: Model Assignments (Phase 2+)
+## Future: Asset-Model Assignments (Phase 2+)
 
-For advanced use cases, we may introduce **Model Assignment Records**:
+For advanced use cases, we may introduce **Asset-Model Assignment Records**:
 
 ```typescript
 // Future-ready type (not implemented yet)
-interface StationModelAssignment {
-  stationUid: StationUid
+interface AssetModelAssignment {
+  assetUid: ToolUid | RobotUid
+  assetType: 'tool' | 'robot'
   modelKey: ModelKey
   plantKey: PlantKey
-  areaKey: string
+  stationUid?: StationUid       // Current location (can change)
   status: 'active' | 'inactive'
-  effectiveFrom?: string  // ISO timestamp
-  effectiveTo?: string    // ISO timestamp
+  sourcingType?: 'make' | 'buy' | 'free_issue'  // How asset is procured
+  procuredBy?: 'simpilot' | 'oem' | 'supplier'
+  effectiveFrom?: string
+  effectiveTo?: string
 }
 ```
 
-**Use case**: "Station 010 ran STLA-S from Jan-Mar 2026, then switched to GLC X254 in Apr 2026."
+**Use cases**:
+- "Tool GUN10 was used for STLA-S (Jan-Mar), then reused for GLC X254 (Apr-Jun)"
+- "Robot R01 is dedicated to STLA-S (OEM-procured, not reusable)"
+- "Which spot weld guns can we carry over from Model A to Model B?"
 
-**Important**: Even with assignments, the station's UID and key remain unchanged. Assignments are historical metadata, not identity.
+**Why Assets, not Stations?**
+- Stations are physical locations (no value in tracking Station ↔ Model)
+- Assets are equipment (tools, robots, guns) with make/buy/free-issue sourcing
+- The question "Which stations for Model X?" is answered by: "Show stations where Model X assets are assigned"
+
+**Important**: Asset UIDs remain stable. Assignments track which Model(s) the asset is used for, and where it's currently located.
 
 ## Implementation Guidelines
 
