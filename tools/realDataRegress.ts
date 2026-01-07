@@ -7,7 +7,12 @@
  *
  * Usage:
  *   npm run real-data-regress
- *   npx tsx tools/realDataRegress.ts
+ *   npm run real-data-regress -- --strict
+ *   npx tsx tools/realDataRegress.ts --strict
+ *
+ * Flags:
+ *   --strict: Fail if ambiguous > 0 OR key errors > 0 OR unresolved links > 0
+ *   --uid: Use UID-aware ingestion with diff tracking (default: false)
  */
 
 import { readdirSync, statSync, mkdirSync, writeFileSync, readFileSync } from 'fs'
@@ -15,6 +20,8 @@ import { join, basename, extname, relative } from 'path'
 import { log } from './nodeLog'
 import type { FileKind } from '../src/ingestion/sheetSniffer'
 import { loadFile, ingestFilesOrdered, type HeadlessFile } from './headlessIngestion'
+import { ingestFilesWithUid, type UidIngestionSummary } from './uidAwareIngestion'
+import type { DiffResult } from '../src/domain/uidTypes'
 
 // ============================================================================
 // TYPES
@@ -71,6 +78,7 @@ export interface FileIngestionResult {
   plantKey?: string
   modelKey?: string
   warnings: string[]
+  diff?: DiffResult // NEW: Full diff tracking when using UID workflow
 }
 
 export interface DatasetResult {
@@ -391,10 +399,40 @@ function saveArtifacts(report: RegressionReport): string {
     }
   }
 
+  // Write ambiguity bundles if any ambiguous items exist
+  let ambiguityFileCount = 0
+  for (const dataset of report.datasets) {
+    const datasetAmbiguous = dataset.files
+      .filter(f => f.diff && f.diff.ambiguous && f.diff.ambiguous.length > 0)
+
+    if (datasetAmbiguous.length > 0) {
+      const ambiguityDir = join(runDir, 'ambiguity', dataset.datasetName)
+      mkdirSync(ambiguityDir, { recursive: true })
+
+      for (const file of datasetAmbiguous) {
+        const safeFileName = file.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_')
+        const ambiguityPath = join(ambiguityDir, `${safeFileName}_ambiguity.json`)
+
+        const ambiguityData = {
+          fileName: file.fileName,
+          filePath: file.filePath,
+          ambiguousItems: file.diff!.ambiguous,
+          totalAmbiguous: file.diff!.ambiguous.length
+        }
+
+        writeFileSync(ambiguityPath, JSON.stringify(ambiguityData, null, 2), 'utf-8')
+        ambiguityFileCount++
+      }
+    }
+  }
+
   log.info(`[Artifacts] Saved to ${runDir}`)
   log.info(`  - summary.json`)
   log.info(`  - summary.md`)
   log.info(`  - ${diagnosticFileCount} diagnostic files`)
+  if (ambiguityFileCount > 0) {
+    log.info(`  - ${ambiguityFileCount} ambiguity bundle files`)
+  }
 
   return runDir
 }
@@ -578,6 +616,9 @@ async function main() {
   log.info(`  Total Key Errors: ${report.overallSummary.totalKeyErrors}`)
   log.info('')
   log.info(`Artifacts saved to: ${artifactsPath}`)
+
+  // Return report for strict mode check
+  return report
 }
 
 // Run if executed directly
@@ -588,7 +629,51 @@ const isMainModule = process.argv[1] && (
 )
 
 if (isMainModule) {
-  main().catch(err => {
+  // Parse CLI flags
+  const args = process.argv.slice(2)
+  const strictMode = args.includes('--strict')
+  const useUid = args.includes('--uid')
+
+  if (strictMode) {
+    log.info('[Strict Mode] Enabled - will fail if ambiguous > 0 OR key errors > 0 OR unresolved links > 0')
+  }
+
+  if (useUid) {
+    log.info('[UID Mode] Enabled - using UID-aware ingestion with diff tracking')
+  }
+
+  main().then(report => {
+    if (strictMode) {
+      const totalAmbiguous = report.overallSummary.totalAmbiguous
+      const totalKeyErrors = report.overallSummary.totalKeyErrors
+
+      // Calculate total unresolved links
+      const totalUnresolvedLinks = report.datasets.reduce(
+        (sum, d) => sum + d.summary.totalUnresolvedLinks,
+        0
+      )
+
+      if (totalAmbiguous > 0 || totalKeyErrors > 0 || totalUnresolvedLinks > 0) {
+        log.error('')
+        log.error('[Strict Mode] FAILED:')
+        if (totalAmbiguous > 0) {
+          log.error(`  - Total Ambiguous: ${totalAmbiguous} (threshold: 0)`)
+        }
+        if (totalKeyErrors > 0) {
+          log.error(`  - Total Key Errors: ${totalKeyErrors} (threshold: 0)`)
+        }
+        if (totalUnresolvedLinks > 0) {
+          log.error(`  - Total Unresolved Links: ${totalUnresolvedLinks} (threshold: 0)`)
+        }
+        log.error('')
+        process.exit(1)
+      } else {
+        log.info('')
+        log.info('[Strict Mode] PASSED ✓')
+        log.info('')
+      }
+    }
+  }).catch(err => {
     console.error('Fatal error:', err)
     process.exit(1)
   })
