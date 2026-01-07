@@ -9,20 +9,8 @@ import {
   DiffUpdate,
   DiffDelete,
   DiffRenameOrMove,
-  DiffAmbiguous,
   ImportSourceType
 } from '../domain/uidTypes'
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface DiffContext {
-  prevStationRecords: StationRecord[]
-  prevToolRecords: ToolRecord[]
-  newStationRecords: StationRecord[]
-  newToolRecords: ToolRecord[]
-}
 
 // ============================================================================
 // STATION DIFF
@@ -48,9 +36,7 @@ export function diffStationRecords(
 
   // Build lookup maps
   const prevByUid = new Map(prevRecords.map(r => [r.uid, r]))
-  const prevByKey = new Map(prevRecords.map(r => [r.key, r]))
   const newByUid = new Map(newRecords.map(r => [r.uid, r]))
-  const newByKey = new Map(newRecords.map(r => [r.key, r]))
 
   // Detect creates and updates
   for (const newRecord of newRecords) {

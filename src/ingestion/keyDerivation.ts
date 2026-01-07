@@ -36,8 +36,8 @@ export interface KeyDerivationError {
 // NORMALIZATION HELPERS
 // ============================================================================
 
-function normalizeForKey(value: string | null | undefined): string | null {
-  if (!value) return null
+function normalizeForKey(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
 
   return value
     .trim()
@@ -47,8 +47,8 @@ function normalizeForKey(value: string | null | undefined): string | null {
     .trim()
 }
 
-function normalizeStationNumber(value: string | null | undefined): string | null {
-  if (!value) return null
+function normalizeStationNumber(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
 
   const trimmed = value.trim()
 
@@ -59,7 +59,7 @@ function normalizeStationNumber(value: string | null | undefined): string | null
 
   // Extract numeric part
   const match = withoutPrefix.match(/\d+/)
-  if (!match) return null
+  if (!match) return undefined
 
   const num = parseInt(match[0], 10)
 
@@ -67,8 +67,8 @@ function normalizeStationNumber(value: string | null | undefined): string | null
   return num.toString().padStart(3, '0')
 }
 
-function normalizeLineOrBay(value: string | null | undefined): string | null {
-  if (!value) return null
+function normalizeLineOrBay(value: string | null | undefined): string | undefined {
+  if (!value) return undefined
 
   return value
     .trim()
