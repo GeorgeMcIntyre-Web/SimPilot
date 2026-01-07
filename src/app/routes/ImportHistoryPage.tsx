@@ -3,6 +3,7 @@ import { PageHeader } from '../../ui/components/PageHeader'
 import { ImportRun, DiffResult } from '../../domain/uidTypes'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function ImportHistoryPage() {
   const { importRuns, diffResults } = useCoreStore()
@@ -65,12 +66,17 @@ interface ImportRunCardProps {
 }
 
 function ImportRunCard({ run, isSelected, onClick }: ImportRunCardProps) {
+  const navigate = useNavigate()
   const hasWarnings = (run.warnings?.length ?? 0) > 0 || run.counts.ambiguous > 0
   const status = hasWarnings ? 'needs resolution' : 'clean'
 
+  const handleReviewClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/import-review/${run.id}`)
+  }
+
   return (
-    <button
-      onClick={onClick}
+    <div
       className={`
         w-full text-left p-4 rounded-lg border transition-colors
         ${isSelected
@@ -79,6 +85,10 @@ function ImportRunCard({ run, isSelected, onClick }: ImportRunCardProps) {
         }
       `}
     >
+      <button
+        onClick={onClick}
+        className="w-full text-left"
+      >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -140,7 +150,19 @@ function ImportRunCard({ run, isSelected, onClick }: ImportRunCardProps) {
           </ul>
         </div>
       )}
-    </button>
+      </button>
+
+      {run.counts.ambiguous > 0 && (
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={handleReviewClick}
+            className="w-full px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded hover:bg-yellow-700 transition-colors"
+          >
+            Review {run.counts.ambiguous} ambiguous {run.counts.ambiguous === 1 ? 'item' : 'items'}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
