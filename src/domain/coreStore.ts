@@ -157,7 +157,15 @@ export const coreStore = {
       changeLog: [], // Reset change log on new data load
       lastUpdated: new Date().toISOString(),
       dataSource: source || null,
-      referenceData: data.referenceData || { employees: [], suppliers: [] }
+      referenceData: data.referenceData || { employees: [], suppliers: [] },
+      // Preserve existing registry data when loading new Excel data
+      stationRecords: storeState.stationRecords,
+      toolRecords: storeState.toolRecords,
+      robotRecords: storeState.robotRecords,
+      aliasRules: storeState.aliasRules,
+      importRuns: storeState.importRuns,
+      diffResults: storeState.diffResults,
+      auditLog: storeState.auditLog
     }
     notifySubscribers()
   },
@@ -184,7 +192,8 @@ export const coreStore = {
       robotRecords: [],
       aliasRules: [],
       importRuns: [],
-      diffResults: []
+      diffResults: [],
+      auditLog: []
     }
     notifySubscribers()
   },

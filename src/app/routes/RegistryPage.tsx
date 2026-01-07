@@ -1,24 +1,23 @@
 import { useState, useMemo } from 'react'
 import { useCoreStore, coreStore } from '../../domain/coreStore'
 import { PageHeader } from '../../ui/components/PageHeader'
-import { StationRecord, ToolRecord, RobotRecord, PlantKey } from '../../domain/uidTypes'
-import { formatDistanceToNow } from 'date-fns'
+import { StationRecord, ToolRecord, RobotRecord } from '../../domain/uidTypes'
 import { createAliasRule } from '../../ingestion/uidResolver'
 import { CanonicalIdDisplay } from '../../components/registry/CanonicalIdDisplay'
+import { LastSeenBadge } from '../../components/registry/LastSeenBadge'
 import {
   createActivateAuditEntry,
   createDeactivateAuditEntry,
-  createAddAliasAuditEntry,
-  createOverrideLabelAuditEntry
+  createAddAliasAuditEntry
 } from '../../domain/auditLog'
 
 export default function RegistryPage() {
-  const { stationRecords, toolRecords, robotRecords } = useCoreStore()
+  const { stationRecords, toolRecords, robotRecords, importRuns } = useCoreStore()
   const [activeTab, setActiveTab] = useState<'stations' | 'tools' | 'robots'>('stations')
-  const [showInactive, setShowInactive] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [plantFilter, setPlantFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
+  const [staleFilter, setStaleFilter] = useState(false)
 
   // Get unique plant keys
   const allPlants = useMemo(() => {
@@ -29,6 +28,18 @@ export default function RegistryPage() {
     return Array.from(plants).sort()
   }, [stationRecords, toolRecords, robotRecords])
 
+  // Helper function to check if entity is stale (inactive and not seen in 30+ days)
+  const isEntityStale = (lastSeenImportRunId: string | undefined, status: 'active' | 'inactive'): boolean => {
+    if (status === 'active') return false
+    if (!lastSeenImportRunId) return true // Never seen = stale
+
+    const importRun = importRuns.find(run => run.id === lastSeenImportRunId)
+    if (!importRun) return true // Import run not found = stale
+
+    const daysSinceLastSeen = Math.floor((Date.now() - new Date(importRun.importedAt).getTime()) / (1000 * 60 * 60 * 24))
+    return daysSinceLastSeen >= 30
+  }
+
   const filteredStations = stationRecords.filter(s => {
     const matchesStatus = statusFilter === 'all' || s.status === statusFilter
     const matchesPlant = plantFilter === 'all' || s.plantKey === plantFilter
@@ -36,7 +47,8 @@ export default function RegistryPage() {
       s.labels.fullLabel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.labels.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.uid.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesPlant && matchesSearch
+    const matchesStale = !staleFilter || isEntityStale(s.lastSeenImportRunId, s.status)
+    return matchesStatus && matchesPlant && matchesSearch && matchesStale
   })
 
   const filteredTools = toolRecords.filter(t => {
@@ -46,7 +58,8 @@ export default function RegistryPage() {
       t.labels.toolCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.labels.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.uid.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesPlant && matchesSearch
+    const matchesStale = !staleFilter || isEntityStale(t.lastSeenImportRunId, t.status)
+    return matchesStatus && matchesPlant && matchesSearch && matchesStale
   })
 
   const filteredRobots = robotRecords.filter(r => {
@@ -56,14 +69,15 @@ export default function RegistryPage() {
       r.labels.robotCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.labels.robotName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.uid.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesPlant && matchesSearch
+    const matchesStale = !staleFilter || isEntityStale(r.lastSeenImportRunId, r.status)
+    return matchesStatus && matchesPlant && matchesSearch && matchesStale
   })
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Entity Registry"
-        description="Manage stations, tools, and robots with stable UIDs"
+        subtitle="Manage stations, tools, and robots with stable UIDs"
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -136,6 +150,15 @@ export default function RegistryPage() {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+            <label className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={staleFilter}
+                onChange={(e) => setStaleFilter(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <span className="text-sm">Stale only (30+ days)</span>
+            </label>
           </div>
 
           {activeTab === 'stations' && (
@@ -253,7 +276,7 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
               Labels
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Last Updated
+              Last Seen
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Actions
@@ -292,8 +315,11 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                 {station.labels.fullLabel || station.labels.area || '-'}
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-500">
-                {formatDistanceToNow(new Date(station.updatedAt), { addSuffix: true })}
+              <td className="px-4 py-3 whitespace-nowrap">
+                <LastSeenBadge
+                  lastSeenImportRunId={station.lastSeenImportRunId}
+                  status={station.status}
+                />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm">
                 <div className="flex items-center gap-2">
@@ -454,7 +480,7 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
               Labels
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Last Updated
+              Last Seen
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Actions
@@ -493,8 +519,11 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                 {tool.labels.toolName || tool.labels.toolCode || '-'}
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-500">
-                {formatDistanceToNow(new Date(tool.updatedAt), { addSuffix: true })}
+              <td className="px-4 py-3 whitespace-nowrap">
+                <LastSeenBadge
+                  lastSeenImportRunId={tool.lastSeenImportRunId}
+                  status={tool.status}
+                />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm">
                 <div className="flex items-center gap-2">
@@ -594,7 +623,7 @@ function RobotRegistryTable({ robots, searchTerm }: RobotRegistryTableProps) {
               Labels
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Last Updated
+              Last Seen
             </th>
           </tr>
         </thead>
@@ -630,8 +659,11 @@ function RobotRegistryTable({ robots, searchTerm }: RobotRegistryTableProps) {
               <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                 {robot.labels.robotName || robot.labels.robotCaption || '-'}
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-500">
-                {formatDistanceToNow(new Date(robot.updatedAt), { addSuffix: true })}
+              <td className="px-4 py-3 whitespace-nowrap">
+                <LastSeenBadge
+                  lastSeenImportRunId={robot.lastSeenImportRunId}
+                  status={robot.status}
+                />
               </td>
             </tr>
           ))}
