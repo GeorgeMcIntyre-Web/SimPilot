@@ -98,6 +98,11 @@ function ImportRunCard({ run, isSelected, onClick }: ImportRunCardProps) {
 
           <div className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             {run.sourceType} • Plant: {run.plantKey} ({run.plantKeySource})
+            {run.modelKey && (
+              <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                Model: {run.modelKey}
+              </span>
+            )}
           </div>
 
           <div className="mt-2 flex items-center gap-4 text-sm">

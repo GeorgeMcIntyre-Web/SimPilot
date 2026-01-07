@@ -276,3 +276,71 @@ describe('buildRobotKey', () => {
     }
   })
 })
+
+describe('Model independence in key derivation', () => {
+  it('should derive same station key regardless of model context', () => {
+    const input = {
+      line: 'AL',
+      bay: '010',
+      station: '10'
+    }
+
+    const result1 = buildStationKey(input)
+    const result2 = buildStationKey({ ...input, model: 'STLA-S' })
+    const result3 = buildStationKey({ ...input, model: 'GLC_X254' })
+
+    expect(isKeyDerivationError(result1)).toBe(false)
+    expect(isKeyDerivationError(result2)).toBe(false)
+    expect(isKeyDerivationError(result3)).toBe(false)
+
+    if (!isKeyDerivationError(result1) && !isKeyDerivationError(result2) && !isKeyDerivationError(result3)) {
+      expect(result1.key).toBe('AL_010-010')
+      expect(result2.key).toBe('AL_010-010')
+      expect(result3.key).toBe('AL_010-010')
+      expect(result1.key).toBe(result2.key)
+      expect(result2.key).toBe(result3.key)
+    }
+  })
+
+  it('should derive same tool key regardless of model context', () => {
+    const input = { tool: 'GJR 10' }
+    const stationKey = 'AL_010-010'
+
+    const result1 = buildToolKey(input, stationKey)
+    const result2 = buildToolKey({ ...input, model: 'STLA-S' }, stationKey)
+    const result3 = buildToolKey({ ...input, model: 'GLC_X254' }, stationKey)
+
+    expect(isKeyDerivationError(result1)).toBe(false)
+    expect(isKeyDerivationError(result2)).toBe(false)
+    expect(isKeyDerivationError(result3)).toBe(false)
+
+    if (!isKeyDerivationError(result1) && !isKeyDerivationError(result2) && !isKeyDerivationError(result3)) {
+      expect(result1.key).toBe('AL_010-010::GJR 10')
+      expect(result2.key).toBe('AL_010-010::GJR 10')
+      expect(result3.key).toBe('AL_010-010::GJR 10')
+      expect(result1.key).toBe(result2.key)
+      expect(result2.key).toBe(result3.key)
+    }
+  })
+
+  it('should derive same robot key regardless of model context', () => {
+    const input = { robot: 'R01', eNumber: 'E12345' }
+    const stationKey = 'AL_010-010'
+
+    const result1 = buildRobotKey(input, stationKey)
+    const result2 = buildRobotKey({ ...input, model: 'STLA-S' }, stationKey)
+    const result3 = buildRobotKey({ ...input, model: 'GLC_X254' }, stationKey)
+
+    expect(isKeyDerivationError(result1)).toBe(false)
+    expect(isKeyDerivationError(result2)).toBe(false)
+    expect(isKeyDerivationError(result3)).toBe(false)
+
+    if (!isKeyDerivationError(result1) && !isKeyDerivationError(result2) && !isKeyDerivationError(result3)) {
+      expect(result1.key).toBe('AL_010-010::R:R01')
+      expect(result2.key).toBe('AL_010-010::R:R01')
+      expect(result3.key).toBe('AL_010-010::R:R01')
+      expect(result1.key).toBe(result2.key)
+      expect(result2.key).toBe(result3.key)
+    }
+  })
+})

@@ -14,6 +14,20 @@ export type PlantKey = string // "PLANT_A", "PLANT_B", "PLANT_UNKNOWN"
  */
 export const PLANT_UNKNOWN: PlantKey = 'PLANT_UNKNOWN'
 
+/**
+ * Identifier for a vehicle program/model.
+ * Model is context metadata, NOT part of the physical hierarchy.
+ *
+ * Examples: "STLA-S", "GLC_X254", "RANGER_P703"
+ *
+ * Important: Model does NOT affect station/tool/robot identity.
+ * Physical entities (stations, tools, robots) are UID-backed and plant-scoped.
+ * An Area can run multiple Models over time.
+ *
+ * See: docs/domain/MODEL_CONTEXT.md
+ */
+export type ModelKey = string
+
 // ============================================================================
 // UID TYPES
 // ============================================================================
@@ -191,7 +205,7 @@ export interface AliasRule {
 export type ImportSourceType = 'toolList' | 'robotList' | 'simulationStatus'
 
 /**
- * ImportRun: Record of each ingestion operation (plant-aware)
+ * ImportRun: Record of each ingestion operation (plant-aware, model-aware)
  */
 export interface ImportRun {
   id: string               // Unique ID
@@ -199,6 +213,7 @@ export interface ImportRun {
   sourceType: ImportSourceType
   plantKey: PlantKey       // Plant context for this import
   plantKeySource: 'filename' | 'metadata' | 'user_selected' | 'unknown'
+  modelKey?: ModelKey      // Vehicle program/model context (optional, inferred or user-selected)
   importedAt: string
   fileHash?: string        // SHA-256 of file content for deduplication
   counts: {
@@ -305,4 +320,87 @@ export interface DiffResult {
     skipped: number
   }
   warnings?: string[]  // e.g., "Plant context PLANT_UNKNOWN; collisions possible"
+}
+
+// ============================================================================
+// MODEL ASSIGNMENTS (Future-Ready Types - Phase 2+)
+// ============================================================================
+
+/**
+ * StationModelAssignment: Tracks which Models run on which Stations over time.
+ *
+ * Purpose: Historical tracking of "Station X ran Model Y from time T1 to T2"
+ *
+ * IMPORTANT: This does NOT affect station identity.
+ * - Station UID remains stable regardless of Model assignments
+ * - Assignments are temporal metadata on top of physical entities
+ *
+ * Future use cases:
+ * - Analytics: "How many stations ran STLA-S in Q1 2026?"
+ * - Planning: "Which stations can we reconfigure for Model B?"
+ * - Audit: "When did Station 010 switch from Model A to Model B?"
+ *
+ * Note: Not yet implemented. Type defined for forward compatibility.
+ */
+export interface StationModelAssignment {
+  id: string                    // Unique ID
+  stationUid: StationUid        // Foreign key to StationRecord
+  modelKey: ModelKey            // Vehicle program (e.g., "STLA-S", "GLC_X254")
+  plantKey: PlantKey            // Plant context
+  areaKey?: string              // Area context (optional)
+  status: 'active' | 'inactive' // Current assignment status
+  effectiveFrom?: string        // ISO timestamp when assignment started
+  effectiveTo?: string          // ISO timestamp when assignment ended (null = ongoing)
+  createdAt: string
+  createdBy?: string            // User ID if available
+  notes?: string                // Optional rationale (e.g., "Line reconfiguration for Model X")
+}
+
+/**
+ * ToolModelAssignment: Tracks which Models use which Tools over time.
+ *
+ * Purpose: Same as StationModelAssignment but for tools/guns.
+ *
+ * Use cases:
+ * - Reuse planning: "Can this tool be carried over to Model B?"
+ * - Procurement: "Which tools are Model-specific vs. multi-Model?"
+ * - Analytics: "What's the tool reuse rate across Models?"
+ *
+ * Note: Not yet implemented. Type defined for forward compatibility.
+ */
+export interface ToolModelAssignment {
+  id: string                    // Unique ID
+  toolUid: ToolUid              // Foreign key to ToolRecord
+  modelKey: ModelKey            // Vehicle program
+  plantKey: PlantKey            // Plant context
+  status: 'active' | 'inactive' // Current assignment status
+  effectiveFrom?: string        // ISO timestamp
+  effectiveTo?: string          // ISO timestamp (null = ongoing)
+  createdAt: string
+  createdBy?: string
+  notes?: string
+}
+
+/**
+ * RobotModelAssignment: Tracks which Models use which Robots over time.
+ *
+ * Purpose: Same as StationModelAssignment but for robots.
+ *
+ * Use cases:
+ * - Robot utilization: "Is Robot R01 dedicated to Model A or shared?"
+ * - Capacity planning: "How many robots needed for Model B ramp-up?"
+ *
+ * Note: Not yet implemented. Type defined for forward compatibility.
+ */
+export interface RobotModelAssignment {
+  id: string                    // Unique ID
+  robotUid: RobotUid            // Foreign key to RobotRecord
+  modelKey: ModelKey            // Vehicle program
+  plantKey: PlantKey            // Plant context
+  status: 'active' | 'inactive' // Current assignment status
+  effectiveFrom?: string        // ISO timestamp
+  effectiveTo?: string          // ISO timestamp (null = ongoing)
+  createdAt: string
+  createdBy?: string
+  notes?: string
 }

@@ -275,6 +275,37 @@ Generate canonical display string: `PlantKey-UIDShort-Key` (e.g., `PlantA-abc123
 
 ---
 
+## DEC-011: Model is Context Metadata, Not Hierarchy
+
+**Date:** 2026-01-07
+**Context:** Excel imports may be "for a Model" (vehicle program like STLA-S, GLC X254), but physical entities (Stations, Tools, Robots) exist at a Plant/Area and can run multiple Models over time.
+
+**Decision:**
+Model (vehicle program) is context metadata, NOT part of the physical hierarchy. The hierarchy remains: Project → Plant → Area → Station → Equipment. Model is stored on ImportRun as optional context and can be associated with entities via future assignment records, but does NOT affect UID identity or key derivation.
+
+**Why:**
+- Stations are physical infrastructure that can be reconfigured for different Models
+- An Area (manufacturing line) can run multiple Models (e.g., Model A this month, Model B next)
+- Nesting Model above Area implies "stations belong to a Model" which is physically incorrect
+- UID identity must be stable across Model changes (renaming Model X→Y should not fragment station identity)
+- Import history needs Model context for traceability ("which import was for STLA-S?")
+
+**Consequences:**
+- ✅ Physical hierarchy correct (Plant → Area → Station)
+- ✅ Areas can run multiple Models without entity fragmentation
+- ✅ ImportRun.modelKey provides Model context for warnings, audit trail
+- ✅ Station/Tool/Robot identity stable across Model changes
+- ✅ No Excel changes required (Model inferred from filename/metadata or user-selected)
+- ⚠️ Model not used for filtering by default (Area/Plant are primary filters)
+- ⚠️ Future: StationModelAssignment records may track "Station X runs Model Y during timeframe Z"
+
+**Alternatives Considered:**
+- Nest Area under Model → rejected: physically incorrect, fragments identity across Models
+- Use Model in key derivation → rejected: breaks UID stability when Model changes
+- Ignore Model entirely → rejected: loses important context for imports and planning
+
+---
+
 ## Template for Future Entries
 
 **DEC-XXX: [Decision Title]**

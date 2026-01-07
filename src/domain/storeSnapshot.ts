@@ -95,7 +95,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
     const toolRecords = snapshot.toolRecords || []
     const robotRecords = snapshot.robotRecords || []
     const aliasRules = snapshot.aliasRules || []
-    const importRuns = snapshot.importRuns || []
+    const importRuns = snapshot.importRuns || []  // ImportRun.modelKey added in v3 (optional field, backward compatible)
     const diffResults = snapshot.diffResults || []
     const auditLog = snapshot.auditLog || []  // Phase 1 migration
 
