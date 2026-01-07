@@ -17,6 +17,7 @@ import { getDemoScenarioData, DemoScenarioId, DEMO_SCENARIOS } from './demoData'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from './storeSnapshot'
 import { ChangeRecord } from './changeLog'
 import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun, DiffResult } from './uidTypes'
+import { AuditEntry } from './auditLog'
 
 export { DEMO_SCENARIOS }
 export type { DemoScenarioId, DemoScenarioSummary } from './demoData'
@@ -50,6 +51,7 @@ export interface CoreStoreState {
   aliasRules: AliasRule[]
   importRuns: ImportRun[]
   diffResults: DiffResult[]  // Store diff results from imports for UI display
+  auditLog: AuditEntry[]     // Phase 1: Registry change audit trail
 }
 
 let storeState: CoreStoreState = {
@@ -70,7 +72,8 @@ let storeState: CoreStoreState = {
   robotRecords: [],
   aliasRules: [],
   importRuns: [],
-  diffResults: []
+  diffResults: [],
+  auditLog: []
 }
 
 // Subscribers for reactive updates
@@ -412,6 +415,48 @@ export const coreStore = {
       lastUpdated: new Date().toISOString()
     }
     notifySubscribers()
+  },
+
+  // ============================================================================
+  // AUDIT LOG METHODS (Phase 1)
+  // ============================================================================
+
+  /**
+   * Add an audit entry to the log
+   */
+  addAuditEntry(entry: AuditEntry): void {
+    storeState = {
+      ...storeState,
+      auditLog: [...storeState.auditLog, entry],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add multiple audit entries at once
+   */
+  addAuditEntries(entries: AuditEntry[]): void {
+    storeState = {
+      ...storeState,
+      auditLog: [...storeState.auditLog, ...entries],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Get all audit entries
+   */
+  getAuditLog(): AuditEntry[] {
+    return storeState.auditLog
+  },
+
+  /**
+   * Get audit entries for a specific entity
+   */
+  getEntityAuditLog(entityUid: string): AuditEntry[] {
+    return storeState.auditLog.filter(entry => entry.entityUid === entityUid)
   }
 }
 

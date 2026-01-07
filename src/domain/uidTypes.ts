@@ -94,6 +94,11 @@ export interface StationRecord {
   createdAt: string               // ISO timestamp
   updatedAt: string
 
+  // Phase 1: Registry Management
+  labelOverrides?: Record<string, string>  // User-specified label overrides (plant-scoped)
+  lastSeenImportRunId?: string            // Last ImportRun that referenced this entity
+  manuallyCreated?: boolean               // True if created in-app, false if from Excel
+
   // Source tracking
   sourceFile?: string
   sheetName?: string
@@ -122,6 +127,11 @@ export interface ToolRecord {
   createdAt: string
   updatedAt: string
 
+  // Phase 1: Registry Management
+  labelOverrides?: Record<string, string>  // User-specified label overrides (plant-scoped)
+  lastSeenImportRunId?: string            // Last ImportRun that referenced this entity
+  manuallyCreated?: boolean               // True if created in-app, false if from Excel
+
   // Source tracking
   sourceFile?: string
   sheetName?: string
@@ -142,6 +152,11 @@ export interface RobotRecord {
   status: EntityStatus
   createdAt: string
   updatedAt: string
+
+  // Phase 1: Registry Management
+  labelOverrides?: Record<string, string>  // User-specified label overrides (plant-scoped)
+  lastSeenImportRunId?: string            // Last ImportRun that referenced this entity
+  manuallyCreated?: boolean               // True if created in-app, false if from Excel
 
   // Source tracking
   sourceFile?: string

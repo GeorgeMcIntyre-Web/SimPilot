@@ -2,6 +2,7 @@ import { Project, Area, Cell, Robot, Tool, UnifiedAsset } from './core'
 import { CoreStoreState } from './coreStore'
 import { ChangeRecord } from './changeLog'
 import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun, DiffResult } from './uidTypes'
+import { AuditEntry } from './auditLog'
 
 export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 3
 
@@ -36,6 +37,7 @@ export interface StoreSnapshot {
     aliasRules?: AliasRule[]
     importRuns?: ImportRun[]
     diffResults?: DiffResult[]
+    auditLog?: AuditEntry[]  // Phase 1: Registry audit trail
 }
 
 /**
@@ -65,7 +67,8 @@ export function createSnapshotFromState(
         robotRecords: state.robotRecords,
         aliasRules: state.aliasRules,
         importRuns: state.importRuns,
-        diffResults: state.diffResults
+        diffResults: state.diffResults,
+        auditLog: state.auditLog
     }
 }
 
@@ -94,6 +97,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
     const aliasRules = snapshot.aliasRules || []
     const importRuns = snapshot.importRuns || []
     const diffResults = snapshot.diffResults || []
+    const auditLog = snapshot.auditLog || []  // Phase 1 migration
 
     return {
         projects: snapshot.projects,
@@ -110,6 +114,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         robotRecords,
         aliasRules,
         importRuns,
-        diffResults
+        diffResults,
+        auditLog
     }
 }
