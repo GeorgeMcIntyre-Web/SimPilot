@@ -18,6 +18,12 @@ import {
   generateRobotUid,
   EntityType
 } from '../domain/uidTypes'
+import {
+  findStationCandidates,
+  findToolCandidates,
+  findRobotCandidates,
+  FuzzyCandidate
+} from './fuzzyMatcher'
 
 // ============================================================================
 // TYPES
@@ -32,36 +38,39 @@ export interface UidResolutionContext {
 }
 
 export interface StationResolution {
-  uid: StationUid
+  uid: StationUid | null // null if ambiguous
   isNew: boolean
-  matchedVia: 'alias' | 'exact_key' | 'created'
+  matchedVia: 'alias' | 'exact_key' | 'created' | 'ambiguous'
   inactiveMatch?: {
     uid: StationUid
     key: string
     labels: StationLabels
   }
+  candidates?: FuzzyCandidate[]
 }
 
 export interface ToolResolution {
-  uid: ToolUid
+  uid: ToolUid | null // null if ambiguous
   isNew: boolean
-  matchedVia: 'alias' | 'exact_key' | 'created'
+  matchedVia: 'alias' | 'exact_key' | 'created' | 'ambiguous'
   inactiveMatch?: {
     uid: ToolUid
     key: string
     labels: ToolLabels
   }
+  candidates?: FuzzyCandidate[]
 }
 
 export interface RobotResolution {
-  uid: RobotUid
+  uid: RobotUid | null // null if ambiguous
   isNew: boolean
-  matchedVia: 'alias' | 'exact_key' | 'created'
+  matchedVia: 'alias' | 'exact_key' | 'created' | 'ambiguous'
   inactiveMatch?: {
     uid: RobotUid
     key: string
     labels: RobotLabels
   }
+  candidates?: FuzzyCandidate[]
 }
 
 // ============================================================================
@@ -73,7 +82,8 @@ export interface RobotResolution {
  * Strategy:
  * 1. Check alias rules (fromKey -> toUid)
  * 2. Check existing records (key -> uid)
- * 3. Create new if not found
+ * 3. Check fuzzy matches - if found, return ambiguous (user must decide)
+ * 4. Create new if no candidates
  */
 export function resolveStationUid(
   key: string,
@@ -84,7 +94,8 @@ export function resolveStationUid(
 ): StationResolution {
   // Strategy 1: Check alias rules
   const aliasRule = context.aliasRules.find(
-    rule => rule.entityType === 'station' && rule.fromKey === key
+    rule => rule.entityType === 'station' && rule.fromKey === key &&
+           (rule.plantKey === context.plantKey || rule.isGlobal)
   )
 
   if (aliasRule) {
@@ -97,7 +108,7 @@ export function resolveStationUid(
 
   // Strategy 2: Check existing records by key
   const existingRecord = context.stationRecords.find(
-    record => record.key === key && record.status === 'active'
+    record => record.key === key && record.status === 'active' && record.plantKey === context.plantKey
   )
 
   if (existingRecord) {
@@ -108,12 +119,29 @@ export function resolveStationUid(
     }
   }
 
-  // Check for inactive match (for warning purposes)
+  // Check for inactive match
   const inactiveRecord = context.stationRecords.find(
-    record => record.key === key && record.status === 'inactive'
+    record => record.key === key && record.status === 'inactive' && record.plantKey === context.plantKey
   )
 
-  // Strategy 3: Create new
+  // Strategy 3: Check fuzzy matches - if found, return ambiguous
+  const candidates = findStationCandidates(key, labels, context.plantKey, context.stationRecords)
+
+  if (candidates.length > 0) {
+    return {
+      uid: null,
+      isNew: false,
+      matchedVia: 'ambiguous',
+      candidates,
+      inactiveMatch: inactiveRecord ? {
+        uid: inactiveRecord.uid,
+        key: inactiveRecord.key,
+        labels: inactiveRecord.labels
+      } : undefined
+    }
+  }
+
+  // Strategy 4: Create new (no candidates found)
   const newUid = generateStationUid()
 
   const newRecord: StationRecord = {
@@ -160,7 +188,8 @@ export function resolveToolUid(
 ): ToolResolution {
   // Strategy 1: Check alias rules
   const aliasRule = context.aliasRules.find(
-    rule => rule.entityType === 'tool' && rule.fromKey === key
+    rule => rule.entityType === 'tool' && rule.fromKey === key &&
+           (rule.plantKey === context.plantKey || rule.isGlobal)
   )
 
   if (aliasRule) {
@@ -173,7 +202,7 @@ export function resolveToolUid(
 
   // Strategy 2: Check existing records by key
   const existingRecord = context.toolRecords.find(
-    record => record.key === key && record.status === 'active'
+    record => record.key === key && record.status === 'active' && record.plantKey === context.plantKey
   )
 
   if (existingRecord) {
@@ -184,12 +213,29 @@ export function resolveToolUid(
     }
   }
 
-  // Check for inactive match (for warning purposes)
+  // Check for inactive match
   const inactiveRecord = context.toolRecords.find(
-    record => record.key === key && record.status === 'inactive'
+    record => record.key === key && record.status === 'inactive' && record.plantKey === context.plantKey
   )
 
-  // Strategy 3: Create new
+  // Strategy 3: Check fuzzy matches
+  const candidates = findToolCandidates(key, labels, context.plantKey, context.toolRecords)
+
+  if (candidates.length > 0) {
+    return {
+      uid: null,
+      isNew: false,
+      matchedVia: 'ambiguous',
+      candidates,
+      inactiveMatch: inactiveRecord ? {
+        uid: inactiveRecord.uid,
+        key: inactiveRecord.key,
+        labels: inactiveRecord.labels
+      } : undefined
+    }
+  }
+
+  // Strategy 4: Create new
   const newUid = generateToolUid()
 
   const newRecord: ToolRecord = {
@@ -237,7 +283,8 @@ export function resolveRobotUid(
 ): RobotResolution {
   // Strategy 1: Check alias rules
   const aliasRule = context.aliasRules.find(
-    rule => rule.entityType === 'robot' && rule.fromKey === key
+    rule => rule.entityType === 'robot' && rule.fromKey === key &&
+           (rule.plantKey === context.plantKey || rule.isGlobal)
   )
 
   if (aliasRule) {
@@ -250,7 +297,7 @@ export function resolveRobotUid(
 
   // Strategy 2: Check existing records by key
   const existingRecord = context.robotRecords.find(
-    record => record.key === key && record.status === 'active'
+    record => record.key === key && record.status === 'active' && record.plantKey === context.plantKey
   )
 
   if (existingRecord) {
@@ -261,12 +308,29 @@ export function resolveRobotUid(
     }
   }
 
-  // Check for inactive match (for warning purposes)
+  // Check for inactive match
   const inactiveRecord = context.robotRecords.find(
-    record => record.key === key && record.status === 'inactive'
+    record => record.key === key && record.status === 'inactive' && record.plantKey === context.plantKey
   )
 
-  // Strategy 3: Create new
+  // Strategy 3: Check fuzzy matches
+  const candidates = findRobotCandidates(key, labels, context.plantKey, context.robotRecords)
+
+  if (candidates.length > 0) {
+    return {
+      uid: null,
+      isNew: false,
+      matchedVia: 'ambiguous',
+      candidates,
+      inactiveMatch: inactiveRecord ? {
+        uid: inactiveRecord.uid,
+        key: inactiveRecord.key,
+        labels: inactiveRecord.labels
+      } : undefined
+    }
+  }
+
+  // Strategy 4: Create new
   const newUid = generateRobotUid()
 
   const newRecord: RobotRecord = {
