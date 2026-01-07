@@ -30,10 +30,17 @@ import { parseToolList } from '../src/ingestion/toolListParser'
 import { parseRobotList } from '../src/ingestion/robotListParser'
 import { type HeadlessFile } from './headlessIngestion'
 import { log } from './nodeLog'
+import { applyMutations, type MutationConfig } from './identifierMutator'
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+export interface UidIngestionOptions {
+  plantKey?: PlantKey
+  mutateNames?: boolean
+  mutationConfig?: MutationConfig
+}
 
 export interface UidIngestionResult {
   fileName: string
@@ -46,6 +53,7 @@ export interface UidIngestionResult {
   diff?: DiffResult
   ambiguousCount: number
   warnings: string[]
+  mutationsApplied?: number
 }
 
 export interface UidIngestionSummary {
@@ -53,6 +61,7 @@ export interface UidIngestionSummary {
   totalTools: number
   totalRobots: number
   diff: DiffResult
+  totalMutations?: number
 }
 
 // ============================================================================
@@ -67,8 +76,11 @@ export async function ingestFileWithUid(
   prevStationRecords: StationRecord[],
   prevToolRecords: ToolRecord[],
   prevRobotRecords: RobotRecord[],
-  plantKey: PlantKey = 'PLANT_TEST'
+  options: UidIngestionOptions = {}
 ): Promise<UidIngestionResult> {
+  const plantKey = options.plantKey || 'PLANT_TEST'
+  const mutateNames = options.mutateNames || false
+  const mutationConfig = options.mutationConfig
   try {
     const xlsxWorkbook = XLSX.read(file.buffer, { type: 'array' })
     const scanResult = scanWorkbook(xlsxWorkbook, file.name)
@@ -252,6 +264,16 @@ export async function ingestFileWithUid(
       }
     }
 
+    // Apply mutations if requested
+    let totalMutations = 0
+    if (mutateNames && (newStationRecords.length > 0 || newToolRecords.length > 0 || newRobotRecords.length > 0)) {
+      const mutated = applyMutations(newStationRecords, newToolRecords, newRobotRecords, mutationConfig)
+      newStationRecords.splice(0, newStationRecords.length, ...mutated.stations)
+      newToolRecords.splice(0, newToolRecords.length, ...mutated.tools)
+      newRobotRecords.splice(0, newRobotRecords.length, ...mutated.robots)
+      totalMutations = mutated.totalMutations
+    }
+
     // Compute diff
     const stationDiff = diffStationRecords(prevStationRecords, newStationRecords)
     const toolDiff = diffToolRecords(prevToolRecords, newToolRecords)
@@ -276,7 +298,8 @@ export async function ingestFileWithUid(
       robotRecords: newRobotRecords,
       diff,
       ambiguousCount: ambiguousItems.length,
-      warnings
+      warnings,
+      mutationsApplied: totalMutations
     }
   } catch (error) {
     return {
@@ -298,7 +321,7 @@ export async function ingestFileWithUid(
  */
 export async function ingestFilesWithUid(
   files: HeadlessFile[],
-  plantKey: PlantKey = 'PLANT_TEST'
+  options: UidIngestionOptions = {}
 ): Promise<{
   results: UidIngestionResult[]
   summary: UidIngestionSummary
@@ -315,7 +338,7 @@ export async function ingestFilesWithUid(
       prevStationRecords,
       prevToolRecords,
       prevRobotRecords,
-      plantKey
+      options
     )
 
     results.push(result)
@@ -337,11 +360,14 @@ export async function ingestFilesWithUid(
     ambiguous: results.flatMap(r => r.diff?.ambiguous || [])
   }
 
+  const totalMutations = results.reduce((sum, r) => sum + (r.mutationsApplied || 0), 0)
+
   const summary: UidIngestionSummary = {
     totalStations: prevStationRecords.length,
     totalTools: prevToolRecords.length,
     totalRobots: prevRobotRecords.length,
-    diff: overallDiff
+    diff: overallDiff,
+    totalMutations
   }
 
   return { results, summary }

@@ -8,11 +8,13 @@
  * Usage:
  *   npm run real-data-regress
  *   npm run real-data-regress -- --strict
+ *   npm run real-data-regress -- --uid --mutate-names
  *   npx tsx tools/realDataRegress.ts --strict
  *
  * Flags:
  *   --strict: Fail if ambiguous > 0 OR key errors > 0 OR unresolved links > 0
  *   --uid: Use UID-aware ingestion with diff tracking (default: false)
+ *   --mutate-names: Mutate ~1-2% of identifiers to simulate data drift (requires --uid)
  */
 
 import { readdirSync, statSync, mkdirSync, writeFileSync, readFileSync } from 'fs'
@@ -441,7 +443,7 @@ function saveArtifacts(report: RegressionReport): string {
 // MAIN ENTRY POINT
 // ============================================================================
 
-async function main() {
+async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
   log.info('=== Real Data Regression Harness ===')
   log.info('')
 
@@ -501,60 +503,103 @@ async function main() {
 
       // Run ingestion
       log.info(`[Dataset] Running ingestion on ${headlessFiles.length} files...`)
-      const ingestionResult = await ingestFilesOrdered(headlessFiles)
 
-      // Process results
-      const fileResults: FileIngestionResult[] = ingestionResult.results.map(result => {
-        const rowsParsed = result.applyResult
-          ? result.applyResult.projects.length +
-            result.applyResult.areas.length +
-            result.applyResult.cells.length +
-            result.applyResult.tools.length +
-            result.applyResult.robots.length
-          : 0
+      // Choose ingestion mode based on flags
+      let fileResults: FileIngestionResult[]
+      if (options.useUid) {
+        // Use UID-aware ingestion with diff tracking
+        const uidResult = await ingestFilesWithUid(headlessFiles, {
+          plantKey: 'PLANT_TEST',
+          mutateNames: options.mutateNames || false
+        })
 
-        const keysGenerated = result.applyResult
-          ? result.applyResult.cells.length +
-            result.applyResult.tools.length +
-            result.applyResult.robots.length
-          : 0
+        // Process UID results
+        fileResults = uidResult.results.map(result => {
+          const rowsParsed = result.stationRecords.length + result.toolRecords.length + result.robotRecords.length
+          const keysGenerated = rowsParsed
 
-        // Count key derivation errors (warnings about missing columns, invalid keys)
-        const keyErrors = result.warnings.filter(w =>
-          w.includes('MISSING_COLUMNS') ||
-          w.includes('key') ||
-          w.includes('derive') ||
-          w.includes('invalid')
-        ).length
+          return {
+            fileName: result.fileName,
+            filePath: result.filePath,
+            sourceType: 'Unknown' as FileKind,
+            detectedSheet: null,
+            detectionScore: 0,
+            success: result.success,
+            error: result.error,
+            rowsParsed,
+            keysGenerated,
+            keyDerivationErrors: 0, // UID mode doesn't track this separately
+            creates: result.diff?.creates.length || 0,
+            updates: result.diff?.updates.length || 0,
+            deletes: result.diff?.deletes.length || 0,
+            renames: result.diff?.renamesOrMoves.length || 0,
+            ambiguous: result.diff?.ambiguous.length || 0,
+            unresolvedLinks: 0, // UID mode handles this differently
+            warnings: result.warnings,
+            diff: result.diff
+          }
+        })
 
-        // Count unresolved links (warnings about failed asset linking)
-        const unresolvedLinks = result.warnings.filter(w =>
-          w.includes('link') ||
-          w.includes('reference') ||
-          w.includes('not found')
-        ).length
-
-        return {
-          fileName: result.fileName,
-          filePath: result.filePath,
-          sourceType: result.detectedType,
-          detectedSheet: result.detectedSheet,
-          detectionScore: result.detectionScore,
-          sheetDiagnostics: result.sheetDiagnostics,
-          success: result.success,
-          error: result.error,
-          rowsParsed,
-          keysGenerated,
-          keyDerivationErrors: keyErrors,
-          creates: 0, // TODO: Will implement with UID resolver integration
-          updates: 0,
-          deletes: 0,
-          renames: 0,
-          ambiguous: 0,
-          unresolvedLinks,
-          warnings: result.warnings
+        if (options.mutateNames) {
+          const totalMutations = uidResult.summary.totalMutations || 0
+          log.info(`[Dataset] Applied ${totalMutations} identifier mutations`)
         }
-      })
+      } else {
+        // Use legacy ingestion
+        const ingestionResult = await ingestFilesOrdered(headlessFiles)
+
+        fileResults = ingestionResult.results.map(result => {
+          const rowsParsed = result.applyResult
+            ? result.applyResult.projects.length +
+              result.applyResult.areas.length +
+              result.applyResult.cells.length +
+              result.applyResult.tools.length +
+              result.applyResult.robots.length
+            : 0
+
+          const keysGenerated = result.applyResult
+            ? result.applyResult.cells.length +
+              result.applyResult.tools.length +
+              result.applyResult.robots.length
+            : 0
+
+          // Count key derivation errors (warnings about missing columns, invalid keys)
+          const keyErrors = result.warnings.filter(w =>
+            w.includes('MISSING_COLUMNS') ||
+            w.includes('key') ||
+            w.includes('derive') ||
+            w.includes('invalid')
+          ).length
+
+          // Count unresolved links (warnings about failed asset linking)
+          const unresolvedLinks = result.warnings.filter(w =>
+            w.includes('link') ||
+            w.includes('reference') ||
+            w.includes('not found')
+          ).length
+
+          return {
+            fileName: result.fileName,
+            filePath: result.filePath,
+            sourceType: result.detectedType,
+            detectedSheet: result.detectedSheet,
+            detectionScore: result.detectionScore,
+            sheetDiagnostics: result.sheetDiagnostics,
+            success: result.success,
+            error: result.error,
+            rowsParsed,
+            keysGenerated,
+            keyDerivationErrors: keyErrors,
+            creates: 0,
+            updates: 0,
+            deletes: 0,
+            renames: 0,
+            ambiguous: 0,
+            unresolvedLinks,
+            warnings: result.warnings
+          }
+        })
+      }
 
       log.info(`[Dataset] Ingestion complete:`)
       log.info(`  - Total rows parsed: ${fileResults.reduce((sum, f) => sum + f.rowsParsed, 0)}`)
@@ -633,6 +678,12 @@ if (isMainModule) {
   const args = process.argv.slice(2)
   const strictMode = args.includes('--strict')
   const useUid = args.includes('--uid')
+  const mutateNames = args.includes('--mutate-names')
+
+  if (mutateNames && !useUid) {
+    log.error('[ERROR] --mutate-names requires --uid flag')
+    process.exit(1)
+  }
 
   if (strictMode) {
     log.info('[Strict Mode] Enabled - will fail if ambiguous > 0 OR key errors > 0 OR unresolved links > 0')
@@ -642,7 +693,11 @@ if (isMainModule) {
     log.info('[UID Mode] Enabled - using UID-aware ingestion with diff tracking')
   }
 
-  main().then(report => {
+  if (mutateNames) {
+    log.info('[Mutate Names] Enabled - will mutate ~1-2% of identifiers to simulate data drift')
+  }
+
+  main({ useUid, mutateNames }).then(report => {
     if (strictMode) {
       const totalAmbiguous = report.overallSummary.totalAmbiguous
       const totalKeyErrors = report.overallSummary.totalKeyErrors
