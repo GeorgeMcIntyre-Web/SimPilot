@@ -28,6 +28,7 @@ const SimulationPage = lazy(() => import('./routes/SimulationPage'))
 const DataHealthPage = lazy(() => import('./routes/DataHealthPage'))
 const ImportHistoryPage = lazy(() => import('./routes/ImportHistoryPage'))
 const RegistryPage = lazy(() => import('./routes/RegistryPage'))
+const AuditTrailPage = lazy(() => import('./routes/AuditTrailPage'))
 
 // Loading fallback component
 function RouteLoader() {
@@ -73,6 +74,7 @@ function App() {
                                             <Route path="data-health" element={<DataHealthPage />} />
                                             <Route path="import-history" element={<ImportHistoryPage />} />
                                             <Route path="registry" element={<RegistryPage />} />
+                                            <Route path="audit-trail" element={<AuditTrailPage />} />
                                         </Route>
                                     </Routes>
                                 </Suspense>
