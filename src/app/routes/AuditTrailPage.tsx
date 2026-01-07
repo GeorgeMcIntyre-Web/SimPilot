@@ -64,7 +64,7 @@ export default function AuditTrailPage() {
     <div className="space-y-6">
       <PageHeader
         title="Audit Trail"
-        description="Complete history of all registry changes"
+        subtitle="Complete history of all registry changes"
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">

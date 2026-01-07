@@ -14,7 +14,7 @@ export default function ImportHistoryPage() {
     <div className="space-y-6">
       <PageHeader
         title="Import History"
-        description="View all Excel imports and their diff results"
+        subtitle="View all Excel imports and their diff results"
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">

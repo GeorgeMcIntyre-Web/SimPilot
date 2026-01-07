@@ -250,6 +250,7 @@ export function computeImportDiff(
     importRunId,
     sourceFile,
     sourceType,
+    plantKey: 'PLANT_UNKNOWN',
     computedAt: new Date().toISOString(),
     creates,
     updates,

@@ -12,6 +12,7 @@ import {
   StationLabels,
   ToolLabels,
   RobotLabels,
+  PlantKey,
   generateStationUid,
   generateToolUid,
   generateRobotUid,
@@ -27,6 +28,7 @@ export interface UidResolutionContext {
   toolRecords: ToolRecord[]
   robotRecords: RobotRecord[]
   aliasRules: AliasRule[]
+  plantKey: PlantKey
 }
 
 export interface StationResolution {
@@ -117,6 +119,7 @@ export function resolveStationUid(
   const newRecord: StationRecord = {
     uid: newUid,
     key,
+    plantKey: context.plantKey,
     labels,
     attributes,
     status: 'active',
@@ -192,6 +195,7 @@ export function resolveToolUid(
   const newRecord: ToolRecord = {
     uid: newUid,
     key,
+    plantKey: context.plantKey,
     stationUid,
     labels,
     attributes,
@@ -268,6 +272,7 @@ export function resolveRobotUid(
   const newRecord: RobotRecord = {
     uid: newUid,
     key,
+    plantKey: context.plantKey,
     stationUid,
     labels,
     attributes,
