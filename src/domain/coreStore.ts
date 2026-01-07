@@ -371,6 +371,32 @@ export const coreStore = {
   },
 
   /**
+   * Update a diff result (e.g., after resolving ambiguities)
+   */
+  updateDiffResult(importRunId: string, updates: Partial<DiffResult>): void {
+    storeState = {
+      ...storeState,
+      diffResults: storeState.diffResults.map(d =>
+        d.importRunId === importRunId ? { ...d, ...updates } : d
+      ),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Create an alias rule
+   */
+  createAliasRule(rule: AliasRule): void {
+    storeState = {
+      ...storeState,
+      aliasRules: [...storeState.aliasRules, rule],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
    * Soft-delete a station (set status to inactive)
    */
   deactivateStation(uid: string): void {

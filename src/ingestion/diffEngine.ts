@@ -9,6 +9,7 @@ import {
   DiffUpdate,
   DiffDelete,
   DiffRenameOrMove,
+  DiffAmbiguous,
   ImportSourceType
 } from '../domain/uidTypes'
 
@@ -222,7 +223,8 @@ export function computeImportDiff(
   prevStationRecords: StationRecord[],
   prevToolRecords: ToolRecord[],
   newStationRecords: StationRecord[],
-  newToolRecords: ToolRecord[]
+  newToolRecords: ToolRecord[],
+  ambiguous: DiffAmbiguous[] = []
 ): DiffResult {
   const stationDiff = diffStationRecords(prevStationRecords, newStationRecords)
   const toolDiff = diffToolRecords(prevToolRecords, newToolRecords)
@@ -242,14 +244,14 @@ export function computeImportDiff(
     updates,
     deletes,
     renamesOrMoves,
-    ambiguous: [], // Ambiguous detection not implemented in minimal version
+    ambiguous,
     summary: {
       totalRows: newStationRecords.length + newToolRecords.length,
       created: creates.length,
       updated: updates.length,
       deleted: deletes.length,
       renamed: renamesOrMoves.length,
-      ambiguous: 0,
+      ambiguous: ambiguous.length,
       skipped: 0
     }
   }
