@@ -5,6 +5,12 @@ import { StationRecord, ToolRecord, RobotRecord, PlantKey } from '../../domain/u
 import { formatDistanceToNow } from 'date-fns'
 import { createAliasRule } from '../../ingestion/uidResolver'
 import { CanonicalIdDisplay } from '../../components/registry/CanonicalIdDisplay'
+import {
+  createActivateAuditEntry,
+  createDeactivateAuditEntry,
+  createAddAliasAuditEntry,
+  createOverrideLabelAuditEntry
+} from '../../domain/auditLog'
 
 export default function RegistryPage() {
   const { stationRecords, toolRecords, robotRecords } = useCoreStore()
@@ -157,12 +163,35 @@ interface StationRegistryTableProps {
 function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProps) {
   const [editingUid, setEditingUid] = useState<string | null>(null)
   const [aliasInput, setAliasInput] = useState('')
+  const [reasonInput, setReasonInput] = useState('')
 
-  const handleToggleActive = (uid: string, currentStatus: 'active' | 'inactive') => {
-    if (currentStatus === 'active') {
-      coreStore.deactivateStation(uid)
+  const handleToggleActive = (station: StationRecord) => {
+    if (station.status === 'active') {
+      const reason = prompt('Reason for deactivation (optional):')
+      if (reason === null) return // User cancelled
+
+      coreStore.deactivateStation(station.uid)
+
+      const auditEntry = createDeactivateAuditEntry(
+        station.uid,
+        'station',
+        station.key,
+        reason || undefined
+      )
+      coreStore.addAuditEntry(auditEntry)
     } else {
-      coreStore.reactivateStation(uid)
+      const reason = prompt('Reason for reactivation (optional):')
+      if (reason === null) return // User cancelled
+
+      coreStore.reactivateStation(station.uid)
+
+      const auditEntry = createActivateAuditEntry(
+        station.uid,
+        'station',
+        station.key,
+        reason || undefined
+      )
+      coreStore.addAuditEntry(auditEntry)
     }
   }
 
@@ -173,12 +202,23 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
       aliasInput.trim(),
       station.uid,
       'station',
-      `Manual alias mapping via Registry UI`,
+      reasonInput.trim() || `Manual alias mapping via Registry UI`,
       undefined
     )
 
     coreStore.addAliasRules([rule])
+
+    const auditEntry = createAddAliasAuditEntry(
+      station.uid,
+      'station',
+      station.key,
+      aliasInput.trim(),
+      reasonInput.trim() || undefined
+    )
+    coreStore.addAuditEntry(auditEntry)
+
     setAliasInput('')
+    setReasonInput('')
     setEditingUid(null)
   }
 
@@ -258,32 +298,45 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
               <td className="px-4 py-3 whitespace-nowrap text-sm">
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleToggleActive(station.uid, station.status)}
+                    onClick={() => handleToggleActive(station)}
                     className="text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {station.status === 'active' ? 'Deactivate' : 'Reactivate'}
                   </button>
                   {editingUid === station.uid ? (
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-col gap-1">
                       <input
                         type="text"
                         value={aliasInput}
                         onChange={(e) => setAliasInput(e.target.value)}
                         placeholder="Old key"
-                        className="px-2 py-1 text-xs border rounded"
+                        className="px-2 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600"
                       />
-                      <button
-                        onClick={() => handleAddAlias(station)}
-                        className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingUid(null)}
-                        className="px-2 py-1 text-xs bg-gray-300 rounded hover:bg-gray-400"
-                      >
-                        Cancel
-                      </button>
+                      <input
+                        type="text"
+                        value={reasonInput}
+                        onChange={(e) => setReasonInput(e.target.value)}
+                        placeholder="Reason (optional)"
+                        className="px-2 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleAddAlias(station)}
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingUid(null)
+                            setAliasInput('')
+                            setReasonInput('')
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button
@@ -311,12 +364,35 @@ interface ToolRegistryTableProps {
 function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
   const [editingUid, setEditingUid] = useState<string | null>(null)
   const [aliasInput, setAliasInput] = useState('')
+  const [reasonInput, setReasonInput] = useState('')
 
-  const handleToggleActive = (uid: string, currentStatus: 'active' | 'inactive') => {
-    if (currentStatus === 'active') {
-      coreStore.deactivateTool(uid)
+  const handleToggleActive = (tool: ToolRecord) => {
+    if (tool.status === 'active') {
+      const reason = prompt('Reason for deactivation (optional):')
+      if (reason === null) return
+
+      coreStore.deactivateTool(tool.uid)
+
+      const auditEntry = createDeactivateAuditEntry(
+        tool.uid,
+        'tool',
+        tool.key,
+        reason || undefined
+      )
+      coreStore.addAuditEntry(auditEntry)
     } else {
-      coreStore.reactivateTool(uid)
+      const reason = prompt('Reason for reactivation (optional):')
+      if (reason === null) return
+
+      coreStore.reactivateTool(tool.uid)
+
+      const auditEntry = createActivateAuditEntry(
+        tool.uid,
+        'tool',
+        tool.key,
+        reason || undefined
+      )
+      coreStore.addAuditEntry(auditEntry)
     }
   }
 
@@ -327,12 +403,23 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
       aliasInput.trim(),
       tool.uid,
       'tool',
-      `Manual alias mapping via Registry UI`,
+      reasonInput.trim() || `Manual alias mapping via Registry UI`,
       undefined
     )
 
     coreStore.addAliasRules([rule])
+
+    const auditEntry = createAddAliasAuditEntry(
+      tool.uid,
+      'tool',
+      tool.key,
+      aliasInput.trim(),
+      reasonInput.trim() || undefined
+    )
+    coreStore.addAuditEntry(auditEntry)
+
     setAliasInput('')
+    setReasonInput('')
     setEditingUid(null)
   }
 
@@ -412,32 +499,45 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
               <td className="px-4 py-3 whitespace-nowrap text-sm">
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleToggleActive(tool.uid, tool.status)}
+                    onClick={() => handleToggleActive(tool)}
                     className="text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {tool.status === 'active' ? 'Deactivate' : 'Reactivate'}
                   </button>
                   {editingUid === tool.uid ? (
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-col gap-1">
                       <input
                         type="text"
                         value={aliasInput}
                         onChange={(e) => setAliasInput(e.target.value)}
                         placeholder="Old key"
-                        className="px-2 py-1 text-xs border rounded"
+                        className="px-2 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600"
                       />
-                      <button
-                        onClick={() => handleAddAlias(tool)}
-                        className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingUid(null)}
-                        className="px-2 py-1 text-xs bg-gray-300 rounded hover:bg-gray-400"
-                      >
-                        Cancel
-                      </button>
+                      <input
+                        type="text"
+                        value={reasonInput}
+                        onChange={(e) => setReasonInput(e.target.value)}
+                        placeholder="Reason (optional)"
+                        className="px-2 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600"
+                      />
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleAddAlias(tool)}
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingUid(null)
+                            setAliasInput('')
+                            setReasonInput('')
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-300 dark:bg-gray-600 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <button
