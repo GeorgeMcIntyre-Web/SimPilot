@@ -62,3 +62,4 @@ LOCAL_CHANGES_STATUS.md
 PROGRESS_SUMMARY.md
 REVIEW_SUMMARY.md
 push-changes.ps1
+artifacts/
