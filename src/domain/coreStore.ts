@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { Project, Area, Cell, Robot, Tool, UnifiedAsset, EmployeeRecord, SupplierRecord } from './core'
+import { clearFileTrackingHistory } from '../ingestion/fileTracker'
 import {
   getProjectMetrics,
   getAllProjectMetrics,
@@ -195,6 +196,8 @@ export const coreStore = {
       diffResults: [],
       auditLog: []
     }
+    // Clear file tracking history when data is cleared
+    clearFileTrackingHistory()
     notifySubscribers()
   },
 

@@ -238,6 +238,32 @@ export function createInactiveEntityReferenceWarning(args: {
 }
 
 /**
+ * Create a duplicate file warning
+ */
+export function createDuplicateFileWarning(args: {
+  fileName: string
+  previousUploadDate: string
+  source?: 'local' | 'remote'
+}): IngestionWarning {
+  const details: Record<string, string | number | boolean> = {
+    previousUploadDate: args.previousUploadDate
+  }
+
+  if (args.source) {
+    details.source = args.source
+  }
+
+  return {
+    id: generateWarningId(),
+    kind: 'PARSER_ERROR',
+    fileName: args.fileName,
+    message: `Duplicate file detected. This file was previously uploaded on ${new Date(args.previousUploadDate).toLocaleString()}. Skipping to avoid duplicate data.`,
+    details,
+    createdAt: new Date().toISOString()
+  }
+}
+
+/**
  * Convert a legacy warning string to structured format
  */
 export function convertLegacyWarning(

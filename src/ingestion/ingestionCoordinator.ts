@@ -9,7 +9,11 @@ import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { parseAssembliesList } from './assembliesListParser'
 import { applyIngestedData, IngestedData } from './applyIngestedData'
-import { createUnknownFileTypeWarning, createParserErrorWarning } from './warningUtils'
+import { createUnknownFileTypeWarning, createParserErrorWarning, createDuplicateFileWarning } from './warningUtils'
+import { generateFileHash, isDuplicateFile, trackUploadedFile, getUploadInfo, clearFileTrackingHistory } from './fileTracker'
+import { withTransaction } from './transactionManager'
+import { validateReferentialIntegrity, logIntegrityErrors, findOrphanedAssets } from './referentialIntegrityValidator'
+import { diagnoseOrphanedAssets, logLinkingReport } from './linkingDiagnostics'
 import {
   scanWorkbook,
   SheetDetection,
@@ -393,12 +397,11 @@ function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedD
 
 /**
  * High-level ingestion entry point.
+ * Wrapped in transaction for automatic rollback on error.
  */
 export async function ingestFiles(
   input: IngestFilesInput
 ): Promise<IngestFilesResult> {
-  const allFiles = [...input.simulationFiles, ...input.equipmentFiles]
-
   // Validate input - require at least one simulation file
   if (input.simulationFiles.length === 0) {
     const warning: IngestionWarning = {
@@ -419,6 +422,42 @@ export async function ingestFiles(
     }
   }
 
+  // Execute ingestion within transaction context
+  const txResult = await withTransaction(async () => {
+    return await ingestFilesInternal(input)
+  })
+
+  // If transaction failed (rolled back), return error as warning
+  if (!txResult.success) {
+    const errorWarning: IngestionWarning = {
+      id: 'transaction-rollback',
+      kind: 'PARSER_ERROR',
+      fileName: '',
+      message: `Ingestion failed and was rolled back: ${txResult.error?.message || 'Unknown error'}`,
+      createdAt: new Date().toISOString()
+    }
+
+    return {
+      projectsCount: 0,
+      areasCount: 0,
+      cellsCount: 0,
+      robotsCount: 0,
+      toolsCount: 0,
+      warnings: [errorWarning]
+    }
+  }
+
+  return txResult.data!
+}
+
+/**
+ * Internal ingestion logic (wrapped by transaction)
+ */
+async function ingestFilesInternal(
+  input: IngestFilesInput
+): Promise<IngestFilesResult> {
+  const allFiles = [...input.simulationFiles, ...input.equipmentFiles]
+
   const ingestedData: IngestedData = {
     simulation: undefined,
     robots: undefined,
@@ -426,12 +465,27 @@ export async function ingestFiles(
   }
 
   const allWarnings: IngestionWarning[] = []
+  const fileHashToFile = new Map<string, File>() // Track files by hash for later tracking
 
   // Process each file
   for (const file of allFiles) {
     try {
+      // Check for duplicate file upload
+      const uploadInfo = await getUploadInfo(file)
+      if (uploadInfo) {
+        allWarnings.push(createDuplicateFileWarning({
+          fileName: file.name,
+          previousUploadDate: uploadInfo.uploadedAt
+        }))
+        console.log(`[Ingestion] Skipping duplicate file: ${file.name} (previously uploaded ${uploadInfo.uploadedAt})`)
+        continue // Skip this file
+      }
+
       // Read workbook first
       const workbook = await readWorkbook(file)
+
+      // Generate file hash for tracking
+      const fileHash = await generateFileHash(file)
 
       // Detect type and best sheet using Sheet Sniffer
       const { kind, sheetName } = detectFileTypeAndSheet(workbook, file.name)
@@ -442,6 +496,9 @@ export async function ingestFiles(
         }))
         continue
       }
+
+      // Store file for later tracking
+      fileHashToFile.set(fileHash, file)
 
       // Route to appropriate parser, passing the detected sheet name
       if (kind === 'SimulationStatus') {
@@ -528,6 +585,72 @@ export async function ingestFiles(
 
   // Collect all warnings (from parsers and linking)
   allWarnings.push(...applyResult.warnings)
+
+  // Validate referential integrity before committing
+  const integrityResult = validateReferentialIntegrity({
+    projects: applyResult.projects,
+    areas: applyResult.areas,
+    cells: applyResult.cells,
+    robots: applyResult.robots,
+    tools: applyResult.tools
+  })
+
+  // Log integrity errors for debugging
+  logIntegrityErrors(integrityResult)
+
+  // If there are critical referential integrity violations, throw error to trigger rollback
+  if (!integrityResult.isValid) {
+    const criticalErrors = integrityResult.errors.filter(e =>
+      e.field === 'projectId' || e.field === 'areaId'
+    )
+
+    if (criticalErrors.length > 0) {
+      throw new Error(
+        `Referential integrity violations detected: ${criticalErrors.length} critical errors. ` +
+        `${integrityResult.summary.danglingProjectRefs} dangling project refs, ` +
+        `${integrityResult.summary.danglingAreaRefs} dangling area refs. ` +
+        `First error: ${criticalErrors[0].message}`
+      )
+    }
+  }
+
+  // Log orphaned assets as warnings (non-critical)
+  const orphans = findOrphanedAssets({
+    robots: applyResult.robots,
+    tools: applyResult.tools
+  })
+
+  if (orphans.robots.length > 0 || orphans.tools.length > 0) {
+    console.warn(`[Integrity] Found ${orphans.robots.length} orphaned robots and ${orphans.tools.length} orphaned tools`)
+
+    // Run diagnostics on orphaned assets
+    const allOrphans = [...orphans.robots, ...orphans.tools]
+    const diagnostics = diagnoseOrphanedAssets(allOrphans, applyResult.cells)
+
+    // Log detailed diagnostic report
+    logLinkingReport(diagnostics)
+
+    allWarnings.push({
+      id: 'orphaned-assets',
+      kind: 'LINKING_MISSING_TARGET',
+      fileName: '',
+      message: `Found ${orphans.robots.length + orphans.tools.length} orphaned assets (not linked to any cell). Check console for detailed diagnostics.`,
+      createdAt: new Date().toISOString()
+    })
+  }
+
+  // Track uploaded files with their created entity IDs
+  const allEntityIds = [
+    ...applyResult.projects.map(p => p.id),
+    ...applyResult.areas.map(a => a.id),
+    ...applyResult.cells.map(c => c.id),
+    ...applyResult.robots.map(r => r.id),
+    ...applyResult.tools.map(t => t.id)
+  ]
+
+  for (const file of fileHashToFile.values()) {
+    await trackUploadedFile(file, allEntityIds)
+  }
 
   // NEW: Perform version comparison if store has existing data
   let versionComparison: VersionComparisonResult | undefined = undefined
