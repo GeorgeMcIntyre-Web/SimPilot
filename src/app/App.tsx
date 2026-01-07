@@ -26,6 +26,8 @@ const ReadinessBoard = lazy(() => import('./routes/ReadinessBoard'))
 const TimelineView = lazy(() => import('./routes/TimelineView'))
 const SimulationPage = lazy(() => import('./routes/SimulationPage'))
 const DataHealthPage = lazy(() => import('./routes/DataHealthPage'))
+const ImportHistoryPage = lazy(() => import('./routes/ImportHistoryPage'))
+const RegistryPage = lazy(() => import('./routes/RegistryPage'))
 
 // Loading fallback component
 function RouteLoader() {
@@ -69,6 +71,8 @@ function App() {
                                             <Route path="readiness" element={<ReadinessBoard />} />
                                             <Route path="timeline/:projectId" element={<TimelineView />} />
                                             <Route path="data-health" element={<DataHealthPage />} />
+                                            <Route path="import-history" element={<ImportHistoryPage />} />
+                                            <Route path="registry" element={<RegistryPage />} />
                                         </Route>
                                     </Routes>
                                 </Suspense>

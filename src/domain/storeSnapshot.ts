@@ -1,7 +1,7 @@
 import { Project, Area, Cell, Robot, Tool, UnifiedAsset } from './core'
 import { CoreStoreState } from './coreStore'
 import { ChangeRecord } from './changeLog'
-import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun } from './uidTypes'
+import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun, DiffResult } from './uidTypes'
 
 export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 3
 
@@ -35,6 +35,7 @@ export interface StoreSnapshot {
     robotRecords?: RobotRecord[]
     aliasRules?: AliasRule[]
     importRuns?: ImportRun[]
+    diffResults?: DiffResult[]
 }
 
 /**
@@ -63,7 +64,8 @@ export function createSnapshotFromState(
         toolRecords: state.toolRecords,
         robotRecords: state.robotRecords,
         aliasRules: state.aliasRules,
-        importRuns: state.importRuns
+        importRuns: state.importRuns,
+        diffResults: state.diffResults
     }
 }
 
@@ -91,6 +93,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
     const robotRecords = snapshot.robotRecords || []
     const aliasRules = snapshot.aliasRules || []
     const importRuns = snapshot.importRuns || []
+    const diffResults = snapshot.diffResults || []
 
     return {
         projects: snapshot.projects,
@@ -106,6 +109,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         toolRecords,
         robotRecords,
         aliasRules,
-        importRuns
+        importRuns,
+        diffResults
     }
 }

@@ -60,6 +60,8 @@ export function diffStationRecords(
       // New UID -> create
       creates.push({
         key: newRecord.key,
+        plantKey: newRecord.plantKey,
+        entityType: 'station',
         attributes: newRecord.attributes,
         suggestedName: newRecord.labels.fullLabel || newRecord.key
       })
@@ -72,6 +74,8 @@ export function diffStationRecords(
       renamesOrMoves.push({
         oldKey: prevRecord.key,
         newKey: newRecord.key,
+        plantKey: newRecord.plantKey,
+        entityType: 'station',
         uid: newRecord.uid,
         confidence: 100, // Same UID = 100% confidence
         matchReasons: ['Same UID'],
@@ -85,6 +89,8 @@ export function diffStationRecords(
       updates.push({
         uid: newRecord.uid,
         key: newRecord.key,
+        plantKey: newRecord.plantKey,
+        entityType: 'station',
         oldAttributes: prevRecord.attributes,
         newAttributes: newRecord.attributes,
         changedFields
@@ -98,6 +104,8 @@ export function diffStationRecords(
       deletes.push({
         uid: prevRecord.uid,
         key: prevRecord.key,
+        plantKey: prevRecord.plantKey,
+        entityType: 'station',
         lastSeen: prevRecord.updatedAt
       })
     }
@@ -138,6 +146,8 @@ export function diffToolRecords(
     if (!prevRecord) {
       creates.push({
         key: newRecord.key,
+        plantKey: newRecord.plantKey,
+        entityType: 'tool',
         attributes: newRecord.attributes,
         suggestedName: newRecord.labels.toolName || newRecord.labels.toolCode || newRecord.key
       })
@@ -149,6 +159,8 @@ export function diffToolRecords(
       renamesOrMoves.push({
         oldKey: prevRecord.key,
         newKey: newRecord.key,
+        plantKey: newRecord.plantKey,
+        entityType: 'tool',
         uid: newRecord.uid,
         confidence: 100,
         matchReasons: ['Same UID'],
@@ -162,6 +174,8 @@ export function diffToolRecords(
       updates.push({
         uid: newRecord.uid,
         key: newRecord.key,
+        plantKey: newRecord.plantKey,
+        entityType: 'tool',
         oldAttributes: prevRecord.attributes,
         newAttributes: newRecord.attributes,
         changedFields
@@ -175,6 +189,8 @@ export function diffToolRecords(
       deletes.push({
         uid: prevRecord.uid,
         key: prevRecord.key,
+        plantKey: prevRecord.plantKey,
+        entityType: 'tool',
         lastSeen: prevRecord.updatedAt
       })
     }

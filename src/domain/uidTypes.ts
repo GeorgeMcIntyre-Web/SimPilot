@@ -206,6 +206,7 @@ export interface ImportRun {
 export interface DiffCreate {
   key: string
   plantKey: PlantKey
+  entityType: EntityType
   attributes: Record<string, any>
   suggestedName?: string
 }
@@ -214,6 +215,7 @@ export interface DiffUpdate {
   uid: EntityUid
   key: string
   plantKey: PlantKey
+  entityType: EntityType
   oldAttributes: Record<string, any>
   newAttributes: Record<string, any>
   changedFields: string[]
@@ -223,6 +225,7 @@ export interface DiffDelete {
   uid: EntityUid
   key: string
   plantKey: PlantKey
+  entityType: EntityType
   lastSeen: string       // ISO timestamp
 }
 
@@ -230,6 +233,7 @@ export interface DiffRenameOrMove {
   oldKey?: string
   newKey: string
   plantKey: PlantKey
+  entityType: EntityType
   oldPlantKey?: PlantKey  // If cross-plant carryover
   uid?: EntityUid         // If already resolved
   confidence: number      // 0-100
@@ -248,6 +252,7 @@ export interface DiffRenameOrMove {
 export interface DiffAmbiguous {
   newKey: string
   plantKey: PlantKey
+  entityType: EntityType
   newAttributes: Record<string, any>
   candidates: Array<{
     uid: EntityUid

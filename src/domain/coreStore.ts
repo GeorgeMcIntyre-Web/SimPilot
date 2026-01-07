@@ -16,7 +16,7 @@ import {
 import { getDemoScenarioData, DemoScenarioId, DEMO_SCENARIOS } from './demoData'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from './storeSnapshot'
 import { ChangeRecord } from './changeLog'
-import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun } from './uidTypes'
+import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun, DiffResult } from './uidTypes'
 
 export { DEMO_SCENARIOS }
 export type { DemoScenarioId, DemoScenarioSummary } from './demoData'
@@ -49,6 +49,7 @@ export interface CoreStoreState {
   robotRecords: RobotRecord[]
   aliasRules: AliasRule[]
   importRuns: ImportRun[]
+  diffResults: DiffResult[]  // Store diff results from imports for UI display
 }
 
 let storeState: CoreStoreState = {
@@ -68,7 +69,8 @@ let storeState: CoreStoreState = {
   toolRecords: [],
   robotRecords: [],
   aliasRules: [],
-  importRuns: []
+  importRuns: [],
+  diffResults: []
 }
 
 // Subscribers for reactive updates
@@ -173,7 +175,13 @@ export const coreStore = {
       referenceData: {
         employees: [],
         suppliers: []
-      }
+      },
+      stationRecords: [],
+      toolRecords: [],
+      robotRecords: [],
+      aliasRules: [],
+      importRuns: [],
+      diffResults: []
     }
     notifySubscribers()
   },
@@ -246,6 +254,164 @@ export const coreStore = {
    */
   clearStore(): void {
     this.clear()
+  },
+
+  // ============================================================================
+  // UID-BACKED LINKING METHODS (Schema v3)
+  // ============================================================================
+
+  /**
+   * Add or update StationRecords
+   */
+  upsertStationRecords(records: StationRecord[]): void {
+    const byUid = new Map(storeState.stationRecords.map(r => [r.uid, r]))
+
+    for (const record of records) {
+      byUid.set(record.uid, record)
+    }
+
+    storeState = {
+      ...storeState,
+      stationRecords: Array.from(byUid.values()),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add or update ToolRecords
+   */
+  upsertToolRecords(records: ToolRecord[]): void {
+    const byUid = new Map(storeState.toolRecords.map(r => [r.uid, r]))
+
+    for (const record of records) {
+      byUid.set(record.uid, record)
+    }
+
+    storeState = {
+      ...storeState,
+      toolRecords: Array.from(byUid.values()),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add or update RobotRecords
+   */
+  upsertRobotRecords(records: RobotRecord[]): void {
+    const byUid = new Map(storeState.robotRecords.map(r => [r.uid, r]))
+
+    for (const record of records) {
+      byUid.set(record.uid, record)
+    }
+
+    storeState = {
+      ...storeState,
+      robotRecords: Array.from(byUid.values()),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add alias rules (deduplicated by fromKey + entityType)
+   */
+  addAliasRules(rules: AliasRule[]): void {
+    const existing = new Map(
+      storeState.aliasRules.map(r => [`${r.entityType}:${r.fromKey}`, r])
+    )
+
+    for (const rule of rules) {
+      existing.set(`${rule.entityType}:${rule.fromKey}`, rule)
+    }
+
+    storeState = {
+      ...storeState,
+      aliasRules: Array.from(existing.values()),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add an import run record
+   */
+  addImportRun(importRun: ImportRun): void {
+    storeState = {
+      ...storeState,
+      importRuns: [...storeState.importRuns, importRun],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Add a diff result
+   */
+  addDiffResult(diffResult: DiffResult): void {
+    storeState = {
+      ...storeState,
+      diffResults: [...storeState.diffResults, diffResult],
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Soft-delete a station (set status to inactive)
+   */
+  deactivateStation(uid: string): void {
+    storeState = {
+      ...storeState,
+      stationRecords: storeState.stationRecords.map(r =>
+        r.uid === uid ? { ...r, status: 'inactive' as const, updatedAt: new Date().toISOString() } : r
+      ),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Reactivate a station
+   */
+  reactivateStation(uid: string): void {
+    storeState = {
+      ...storeState,
+      stationRecords: storeState.stationRecords.map(r =>
+        r.uid === uid ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() } : r
+      ),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Soft-delete a tool
+   */
+  deactivateTool(uid: string): void {
+    storeState = {
+      ...storeState,
+      toolRecords: storeState.toolRecords.map(r =>
+        r.uid === uid ? { ...r, status: 'inactive' as const, updatedAt: new Date().toISOString() } : r
+      ),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
+  /**
+   * Reactivate a tool
+   */
+  reactivateTool(uid: string): void {
+    storeState = {
+      ...storeState,
+      toolRecords: storeState.toolRecords.map(r =>
+        r.uid === uid ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() } : r
+      ),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
   }
 }
 
