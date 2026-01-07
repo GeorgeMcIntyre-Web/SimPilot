@@ -1,6 +1,7 @@
 import { coreStore } from '../../../domain/coreStore';
 import type { IngestFilesInput, IngestFilesResult } from '../../../ingestion/ingestionCoordinator';
 import type { VersionComparisonResult, EntityChange } from '../../../ingestion/versionComparison';
+import type { IngestionWarning } from '../../../domain/core';
 import type {
   ImportHistoryEntry,
   ImportDiff,
@@ -81,8 +82,9 @@ export function buildImportHistoryEntry(
         ambiguous: 0,
       };
 
-  const warnings = (result.warnings || []).map(w => w.message);
-  const unlinked = (result.warnings || [])
+  const warningsDetailed: IngestionWarning[] = result.warnings || [];
+  const warnings = warningsDetailed.map(w => w.message);
+  const unlinked = warningsDetailed
     .filter(w => w.kind === 'LINKING_MISSING_TARGET')
     .map<UnlinkedItem>(w => ({
       item: w.details?.targetId ? String(w.details.targetId) : (w.fileName || 'Unknown'),
@@ -104,6 +106,7 @@ export function buildImportHistoryEntry(
     counts,
     diff,
     warnings,
+    warningsDetailed,
     unlinked,
   };
 }

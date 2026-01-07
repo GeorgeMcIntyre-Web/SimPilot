@@ -1,5 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, AlertTriangle, Info } from 'lucide-react';
+import type { IngestionWarning } from '../../../domain/core';
 
 export type ImportStatus = 'clean' | 'needs resolution';
 
@@ -55,6 +56,7 @@ export interface ImportHistoryEntry {
   };
   diff?: ImportDiff;
   warnings?: string[];
+  warningsDetailed?: IngestionWarning[];
   unlinked?: UnlinkedItem[];
 }
 
@@ -167,20 +169,50 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                       <tr>
                         <td colSpan={12} className="bg-gray-50 dark:bg-gray-800/60 px-6 py-4">
                           <div className="space-y-4">
-                            {entry.warnings && entry.warnings.length > 0 && (
-                              <div className="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 p-3">
+                            {(entry.warningsDetailed && entry.warningsDetailed.length > 0) || (entry.warnings && entry.warnings.length > 0) ? (
+                              <div className="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30 p-3 space-y-2">
                                 <div className="flex items-start gap-2">
                                   <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-300 mt-0.5" />
                                   <div className="space-y-1">
-                                    {entry.warnings.map((warning) => (
+                                    {(entry.warningsDetailed && entry.warningsDetailed.length > 0
+                                      ? entry.warningsDetailed.map((w) => w.message)
+                                      : entry.warnings || []
+                                    ).map((warning) => (
                                       <div key={warning} className="text-sm text-amber-800 dark:text-amber-200">
                                         {warning}
                                       </div>
                                     ))}
                                   </div>
                                 </div>
+                                {entry.warningsDetailed && entry.warningsDetailed.length > 0 && (
+                                  <div className="overflow-hidden rounded-md border border-amber-200 dark:border-amber-700">
+                                    <table className="min-w-full divide-y divide-amber-200 dark:divide-amber-800">
+                                      <thead className="bg-amber-100 dark:bg-amber-900/40">
+                                        <tr>
+                                          <th className="px-3 py-2 text-left text-xs font-semibold text-amber-900 dark:text-amber-100">Kind</th>
+                                          <th className="px-3 py-2 text-left text-xs font-semibold text-amber-900 dark:text-amber-100">File / Sheet</th>
+                                          <th className="px-3 py-2 text-left text-xs font-semibold text-amber-900 dark:text-amber-100">Row</th>
+                                          <th className="px-3 py-2 text-left text-xs font-semibold text-amber-900 dark:text-amber-100">Message</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-amber-100 dark:divide-amber-800 bg-amber-50 dark:bg-amber-950/30">
+                                        {entry.warningsDetailed.map((w) => (
+                                          <tr key={w.id}>
+                                            <td className="px-3 py-2 text-xs text-amber-900 dark:text-amber-100">{w.kind}</td>
+                                            <td className="px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+                                              {w.fileName || '—'}
+                                              {w.sheetName ? ` / ${w.sheetName}` : ''}
+                                            </td>
+                                            <td className="px-3 py-2 text-xs text-amber-900 dark:text-amber-100">{w.rowIndex ?? '—'}</td>
+                                            <td className="px-3 py-2 text-xs text-amber-900 dark:text-amber-100 whitespace-pre-wrap">{w.message}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
                               </div>
-                            )}
+                            ) : null}
 
                             <DiffSection title="Created" items={diff.created} />
                             <DiffSection title="Updated" items={diff.updated} />
