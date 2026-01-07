@@ -1,11 +1,49 @@
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RotateCcw } from 'lucide-react';
 import { IngestFilesResult } from '../../../../ingestion/ingestionCoordinator';
+import { IngestionWarning } from '../../../../domain/core';
+import { coreStore } from '../../../../domain/coreStore';
+import { createActivateAuditEntry } from '../../../../domain/auditLog';
 
 interface IngestionResultsProps {
   result: IngestFilesResult;
 }
 
 export function IngestionResults({ result }: IngestionResultsProps) {
+  const handleReactivateEntity = (warning: IngestionWarning) => {
+    if (warning.kind !== 'INACTIVE_ENTITY_REFERENCE' || !warning.details) return
+
+    const { inactiveUid, key, entityType } = warning.details as {
+      inactiveUid: string
+      key: string
+      entityType: 'station' | 'tool' | 'robot'
+    }
+
+    const reason = prompt(`Reactivating ${entityType} "${key}". Reason (optional):`)
+    if (reason === null) return // User cancelled
+
+    // Reactivate based on entity type
+    if (entityType === 'station') {
+      coreStore.reactivateStation(inactiveUid)
+    } else if (entityType === 'tool') {
+      coreStore.reactivateTool(inactiveUid)
+    } else if (entityType === 'robot') {
+      coreStore.reactivateRobot(inactiveUid)
+    }
+
+    // Create audit entry
+    const auditEntry = createActivateAuditEntry(
+      inactiveUid,
+      entityType,
+      key,
+      reason || `Reactivated during import (was referenced in ${warning.fileName})`,
+      undefined
+    )
+    coreStore.addAuditEntry(auditEntry)
+  }
+
+  const inactiveWarnings = result.warnings.filter(w => w.kind === 'INACTIVE_ENTITY_REFERENCE')
+  const otherWarnings = result.warnings.filter(w => w.kind !== 'INACTIVE_ENTITY_REFERENCE')
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
@@ -61,15 +99,47 @@ export function IngestionResults({ result }: IngestionResultsProps) {
             <AlertTriangle className="w-4 h-4 mr-1" />
             Warnings ({result.warnings.length})
           </h4>
-          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-md p-4 max-h-60 overflow-y-auto">
-            <ul className="space-y-2">
-              {result.warnings.map((w: any, i: number) => (
-                <li key={i} className="text-sm text-orange-800 dark:text-orange-200">
-                  <span className="font-semibold">{w.fileName}:</span> {w.message}
-                </li>
-              ))}
-            </ul>
-          </div>
+
+          {/* Inactive Entity Warnings with Actions */}
+          {inactiveWarnings.length > 0 && (
+            <div className="mb-4">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-md p-4 border border-yellow-200 dark:border-yellow-800">
+                <h5 className="text-xs font-semibold text-yellow-800 dark:text-yellow-200 uppercase mb-2">
+                  Inactive Entity References ({inactiveWarnings.length})
+                </h5>
+                <ul className="space-y-2">
+                  {inactiveWarnings.map((w, i) => (
+                    <li key={i} className="flex items-start justify-between gap-2 text-sm text-yellow-800 dark:text-yellow-200">
+                      <div className="flex-1">
+                        <span className="font-semibold">{w.fileName}:</span> {w.message}
+                      </div>
+                      <button
+                        onClick={() => handleReactivateEntity(w)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700 whitespace-nowrap"
+                        title="Reactivate this entity"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        Reactivate
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Other Warnings */}
+          {otherWarnings.length > 0 && (
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-md p-4 max-h-60 overflow-y-auto">
+              <ul className="space-y-2">
+                {otherWarnings.map((w: any, i: number) => (
+                  <li key={i} className="text-sm text-orange-800 dark:text-orange-200">
+                    <span className="font-semibold">{w.fileName}:</span> {w.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </div>

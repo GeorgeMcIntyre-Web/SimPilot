@@ -33,18 +33,33 @@ export interface StationResolution {
   uid: StationUid
   isNew: boolean
   matchedVia: 'alias' | 'exact_key' | 'created'
+  inactiveMatch?: {
+    uid: StationUid
+    key: string
+    labels: StationLabels
+  }
 }
 
 export interface ToolResolution {
   uid: ToolUid
   isNew: boolean
   matchedVia: 'alias' | 'exact_key' | 'created'
+  inactiveMatch?: {
+    uid: ToolUid
+    key: string
+    labels: ToolLabels
+  }
 }
 
 export interface RobotResolution {
   uid: RobotUid
   isNew: boolean
   matchedVia: 'alias' | 'exact_key' | 'created'
+  inactiveMatch?: {
+    uid: RobotUid
+    key: string
+    labels: RobotLabels
+  }
 }
 
 // ============================================================================
@@ -91,6 +106,11 @@ export function resolveStationUid(
     }
   }
 
+  // Check for inactive match (for warning purposes)
+  const inactiveRecord = context.stationRecords.find(
+    record => record.key === key && record.status === 'inactive'
+  )
+
   // Strategy 3: Create new
   const newUid = generateStationUid()
 
@@ -110,7 +130,12 @@ export function resolveStationUid(
   return {
     uid: newUid,
     isNew: true,
-    matchedVia: 'created'
+    matchedVia: 'created',
+    inactiveMatch: inactiveRecord ? {
+      uid: inactiveRecord.uid,
+      key: inactiveRecord.key,
+      labels: inactiveRecord.labels
+    } : undefined
   }
 }
 
@@ -156,6 +181,11 @@ export function resolveToolUid(
     }
   }
 
+  // Check for inactive match (for warning purposes)
+  const inactiveRecord = context.toolRecords.find(
+    record => record.key === key && record.status === 'inactive'
+  )
+
   // Strategy 3: Create new
   const newUid = generateToolUid()
 
@@ -176,7 +206,12 @@ export function resolveToolUid(
   return {
     uid: newUid,
     isNew: true,
-    matchedVia: 'created'
+    matchedVia: 'created',
+    inactiveMatch: inactiveRecord ? {
+      uid: inactiveRecord.uid,
+      key: inactiveRecord.key,
+      labels: inactiveRecord.labels
+    } : undefined
   }
 }
 
@@ -222,6 +257,11 @@ export function resolveRobotUid(
     }
   }
 
+  // Check for inactive match (for warning purposes)
+  const inactiveRecord = context.robotRecords.find(
+    record => record.key === key && record.status === 'inactive'
+  )
+
   // Strategy 3: Create new
   const newUid = generateRobotUid()
 
@@ -242,7 +282,12 @@ export function resolveRobotUid(
   return {
     uid: newUid,
     isNew: true,
-    matchedVia: 'created'
+    matchedVia: 'created',
+    inactiveMatch: inactiveRecord ? {
+      uid: inactiveRecord.uid,
+      key: inactiveRecord.key,
+      labels: inactiveRecord.labels
+    } : undefined
   }
 }
 
@@ -270,4 +315,53 @@ export function createAliasRule(
     createdAt: new Date().toISOString(),
     createdBy
   }
+}
+
+// ============================================================================
+// WARNING COLLECTION
+// ============================================================================
+
+/**
+ * Collect inactive entity warnings from resolution results
+ * Call this after resolving all UIDs to collect warnings
+ */
+export function collectInactiveWarnings(
+  resolutions: Array<{
+    resolution: StationResolution | ToolResolution | RobotResolution
+    entityType: 'station' | 'tool' | 'robot'
+    fileName: string
+    sheetName?: string
+    rowIndex?: number
+  }>
+): Array<{
+  entityType: 'station' | 'tool' | 'robot'
+  key: string
+  inactiveUid: string
+  fileName: string
+  sheetName?: string
+  rowIndex?: number
+}> {
+  const warnings: Array<{
+    entityType: 'station' | 'tool' | 'robot'
+    key: string
+    inactiveUid: string
+    fileName: string
+    sheetName?: string
+    rowIndex?: number
+  }> = []
+
+  for (const { resolution, entityType, fileName, sheetName, rowIndex } of resolutions) {
+    if (resolution.inactiveMatch) {
+      warnings.push({
+        entityType,
+        key: resolution.inactiveMatch.key,
+        inactiveUid: resolution.inactiveMatch.uid,
+        fileName,
+        sheetName,
+        rowIndex
+      })
+    }
+  }
+
+  return warnings
 }

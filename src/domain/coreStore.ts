@@ -417,6 +417,20 @@ export const coreStore = {
     notifySubscribers()
   },
 
+  /**
+   * Reactivate a robot
+   */
+  reactivateRobot(uid: string): void {
+    storeState = {
+      ...storeState,
+      robotRecords: storeState.robotRecords.map(r =>
+        r.uid === uid ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() } : r
+      ),
+      lastUpdated: new Date().toISOString()
+    }
+    notifySubscribers()
+  },
+
   // ============================================================================
   // AUDIT LOG METHODS (Phase 1)
   // ============================================================================

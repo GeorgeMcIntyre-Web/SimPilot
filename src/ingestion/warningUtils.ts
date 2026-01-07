@@ -200,6 +200,44 @@ export function createUnknownFileTypeWarning(args: {
 }
 
 /**
+ * Create an inactive entity reference warning
+ * Used when Excel references an inactive entity by key
+ */
+export function createInactiveEntityReferenceWarning(args: {
+  entityType: 'station' | 'tool' | 'robot'
+  key: string
+  inactiveUid: string
+  fileName: string
+  sheetName?: string
+  rowIndex?: number
+  source?: 'local' | 'remote'
+}): IngestionWarning {
+  const details: Record<string, string | number | boolean> = {
+    entityType: args.entityType,
+    key: args.key,
+    inactiveUid: args.inactiveUid
+  }
+
+  if (args.source) {
+    details.source = args.source
+  }
+
+  const rowInfo = args.rowIndex !== undefined ? ` (row ${args.rowIndex + 1})` : ''
+  const sheetInfo = args.sheetName ? ` in "${args.sheetName}"` : ''
+
+  return {
+    id: generateWarningId(),
+    kind: 'INACTIVE_ENTITY_REFERENCE',
+    fileName: args.fileName,
+    sheetName: args.sheetName,
+    rowIndex: args.rowIndex,
+    message: `${args.entityType.charAt(0).toUpperCase() + args.entityType.slice(1)} "${args.key}"${sheetInfo}${rowInfo} references an inactive entity (${args.inactiveUid}). Created new entity instead. Consider reactivating the original.`,
+    details,
+    createdAt: new Date().toISOString()
+  }
+}
+
+/**
  * Convert a legacy warning string to structured format
  */
 export function convertLegacyWarning(
