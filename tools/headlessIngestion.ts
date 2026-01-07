@@ -27,12 +27,30 @@ export interface HeadlessFile {
   buffer: ArrayBuffer
 }
 
+export interface SheetCandidate {
+  sheetName: string
+  category: string
+  score: number
+  maxRow: number
+  nameScore: number
+  strongMatches: string[]
+  weakMatches: string[]
+}
+
+export interface SheetDiagnostics {
+  allSheets: Array<{ name: string; maxRow: number; maxCol: number }>
+  chosenSheet: string | null
+  chosenScore: number
+  topCandidates: SheetCandidate[]
+}
+
 export interface HeadlessIngestionResult {
   fileName: string
   filePath: string
   detectedType: FileKind
   detectedSheet: string | null
   detectionScore: number
+  sheetDiagnostics?: SheetDiagnostics
   success: boolean
   error?: string
   applyResult?: ApplyResult
@@ -116,6 +134,37 @@ export async function ingestFileHeadless(
     // Detect sheet type
     const scanResult = scanWorkbook(xlsxWorkbook, file.name)
 
+    // Collect sheet diagnostics
+    const allSheets = xlsxWorkbook.SheetNames.map(name => {
+      const sheet = xlsxWorkbook.Sheets[name]
+      const range = sheet && sheet['!ref'] ? XLSX.utils.decode_range(sheet['!ref']) : null
+      return {
+        name,
+        maxRow: range ? range.e.r + 1 : 0,
+        maxCol: range ? range.e.c + 1 : 0
+      }
+    })
+
+    const topCandidates = scanResult.allDetections
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(d => ({
+        sheetName: d.sheetName,
+        category: d.category,
+        score: d.score,
+        maxRow: d.maxRow || 0,
+        nameScore: d.nameScore || 0,
+        strongMatches: d.strongMatches,
+        weakMatches: d.weakMatches
+      }))
+
+    const sheetDiagnostics: SheetDiagnostics = {
+      allSheets,
+      chosenSheet: scanResult.bestOverall?.sheetName || null,
+      chosenScore: scanResult.bestOverall?.score || 0,
+      topCandidates
+    }
+
     if (!scanResult.bestOverall) {
       return {
         fileName: file.name,
@@ -123,6 +172,7 @@ export async function ingestFileHeadless(
         detectedType: 'Unknown',
         detectedSheet: null,
         detectionScore: 0,
+        sheetDiagnostics,
         success: false,
         error: 'Could not detect sheet type',
         warnings: []
@@ -168,6 +218,7 @@ export async function ingestFileHeadless(
           detectedType: fileKind,
           detectedSheet: sheetName,
           detectionScore: detection.score,
+          sheetDiagnostics,
           success: false,
           error: `Unsupported file type: ${fileKind}`,
           warnings: []
@@ -184,6 +235,7 @@ export async function ingestFileHeadless(
         detectedType: fileKind,
         detectedSheet: sheetName,
         detectionScore: detection.score,
+        sheetDiagnostics,
         success: true,
         applyResult,
         warnings: allWarnings
@@ -195,18 +247,29 @@ export async function ingestFileHeadless(
         detectedType: fileKind,
         detectedSheet: sheetName,
         detectionScore: detection.score,
+        sheetDiagnostics,
         success: false,
         error: String(parseError),
         warnings: allWarnings
       }
     }
   } catch (error) {
+    // For early errors before sheet detection, provide empty diagnostics
+    const xlsxWorkbook = XLSX.read(file.buffer, { type: 'array' }).catch(() => null)
+    const emptyDiagnostics: SheetDiagnostics = {
+      allSheets: [],
+      chosenSheet: null,
+      chosenScore: 0,
+      topCandidates: []
+    }
+
     return {
       fileName: file.name,
       filePath: file.path,
       detectedType: 'Unknown',
       detectedSheet: null,
       detectionScore: 0,
+      sheetDiagnostics: emptyDiagnostics,
       success: false,
       error: String(error),
       warnings: []

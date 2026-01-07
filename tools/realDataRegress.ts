@@ -33,10 +33,30 @@ export interface CategorizedFile {
   reason: string
 }
 
+export interface SheetCandidate {
+  sheetName: string
+  category: string
+  score: number
+  maxRow: number
+  nameScore: number
+  strongMatches: string[]
+  weakMatches: string[]
+}
+
+export interface SheetDiagnostics {
+  allSheets: Array<{ name: string; maxRow: number; maxCol: number }>
+  chosenSheet: string | null
+  chosenScore: number
+  topCandidates: SheetCandidate[]
+}
+
 export interface FileIngestionResult {
   fileName: string
   filePath: string
   sourceType: FileKind
+  detectedSheet?: string | null
+  detectionScore?: number
+  sheetDiagnostics?: SheetDiagnostics
   success: boolean
   error?: string
   rowsParsed: number
@@ -305,14 +325,16 @@ function generateMarkdownSummary(report: RegressionReport): string {
     lines.push('')
     lines.push('### Files')
     lines.push('')
-    lines.push('| File | Type | Rows | Creates | Ambiguous | Key Errors | Status |')
-    lines.push('|------|------|------|---------|-----------|------------|--------|')
+    lines.push('| File | Type | Sheet | Score | Rows | Creates | Ambiguous | Key Errors | Status |')
+    lines.push('|------|------|-------|-------|------|---------|-----------|------------|--------|')
 
     for (const file of dataset.files) {
       const status = file.success ? '✓' : '✗'
       const statusText = file.success ? 'OK' : file.error || 'FAILED'
+      const sheetName = file.detectedSheet || 'N/A'
+      const score = file.detectionScore !== undefined ? file.detectionScore.toFixed(0) : 'N/A'
       lines.push(
-        `| ${file.fileName} | ${file.sourceType} | ${file.rowsParsed} | ` +
+        `| ${file.fileName} | ${file.sourceType} | ${sheetName} | ${score} | ${file.rowsParsed} | ` +
         `${file.creates} | ${file.ambiguous} | ${file.keyDerivationErrors} | ${status} ${statusText} |`
       )
     }
@@ -342,9 +364,37 @@ function saveArtifacts(report: RegressionReport): string {
   const markdown = generateMarkdownSummary(report)
   writeFileSync(mdPath, markdown, 'utf-8')
 
+  // Write per-file diagnostics for files with sheet detection info
+  let diagnosticFileCount = 0
+  for (const dataset of report.datasets) {
+    for (const file of dataset.files) {
+      if (file.sheetDiagnostics) {
+        const safeFileName = file.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_')
+        const diagnosticDir = join(runDir, 'diagnostics', dataset.datasetName)
+        mkdirSync(diagnosticDir, { recursive: true })
+
+        const diagnosticPath = join(diagnosticDir, `${safeFileName}.json`)
+        const diagnosticData = {
+          fileName: file.fileName,
+          filePath: file.filePath,
+          sourceType: file.sourceType,
+          detectedSheet: file.detectedSheet,
+          detectionScore: file.detectionScore,
+          success: file.success,
+          error: file.error,
+          sheetDiagnostics: file.sheetDiagnostics
+        }
+
+        writeFileSync(diagnosticPath, JSON.stringify(diagnosticData, null, 2), 'utf-8')
+        diagnosticFileCount++
+      }
+    }
+  }
+
   log.info(`[Artifacts] Saved to ${runDir}`)
   log.info(`  - summary.json`)
   log.info(`  - summary.md`)
+  log.info(`  - ${diagnosticFileCount} diagnostic files`)
 
   return runDir
 }
@@ -450,6 +500,9 @@ async function main() {
           fileName: result.fileName,
           filePath: result.filePath,
           sourceType: result.detectedType,
+          detectedSheet: result.detectedSheet,
+          detectionScore: result.detectionScore,
+          sheetDiagnostics: result.sheetDiagnostics,
           success: result.success,
           error: result.error,
           rowsParsed,
