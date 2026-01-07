@@ -28,6 +28,7 @@ const SimulationPage = lazy(() => import('./routes/SimulationPage'))
 const DataHealthPage = lazy(() => import('./routes/DataHealthPage'))
 const ImportHistoryPage = lazy(() => import('./routes/ImportHistoryPage'))
 const ImportReviewPage = lazy(() => import('./routes/ImportReviewPage'))
+const AmbiguityBundleImportPage = lazy(() => import('./routes/AmbiguityBundleImportPage'))
 const RegistryPage = lazy(() => import('./routes/RegistryPage'))
 const AuditTrailPage = lazy(() => import('./routes/AuditTrailPage'))
 
@@ -75,6 +76,7 @@ function App() {
                                             <Route path="data-health" element={<DataHealthPage />} />
                                             <Route path="import-history" element={<ImportHistoryPage />} />
                                             <Route path="import-review/:importRunId" element={<ImportReviewPage />} />
+                                            <Route path="ambiguity-bundle-import" element={<AmbiguityBundleImportPage />} />
                                             <Route path="registry" element={<RegistryPage />} />
                                             <Route path="audit-trail" element={<AuditTrailPage />} />
                                         </Route>

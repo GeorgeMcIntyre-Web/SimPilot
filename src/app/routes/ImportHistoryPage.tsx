@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 export default function ImportHistoryPage() {
   const { importRuns, diffResults } = useCoreStore()
   const [selectedImportRunId, setSelectedImportRunId] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const selectedDiff = diffResults.find(d => d.importRunId === selectedImportRunId)
 
@@ -17,6 +18,15 @@ export default function ImportHistoryPage() {
         title="Import History"
         subtitle="View all Excel imports and their diff results"
       />
+
+      <div className="flex gap-2">
+        <button
+          onClick={() => navigate('/ambiguity-bundle-import')}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Import Ambiguity Bundle
+        </button>
+      </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="px-4 py-5 sm:p-6">
