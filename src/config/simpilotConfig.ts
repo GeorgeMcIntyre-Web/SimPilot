@@ -5,6 +5,8 @@
  * Provides runtime config values with environment variable support.
  */
 
+import { getRuntimeEnv } from '../runtime/runtimeEnv'
+
 /**
  * Application environment mode
  */
@@ -16,37 +18,37 @@ export type AppEnvironment = 'development' | 'preview' | 'production';
  * @returns The current environment mode
  */
 export function getAppEnvironment(): AppEnvironment {
-  const viteMode = import.meta.env.MODE;
-  const viteAppEnv = import.meta.env.VITE_APP_ENV;
+  const env = getRuntimeEnv()
+  const viteAppEnv = typeof import.meta !== 'undefined' && import.meta.env?.VITE_APP_ENV
 
   // Priority: VITE_APP_ENV > MODE
   if (viteAppEnv === 'production') {
-    return 'production';
+    return 'production'
   }
 
   if (viteAppEnv === 'preview') {
-    return 'preview';
+    return 'preview'
   }
 
-  if (viteMode === 'production') {
-    return 'production';
+  if (env.MODE === 'production') {
+    return 'production'
   }
 
-  return 'development';
+  return 'development'
 }
 
 /**
  * Check if the app is running in development mode
  */
 export function isDevelopment(): boolean {
-  return getAppEnvironment() === 'development';
+  return getRuntimeEnv().DEV
 }
 
 /**
  * Check if the app is running in production mode
  */
 export function isProduction(): boolean {
-  return getAppEnvironment() === 'production';
+  return getRuntimeEnv().PROD
 }
 
 /**
@@ -58,19 +60,19 @@ export function isProduction(): boolean {
  * @returns Data root path or empty string
  */
 export function getDefaultDataRoot(): string {
-  const envRoot = import.meta.env.VITE_SIMPILOT_DATA_ROOT;
+  const envRoot = typeof import.meta !== 'undefined' && import.meta.env?.VITE_SIMPILOT_DATA_ROOT
 
   if (typeof envRoot !== 'string') {
-    return '';
+    return ''
   }
 
-  const trimmed = envRoot.trim();
+  const trimmed = envRoot.trim()
 
   if (trimmed.length === 0) {
-    return '';
+    return ''
   }
 
-  return trimmed;
+  return trimmed
 }
 
 /**
@@ -91,14 +93,14 @@ export interface FeatureFlags {
  * @returns Feature flags object
  */
 export function getFeatureFlags(): FeatureFlags {
-  const msClientId = import.meta.env.VITE_MSAL_CLIENT_ID;
-  const simBridgeUrl = import.meta.env.VITE_SIMBRIDGE_URL;
+  const msClientId = typeof import.meta !== 'undefined' && import.meta.env?.VITE_MSAL_CLIENT_ID
+  const simBridgeUrl = typeof import.meta !== 'undefined' && import.meta.env?.VITE_SIMBRIDGE_URL
 
   return {
     msIntegrationEnabled: typeof msClientId === 'string' && msClientId.length > 0,
     simBridgeEnabled: typeof simBridgeUrl === 'string' && simBridgeUrl.length > 0,
     devDiagnosticsEnabled: isDevelopment(),
-  };
+  }
 }
 
 /**
