@@ -18,6 +18,7 @@ const CellDetailPage = lazy(() => import('./routes/CellDetailPage'))
 const ToolsPage = lazy(() => import('./routes/ToolsPage'))
 const AssetsPage = lazy(() => import('./routes/AssetsPage'))
 const DataLoaderPage = lazy(() => import('./routes/DataLoaderPage'))
+const ImportHistoryPage = lazy(() => import('./routes/ImportHistoryPage'))
 const EngineersPage = lazy(() => import('./routes/EngineersPage'))
 const DaleConsole = lazy(() => import('./routes/DaleConsole'))
 const WarningsPage = lazy(() => import('./routes/WarningsPage'))
@@ -65,6 +66,7 @@ function App() {
                                             <Route path="tools" element={<ToolsPage />} />
                                             <Route path="assets" element={<AssetsPage />} />
                                             <Route path="data-loader" element={<DataLoaderPage />} />
+                                            <Route path="import-history" element={<ImportHistoryPage />} />
                                             <Route path="changes" element={<ChangesPage />} />
                                             <Route path="readiness" element={<ReadinessBoard />} />
                                             <Route path="timeline/:projectId" element={<TimelineView />} />

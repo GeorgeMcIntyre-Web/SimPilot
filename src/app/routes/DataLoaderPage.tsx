@@ -133,7 +133,7 @@ export function DataLoaderPage() {
               onClick={() => setActiveTab('local')}
               data-testid="tab-local-files"
               className={cn(
-                "w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
                 activeTab === 'local'
                   ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-rose-200 dark:text-gray-400 dark:hover:text-gray-300"
@@ -145,7 +145,7 @@ export function DataLoaderPage() {
               <button
                 onClick={() => setActiveTab('m365')}
                 className={cn(
-                  "w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                  "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
                   activeTab === 'm365'
                     ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-rose-200 dark:text-gray-400 dark:hover:text-gray-300"
@@ -157,7 +157,7 @@ export function DataLoaderPage() {
             <button
               onClick={() => setActiveTab('simbridge')}
               className={cn(
-                "w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm",
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
                 activeTab === 'simbridge'
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
