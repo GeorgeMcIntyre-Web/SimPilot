@@ -1,30 +1,56 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useCoreStore, coreStore } from '../../domain/coreStore'
 import { PageHeader } from '../../ui/components/PageHeader'
-import { StationRecord, ToolRecord, PlantKey } from '../../domain/uidTypes'
+import { StationRecord, ToolRecord, RobotRecord, PlantKey } from '../../domain/uidTypes'
 import { formatDistanceToNow } from 'date-fns'
 import { createAliasRule } from '../../ingestion/uidResolver'
+import { CanonicalIdDisplay } from '../../components/registry/CanonicalIdDisplay'
 
 export default function RegistryPage() {
-  const { stationRecords, toolRecords } = useCoreStore()
-  const [activeTab, setActiveTab] = useState<'stations' | 'tools'>('stations')
+  const { stationRecords, toolRecords, robotRecords } = useCoreStore()
+  const [activeTab, setActiveTab] = useState<'stations' | 'tools' | 'robots'>('stations')
   const [showInactive, setShowInactive] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [plantFilter, setPlantFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
+
+  // Get unique plant keys
+  const allPlants = useMemo(() => {
+    const plants = new Set<string>()
+    stationRecords.forEach(s => plants.add(s.plantKey))
+    toolRecords.forEach(t => plants.add(t.plantKey))
+    robotRecords.forEach(r => plants.add(r.plantKey))
+    return Array.from(plants).sort()
+  }, [stationRecords, toolRecords, robotRecords])
 
   const filteredStations = stationRecords.filter(s => {
-    const matchesStatus = showInactive || s.status === 'active'
+    const matchesStatus = statusFilter === 'all' || s.status === statusFilter
+    const matchesPlant = plantFilter === 'all' || s.plantKey === plantFilter
     const matchesSearch = s.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.labels.fullLabel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.labels.area?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesSearch
+      s.labels.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.uid.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesStatus && matchesPlant && matchesSearch
   })
 
   const filteredTools = toolRecords.filter(t => {
-    const matchesStatus = showInactive || t.status === 'active'
+    const matchesStatus = statusFilter === 'all' || t.status === statusFilter
+    const matchesPlant = plantFilter === 'all' || t.plantKey === plantFilter
     const matchesSearch = t.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.labels.toolCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.labels.toolName?.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesSearch
+      t.labels.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.uid.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesStatus && matchesPlant && matchesSearch
+  })
+
+  const filteredRobots = robotRecords.filter(r => {
+    const matchesStatus = statusFilter === 'all' || r.status === statusFilter
+    const matchesPlant = plantFilter === 'all' || r.plantKey === plantFilter
+    const matchesSearch = r.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.labels.robotCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.labels.robotName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.uid.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesStatus && matchesPlant && matchesSearch
   })
 
   return (
@@ -61,27 +87,49 @@ export default function RegistryPage() {
             >
               Tools ({filteredTools.length})
             </button>
+            <button
+              onClick={() => setActiveTab('robots')}
+              className={`
+                px-6 py-3 border-b-2 font-medium text-sm
+                ${activeTab === 'robots'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }
+              `}
+            >
+              Robots ({filteredRobots.length})
+            </button>
           </nav>
         </div>
 
         <div className="p-6">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-4 mb-6">
             <input
               type="text"
-              placeholder="Search by key, label, or code..."
+              placeholder="Search by UID, key, label, or code..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input
-                type="checkbox"
-                checked={showInactive}
-                onChange={(e) => setShowInactive(e.target.checked)}
-                className="rounded"
-              />
-              Show inactive
-            </label>
+            <select
+              value={plantFilter}
+              onChange={(e) => setPlantFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              <option value="all">All Plants</option>
+              {allPlants.map(plant => (
+                <option key={plant} value={plant}>{plant}</option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
 
           {activeTab === 'stations' && (
@@ -90,6 +138,10 @@ export default function RegistryPage() {
 
           {activeTab === 'tools' && (
             <ToolRegistryTable tools={filteredTools} searchTerm={searchTerm} />
+          )}
+
+          {activeTab === 'robots' && (
+            <RobotRegistryTable robots={filteredRobots} searchTerm={searchTerm} />
           )}
         </div>
       </div>
@@ -188,9 +240,11 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
                 </code>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <span className="font-mono text-sm text-gray-900 dark:text-gray-100">
-                  {generateCanonicalDisplay(station.plantKey, station.uid, station.key)}
-                </span>
+                <CanonicalIdDisplay
+                  plantKey={station.plantKey}
+                  uid={station.uid}
+                  key={station.key}
+                />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                 {station.plantKey}
@@ -340,9 +394,11 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
                 </code>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <span className="font-mono text-sm text-gray-900 dark:text-gray-100">
-                  {generateCanonicalDisplay(tool.plantKey, tool.uid, tool.key)}
-                </span>
+                <CanonicalIdDisplay
+                  plantKey={tool.plantKey}
+                  uid={tool.uid}
+                  key={tool.key}
+                />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                 {tool.plantKey}
@@ -401,13 +457,86 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
   )
 }
 
-/**
- * Generate canonical display string for human readability
- * Format: PlantKey-UIDShort-Key
- */
-function generateCanonicalDisplay(plantKey: PlantKey, uid: string, key: string): string {
-  // Extract short UID (last 8 chars)
-  const uidShort = uid.split('_')[1]?.slice(-8) || uid.slice(-8)
+interface RobotRegistryTableProps {
+  robots: RobotRecord[]
+  searchTerm: string
+}
 
-  return `${plantKey}-${uidShort}-${key}`
+function RobotRegistryTable({ robots, searchTerm }: RobotRegistryTableProps) {
+  if (robots.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500 dark:text-gray-400">
+          {searchTerm ? 'No robots match your search.' : 'No robots yet. Import an Excel file to populate the registry.'}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-900">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              UID
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Canonical Key
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Plant
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Labels
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              Last Updated
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          {robots.map((robot) => (
+            <tr key={robot.uid} className={robot.status === 'inactive' ? 'opacity-50' : ''}>
+              <td className="px-4 py-3 whitespace-nowrap">
+                <span className={`
+                  px-2 py-1 text-xs font-medium rounded-full
+                  ${robot.status === 'active'
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                  }
+                `}>
+                  {robot.status}
+                </span>
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">
+                <code className="text-xs text-gray-600 dark:text-gray-400">
+                  {robot.uid}
+                </code>
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">
+                <CanonicalIdDisplay
+                  plantKey={robot.plantKey}
+                  uid={robot.uid}
+                  key={robot.key}
+                />
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                {robot.plantKey}
+              </td>
+              <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                {robot.labels.robotName || robot.labels.robotCaption || '-'}
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-500 dark:text-gray-500">
+                {formatDistanceToNow(new Date(robot.updatedAt), { addSuffix: true })}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
