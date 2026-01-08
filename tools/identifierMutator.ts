@@ -491,11 +491,17 @@ export function mutateCollisionTools(
   prevRecords: ToolRecord[],
   config: CollisionMutationConfig
 ): { mutated: Tool[]; mutationLog: string[] } {
+  // Guard: always return valid arrays
+  if (!tools || !Array.isArray(tools)) {
+    log.warn(`[CollisionMutator] Invalid tools input: ${typeof tools}`)
+    return { mutated: [], mutationLog: [] }
+  }
+
   const rng = new SeededRandom(config.seed)
   const mutated: Tool[] = [...tools]
   const mutationLog: string[] = []
 
-  if (!tools || tools.length === 0 || !prevRecords || prevRecords.length === 0) {
+  if (tools.length === 0 || !prevRecords || prevRecords.length === 0) {
     return { mutated, mutationLog }
   }
 
