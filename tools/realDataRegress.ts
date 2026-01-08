@@ -458,30 +458,51 @@ function saveArtifacts(report: RegressionReport): string {
     }
   }
 
-  // Write ambiguity bundles if any ambiguous items exist
+  // Write ambiguity bundles and index (ALWAYS, even if zero)
   let ambiguityFileCount = 0
   for (const dataset of report.datasets) {
+    const ambiguityDir = join(runDir, 'ambiguity', dataset.datasetName)
+    mkdirSync(ambiguityDir, { recursive: true })
+
     const datasetAmbiguous = dataset.files
       .filter(f => f.diff && f.diff.ambiguous && f.diff.ambiguous.length > 0)
 
-    if (datasetAmbiguous.length > 0) {
-      const ambiguityDir = join(runDir, 'ambiguity', dataset.datasetName)
-      mkdirSync(ambiguityDir, { recursive: true })
+    const totalAmbiguous = datasetAmbiguous.reduce((sum, f) => sum + f.ambiguous, 0)
 
-      for (const file of datasetAmbiguous) {
-        const safeFileName = file.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_')
-        const ambiguityPath = join(ambiguityDir, `${safeFileName}_ambiguity.json`)
+    // Write index.json (ALWAYS)
+    const indexPath = join(ambiguityDir, 'index.json')
+    const indexData: any = {
+      totalAmbiguous,
+      datasetName: dataset.datasetName,
+      timestamp: report.timestamp,
+      files: dataset.files.map(f => ({
+        fileName: f.fileName,
+        filePath: f.filePath,
+        ambiguousCount: f.ambiguous
+      }))
+    }
 
-        const ambiguityData = {
-          fileName: file.fileName,
-          filePath: file.filePath,
-          ambiguousItems: file.diff!.ambiguous,
-          totalAmbiguous: file.diff!.ambiguous.length
-        }
+    if (totalAmbiguous === 0) {
+      // Add explanation when zero
+      indexData.explanation = 'No ambiguous matches produced. Possible reasons: insufficient mutation rate, no collision zones in existing data, or all keys resolved cleanly.'
+    }
 
-        writeFileSync(ambiguityPath, JSON.stringify(ambiguityData, null, 2), 'utf-8')
-        ambiguityFileCount++
+    writeFileSync(indexPath, JSON.stringify(indexData, null, 2), 'utf-8')
+
+    // Write per-file ambiguity bundles if they have ambiguous items
+    for (const file of datasetAmbiguous) {
+      const safeFileName = file.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_')
+      const ambiguityPath = join(ambiguityDir, `${safeFileName}_ambiguity.json`)
+
+      const ambiguityData = {
+        fileName: file.fileName,
+        filePath: file.filePath,
+        ambiguousItems: file.diff!.ambiguous,
+        totalAmbiguous: file.diff!.ambiguous.length
       }
+
+      writeFileSync(ambiguityPath, JSON.stringify(ambiguityData, null, 2), 'utf-8')
+      ambiguityFileCount++
     }
   }
 
@@ -492,6 +513,7 @@ function saveArtifacts(report: RegressionReport): string {
   if (perFileStatsCount > 0) {
     log.info(`  - ${perFileStatsCount} per-file stats`)
   }
+  log.info(`  - ${report.datasets.length} ambiguity index files (always created)`)
   if (ambiguityFileCount > 0) {
     log.info(`  - ${ambiguityFileCount} ambiguity bundle files`)
   }
