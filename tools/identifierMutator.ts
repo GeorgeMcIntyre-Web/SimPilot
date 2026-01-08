@@ -20,7 +20,7 @@ export interface MutationConfig {
 }
 
 const DEFAULT_CONFIG: MutationConfig = {
-  mutationRate: 0.015, // 1.5% mutation rate
+  mutationRate: 0.10, // 10% mutation rate (for guaranteed mutations in testing)
   seed: 42
 }
 

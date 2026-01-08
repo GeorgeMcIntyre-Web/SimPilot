@@ -54,6 +54,11 @@ export interface UidIngestionResult {
   ambiguousCount: number
   warnings: string[]
   mutationsApplied?: number
+  // Per-category row counts
+  simulationStatusRowsParsed: number
+  toolListRowsParsed: number
+  robotListRowsParsed: number
+  assembliesRowsParsed: number
 }
 
 export interface UidIngestionSummary {
@@ -117,10 +122,17 @@ export async function ingestFileWithUid(
     const ambiguousResolutions: AmbiguousResolutionInput[] = []
     const warnings: string[] = []
 
+    // Row count tracking
+    let simulationStatusRowsParsed = 0
+    let toolListRowsParsed = 0
+    let robotListRowsParsed = 0
+    let assembliesRowsParsed = 0
+
     // Parse based on detected type
     if (detection.category === 'SIMULATION_STATUS') {
       const result = await parseSimulationStatus(xlsxWorkbook, file.name, sheetName)
       warnings.push(...result.warnings.map(w => w.message))
+      simulationStatusRowsParsed = result.cells.length
 
       // Convert cells to station records with UID resolution
       for (const cell of result.cells) {
@@ -170,6 +182,13 @@ export async function ingestFileWithUid(
       const result = await parseToolList(xlsxWorkbook, file.name, sheetName)
       warnings.push(...result.warnings.map(w => w.message))
 
+      // Track row counts based on category
+      if (detection.category === 'ASSEMBLIES_LIST') {
+        assembliesRowsParsed = result.tools.length
+      } else {
+        toolListRowsParsed = result.tools.length
+      }
+
       // Convert tools to tool records with UID resolution
       for (const tool of result.tools) {
         const key = tool.id // Canonical key
@@ -217,6 +236,7 @@ export async function ingestFileWithUid(
     } else if (detection.category === 'ROBOT_SPECS') {
       const result = await parseRobotList(xlsxWorkbook, file.name, sheetName)
       warnings.push(...result.warnings.map(w => w.message))
+      robotListRowsParsed = result.robots.length
 
       // Convert robots to robot records with UID resolution
       for (const robot of result.robots) {
@@ -299,7 +319,11 @@ export async function ingestFileWithUid(
       diff,
       ambiguousCount: ambiguousItems.length,
       warnings,
-      mutationsApplied: totalMutations
+      mutationsApplied: totalMutations,
+      simulationStatusRowsParsed,
+      toolListRowsParsed,
+      robotListRowsParsed,
+      assembliesRowsParsed
     }
   } catch (error) {
     return {
@@ -311,7 +335,11 @@ export async function ingestFileWithUid(
       toolRecords: [],
       robotRecords: [],
       ambiguousCount: 0,
-      warnings: []
+      warnings: [],
+      simulationStatusRowsParsed: 0,
+      toolListRowsParsed: 0,
+      robotListRowsParsed: 0,
+      assembliesRowsParsed: 0
     }
   }
 }

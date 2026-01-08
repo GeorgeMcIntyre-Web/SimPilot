@@ -81,6 +81,16 @@ export interface FileIngestionResult {
   modelKey?: string
   warnings: string[]
   diff?: DiffResult // NEW: Full diff tracking when using UID workflow
+  categoryMetrics?: FileCategoryMetrics
+}
+
+export interface FileCategoryMetrics {
+  simulationStatusRowsParsed: number
+  toolListRowsParsed: number
+  robotListRowsParsed: number
+  assembliesRowsParsed: number
+  totalRowsParsed: number
+  mutationsApplied: number
 }
 
 export interface DatasetResult {
@@ -94,6 +104,10 @@ export interface DatasetResult {
     successfulFiles: number
     failedFiles: number
     totalRows: number
+    simulationStatusRows: number
+    toolListRows: number
+    robotListRows: number
+    assembliesRows: number
     totalCreates: number
     totalUpdates: number
     totalDeletes: number
@@ -323,6 +337,13 @@ function generateMarkdownSummary(report: RegressionReport): string {
     lines.push(`- **Failed**: ${dataset.summary.failedFiles}`)
     lines.push(`- **Total Rows**: ${dataset.summary.totalRows}`)
     lines.push('')
+    lines.push('### Row Counts by Category')
+    lines.push('')
+    lines.push(`- Simulation Status: ${dataset.summary.simulationStatusRows}`)
+    lines.push(`- Tool List: ${dataset.summary.toolListRows}`)
+    lines.push(`- Robot List: ${dataset.summary.robotListRows}`)
+    lines.push(`- Assemblies: ${dataset.summary.assembliesRows}`)
+    lines.push('')
     lines.push('### Ingestion Results')
     lines.push('')
     lines.push(`- Creates: ${dataset.summary.totalCreates}`)
@@ -335,17 +356,17 @@ function generateMarkdownSummary(report: RegressionReport): string {
     lines.push('')
     lines.push('### Files')
     lines.push('')
-    lines.push('| File | Type | Sheet | Score | Rows | Creates | Ambiguous | Key Errors | Status |')
-    lines.push('|------|------|-------|-------|------|---------|-----------|------------|--------|')
+    lines.push('| File | Type | Sheet | Rows | Mutations | Creates | Updates | Deletes | Renames | Ambiguous | Status |')
+    lines.push('|------|------|-------|------|-----------|---------|---------|---------|---------|-----------|--------|')
 
     for (const file of dataset.files) {
       const status = file.success ? '✓' : '✗'
       const statusText = file.success ? 'OK' : file.error || 'FAILED'
       const sheetName = file.detectedSheet || 'N/A'
-      const score = file.detectionScore !== undefined ? file.detectionScore.toFixed(0) : 'N/A'
+      const mutations = file.categoryMetrics?.mutationsApplied || 0
       lines.push(
-        `| ${file.fileName} | ${file.sourceType} | ${sheetName} | ${score} | ${file.rowsParsed} | ` +
-        `${file.creates} | ${file.ambiguous} | ${file.keyDerivationErrors} | ${status} ${statusText} |`
+        `| ${file.fileName} | ${file.sourceType} | ${sheetName} | ${file.rowsParsed} | ${mutations} | ` +
+        `${file.creates} | ${file.updates} | ${file.deletes} | ${file.renames} | ${file.ambiguous} | ${status} ${statusText} |`
       )
     }
 
@@ -401,6 +422,42 @@ function saveArtifacts(report: RegressionReport): string {
     }
   }
 
+  // Write per-file stats for UID mode (includes category metrics and diff counts)
+  let perFileStatsCount = 0
+  for (const dataset of report.datasets) {
+    for (const file of dataset.files) {
+      if (file.categoryMetrics) {
+        const safeFileName = file.fileName.replace(/[^a-zA-Z0-9_.-]/g, '_')
+        const perFileDir = join(runDir, 'per-file', dataset.datasetName)
+        mkdirSync(perFileDir, { recursive: true })
+
+        const perFilePath = join(perFileDir, `${safeFileName}.json`)
+        const perFileData = {
+          dataset: dataset.datasetName,
+          fileName: file.fileName,
+          filePath: file.filePath,
+          fileCategory: file.sourceType,
+          chosenSheetName: file.detectedSheet || null,
+          detectionScore: file.detectionScore || 0,
+          metrics: file.categoryMetrics,
+          diffCounts: {
+            creates: file.creates,
+            updates: file.updates,
+            deletes: file.deletes,
+            renames: file.renames,
+            ambiguous: file.ambiguous
+          },
+          success: file.success,
+          error: file.error,
+          warnings: file.warnings
+        }
+
+        writeFileSync(perFilePath, JSON.stringify(perFileData, null, 2), 'utf-8')
+        perFileStatsCount++
+      }
+    }
+  }
+
   // Write ambiguity bundles if any ambiguous items exist
   let ambiguityFileCount = 0
   for (const dataset of report.datasets) {
@@ -432,6 +489,9 @@ function saveArtifacts(report: RegressionReport): string {
   log.info(`  - summary.json`)
   log.info(`  - summary.md`)
   log.info(`  - ${diagnosticFileCount} diagnostic files`)
+  if (perFileStatsCount > 0) {
+    log.info(`  - ${perFileStatsCount} per-file stats`)
+  }
   if (ambiguityFileCount > 0) {
     log.info(`  - ${ambiguityFileCount} ambiguity bundle files`)
   }
@@ -515,8 +575,12 @@ async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
 
         // Process UID results
         fileResults = uidResult.results.map(result => {
-          const rowsParsed = result.stationRecords.length + result.toolRecords.length + result.robotRecords.length
-          const keysGenerated = rowsParsed
+          const totalRowsParsed =
+            result.simulationStatusRowsParsed +
+            result.toolListRowsParsed +
+            result.robotListRowsParsed +
+            result.assembliesRowsParsed
+          const keysGenerated = result.stationRecords.length + result.toolRecords.length + result.robotRecords.length
 
           return {
             fileName: result.fileName,
@@ -526,7 +590,7 @@ async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
             detectionScore: 0,
             success: result.success,
             error: result.error,
-            rowsParsed,
+            rowsParsed: totalRowsParsed,
             keysGenerated,
             keyDerivationErrors: 0, // UID mode doesn't track this separately
             creates: result.diff?.creates.length || 0,
@@ -536,7 +600,15 @@ async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
             ambiguous: result.diff?.ambiguous.length || 0,
             unresolvedLinks: 0, // UID mode handles this differently
             warnings: result.warnings,
-            diff: result.diff
+            diff: result.diff,
+            categoryMetrics: {
+              simulationStatusRowsParsed: result.simulationStatusRowsParsed,
+              toolListRowsParsed: result.toolListRowsParsed,
+              robotListRowsParsed: result.robotListRowsParsed,
+              assembliesRowsParsed: result.assembliesRowsParsed,
+              totalRowsParsed,
+              mutationsApplied: result.mutationsApplied || 0
+            }
           }
         })
 
@@ -620,6 +692,10 @@ async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
           successfulFiles: fileResults.filter(f => f.success).length,
           failedFiles: fileResults.filter(f => !f.success).length,
           totalRows: fileResults.reduce((sum, f) => sum + f.rowsParsed, 0),
+          simulationStatusRows: fileResults.reduce((sum, f) => sum + (f.categoryMetrics?.simulationStatusRowsParsed || 0), 0),
+          toolListRows: fileResults.reduce((sum, f) => sum + (f.categoryMetrics?.toolListRowsParsed || 0), 0),
+          robotListRows: fileResults.reduce((sum, f) => sum + (f.categoryMetrics?.robotListRowsParsed || 0), 0),
+          assembliesRows: fileResults.reduce((sum, f) => sum + (f.categoryMetrics?.assembliesRowsParsed || 0), 0),
           totalCreates: fileResults.reduce((sum, f) => sum + f.creates, 0),
           totalUpdates: fileResults.reduce((sum, f) => sum + f.updates, 0),
           totalDeletes: fileResults.reduce((sum, f) => sum + f.deletes, 0),
