@@ -68,12 +68,14 @@ export function DashboardBottlenecksPanel({
       <EmptyState
         title="No tooling bottlenecks"
         message="Load data in the Data Loader to see bottleneck trends across tooling workflows."
+        ctaLabel="Go to Data Loader"
+        onCtaClick={() => navigate('/data-loader')}
       />
     );
     return variant === 'embedded' ? (
       emptyContent
     ) : (
-      <ContentWrapper data-testid="bottlenecks-empty">{emptyContent}</ContentWrapper>
+      <div data-testid="bottlenecks-empty">{emptyContent}</div>
     );
   }
 
@@ -122,9 +124,10 @@ export function DashboardBottlenecksPanel({
       />
 
       {filteredBottlenecks.length === 0 ? (
-        <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-          No bottlenecks match the current filters. Try switching stages or clearing the reasons.
-        </div>
+        <EmptyState
+          title="No bottlenecks match these filters"
+          message="Switch stages or clear the reasons to see tooling bottlenecks again."
+        />
       ) : (
         <div className="pt-2">
           <BottleneckTable
