@@ -10,7 +10,7 @@ export function StagePill({ label, snapshot }: StagePillProps) {
     snapshot.status === 'BLOCKED'
       ? 'Blocked'
       : snapshot.status === 'CHANGES_REQUESTED'
-        ? 'Changes requested'
+        ? 'Changes'
         : snapshot.status === 'IN_PROGRESS'
           ? 'In progress'
           : snapshot.status === 'APPROVED'
@@ -23,25 +23,22 @@ export function StagePill({ label, snapshot }: StagePillProps) {
 
   const statusColor =
     snapshot.status === 'BLOCKED'
-      ? 'text-rose-600'
+      ? 'text-rose-600 dark:text-rose-400'
       : snapshot.status === 'CHANGES_REQUESTED'
-        ? 'text-amber-600'
+        ? 'text-amber-600 dark:text-amber-400'
         : snapshot.status === 'IN_PROGRESS'
-          ? 'text-blue-600'
+          ? 'text-blue-600 dark:text-blue-400'
           : snapshot.status === 'APPROVED' || snapshot.status === 'COMPLETE'
-            ? 'text-emerald-600'
-            : 'text-gray-500';
+            ? 'text-emerald-600 dark:text-emerald-400'
+            : 'text-gray-500 dark:text-gray-400';
 
   return (
-    <div className="rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-800 p-3">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</p>
-      <p className={`text-sm font-bold ${statusColor}`}>
+    <div className="rounded bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 p-2">
+      <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
+      <p className={`text-xs font-semibold ${statusColor} truncate`}>
         {statusText}
-        {typeof snapshot.percentComplete === 'number' ? ` • ${snapshot.percentComplete}%` : ''}
+        {typeof snapshot.percentComplete === 'number' ? ` ${snapshot.percentComplete}%` : ''}
       </p>
-      {snapshot.owner !== undefined && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">Owner: {snapshot.owner}</p>
-      )}
     </div>
   );
 }

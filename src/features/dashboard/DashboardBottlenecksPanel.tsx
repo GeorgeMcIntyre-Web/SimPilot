@@ -8,7 +8,7 @@ import { EmptyState } from '../../ui/components/EmptyState';
 import type { WorkflowBottleneckStatus } from '../../domain/workflowTypes';
 import { PanelCard } from './bottlenecks/PanelCard';
 import { FilterToolbar } from './bottlenecks/FilterToolbar';
-import { BottleneckRow } from './bottlenecks/BottleneckRow';
+import { BottleneckTable } from './bottlenecks/BottleneckTable';
 import { WorkflowDetailDrawer } from './bottlenecks/WorkflowDetailDrawer';
 import { useBottleneckFiltering } from './bottlenecks/useBottleneckFiltering';
 
@@ -102,7 +102,7 @@ export function DashboardBottlenecksPanel({
   const updatedAt = simPilotState.snapshot?.workflowBottleneckSnapshot.generatedAt;
 
   const content = (
-    <div className="space-y-6" data-testid="bottlenecks-panel">
+    <div className="space-y-3" data-testid="bottlenecks-panel">
       <DashboardBottlenecksSummary
         total={worstBottlenecks.length}
         highCount={summaryCounts.high}
@@ -122,19 +122,16 @@ export function DashboardBottlenecksPanel({
       />
 
       {filteredBottlenecks.length === 0 ? (
-        <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
+        <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
           No bottlenecks match the current filters. Try switching stages or clearing the reasons.
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredBottlenecks.map((status) => (
-            <BottleneckRow
-              key={status.workflowItemId}
-              status={status}
-              onOpenSimulation={() => handleOpenSimulation(status)}
-              onOpenDetail={() => handleOpenDrawer(status)}
-            />
-          ))}
+        <div className="pt-2">
+          <BottleneckTable
+            bottlenecks={filteredBottlenecks}
+            onOpenSimulation={handleOpenSimulation}
+            onOpenDetail={handleOpenDrawer}
+          />
         </div>
       )}
     </div>

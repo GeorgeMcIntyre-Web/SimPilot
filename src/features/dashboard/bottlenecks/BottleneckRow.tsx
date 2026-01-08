@@ -23,55 +23,51 @@ export function BottleneckRow({ status, onOpenSimulation, onOpenDetail }: Bottle
   const handedness = workflowItem?.handedness;
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2.5 hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+      <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
             <span
-              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${severityStyle}`}
+              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${severityStyle}`}
             >
-              {status.severity} severity
+              {status.severity}
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
               {formatReason(status.bottleneckReason)}
             </span>
           </div>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
             {itemNumber}
             {handedness !== undefined ? ` • ${handedness}` : ''}
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Station {station} · {program}
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {station} • {program}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 text-sm">
+        <div className="flex flex-wrap gap-1.5 text-xs lg:flex-nowrap">
           <button
             type="button"
             onClick={onOpenSimulation}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow-sm hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
-            Open Station in Simulation
-            <ExternalLink className="h-4 w-4" />
+            <ExternalLink className="h-3 w-3" />
+            Simulation
           </button>
           <button
             type="button"
             onClick={onOpenDetail}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:border-indigo-400 transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors whitespace-nowrap"
           >
-            Open Item Detail
+            Detail
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+      <div className="grid grid-cols-3 gap-2 text-xs">
         <StagePill label="Design" snapshot={status.designStage} />
         <StagePill label="Simulation" snapshot={status.simulationStage} />
         <StagePill label="Manufacture" snapshot={status.manufactureStage} />
-      </div>
-
-      <div className="text-xs text-gray-400">
-        Dominant stage: {status.dominantStage} · Score {status.severityScore} · Kind: {status.kind}
       </div>
     </div>
   );
