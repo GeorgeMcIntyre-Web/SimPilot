@@ -1,14 +1,14 @@
-import type { WorkflowBottleneckStatus } from '../../../domain/workflowTypes';
-import { formatReason } from './bottleneckUtils';
+import type { WorkflowBottleneckStatus } from '../../../domain/workflowTypes'
+import { formatReason } from './bottleneckUtils'
 
 interface WorkflowDetailDrawerProps {
-  workflow: WorkflowBottleneckStatus | null;
-  onClose: () => void;
+  workflow: WorkflowBottleneckStatus | null
+  onClose: () => void
 }
 
 interface InfoRowProps {
-  label: string;
-  value: string;
+  label: string
+  value: string
 }
 
 function InfoRow({ label, value }: InfoRowProps) {
@@ -17,18 +17,18 @@ function InfoRow({ label, value }: InfoRowProps) {
       <span className="text-gray-500 dark:text-gray-400">{label}</span>
       <span className="font-medium text-gray-900 dark:text-gray-100 text-right">{value}</span>
     </div>
-  );
+  )
 }
 
 export function WorkflowDetailDrawer({ workflow, onClose }: WorkflowDetailDrawerProps) {
   if (workflow === null) {
-    return null;
+    return null
   }
 
-  const workflowItem = workflow.workflowItem;
-  const parts = workflow.simulationContextKey.split('|');
-  const program = parts[0] ?? 'UNKNOWN';
-  const station = parts[4] ?? 'UNKNOWN';
+  const workflowItem = workflow.workflowItem
+  const parts = workflow.simulationContextKey.split('|')
+  const program = parts[0] ?? 'UNKNOWN'
+  const station = parts[4] ?? 'UNKNOWN'
 
   return (
     <div className="fixed inset-0 z-40 flex items-stretch justify-end">
@@ -88,5 +88,5 @@ export function WorkflowDetailDrawer({ workflow, onClose }: WorkflowDetailDrawer
         </div>
       </div>
     </div>
-  );
+  )
 }

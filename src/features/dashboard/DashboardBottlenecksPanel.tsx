@@ -9,7 +9,7 @@ import type { WorkflowBottleneckStatus } from '../../domain/workflowTypes';
 import { PanelCard } from './bottlenecks/PanelCard';
 import { FilterToolbar } from './bottlenecks/FilterToolbar';
 import { BottleneckTable } from './bottlenecks/BottleneckTable';
-import { WorkflowDetailDrawer } from './bottlenecks/WorkflowDetailDrawer';
+import { BottleneckDetailModal } from './bottlenecks/BottleneckDetailModal';
 import { useBottleneckFiltering } from './bottlenecks/useBottleneckFiltering';
 
 interface DashboardBottlenecksPanelProps {
@@ -100,74 +100,26 @@ export function DashboardBottlenecksPanel({
   };
 
   const updatedAt = simPilotState.snapshot?.workflowBottleneckSnapshot.generatedAt;
-  const stageLabel =
-    stageFilter === 'ALL'
-      ? 'all stages'
-      : stageFilter
-          .split('_')
-          .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
-          .join(' ');
-  const formattedUpdatedAt = updatedAt
-    ? new Date(updatedAt).toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null;
 
   const content = (
-    <div className="space-y-4" data-testid="bottlenecks-panel">
-      <div className="rounded-2xl border border-indigo-100 bg-white px-4 py-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-indigo-700 dark:text-indigo-200">
-              Tooling health pulse
-            </p>
-            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Focused on {stageLabel}
-            </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Scan the highest-impact tooling blockers. Adjust filters to see how the story changes.
-            </p>
-          </div>
-          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
-            <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/80 px-3 py-1.5 text-xs font-semibold text-gray-800 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-gray-100">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]" />
-              Live snapshot
-              {formattedUpdatedAt && (
-                <span className="text-[11px] font-normal text-gray-600 dark:text-gray-300">
-                  • {formattedUpdatedAt}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow">
-              <span className="h-2 w-2 rounded-full bg-white/70" />
-              {summaryCounts.high} high-risk items
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-3" data-testid="bottlenecks-panel">
+      <DashboardBottlenecksSummary
+        total={worstBottlenecks.length}
+        highCount={summaryCounts.high}
+        mediumCount={summaryCounts.medium}
+        lowCount={summaryCounts.low}
+        activeStage={stageFilter}
+        updatedAt={updatedAt}
+      />
 
-      <div className="rounded-xl border border-gray-100 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/70">
-        <DashboardBottlenecksSummary
-          total={worstBottlenecks.length}
-          highCount={summaryCounts.high}
-          mediumCount={summaryCounts.medium}
-          lowCount={summaryCounts.low}
-          activeStage={stageFilter}
-          updatedAt={updatedAt}
-        />
-
-        <FilterToolbar
-          stageFilter={stageFilter}
-          onStageChange={setStageFilter}
-          reasonFilter={reasonFilter}
-          onReasonToggle={handleReasonToggle}
-          onClearReasons={handleClearReasons}
-          reasons={reasonOptions}
-        />
-      </div>
+      <FilterToolbar
+        stageFilter={stageFilter}
+        onStageChange={setStageFilter}
+        reasonFilter={reasonFilter}
+        onReasonToggle={handleReasonToggle}
+        onClearReasons={handleClearReasons}
+        reasons={reasonOptions}
+      />
 
       {filteredBottlenecks.length === 0 ? (
         <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
@@ -192,7 +144,7 @@ export function DashboardBottlenecksPanel({
       ) : (
         <PanelCard data-testid="bottlenecks-panel-wrapper">{content}</PanelCard>
       )}
-      <WorkflowDetailDrawer workflow={activeWorkflow} onClose={handleCloseDrawer} />
+      <BottleneckDetailModal workflow={activeWorkflow} onClose={handleCloseDrawer} />
     </>
   );
 }
