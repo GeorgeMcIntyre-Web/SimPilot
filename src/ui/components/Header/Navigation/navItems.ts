@@ -8,13 +8,15 @@ import {
     Box,
     LayoutGrid,
     Activity,
-    History
+    History,
+    AlertTriangle
 } from 'lucide-react';
 import { NavItem } from './types';
 
 export const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/simulation', label: 'Simulation', icon: LayoutGrid },
+    { href: '/tooling-bottlenecks', label: 'Tooling Bottlenecks', icon: AlertTriangle },
     { href: '/projects', label: 'Projects', icon: FolderKanban },
     { href: '/projects-by-customer', label: 'By Customer', icon: FolderKanban },
     { href: '/readiness', label: 'Readiness', icon: Calendar },

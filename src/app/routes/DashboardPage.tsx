@@ -18,7 +18,6 @@ import { useCells } from '../../domain/coreStore'
 import {
   AreaCardsGrid,
   StationsTable,
-  DashboardBottlenecksPanel,
   FocusSummaryCards,
   generateFocusItems,
   countByRisk
@@ -257,20 +256,6 @@ export function DashboardPage() {
             onSelectStation={handleSelectStation}
             onClearAreaFilter={handleClearAreaFilter}
           />
-        </div>
-      </section>
-
-      {/* Tooling bottlenecks */}
-      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Tooling Bottlenecks Overview
-            </h3>
-          </div>
-        </div>
-        <div className="px-4 pb-4">
-          <DashboardBottlenecksPanel variant="embedded" />
         </div>
       </section>
     </div>

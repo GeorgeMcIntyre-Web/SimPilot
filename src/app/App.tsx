@@ -27,6 +27,7 @@ const ReadinessBoard = lazy(() => import('./routes/ReadinessBoard'))
 const TimelineView = lazy(() => import('./routes/TimelineView'))
 const SimulationPage = lazy(() => import('./routes/SimulationPage'))
 const DataHealthPage = lazy(() => import('./routes/DataHealthPage'))
+const ToolingBottlenecksPage = lazy(() => import('./routes/ToolingBottlenecksPage'))
 
 // Loading fallback component
 function RouteLoader() {
@@ -55,6 +56,7 @@ function App() {
                                             <Route index element={<Navigate to="/dashboard" replace />} />
                                             <Route path="dashboard" element={<DashboardPage />} />
                                             <Route path="simulation" element={<SimulationPage />} />
+                                            <Route path="tooling-bottlenecks" element={<ToolingBottlenecksPage />} />
                                             <Route path="dale-console" element={<DaleConsole />} />
                                             <Route path="warnings" element={<WarningsPage />} />
                                             <Route path="projects" element={<ProjectsPage />} />
