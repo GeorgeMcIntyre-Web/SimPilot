@@ -17,6 +17,8 @@ import { log } from './nodeLog'
 export interface MutationConfig {
   mutationRate: number // Percentage of entities to mutate (0.01 = 1%, 0.02 = 2%)
   seed?: number        // Random seed for reproducibility
+  ambiguityMode?: boolean // If true, create collisions instead of clean renames
+  ambiguityTarget?: number // Target number of ambiguous items (requires ambiguityMode)
 }
 
 const DEFAULT_CONFIG: MutationConfig = {
@@ -263,4 +265,102 @@ export function applyMutations(
     robots,
     totalMutations: allLogs.length
   }
+}
+
+// ============================================================================
+// PRE-RESOLUTION MUTATIONS (for Cells/Tools/Robots)
+// ============================================================================
+
+import type { Cell, Tool, Robot } from '../src/domain/core'
+
+/**
+ * Mutate parsed Cell IDs BEFORE UID resolution
+ * This allows the fuzzy matcher to detect ambiguity
+ */
+export function mutateCellIds(
+  cells: Cell[],
+  config: MutationConfig = DEFAULT_CONFIG
+): { mutated: Cell[]; mutationLog: string[] } {
+  const rng = new SeededRandom(config.seed || 42)
+  const mutated: Cell[] = []
+  const mutationLog: string[] = []
+
+  for (const cell of cells) {
+    if (rng.next() < config.mutationRate) {
+      const oldId = cell.id
+      // Apply same mutation strategies as stations
+      const newId = mutateStationKey(oldId)
+
+      if (newId !== oldId) {
+        mutationLog.push(`Cell: "${oldId}" -> "${newId}"`)
+        mutated.push({ ...cell, id: newId })
+      } else {
+        mutated.push(cell)
+      }
+    } else {
+      mutated.push(cell)
+    }
+  }
+
+  return { mutated, mutationLog }
+}
+
+/**
+ * Mutate parsed Tool IDs BEFORE UID resolution
+ */
+export function mutateToolIds(
+  tools: Tool[],
+  config: MutationConfig = DEFAULT_CONFIG
+): { mutated: Tool[]; mutationLog: string[] } {
+  const rng = new SeededRandom(config.seed || 42)
+  const mutated: Tool[] = []
+  const mutationLog: string[] = []
+
+  for (const tool of tools) {
+    if (rng.next() < config.mutationRate) {
+      const oldId = tool.id
+      const newId = mutateToolKey(oldId)
+
+      if (newId !== oldId) {
+        mutationLog.push(`Tool: "${oldId}" -> "${newId}"`)
+        mutated.push({ ...tool, id: newId })
+      } else {
+        mutated.push(tool)
+      }
+    } else {
+      mutated.push(tool)
+    }
+  }
+
+  return { mutated, mutationLog }
+}
+
+/**
+ * Mutate parsed Robot IDs BEFORE UID resolution
+ */
+export function mutateRobotIds(
+  robots: Robot[],
+  config: MutationConfig = DEFAULT_CONFIG
+): { mutated: Robot[]; mutationLog: string[] } {
+  const rng = new SeededRandom(config.seed || 42)
+  const mutated: Robot[] = []
+  const mutationLog: string[] = []
+
+  for (const robot of robots) {
+    if (rng.next() < config.mutationRate) {
+      const oldId = robot.id
+      const newId = mutateRobotKey(oldId)
+
+      if (newId !== oldId) {
+        mutationLog.push(`Robot: "${oldId}" -> "${newId}"`)
+        mutated.push({ ...robot, id: newId })
+      } else {
+        mutated.push(robot)
+      }
+    } else {
+      mutated.push(robot)
+    }
+  }
+
+  return { mutated, mutationLog }
 }

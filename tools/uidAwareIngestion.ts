@@ -30,7 +30,7 @@ import { parseToolList } from '../src/ingestion/toolListParser'
 import { parseRobotList } from '../src/ingestion/robotListParser'
 import { type HeadlessFile } from './headlessIngestion'
 import { log } from './nodeLog'
-import { applyMutations, type MutationConfig } from './identifierMutator'
+import { applyMutations, mutateCellIds, mutateToolIds, mutateRobotIds, type MutationConfig } from './identifierMutator'
 
 // ============================================================================
 // TYPES
@@ -40,6 +40,8 @@ export interface UidIngestionOptions {
   plantKey?: PlantKey
   mutateNames?: boolean
   mutationConfig?: MutationConfig
+  ambiguityTarget?: number
+  ambiguitySeed?: number
 }
 
 export interface UidIngestionResult {
@@ -127,15 +129,31 @@ export async function ingestFileWithUid(
     let toolListRowsParsed = 0
     let robotListRowsParsed = 0
     let assembliesRowsParsed = 0
+    let cellMutationCount = 0
+    let toolMutationCount = 0
+    let robotMutationCount = 0
 
     // Parse based on detected type
     if (detection.category === 'SIMULATION_STATUS') {
       const result = await parseSimulationStatus(xlsxWorkbook, file.name, sheetName)
       warnings.push(...result.warnings.map(w => w.message))
-      simulationStatusRowsParsed = result.cells.length
+
+      // Apply mutations to parsed cells BEFORE UID resolution
+      let cellsToProcess = result.cells
+      if (mutateNames) {
+        const cellMutation = mutateCellIds(result.cells, mutationConfig)
+        cellsToProcess = cellMutation.mutated
+        cellMutationCount = cellMutation.mutationLog.length
+        if (cellMutationCount > 0) {
+          log.info(`[UidIngestion] Mutated ${cellMutationCount} cell IDs before UID resolution`)
+          cellMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+        }
+      }
+
+      simulationStatusRowsParsed = cellsToProcess.length
 
       // Convert cells to station records with UID resolution
-      for (const cell of result.cells) {
+      for (const cell of cellsToProcess) {
         const key = cell.id // Canonical key
         const labels = {
           line: cell.area || '',
@@ -182,15 +200,27 @@ export async function ingestFileWithUid(
       const result = await parseToolList(xlsxWorkbook, file.name, sheetName)
       warnings.push(...result.warnings.map(w => w.message))
 
+      // Apply mutations to parsed tools BEFORE UID resolution
+      let toolsToProcess = result.tools
+      if (mutateNames) {
+        const toolMutation = mutateToolIds(result.tools, mutationConfig)
+        toolsToProcess = toolMutation.mutated
+        toolMutationCount = toolMutation.mutationLog.length
+        if (toolMutationCount > 0) {
+          log.info(`[UidIngestion] Mutated ${toolMutationCount} tool IDs before UID resolution`)
+          toolMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+        }
+      }
+
       // Track row counts based on category
       if (detection.category === 'ASSEMBLIES_LIST') {
-        assembliesRowsParsed = result.tools.length
+        assembliesRowsParsed = toolsToProcess.length
       } else {
-        toolListRowsParsed = result.tools.length
+        toolListRowsParsed = toolsToProcess.length
       }
 
       // Convert tools to tool records with UID resolution
-      for (const tool of result.tools) {
+      for (const tool of toolsToProcess) {
         const key = tool.id // Canonical key
         const labels = {
           toolCode: tool.toolNo || tool.name || '',
@@ -236,10 +266,23 @@ export async function ingestFileWithUid(
     } else if (detection.category === 'ROBOT_SPECS') {
       const result = await parseRobotList(xlsxWorkbook, file.name, sheetName)
       warnings.push(...result.warnings.map(w => w.message))
-      robotListRowsParsed = result.robots.length
+
+      // Apply mutations to parsed robots BEFORE UID resolution
+      let robotsToProcess = result.robots
+      if (mutateNames) {
+        const robotMutation = mutateRobotIds(result.robots, mutationConfig)
+        robotsToProcess = robotMutation.mutated
+        robotMutationCount = robotMutation.mutationLog.length
+        if (robotMutationCount > 0) {
+          log.info(`[UidIngestion] Mutated ${robotMutationCount} robot IDs before UID resolution`)
+          robotMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+        }
+      }
+
+      robotListRowsParsed = robotsToProcess.length
 
       // Convert robots to robot records with UID resolution
-      for (const robot of result.robots) {
+      for (const robot of robotsToProcess) {
         const key = robot.id // Canonical key
         const labels = {
           robotNumber: robot.robotNumber || '',
@@ -284,15 +327,8 @@ export async function ingestFileWithUid(
       }
     }
 
-    // Apply mutations if requested
-    let totalMutations = 0
-    if (mutateNames && (newStationRecords.length > 0 || newToolRecords.length > 0 || newRobotRecords.length > 0)) {
-      const mutated = applyMutations(newStationRecords, newToolRecords, newRobotRecords, mutationConfig)
-      newStationRecords.splice(0, newStationRecords.length, ...mutated.stations)
-      newToolRecords.splice(0, newToolRecords.length, ...mutated.tools)
-      newRobotRecords.splice(0, newRobotRecords.length, ...mutated.robots)
-      totalMutations = mutated.totalMutations
-    }
+    // Track total mutations from all categories
+    const totalMutations = cellMutationCount + toolMutationCount + robotMutationCount
 
     // Compute diff
     const stationDiff = diffStationRecords(prevStationRecords, newStationRecords)
