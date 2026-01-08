@@ -7,6 +7,7 @@ import { useHasSimulationData } from '../../ui/hooks/useDomainData';
 import { clearCrossRefData } from '../../hooks/useCrossRefData';
 import { syncSimulationStore } from '../../features/simulation';
 import { coreStore } from '../../domain/coreStore';
+import { simPilotStore } from '../../domain/simPilotStore';
 import { VersionComparisonModal } from '../components/VersionComparisonModal';
 import { log } from '../../lib/log';
 
@@ -69,6 +70,7 @@ export function DataLoaderPage() {
     coreStore.clear();
     syncSimulationStore();
     clearCrossRefData();
+    simPilotStore.clear();
     localIngest.clearFiles();
     localIngest.setResult(null);
     localIngest.setError(null);
