@@ -5,6 +5,7 @@ import { getUserPreference, setUserPreference } from '../../utils/prefsStorage';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { IngestFilesResult } from '../../ingestion/ingestionCoordinator';
 import { log } from '../../lib/log';
+import { syncSimPilotStoreFromLocalData } from '../../domain/simPilotSnapshotBuilder';
 
 export function useDemoScenario() {
   const [selectedDemoId, setSelectedDemoIdState] = useState<DemoScenarioId>(
@@ -28,6 +29,7 @@ export function useDemoScenario() {
     setTimeout(() => {
       loadDemoScenario(selectedDemoId);
       syncSimulationStore();
+      syncSimPilotStoreFromLocalData();
 
       const state = coreStore.getState();
       const result: IngestFilesResult = {

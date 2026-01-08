@@ -190,7 +190,7 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                     {expanded && (
                       <tr>
                         <td colSpan={12} className="bg-gray-50 dark:bg-gray-800/60 px-6 py-4">
-                          <div className="space-y-6 overflow-x-auto">
+                          <div className="space-y-6">
                             {hasDetailedWarnings || hasSimpleWarnings ? (
                               <WarningsSection
                                 detailedWarnings={detailedWarnings}
@@ -346,13 +346,13 @@ function WarningsSection({
   };
 
   return (
-    <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-sm">
+    <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-sm overflow-hidden max-w-full">
       {/* Header */}
       <div className="border-b border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-3">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <div className="flex-1">
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+          <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
               Warnings ({hasDetailedWarnings ? detailedWarnings.length : simpleWarnings.length})
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
@@ -363,7 +363,7 @@ function WarningsSection({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 max-w-full">
         {hasSimpleWarnings ? (
           <div className="space-y-2">
             {simpleWarnings.map((warning, idx) => (
@@ -381,22 +381,22 @@ function WarningsSection({
               const isExpanded = warningGroupExpanded[key] ?? true;
 
               return (
-                <div key={kind} className={`rounded-lg border ${colors.border} shadow-sm overflow-hidden bg-white dark:bg-gray-900`}>
+                <div key={kind} className={`rounded-lg border ${colors.border} shadow-sm overflow-hidden bg-white dark:bg-gray-900 max-w-full`}>
                   {/* Group header */}
                   <button
                     onClick={() => toggleWarningGroup(entryId, kind)}
                     className={`w-full px-4 py-3 flex items-center justify-between ${colors.bg} hover:opacity-80 transition-opacity`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       {isExpanded ? (
-                        <ChevronDown className={`w-4 h-4 ${colors.text}`} />
+                        <ChevronDown className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
                       ) : (
-                        <ChevronRight className={`w-4 h-4 ${colors.text}`} />
+                        <ChevronRight className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
                       )}
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold ${colors.badge} text-white`}>
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${colors.badge} text-white`}>
                         {kind}
                       </div>
-                      <span className={`text-sm font-semibold ${colors.text}`}>
+                      <span className={`text-sm font-semibold ${colors.text} truncate`}>
                         {warnings.length} {warnings.length === 1 ? 'item' : 'items'}
                       </span>
                     </div>
@@ -404,17 +404,17 @@ function WarningsSection({
 
                   {/* Group content */}
                   {isExpanded && (
-                    <div className="max-h-80 overflow-y-auto overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <div className="max-h-80 overflow-auto w-full">
+                      <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                           <tr>
-                            <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/4 min-w-[150px]">
                               Location
                             </th>
                             <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-16">
                               Row
                             </th>
-                            <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/2 min-w-[200px]">
                               Message
                             </th>
                           </tr>
@@ -422,18 +422,18 @@ function WarningsSection({
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                           {warnings.map((w) => (
                             <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                                <div className="font-medium">{w.fileName || 'Unknown'}</div>
+                              <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 max-w-[200px]">
+                                <div className="font-medium truncate">{w.fileName || 'Unknown'}</div>
                                 {w.sheetName && (
-                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
                                     Sheet: {w.sheetName}
                                   </div>
                                 )}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 text-center font-mono">
+                              <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 text-center font-mono whitespace-nowrap">
                                 {w.rowIndex ?? '—'}
                               </td>
-                              <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words">
+                              <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-200 break-words">
                                 {w.message}
                               </td>
                             </tr>
@@ -495,13 +495,13 @@ function UnlinkedItemsSection({
   };
 
   return (
-    <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-sm">
+    <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-sm overflow-hidden max-w-full">
       {/* Header */}
       <div className="border-b border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-3">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <div className="flex-1">
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+          <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
               Unlinked Items ({unlinkedItems.length})
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
@@ -512,29 +512,29 @@ function UnlinkedItemsSection({
       </div>
 
       {/* Content */}
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 max-w-full">
         {Object.entries(groupedItems).map(([type, items]) => {
           const colors = getTypeColors(type);
           const key = `${entryId}-${type}`;
           const isExpanded = unlinkedGroupExpanded[key] ?? true;
 
           return (
-            <div key={type} className={`rounded-lg border ${colors.border} shadow-sm overflow-hidden bg-white dark:bg-gray-900`}>
+            <div key={type} className={`rounded-lg border ${colors.border} shadow-sm overflow-hidden bg-white dark:bg-gray-900 max-w-full`}>
               {/* Group header */}
               <button
                 onClick={() => toggleUnlinkedGroup(entryId, type)}
                 className={`w-full px-4 py-3 flex items-center justify-between ${colors.bg} hover:opacity-80 transition-opacity`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   {isExpanded ? (
-                    <ChevronDown className={`w-4 h-4 ${colors.text}`} />
+                    <ChevronDown className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
                   ) : (
-                    <ChevronRight className={`w-4 h-4 ${colors.text}`} />
+                    <ChevronRight className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
                   )}
-                  <div className={`px-3 py-1 rounded-full text-xs font-bold ${colors.badge} text-white`}>
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${colors.badge} text-white`}>
                     {type}
                   </div>
-                  <span className={`text-sm font-semibold ${colors.text}`}>
+                  <span className={`text-sm font-semibold ${colors.text} truncate`}>
                     {items.length} {items.length === 1 ? 'item' : 'items'}
                   </span>
                 </div>
@@ -542,14 +542,14 @@ function UnlinkedItemsSection({
 
               {/* Group content */}
               {isExpanded && (
-                <div className="max-h-80 overflow-y-auto overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <div className="max-h-80 overflow-auto w-full">
+                  <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                       <tr>
-                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/4 min-w-[150px]">
                           Item Name
                         </th>
-                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/2 min-w-[200px]">
                           Reason
                         </th>
                         <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-32">
@@ -566,13 +566,13 @@ function UnlinkedItemsSection({
 
                         return (
                           <tr key={`${item.item}-${idx}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 max-w-[200px] break-words">
                               {item.item}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
+                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-words">
                               {item.reason}
                             </td>
-                            <td className="px-4 py-3 text-xs">
+                            <td className="px-4 py-3 text-xs whitespace-nowrap">
                               {hasReference ? (
                                 <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium">
                                   Create or link
