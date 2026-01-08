@@ -5,6 +5,7 @@ import { useGlobalBusy } from '../ui/GlobalBusyContext'
 import { setCrossRefData } from '../hooks/useCrossRefData'
 import { buildCrossRef, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot, normalizeStationId } from '../domain/crossRef'
 import { syncSimulationStore } from '../features/simulation'
+import { syncSimPilotStoreFromLocalData } from '../domain/simPilotSnapshotBuilder'
 import { log } from '../lib/log'
 
 const SAVE_DEBOUNCE_MS = 2000
@@ -100,6 +101,10 @@ export function PersistenceManager() {
                         cells: crossRefResult.cells.length,
                         areas: crossRefResult.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
                     })
+
+                    // Rebuild SimPilot store (including bottleneck data) from persisted coreStore
+                    syncSimPilotStoreFromLocalData()
+                    log.debug('[PersistenceManager] SimPilot store synced from persisted data')
                 }
             } catch (err) {
                 console.error('Failed to load persistence:', err)
