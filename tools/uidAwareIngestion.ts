@@ -30,7 +30,17 @@ import { parseToolList } from '../src/ingestion/toolListParser'
 import { parseRobotList } from '../src/ingestion/robotListParser'
 import { type HeadlessFile } from './headlessIngestion'
 import { log } from './nodeLog'
-import { applyMutations, mutateCellIds, mutateToolIds, mutateRobotIds, type MutationConfig } from './identifierMutator'
+import {
+  applyMutations,
+  mutateCellIds,
+  mutateToolIds,
+  mutateRobotIds,
+  mutateCollisionCells,
+  mutateCollisionTools,
+  mutateCollisionRobots,
+  type MutationConfig,
+  type CollisionMutationConfig
+} from './identifierMutator'
 
 // ============================================================================
 // TYPES
@@ -40,8 +50,9 @@ export interface UidIngestionOptions {
   plantKey?: PlantKey
   mutateNames?: boolean
   mutationConfig?: MutationConfig
+  mutateAmbiguity?: boolean
+  seed?: number
   ambiguityTarget?: number
-  ambiguitySeed?: number
 }
 
 export interface UidIngestionResult {
@@ -140,7 +151,20 @@ export async function ingestFileWithUid(
 
       // Apply mutations to parsed cells BEFORE UID resolution
       let cellsToProcess = result.cells
-      if (mutateNames) {
+      if (options.mutateAmbiguity) {
+        const collisionConfig: CollisionMutationConfig = {
+          seed: options.seed || 1,
+          targetAmbiguous: options.ambiguityTarget || 5,
+          plantKey
+        }
+        const cellMutation = mutateCollisionCells(result.cells, prevStationRecords, collisionConfig)
+        cellsToProcess = cellMutation.mutated
+        cellMutationCount = cellMutation.mutationLog.length
+        if (cellMutationCount > 0) {
+          log.info(`[UidIngestion] Applied ${cellMutationCount} collision mutations to cells`)
+          cellMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+        }
+      } else if (mutateNames) {
         const cellMutation = mutateCellIds(result.cells, mutationConfig)
         cellsToProcess = cellMutation.mutated
         cellMutationCount = cellMutation.mutationLog.length
@@ -202,7 +226,26 @@ export async function ingestFileWithUid(
 
       // Apply mutations to parsed tools BEFORE UID resolution
       let toolsToProcess = result.tools
-      if (mutateNames) {
+      if (options.mutateAmbiguity) {
+        try {
+          const collisionConfig: CollisionMutationConfig = {
+            seed: options.seed || 1,
+            targetAmbiguous: options.ambiguityTarget || 5,
+            plantKey
+          }
+          const toolMutation = mutateCollisionTools(result.tools, prevToolRecords, collisionConfig)
+          toolsToProcess = toolMutation.mutated
+          toolMutationCount = toolMutation.mutationLog.length
+          if (toolMutationCount > 0) {
+            log.info(`[UidIngestion] Applied ${toolMutationCount} collision mutations to tools`)
+            toolMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+          }
+        } catch (err) {
+          log.error(`[UidIngestion] Error in collision mutations: ${err}`)
+          log.error(`Stack: ${(err as Error).stack}`)
+          throw err
+        }
+      } else if (mutateNames) {
         const toolMutation = mutateToolIds(result.tools, mutationConfig)
         toolsToProcess = toolMutation.mutated
         toolMutationCount = toolMutation.mutationLog.length
@@ -269,7 +312,20 @@ export async function ingestFileWithUid(
 
       // Apply mutations to parsed robots BEFORE UID resolution
       let robotsToProcess = result.robots
-      if (mutateNames) {
+      if (options.mutateAmbiguity) {
+        const collisionConfig: CollisionMutationConfig = {
+          seed: options.seed || 1,
+          targetAmbiguous: options.ambiguityTarget || 5,
+          plantKey
+        }
+        const robotMutation = mutateCollisionRobots(result.robots, prevRobotRecords, collisionConfig)
+        robotsToProcess = robotMutation.mutated
+        robotMutationCount = robotMutation.mutationLog.length
+        if (robotMutationCount > 0) {
+          log.info(`[UidIngestion] Applied ${robotMutationCount} collision mutations to robots`)
+          robotMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+        }
+      } else if (mutateNames) {
         const robotMutation = mutateRobotIds(result.robots, mutationConfig)
         robotsToProcess = robotMutation.mutated
         robotMutationCount = robotMutation.mutationLog.length

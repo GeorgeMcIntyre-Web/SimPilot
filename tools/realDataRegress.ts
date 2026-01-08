@@ -9,12 +9,16 @@
  *   npm run real-data-regress
  *   npm run real-data-regress -- --strict
  *   npm run real-data-regress -- --uid --mutate-names
+ *   npm run real-data-regress -- --uid --mutate-ambiguity --seed=123
  *   npx tsx tools/realDataRegress.ts --strict
  *
  * Flags:
  *   --strict: Fail if ambiguous > 0 OR key errors > 0 OR unresolved links > 0
  *   --uid: Use UID-aware ingestion with diff tracking (default: false)
  *   --mutate-names: Mutate ~1-2% of identifiers to simulate data drift (requires --uid)
+ *   --mutate-ambiguity: Use collision-zone mutations to GUARANTEE ambiguous matches (requires --uid)
+ *   --seed=N: Random seed for deterministic mutations (default: 1)
+ *   --mutate-ambiguity-target=N: Target number of ambiguous items per dataset (default: 5)
  */
 
 import { readdirSync, statSync, mkdirSync, writeFileSync, readFileSync } from 'fs'
@@ -525,7 +529,13 @@ function saveArtifacts(report: RegressionReport): string {
 // MAIN ENTRY POINT
 // ============================================================================
 
-async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
+async function main(options: {
+  useUid?: boolean
+  mutateNames?: boolean
+  mutateAmbiguity?: boolean
+  seed?: number
+  ambiguityTarget?: number
+} = {}) {
   log.info('=== Real Data Regression Harness ===')
   log.info('')
 
@@ -592,7 +602,10 @@ async function main(options: { useUid?: boolean; mutateNames?: boolean } = {}) {
         // Use UID-aware ingestion with diff tracking
         const uidResult = await ingestFilesWithUid(headlessFiles, {
           plantKey: 'PLANT_TEST',
-          mutateNames: options.mutateNames || false
+          mutateNames: options.mutateNames || false,
+          mutateAmbiguity: options.mutateAmbiguity || false,
+          seed: options.seed || 1,
+          ambiguityTarget: options.ambiguityTarget || 5
         })
 
         // Process UID results
@@ -777,9 +790,28 @@ if (isMainModule) {
   const strictMode = args.includes('--strict')
   const useUid = args.includes('--uid')
   const mutateNames = args.includes('--mutate-names')
+  const mutateAmbiguity = args.includes('--mutate-ambiguity')
+
+  // Parse seed flag
+  const seedArg = args.find(arg => arg.startsWith('--seed='))
+  const seed = seedArg ? parseInt(seedArg.split('=')[1], 10) : 1
+
+  // Parse ambiguity target flag
+  const targetArg = args.find(arg => arg.startsWith('--mutate-ambiguity-target='))
+  const ambiguityTarget = targetArg ? parseInt(targetArg.split('=')[1], 10) : 5
 
   if (mutateNames && !useUid) {
     log.error('[ERROR] --mutate-names requires --uid flag')
+    process.exit(1)
+  }
+
+  if (mutateAmbiguity && !useUid) {
+    log.error('[ERROR] --mutate-ambiguity requires --uid flag')
+    process.exit(1)
+  }
+
+  if (mutateNames && mutateAmbiguity) {
+    log.error('[ERROR] --mutate-names and --mutate-ambiguity are mutually exclusive (choose one)')
     process.exit(1)
   }
 
@@ -795,7 +827,11 @@ if (isMainModule) {
     log.info('[Mutate Names] Enabled - will mutate ~1-2% of identifiers to simulate data drift')
   }
 
-  main({ useUid, mutateNames }).then(report => {
+  if (mutateAmbiguity) {
+    log.info(`[Mutate Ambiguity] Enabled - targeting ${ambiguityTarget} ambiguous items per dataset (seed: ${seed})`)
+  }
+
+  main({ useUid, mutateNames, mutateAmbiguity, seed, ambiguityTarget }).then(report => {
     if (strictMode) {
       const totalAmbiguous = report.overallSummary.totalAmbiguous
       const totalKeyErrors = report.overallSummary.totalKeyErrors

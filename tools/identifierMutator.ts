@@ -21,6 +21,12 @@ export interface MutationConfig {
   ambiguityTarget?: number // Target number of ambiguous items (requires ambiguityMode)
 }
 
+export interface CollisionMutationConfig {
+  seed: number
+  targetAmbiguous: number // Minimum number of ambiguous items to create
+  plantKey: string // Plant key for scoping collision zones
+}
+
 const DEFAULT_CONFIG: MutationConfig = {
   mutationRate: 0.02, // 2% mutation rate by default
   seed: 1
@@ -41,6 +47,19 @@ class SeededRandom {
     // Linear congruential generator
     this.seed = (this.seed * 1664525 + 1013904223) % 4294967296
     return this.seed / 4294967296
+  }
+
+  nextInt(max: number): number {
+    return Math.floor(this.next() * max)
+  }
+
+  shuffle<T>(array: T[]): T[] {
+    const result = [...array]
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = this.nextInt(i + 1)
+      ;[result[i], result[j]] = [result[j], result[i]]
+    }
+    return result
   }
 }
 
@@ -363,4 +382,278 @@ export function mutateRobotIds(
   }
 
   return { mutated, mutationLog }
+}
+
+// ============================================================================
+// COLLISION-ZONE AMBIGUITY MUTATIONS (Pre-Resolution)
+// ============================================================================
+
+/**
+ * Mutate parsed Cells to GUARANTEE ambiguous matches
+ * Strategy: Find existing stations with shared line+bay, mutate incoming cells
+ * to share those discriminators but with different station numbers
+ */
+export function mutateCollisionCells(
+  cells: Cell[],
+  prevRecords: StationRecord[],
+  config: CollisionMutationConfig
+): { mutated: Cell[]; mutationLog: string[] } {
+  const rng = new SeededRandom(config.seed)
+  const mutated: Cell[] = [...cells]
+  const mutationLog: string[] = []
+
+  if (cells.length === 0 || prevRecords.length === 0) {
+    return { mutated, mutationLog }
+  }
+
+  // Build collision zone index: group prevRecords by (line+bay)
+  const zoneIndex = new Map<string, StationRecord[]>()
+  for (const record of prevRecords) {
+    if (record.plantKey !== config.plantKey) continue
+    if (record.status !== 'active') continue
+    const { line, bay } = record.labels
+    if (!line || !bay) continue
+
+    const zoneKey = `${line}_${bay}`
+    if (!zoneIndex.has(zoneKey)) {
+      zoneIndex.set(zoneKey, [])
+    }
+    zoneIndex.get(zoneKey)!.push(record)
+  }
+
+  // Find zones with 2+ stations (collision candidates)
+  const collisionZones = Array.from(zoneIndex.entries())
+    .filter(([_, records]) => records.length >= 2)
+
+  if (collisionZones.length === 0) {
+    log.debug(`[CollisionMutator] No collision zones found for cells (need zones with 2+ stations)`)
+    return { mutated, mutationLog }
+  }
+
+  // Shuffle cells deterministically
+  const indices = rng.shuffle([...Array(mutated.length).keys()])
+
+  // Mutate up to targetAmbiguous cells
+  let mutationCount = 0
+  for (let i = 0; i < indices.length && mutationCount < config.targetAmbiguous; i++) {
+    const idx = indices[i]
+    const cell = mutated[idx]
+    const zone = collisionZones[mutationCount % collisionZones.length]
+    const [zoneKey, zoneRecords] = zone
+
+    // Pick a random target from the zone
+    const target = zoneRecords[rng.nextInt(zoneRecords.length)]
+
+    // Parse existing cell id to extract components (assuming format like "proj-TMS-STLA-S-area-X-cell-Y")
+    const oldId = cell.id
+    const oldArea = cell.area || ''
+    const oldLocation = cell.location || ''
+    const oldStation = cell.station || ''
+
+    // Create new station number that differs from all existing in the zone
+    const existingStationNos = zoneRecords.map(r => r.labels.stationNo)
+    const newStationNo = generateCollisionStationNo(existingStationNos, rng)
+
+    // Mutate cell to match target's line+bay but different station
+    const newArea = target.labels.line
+    const newLocation = target.labels.bay
+    const newStation = newStationNo
+
+    // Reconstruct cell id (simplified - matches keyDerivation pattern)
+    const newId = `proj-${config.plantKey}-area-${newArea}-cell-${newLocation}-${newStation}`
+
+    mutated[idx] = {
+      ...cell,
+      id: newId,
+      area: newArea,
+      location: newLocation,
+      station: newStation
+    }
+
+    mutationLog.push(`Cell: "${oldId}" -> "${newId}" (collision zone: ${zoneKey})`)
+    mutationCount++
+  }
+
+  if (mutationCount > 0) {
+    log.info(`[CollisionMutator] Created ${mutationCount} collision cell mutations`)
+  }
+
+  return { mutated, mutationLog }
+}
+
+/**
+ * Mutate parsed Tools to GUARANTEE ambiguous matches
+ * Strategy: Find existing tools with shared toolCode, mutate incoming tools
+ * to share toolCode but with different keys/names
+ */
+export function mutateCollisionTools(
+  tools: Tool[],
+  prevRecords: ToolRecord[],
+  config: CollisionMutationConfig
+): { mutated: Tool[]; mutationLog: string[] } {
+  const rng = new SeededRandom(config.seed)
+  const mutated: Tool[] = [...tools]
+  const mutationLog: string[] = []
+
+  if (!tools || tools.length === 0 || !prevRecords || prevRecords.length === 0) {
+    return { mutated, mutationLog }
+  }
+
+  // Build collision zone index: group by toolCode
+  const zoneIndex = new Map<string, ToolRecord[]>()
+  for (const record of prevRecords) {
+    if (!record || !record.plantKey || !record.labels) continue
+    if (record.plantKey !== config.plantKey) continue
+    if (record.status !== 'active') continue
+    const toolCode = record.labels.toolCode
+    if (!toolCode) continue
+
+    if (!zoneIndex.has(toolCode)) {
+      zoneIndex.set(toolCode, [])
+    }
+    const zone = zoneIndex.get(toolCode)
+    if (zone) {
+      zone.push(record)
+    }
+  }
+
+  // Find zones with 2+ tools
+  const collisionZones = Array.from(zoneIndex.entries())
+    .filter(([_, records]) => records.length >= 2)
+
+  if (collisionZones.length === 0) {
+    log.debug(`[CollisionMutator] No collision zones found for tools (need zones with 2+ tools sharing toolCode)`)
+    return { mutated, mutationLog }
+  }
+
+  // Shuffle tools deterministically
+  const indices = rng.shuffle([...Array(mutated.length).keys()])
+
+  // Mutate up to targetAmbiguous tools
+  let mutationCount = 0
+  for (let i = 0; i < indices.length && mutationCount < config.targetAmbiguous; i++) {
+    const idx = indices[i]
+    const tool = mutated[idx]
+    const zone = collisionZones[mutationCount % collisionZones.length]
+    const [toolCode, zoneRecords] = zone
+
+    const oldId = tool.id
+    const oldName = tool.name || ''
+
+    // Create new id with same toolCode but different suffix
+    const suffix = `COLLISION${rng.nextInt(1000)}`
+    const newId = `tool-${toolCode}-${suffix}`
+    const newName = `${toolCode} ${suffix}`
+
+    mutated[idx] = {
+      ...tool,
+      id: newId,
+      name: newName,
+      description: tool.description ? `${tool.description} (collision test)` : `(collision test)`
+    }
+
+    mutationLog.push(`Tool: "${oldId}" -> "${newId}" (collision zone: ${toolCode})`)
+    mutationCount++
+  }
+
+  if (mutationCount > 0) {
+    log.info(`[CollisionMutator] Created ${mutationCount} collision tool mutations`)
+  }
+
+  return { mutated, mutationLog }
+}
+
+/**
+ * Mutate parsed Robots to GUARANTEE ambiguous matches
+ * Strategy: Find existing robots with shared caption prefix, mutate incoming robots
+ * to share prefix but with different full captions
+ */
+export function mutateCollisionRobots(
+  robots: Robot[],
+  prevRecords: RobotRecord[],
+  config: CollisionMutationConfig
+): { mutated: Robot[]; mutationLog: string[] } {
+  const rng = new SeededRandom(config.seed)
+  const mutated: Robot[] = [...robots]
+  const mutationLog: string[] = []
+
+  if (robots.length === 0 || prevRecords.length === 0) {
+    return { mutated, mutationLog }
+  }
+
+  // Build collision zone index: group by robotCaption prefix (first 5 chars)
+  const zoneIndex = new Map<string, RobotRecord[]>()
+  for (const record of prevRecords) {
+    if (record.plantKey !== config.plantKey) continue
+    if (record.status !== 'active') continue
+    const caption = record.labels.robotCaption
+    if (!caption || caption.length < 3) continue
+
+    const prefix = caption.substring(0, Math.min(5, caption.length))
+    if (!zoneIndex.has(prefix)) {
+      zoneIndex.set(prefix, [])
+    }
+    zoneIndex.get(prefix)!.push(record)
+  }
+
+  // Find zones with 2+ robots
+  const collisionZones = Array.from(zoneIndex.entries())
+    .filter(([_, records]) => records.length >= 2)
+
+  if (collisionZones.length === 0) {
+    log.debug(`[CollisionMutator] No collision zones found for robots (need zones with 2+ robots sharing caption prefix)`)
+    return { mutated, mutationLog }
+  }
+
+  // Shuffle robots deterministically
+  const indices = rng.shuffle([...Array(mutated.length).keys()])
+
+  // Mutate up to targetAmbiguous robots
+  let mutationCount = 0
+  for (let i = 0; i < indices.length && mutationCount < config.targetAmbiguous; i++) {
+    const idx = indices[i]
+    const robot = mutated[idx]
+    const zone = collisionZones[mutationCount % collisionZones.length]
+    const [prefix, zoneRecords] = zone
+
+    const oldId = robot.id
+    const oldName = robot.name || ''
+
+    // Create new id with same prefix but different suffix
+    const suffix = `COLLISION${rng.nextInt(1000)}`
+    const newId = `robot-${prefix}-${suffix}`
+    const newName = `${prefix} ${suffix}`
+
+    mutated[idx] = {
+      ...robot,
+      id: newId,
+      name: newName,
+      oemModel: `${robot.oemModel || prefix} COLLISION`,
+      description: `${robot.description || ''} (collision test)`.trim()
+    }
+
+    mutationLog.push(`Robot: "${oldId}" -> "${newId}" (collision zone: ${prefix})`)
+    mutationCount++
+  }
+
+  if (mutationCount > 0) {
+    log.info(`[CollisionMutator] Created ${mutationCount} collision robot mutations`)
+  }
+
+  return { mutated, mutationLog }
+}
+
+/**
+ * Generate a station number that will collide with existing stations
+ * but is not an exact match
+ */
+function generateCollisionStationNo(existingStationNos: string[], rng: SeededRandom): string {
+  // Try to create a variant that's close but different
+  if (existingStationNos.length > 0) {
+    const base = existingStationNos[rng.nextInt(existingStationNos.length)]
+    // Add a suffix to make it different but similar
+    return `${base}-COL${rng.nextInt(10)}`
+  }
+  // Fallback
+  return `COLLISION${rng.nextInt(100)}`
 }
