@@ -28,6 +28,10 @@ const TimelineView = lazy(() => import('./routes/TimelineView'))
 const SimulationPage = lazy(() => import('./routes/SimulationPage'))
 const DataHealthPage = lazy(() => import('./routes/DataHealthPage'))
 const ToolingBottlenecksPage = lazy(() => import('./routes/ToolingBottlenecksPage'))
+const ImportReviewPage = lazy(() => import('./routes/ImportReviewPage'))
+const AmbiguityBundleImportPage = lazy(() => import('./routes/AmbiguityBundleImportPage'))
+const RegistryPage = lazy(() => import('./routes/RegistryPage'))
+const AuditTrailPage = lazy(() => import('./routes/AuditTrailPage'))
 
 // Loading fallback component
 function RouteLoader() {
@@ -73,6 +77,11 @@ function App() {
                                             <Route path="readiness" element={<ReadinessBoard />} />
                                             <Route path="timeline/:projectId" element={<TimelineView />} />
                                             <Route path="data-health" element={<DataHealthPage />} />
+                                            <Route path="import-history" element={<ImportHistoryPage />} />
+                                            <Route path="import-review/:importRunId" element={<ImportReviewPage />} />
+                                            <Route path="ambiguity-bundle-import" element={<AmbiguityBundleImportPage />} />
+                                            <Route path="registry" element={<RegistryPage />} />
+                                            <Route path="audit-trail" element={<AuditTrailPage />} />
                                         </Route>
                                     </Routes>
                                 </Suspense>

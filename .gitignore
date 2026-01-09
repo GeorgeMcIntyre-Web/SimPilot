@@ -23,8 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # User Data (Large files)
 user_data/
+
+# Tool List Excel files (large, contain sensitive data)
+public/ToolingList/*.xlsx
+public/ToolingList/*.xls
 
 # Env (allow .env.example for documentation)
 .env
@@ -59,3 +66,4 @@ LOCAL_CHANGES_STATUS.md
 PROGRESS_SUMMARY.md
 REVIEW_SUMMARY.md
 push-changes.ps1
+artifacts/
