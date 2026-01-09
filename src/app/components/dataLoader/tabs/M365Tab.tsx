@@ -45,6 +45,8 @@ export function M365Tab({
           </button>
         </div>
       </div>
+
+      
     );
   }
 
@@ -68,7 +70,7 @@ export function M365Tab({
         <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
           <p className="text-sm text-red-700 dark:text-red-300">{m365Error}</p>
         </div>
-      )}
+      )}  
 
       {m365Items.length > 0 ? (
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">

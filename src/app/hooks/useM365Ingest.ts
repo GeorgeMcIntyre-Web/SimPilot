@@ -3,6 +3,8 @@ import { ingestFiles, IngestFilesResult, IngestFilesInput } from '../../ingestio
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { listExcelFilesInConfiguredFolder, downloadFileAsBlob, blobToFile, MsExcelFileItem } from '../../integrations/ms/msGraphClient';
 import { VersionComparisonResult } from '../../ingestion/versionComparison';
+import { addImportHistoryEntry, buildImportHistoryEntry } from '../features/importHistory/importHistoryStore';
+import { syncSimPilotStoreFromLocalData } from '../../domain/simPilotSnapshotBuilder';
 
 export function useM365Ingest(hasData: boolean) {
   const [m365Items, setM365Items] = useState<MsExcelFileItem[]>([]);
@@ -97,6 +99,8 @@ export function useM365Ingest(hasData: boolean) {
         setShowVersionComparison(true);
       } else {
         setResult(res);
+        addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Microsoft 365'));
+        syncSimPilotStoreFromLocalData();
       }
 
     } catch (err) {
@@ -139,6 +143,8 @@ export function useM365Ingest(hasData: boolean) {
       setResult(res);
       setPendingIngestInput(null);
       setVersionComparison(null);
+      addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Microsoft 365'));
+      syncSimPilotStoreFromLocalData();
     } catch (err) {
       console.error(err);
       setM365Error(err instanceof Error ? err.message : "An unknown error occurred during ingestion.");

@@ -7,7 +7,8 @@ import {
     Calendar,
     Box,
     LayoutGrid,
-    Activity
+    Activity,
+    History
 } from 'lucide-react';
 import { NavItem } from './types';
 
@@ -22,4 +23,5 @@ export const navItems: NavItem[] = [
     { href: '/assets', label: 'Assets', icon: Box },
     { href: '/data-health', label: 'Data Health', icon: Activity },
     { href: '/data-loader', label: 'Data Loader', icon: Upload },
+    { href: '/import-history', label: 'Import History', icon: History },
 ];

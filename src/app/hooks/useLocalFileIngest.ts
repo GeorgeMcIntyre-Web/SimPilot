@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { ingestFiles, IngestFilesResult, IngestFilesInput } from '../../ingestion/ingestionCoordinator';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { VersionComparisonResult } from '../../ingestion/versionComparison';
+import { addImportHistoryEntry, buildImportHistoryEntry } from '../features/importHistory/importHistoryStore';
+import { syncSimPilotStoreFromLocalData } from '../../domain/simPilotSnapshotBuilder';
 
 export function useLocalFileIngest(hasData: boolean) {
   const [simulationFiles, setSimulationFiles] = useState<File[]>([]);
@@ -75,6 +77,8 @@ export function useLocalFileIngest(hasData: boolean) {
         setShowVersionComparison(true);
       } else {
         setResult(res);
+        addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Local Files'));
+        syncSimPilotStoreFromLocalData();
       }
     } catch (err) {
       console.error(err);
@@ -98,6 +102,8 @@ export function useLocalFileIngest(hasData: boolean) {
       setResult(res);
       setPendingIngestInput(null);
       setVersionComparison(null);
+      addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Local Files'));
+      syncSimPilotStoreFromLocalData();
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "An unknown error occurred during ingestion.");
