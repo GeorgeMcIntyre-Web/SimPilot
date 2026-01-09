@@ -1,0 +1,486 @@
+/**
+ * Robot Equipment List Styles
+ */
+
+.robot-equipment-list {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ============================================================================
+   HEADER
+   ============================================================================ */
+
+.robot-equipment-header {
+  margin-bottom: 30px;
+}
+
+.robot-equipment-header h1 {
+  margin: 0 0 15px 0;
+  font-size: 28px;
+  color: #1a1a1a;
+}
+
+.robot-equipment-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 15px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  min-width: 120px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.stat-value.delivered {
+  color: #28a745;
+}
+
+.stat-value.not-delivered {
+  color: #ffc107;
+}
+
+.stat-value.powered-on {
+  color: #007bff;
+}
+
+/* ============================================================================
+   FILTERS
+   ============================================================================ */
+
+.robot-equipment-filters {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 300px;
+  padding: 10px 15px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.filter-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border: 1px solid #d0d0d0;
+  background: white;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-chip:hover {
+  border-color: #007bff;
+  background: #f0f7ff;
+}
+
+.filter-chip.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.filter-more {
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+  padding: 6px 0;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.group-select {
+  padding: 8px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+.expand-collapse-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-expand,
+.btn-collapse {
+  padding: 6px 12px;
+  border: 1px solid #d0d0d0;
+  background: white;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-expand:hover,
+.btn-collapse:hover {
+  background: #f5f5f5;
+}
+
+/* ============================================================================
+   CONTENT
+   ============================================================================ */
+
+.robot-equipment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.robot-group {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.robot-group-header {
+  padding: 12px 20px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.robot-group-header:hover {
+  background: #f0f0f0;
+}
+
+.group-toggle {
+  font-size: 12px;
+  color: #666;
+  width: 16px;
+  text-align: center;
+}
+
+.group-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.group-count {
+  font-size: 14px;
+  color: #666;
+}
+
+.robot-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 15px;
+  padding: 15px;
+}
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.no-results p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ============================================================================
+   ROBOT CARD
+   ============================================================================ */
+
+.robot-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  overflow: hidden;
+}
+
+.robot-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
+}
+
+.robot-card.not-delivered {
+  border-left: 4px solid #ffc107;
+}
+
+.robot-card.esow-concern {
+  border-left: 4px solid #dc3545;
+}
+
+.robot-card.removed {
+  border-left: 4px solid #6c757d;
+  opacity: 0.7;
+}
+
+.robot-card.removed .robot-id {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+.robot-card-header {
+  padding: 12px 15px;
+  background: #fafafa;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.robot-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.robot-id {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.robot-station {
+  font-size: 13px;
+  color: #666;
+}
+
+.robot-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-alert {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.badge-status {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.badge-removed {
+  background: #e2e3e5;
+  color: #383d41;
+  text-decoration: line-through;
+}
+
+.robot-card-body {
+  padding: 15px;
+}
+
+.robot-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   ROBOT DETAILS (EXPANDED)
+   ============================================================================ */
+
+.robot-details {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.details-section {
+  margin-bottom: 15px;
+}
+
+.details-section:last-child {
+  margin-bottom: 0;
+}
+
+.details-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: #1a1a1a;
+}
+
+.detail-value.warning {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .robot-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .robot-info-grid,
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    min-width: 100%;
+  }
+
+  .robot-equipment-stats {
+    justify-content: space-between;
+  }
+
+  .stat-item {
+    flex: 1;
+    min-width: calc(50% - 10px);
+  }
+}
