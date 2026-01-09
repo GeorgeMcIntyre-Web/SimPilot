@@ -24,6 +24,7 @@ import {
   generateRunId
 } from './ingestionTelemetry'
 import * as XLSX from 'xlsx'
+import { DiffResult, ImportSourceType } from '../domain/uidTypes'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -49,6 +50,7 @@ export interface IngestFilesResultV2 {
   robotsCount: number
   toolsCount: number
   warnings: IngestionWarning[]
+  diffResult?: DiffResult
 }
 
 // ============================================================================
@@ -126,6 +128,50 @@ function mapLegacyKindToCode(kind: IngestionWarning['kind']): FileIngestionWarni
     default:
       return 'PARSER_ERROR'
   }
+}
+
+// ============================================================================
+// DIFFRESULT BUILDER (Telemetry Path)
+// ============================================================================
+
+function buildDiffResultFromTelemetry(
+  runResult: IngestionRunResult,
+  aggregateCounts: { projects: number; areas: number; cells: number; robots: number; tools: number }
+): DiffResult {
+  const sourceFile = runResult.fileResults[0]?.fileName || 'unknown'
+  const sourceType: ImportSourceType = deriveSourceType(runResult.fileResults)
+  const totalRows = aggregateCounts.cells + aggregateCounts.robots + aggregateCounts.tools
+
+  return {
+    importRunId: runResult.runId,
+    sourceFile,
+    sourceType,
+    plantKey: 'PLANT_UNKNOWN',
+    computedAt: new Date().toISOString(),
+    creates: [], // Telemetry path does not yet compute detailed CRUD; placeholder to keep UI in sync
+    updates: [],
+    deletes: [],
+    renamesOrMoves: [],
+    ambiguous: [],
+    summary: {
+      totalRows,
+      created: 0,
+      updated: 0,
+      deleted: 0,
+      renamed: 0,
+      ambiguous: 0,
+      skipped: 0
+    }
+  }
+}
+
+function deriveSourceType(fileResults: FileIngestionResult[]): ImportSourceType {
+  const first = fileResults[0]
+  if (!first || !first.scanSummary) return 'toolList'
+  const category = first.scanSummary.category
+  if (category === 'SIMULATION_STATUS') return 'simulationStatus'
+  if (category === 'ROBOT_SPECS') return 'robotList'
+  return 'toolList'
 }
 
 // ============================================================================
@@ -256,6 +302,12 @@ export async function ingestFilesV2(
   // Convert telemetry warnings to legacy warnings for backward compat
   const legacyWarnings = runResult.aggregateWarnings.map(telemetryToLegacyWarning)
 
+  // Persist a minimal DiffResult so the Diff Results tab stays in sync for V2 imports.
+  if (stage === 'APPLY_TO_STORE') {
+    const diffResult = buildDiffResultFromTelemetry(runResult, aggregateCounts)
+    coreStore.addDiffResult(diffResult)
+  }
+
   return {
     runResult,
     projectsCount: aggregateCounts.projects,
@@ -263,7 +315,8 @@ export async function ingestFilesV2(
     cellsCount: aggregateCounts.cells,
     robotsCount: aggregateCounts.robots,
     toolsCount: aggregateCounts.tools,
-    warnings: legacyWarnings
+    warnings: legacyWarnings,
+    diffResult: stage === 'APPLY_TO_STORE' ? buildDiffResultFromTelemetry(runResult, aggregateCounts) : undefined
   }
 }
 

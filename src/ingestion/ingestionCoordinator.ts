@@ -33,6 +33,15 @@ import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 import * as XLSX from 'xlsx'
 import { syncSimulationStore } from '../features/simulation'
 import { log } from '../lib/log'
+import {
+  DiffResult,
+  DiffCreate,
+  DiffUpdate,
+  DiffDelete,
+  DiffRenameOrMove,
+  DiffAmbiguous,
+  ImportSourceType
+} from '../domain/uidTypes'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -63,6 +72,8 @@ export interface IngestFilesResult {
   toolsCount: number
   warnings: IngestionWarning[]
   versionComparison?: VersionComparisonResult
+  diffResult?: DiffResult
+  importRunId?: string
 }
 
 // ============================================================================
@@ -209,6 +220,131 @@ function inferModelKeyFromFilename(filename: string): string | undefined {
   }
 
   return undefined
+}
+
+// ============================================================================
+// DIFFRESULT ADAPTER (versionComparison -> DiffResult)
+// ============================================================================
+
+function buildDiffResultFromVersionComparison(
+  importRunId: string,
+  sourceFile: string,
+  sourceType: ImportSourceType,
+  versionComparison: VersionComparisonResult | undefined,
+  plantKey: string = 'PLANT_UNKNOWN'
+): DiffResult {
+  const creates: DiffCreate[] = []
+  const updates: DiffUpdate[] = []
+  const deletes: DiffDelete[] = []
+  const renamesOrMoves: DiffRenameOrMove[] = []
+  const ambiguous: DiffAmbiguous[] = []
+
+  if (versionComparison) {
+    for (const change of versionComparison.cells) {
+      const key = resolveCellKey(change.entity)
+      if (change.type === 'ADDED') {
+        creates.push({
+          key,
+          plantKey,
+          entityType: 'station',
+          attributes: change.entity,
+          suggestedName: change.entity.name
+        })
+        continue
+      }
+
+      if (change.type === 'MODIFIED') {
+        updates.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType: 'station',
+          oldAttributes: change.oldEntity || {},
+          newAttributes: change.entity,
+          changedFields: (change.conflicts || []).map(c => c.field)
+        })
+        continue
+      }
+
+      if (change.type === 'REMOVED') {
+        deletes.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType: 'station',
+          lastSeen: change.entity.lastUpdated || new Date().toISOString()
+        })
+      }
+    }
+
+    const assetChanges = [...versionComparison.robots, ...versionComparison.tools]
+    for (const change of assetChanges) {
+      const entityType = change.entity.kind === 'ROBOT' ? 'robot' : 'tool'
+      const key = change.entity.id
+
+      if (change.type === 'ADDED') {
+        creates.push({
+          key,
+          plantKey,
+          entityType,
+          attributes: change.entity,
+          suggestedName: change.entity.name
+        })
+        continue
+      }
+
+      if (change.type === 'MODIFIED') {
+        updates.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType,
+          oldAttributes: change.oldEntity || {},
+          newAttributes: change.entity,
+          changedFields: (change.conflicts || []).map(c => c.field)
+        })
+        continue
+      }
+
+      if (change.type === 'REMOVED') {
+        deletes.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType,
+          lastSeen: (change.entity as any).lastUpdated || change.entity.metadata?.lastUpdated || new Date().toISOString()
+        })
+      }
+    }
+  }
+
+  const totalRows = creates.length + updates.length + deletes.length + renamesOrMoves.length + ambiguous.length
+
+  return {
+    importRunId,
+    sourceFile,
+    sourceType,
+    plantKey,
+    computedAt: new Date().toISOString(),
+    creates,
+    updates,
+    deletes,
+    renamesOrMoves,
+    ambiguous,
+    summary: {
+      totalRows,
+      created: creates.length,
+      updated: updates.length,
+      deleted: deletes.length,
+      renamed: renamesOrMoves.length,
+      ambiguous: ambiguous.length,
+      skipped: 0
+    }
+  }
+}
+
+function resolveCellKey(cell: import('../domain/core').Cell): string {
+  return cell.stationId || cell.code || cell.id
 }
 
 // ============================================================================
@@ -704,8 +840,20 @@ async function ingestFilesInternal(
     log.info('[Version Comparison]', versionComparison.summary)
   }
 
+  const sourceFileName = input.simulationFiles[0]?.name || input.equipmentFiles[0]?.name || 'unknown'
+  const importSourceType: ImportSourceType = input.simulationFiles.length > 0 ? 'simulationStatus' :
+    input.equipmentFiles.length > 0 ? 'toolList' : 'toolList'
+  const importRunId = crypto.randomUUID()
+  const modelKey = inferModelKeyFromFilename(sourceFileName)
+  const diffResult: DiffResult = buildDiffResultFromVersionComparison(
+    importRunId,
+    sourceFileName,
+    importSourceType,
+    versionComparison
+  )
+
   // If previewOnly mode, return comparison without applying data
-  if (input.previewOnly && versionComparison) {
+  if (input.previewOnly) {
     return {
       projectsCount: applyResult.projects.length,
       areasCount: applyResult.areas.length,
@@ -713,32 +861,31 @@ async function ingestFilesInternal(
       robotsCount: applyResult.robots.length,
       toolsCount: applyResult.tools.length,
       warnings: allWarnings,
-      versionComparison
+      versionComparison,
+      diffResult,
+      importRunId
     }
   }
 
   // Create ImportRun record for last-seen tracking
-  const importRunId = crypto.randomUUID()
-  const sourceFileName = input.simulationFiles[0]?.name || input.equipmentFiles[0]?.name || 'unknown'
-  const modelKey = inferModelKeyFromFilename(sourceFileName)
   const importRun: import('../domain/uidTypes').ImportRun = {
     id: importRunId,
     sourceFileName,
-    sourceType: input.simulationFiles.length > 0 ? 'simulationStatus' :
-                 input.equipmentFiles.length > 0 ? 'toolList' : 'toolList',
+    sourceType: importSourceType,
     plantKey: 'PLANT_UNKNOWN', // TODO: Derive from filename/metadata when plant detection is implemented
     plantKeySource: 'unknown',
     modelKey, // Vehicle program inferred from filename (optional)
     importedAt: new Date().toISOString(),
     counts: {
-      created: 0,
-      updated: 0,
-      deleted: 0,
-      renamed: 0,
-      ambiguous: 0
+      created: diffResult.summary.created,
+      updated: diffResult.summary.updated,
+      deleted: diffResult.summary.deleted,
+      renamed: diffResult.summary.renamed,
+      ambiguous: diffResult.summary.ambiguous
     }
   }
   coreStore.addImportRun(importRun)
+  coreStore.addDiffResult(diffResult)
 
   // Log Model context if detected
   if (modelKey) {
@@ -785,7 +932,9 @@ async function ingestFilesInternal(
     robotsCount: state.assets.filter(a => a.kind === 'ROBOT').length,
     toolsCount: state.assets.filter(a => a.kind !== 'ROBOT').length,
     warnings: allWarnings,
-    versionComparison
+    versionComparison,
+    diffResult,
+    importRunId
   }
 }
 

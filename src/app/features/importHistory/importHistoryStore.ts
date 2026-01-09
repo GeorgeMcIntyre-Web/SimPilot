@@ -2,6 +2,7 @@ import { coreStore } from '../../../domain/coreStore';
 import type { IngestFilesInput, IngestFilesResult } from '../../../ingestion/ingestionCoordinator';
 import type { VersionComparisonResult, EntityChange } from '../../../ingestion/versionComparison';
 import type { IngestionWarning } from '../../../domain/core';
+import type { DiffResult } from '../../../domain/uidTypes';
 import type {
   ImportHistoryEntry,
   ImportDiff,
@@ -58,29 +59,42 @@ export function buildImportHistoryEntry(
   const filename = input.simulationFiles.map(f => f.name).join(', ') || input.equipmentFiles[0]?.name || 'Import';
 
   const versionComparison = result.versionComparison;
-  const diff: ImportDiff = versionComparison ? buildDiffFromVersionComparison(versionComparison) : {
-    created: [],
-    updated: [],
-    deleted: [],
-    renamed: [],
-    ambiguities: [],
-  };
+  const diffResult = result.diffResult;
+  const diff: ImportDiff = diffResult
+    ? buildDiffFromDiffResult(diffResult)
+    : versionComparison
+      ? buildDiffFromVersionComparison(versionComparison)
+      : {
+          created: [],
+          updated: [],
+          deleted: [],
+          renamed: [],
+          ambiguities: [],
+        };
 
-  const counts = versionComparison
+  const counts = diffResult
     ? {
-        created: countChanges(versionComparison, 'ADDED'),
-        updated: countChanges(versionComparison, 'MODIFIED'),
-        deleted: countChanges(versionComparison, 'REMOVED'),
-        renamed: diff.renamed.length,
-        ambiguous: diff.ambiguities.length,
+        created: diffResult.summary.created,
+        updated: diffResult.summary.updated,
+        deleted: diffResult.summary.deleted,
+        renamed: diffResult.summary.renamed,
+        ambiguous: diffResult.summary.ambiguous,
       }
-    : {
-        created: 0,
-        updated: 0,
-        deleted: 0,
-        renamed: 0,
-        ambiguous: 0,
-      };
+    : versionComparison
+      ? {
+          created: countChanges(versionComparison, 'ADDED'),
+          updated: countChanges(versionComparison, 'MODIFIED'),
+          deleted: countChanges(versionComparison, 'REMOVED'),
+          renamed: diff.renamed.length,
+          ambiguous: diff.ambiguities.length,
+        }
+      : {
+          created: 0,
+          updated: 0,
+          deleted: 0,
+          renamed: 0,
+          ambiguous: 0,
+        };
 
   const warningsDetailed: IngestionWarning[] = result.warnings || [];
   const warnings = warningsDetailed.map(w => w.message);
@@ -97,7 +111,7 @@ export function buildImportHistoryEntry(
   const plant = resolvePlantName();
 
   return {
-    id: `IMP-${timestamp}`,
+    id: result.importRunId || `IMP-${timestamp}`,
     timestamp,
     filename,
     plant,
@@ -169,6 +183,40 @@ function buildDiffFromVersionComparison(vc: VersionComparisonResult): ImportDiff
   return { created, updated, deleted, renamed, ambiguities };
 }
 
+function buildDiffFromDiffResult(diff: DiffResult): ImportDiff {
+  const created: DiffItem[] = diff.creates.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.key}`,
+    detail: `Plant ${item.plantKey}`,
+  }))
+
+  const updated: DiffItem[] = diff.updates.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.key}`,
+    detail: item.changedFields.length ? `Changed: ${item.changedFields.join(', ')}` : undefined,
+  }))
+
+  const deleted: DiffItem[] = diff.deletes.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.key}`,
+    detail: item.lastSeen ? `Last seen ${item.lastSeen}` : undefined,
+  }))
+
+  const renamed: RenameItem[] = diff.renamesOrMoves.map(item => ({
+    from: item.oldKey || 'unknown',
+    to: item.newKey,
+    reason: item.matchReasons?.join(', ') || undefined,
+  }))
+
+  const ambiguities: AmbiguityItem[] = diff.ambiguous.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.newKey}`,
+    candidates: item.candidates.map(c => ({
+      name: c.key,
+      score: c.matchScore / 100,
+      reason: c.reasons.join(', '),
+    })),
+  }))
+
+  return { created, updated, deleted, renamed, ambiguities }
+}
+
 function countChanges(vc: VersionComparisonResult, type: EntityChange<any>['type']): number {
   const sum = (arr: EntityChange<any>[]) => arr.filter(c => c.type === type).length;
   return sum(vc.projects) + sum(vc.areas) + sum(vc.cells) + sum(vc.robots) + sum(vc.tools);
@@ -188,4 +236,9 @@ function inferTypeFromMessage(message: string): UnlinkedItem['type'] {
   const lower = message.toLowerCase();
   if (lower.includes('robot')) return 'Robot';
   return 'Tool';
+}
+
+function capitalize(input: string): string {
+  if (!input) return input;
+  return input.charAt(0).toUpperCase() + input.slice(1);
 }
