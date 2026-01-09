@@ -96,6 +96,7 @@ export async function ingestFileWithUid(
   prevRobotRecords: RobotRecord[],
   options: UidIngestionOptions = {}
 ): Promise<UidIngestionResult> {
+  console.log('>>> CODE VERSION: 2026-01-08-v2')  // Version marker to verify code is loaded
   const plantKey = options.plantKey || 'PLANT_TEST'
   const mutateNames = options.mutateNames || false
   const mutationConfig = options.mutationConfig
@@ -239,6 +240,12 @@ export async function ingestFileWithUid(
           if (toolMutationCount > 0) {
             log.info(`[UidIngestion] Applied ${toolMutationCount} collision mutations to tools`)
             toolMutation.mutationLog.forEach(m => log.debug(`  - ${m}`))
+            // TEMP DEBUG: Verify toolsToProcess has COL tools
+            const colTools = toolsToProcess.filter(t => t.id && t.id.includes('COL'))
+            console.log(`>>> DEBUG uidIngestion: toolsToProcess contains ${colTools.length} COL tools (out of ${toolsToProcess.length} total)`)
+            if (colTools.length > 0) {
+              console.log(`   First COL tool: id="${colTools[0].id}", toolNo="${colTools[0].toolNo}"`)
+            }
           }
         } catch (err) {
           log.error(`[UidIngestion] Error in collision mutations: ${err}`)
@@ -263,8 +270,12 @@ export async function ingestFileWithUid(
       }
 
       // Convert tools to tool records with UID resolution
-      for (const tool of toolsToProcess) {
-        const key = tool.id // Canonical key
+      // WORKAROUND: Use index-based iteration to bypass weird for-of caching issue
+      for (let i = 0; i < toolsToProcess.length; i++) {
+        const tool = toolsToProcess[i]
+        // Use canonicalKey if available (schema-aware), otherwise fall back to tool.id
+        const key = tool.canonicalKey || tool.id
+
         const labels = {
           toolCode: tool.toolNo || tool.name || '',
           toolName: tool.name || '',
@@ -280,6 +291,7 @@ export async function ingestFileWithUid(
         )
 
         if (resolution.matchedVia === 'ambiguous') {
+          console.log(`\n!!! AMBIGUOUS TOOL FOUND: key="${key}", toolCode="${labels.toolCode}", candidates=${resolution.candidates?.length}`)
           ambiguousResolutions.push({
             key,
             resolution,

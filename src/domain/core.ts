@@ -187,6 +187,8 @@ export interface Tool extends UnifiedAsset {
   projectId?: string
   robotId?: string
   reuseStatus?: string
+  canonicalKey?: string  // Schema-aware canonical key for UID resolution
+  toolNo?: string        // Tool number/code from Excel
 }
 
 // ============================================================================

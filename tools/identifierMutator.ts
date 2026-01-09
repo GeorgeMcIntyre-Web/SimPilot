@@ -501,17 +501,39 @@ export function mutateCollisionTools(
   const mutated: Tool[] = [...tools]
   const mutationLog: string[] = []
 
-  if (tools.length === 0 || !prevRecords || prevRecords.length === 0) {
+  if (tools.length === 0) {
     return { mutated, mutationLog }
   }
 
-  // Build collision zone index: group by toolCode
-  const zoneIndex = new Map<string, ToolRecord[]>()
-  for (const record of prevRecords) {
-    if (!record || !record.plantKey || !record.labels) continue
-    if (record.plantKey !== config.plantKey) continue
-    if (record.status !== 'active') continue
-    const toolCode = record.labels.toolCode
+  // Build collision zone index from BOTH prevRecords AND current tools
+  const zoneIndex = new Map<string, { id: string; name: string }[]>()
+
+  // Add prevRecords to zone index
+  if (prevRecords && prevRecords.length > 0) {
+    for (const record of prevRecords) {
+      if (!record || !record.plantKey || !record.labels) continue
+      if (record.plantKey !== config.plantKey) continue
+      if (record.status !== 'active') continue
+      const toolCode = record.labels.toolCode
+      if (!toolCode) continue
+
+      if (!zoneIndex.has(toolCode)) {
+        zoneIndex.set(toolCode, [])
+      }
+      const zone = zoneIndex.get(toolCode)
+      if (zone) {
+        zone.push({ id: record.key, name: record.labels.toolName || toolCode })
+      }
+    }
+  }
+
+  // CRITICAL: Also index the CURRENT batch of tools to find intra-file collisions
+  // Extract tool codes from current tools
+  const toolCodePattern = /^tool[-_]([A-Z0-9]+)/i
+  for (const tool of tools) {
+    if (!tool.id) continue
+    const match = tool.id.match(toolCodePattern)
+    const toolCode = match ? match[1] : (tool.name || tool.id).split(/[\s_-]/)[0]
     if (!toolCode) continue
 
     if (!zoneIndex.has(toolCode)) {
@@ -519,51 +541,77 @@ export function mutateCollisionTools(
     }
     const zone = zoneIndex.get(toolCode)
     if (zone) {
-      zone.push(record)
+      zone.push({ id: tool.id, name: tool.name || tool.id })
     }
   }
 
   // Find zones with 2+ tools
   const collisionZones = Array.from(zoneIndex.entries())
-    .filter(([_, records]) => records.length >= 2)
+    .filter(([_, items]) => items.length >= 2)
 
   if (collisionZones.length === 0) {
-    log.debug(`[CollisionMutator] No collision zones found for tools (need zones with 2+ tools sharing toolCode)`)
+    log.debug(`[CollisionMutator] No collision zones found for tools (need zones with 2+ tools sharing toolCode). Checked ${tools.length} tools and ${prevRecords?.length || 0} prevRecords.`)
     return { mutated, mutationLog }
   }
 
-  // Shuffle tools deterministically
-  const indices = rng.shuffle([...Array(mutated.length).keys()])
+  log.debug(`[CollisionMutator] Found ${collisionZones.length} tool collision zones from ${zoneIndex.size} unique tool codes`)
 
-  // Mutate up to targetAmbiguous tools
+  // NEW STRATEGY: For each collision zone, find tools WITHIN the current batch that belong to that zone
+  // and mutate them to create duplicates with different IDs but same toolCode
   let mutationCount = 0
-  for (let i = 0; i < indices.length && mutationCount < config.targetAmbiguous; i++) {
-    const idx = indices[i]
+  const shuffledZones = rng.shuffle([...collisionZones])
+
+  for (const [sharedToolCode, zoneMembers] of shuffledZones) {
+    if (mutationCount >= config.targetAmbiguous) break
+
+    // Find tools in the current batch that have this toolCode (from indexing above)
+    // Look for tools whose extracted toolCode matches this zone's toolCode
+    const candidateIndices: number[] = []
+    for (let i = 0; i < mutated.length; i++) {
+      const tool = mutated[i]
+      if (!tool.id) continue
+
+      // Extract toolCode same way as when building zones
+      const match = tool.id.match(/^tool[-_]([A-Z0-9]+)/i)
+      const extractedCode = match ? match[1] : (tool.name || tool.id).split(/[\s_-]/)[0]
+      if (extractedCode && extractedCode.toUpperCase() === sharedToolCode.toUpperCase()) {
+        candidateIndices.push(i)
+      }
+    }
+
+    if (candidateIndices.length === 0) continue
+
+    // Pick ONE tool from this zone to mutate
+    const idx = candidateIndices[rng.nextInt(candidateIndices.length)]
     const tool = mutated[idx]
-    const zone = collisionZones[mutationCount % collisionZones.length]
-    const [toolCode, zoneRecords] = zone
 
     const oldId = tool.id
     const oldName = tool.name || ''
+    const oldToolNo = tool.toolNo || ''
 
-    // Create new id with same toolCode but different suffix
-    const suffix = `COLLISION${rng.nextInt(1000)}`
-    const newId = `tool-${toolCode}-${suffix}`
-    const newName = `${toolCode} ${suffix}`
+    // Create a variant: different ID but same toolNo so it shares toolCode
+    const suffix = `COL${rng.nextInt(1000)}`
+    const newId = `tool-${sharedToolCode}-${suffix}`
+    const newToolNo = oldToolNo || sharedToolCode  // Preserve existing toolNo if present, else use sharedToolCode
+    const newName = `${sharedToolCode} ${suffix}`
 
     mutated[idx] = {
       ...tool,
       id: newId,
+      toolNo: newToolNo,  // This will be used for labels.toolCode extraction
       name: newName,
       description: tool.description ? `${tool.description} (collision test)` : `(collision test)`
     }
 
-    mutationLog.push(`Tool: "${oldId}" -> "${newId}" (collision zone: ${toolCode})`)
+    mutationLog.push(`Tool: "${oldId}" (toolNo="${oldToolNo}") -> "${newId}" (toolNo="${newToolNo}", zone: ${sharedToolCode})`)
     mutationCount++
   }
 
   if (mutationCount > 0) {
     log.info(`[CollisionMutator] Created ${mutationCount} collision tool mutations`)
+    // TEMP DEBUG: Verify mutations are in the array
+    const colToolsInArray = mutated.filter(t => t.id && t.id.includes('COL')).length
+    console.log(`>>> DEBUG: mutated array contains ${colToolsInArray} tools with COL in id (out of ${mutated.length} total)`)
   }
 
   return { mutated, mutationLog }

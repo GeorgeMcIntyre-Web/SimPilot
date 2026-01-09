@@ -16,7 +16,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "ingest:stla-s": "node scripts/ingest_stla_s.cjs",
-    "real-data-regress": "npx tsx tools/realDataRegress.ts"
+    "real-data-regress": "npx tsx tools/realDataRegress.ts",
+    "dev:inspect-tool-lists": "npx tsx tools/dev/inspectToolLists.ts",
+    "dev:tool-list-count-contract": "npx tsx tools/dev/toolListCountContract.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

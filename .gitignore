@@ -29,6 +29,10 @@ dist-ssr
 # User Data (Large files)
 user_data/
 
+# Tool List Excel files (large, contain sensitive data)
+public/ToolingList/*.xlsx
+public/ToolingList/*.xls
+
 # Env (allow .env.example for documentation)
 .env
 .env.*

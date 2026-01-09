@@ -99,12 +99,19 @@ export function findToolCandidates(
 ): FuzzyCandidate[] {
   const candidates: FuzzyCandidate[] = []
 
+  // TEMP DEBUG: Log when searching for collision-mutated tools
+  const isCollisionKey = key.includes('COL')
+  let debugChecked = 0
+  let debugMatched = 0
+
   for (const record of existingRecords) {
     if (record.key === key) continue
     if (record.plantKey !== plantKey) continue
 
     const reasons: string[] = []
     let score = 0
+
+    debugChecked++
 
     // Partial key match
     if (record.key.includes(key) || key.includes(record.key)) {
@@ -118,6 +125,9 @@ export function findToolCandidates(
       if (codeMatch) {
         score += 30
         reasons.push(`Same tool code: ${labels.toolCode}`)
+        if (isCollisionKey) {
+          debugMatched++
+        }
       }
     }
 
@@ -153,6 +163,14 @@ export function findToolCandidates(
         matchScore: score,
         reasons
       })
+    }
+  }
+
+  // TEMP DEBUG: Log collision key matching
+  if (isCollisionKey) {
+    console.log(`[FuzzyMatcher] Collision key "${key}" (toolCode="${labels.toolCode}"): checked ${debugChecked} existing records, matched ${debugMatched} by toolCode, found ${candidates.length} total candidates`)
+    if (candidates.length > 0) {
+      console.log(`  Top candidate: ${candidates[0].key} (score=${candidates[0].matchScore}, reasons: ${candidates[0].reasons.join(', ')})`)
     }
   }
 

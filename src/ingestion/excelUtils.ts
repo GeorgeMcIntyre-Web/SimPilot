@@ -49,7 +49,8 @@ async function readWorkbookFromExcelInput(
       type: 'array',
       cellDates: false,
       cellNF: false,
-      cellText: false
+      cellText: false,
+      cellStyles: true  // Enable style parsing for strike-through detection
     })
 
     if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
@@ -394,5 +395,56 @@ export function findColumnIndex(
   }
 
   return null
+}
+
+/**
+ * Check if a cell has strike-through formatting
+ *
+ * SheetJS exposes cell styles via cell.s when cellStyles: true is enabled
+ * @param sheet - SheetJS worksheet
+ * @param row - Row index (zero-based)
+ * @param col - Column index (zero-based)
+ * @returns true if cell has strike-through formatting
+ */
+export function isCellStruck(
+  sheet: XLSX.WorkSheet,
+  row: number,
+  col: number
+): boolean {
+  const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
+  const cell = sheet[cellAddress]
+
+  if (!cell) {
+    return false
+  }
+
+  // Check for strike-through in cell style
+  // SheetJS format: cell.s.font.strike
+  return !!(cell.s as any)?.font?.strike
+}
+
+/**
+ * Check if any cells in a row have strike-through formatting
+ * @param sheet - SheetJS worksheet
+ * @param row - Row index (zero-based)
+ * @param columns - Column indices to check (if not provided, checks all columns)
+ * @returns true if any checked cell has strike-through
+ */
+export function isRowStruck(
+  sheet: XLSX.WorkSheet,
+  row: number,
+  columns?: number[]
+): boolean {
+  if (!sheet['!ref']) {
+    return false
+  }
+
+  const range = XLSX.utils.decode_range(sheet['!ref'])
+  const colsToCheck = columns ?? Array.from(
+    { length: range.e.c - range.s.c + 1 },
+    (_, i) => i
+  )
+
+  return colsToCheck.some(col => isCellStruck(sheet, row, col))
 }
 
