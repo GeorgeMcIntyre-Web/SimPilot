@@ -1,6 +1,8 @@
 import { Fragment, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, AlertTriangle, Info } from 'lucide-react';
-import type { IngestionWarning } from '../../../domain/core';
+import type { IngestionWarning } from '../../../../domain/core';
+import { useCoreStore } from '../../../../domain/coreStore';
+import type { DiffResult } from '../../../../domain/uidTypes';
 
 export type ImportStatus = 'clean' | 'needs resolution';
 
@@ -75,6 +77,7 @@ function formatTimestamp(ts: string) {
 }
 
 export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
+  const { diffResults } = useCoreStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [unlinkedGroupExpanded, setUnlinkedGroupExpanded] = useState<Record<string, boolean>>({});
   const [warningGroupExpanded, setWarningGroupExpanded] = useState<Record<string, boolean>>({});
@@ -114,50 +117,61 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
         </p>
       </div>
 
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-x-auto">
+      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-x-auto max-w-5xl custom-scrollbar">
         {!hasData ? (
           <div className="p-6 text-sm text-gray-600 dark:text-gray-300">
             No imports yet. Run a Data Loader import to see history and detailed diffs here.
           </div>
         ) : (
           <table className="w-full table-auto divide-y divide-gray-300 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+            <thead className="bg-gray-50 dark:bg-gray-800 text-xs">
               <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-6">Import</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Filename</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Plant</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Source</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Created</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Updated</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Deleted</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Renamed</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Ambiguous</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Status</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Warnings</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100"></th>
+                <th scope="col" className="py-1.5 pl-2 pr-1 text-left font-semibold text-gray-900 dark:text-gray-100 sm:pl-3">Import</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Filename</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Plant</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Source</th>
+                <th scope="col" className="px-1.5 py-1.5 text-center font-semibold text-gray-900 dark:text-gray-100">Created</th>
+                <th scope="col" className="px-1.5 py-1.5 text-center font-semibold text-gray-900 dark:text-gray-100">Updated</th>
+                <th scope="col" className="px-1.5 py-1.5 text-center font-semibold text-gray-900 dark:text-gray-100">Deleted</th>
+                <th scope="col" className="px-1.5 py-1.5 text-center font-semibold text-gray-900 dark:text-gray-100">Renamed</th>
+                <th scope="col" className="px-1.5 py-1.5 text-center font-semibold text-gray-900 dark:text-gray-100">Ambiguous</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Status</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Warnings</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
               {rows.map((entry) => {
                 const expanded = expandedId === entry.id;
                 const WarningsIcon = entry.warnings && entry.warnings.length > 0 ? AlertTriangle : Info;
-                const counts = entry.counts || {};
+                const liveDiff = diffResults.find((d: DiffResult) => d.importRunId === entry.id);
+                const counts = liveDiff
+                  ? {
+                      created: liveDiff.summary.created,
+                      updated: liveDiff.summary.updated,
+                      deleted: liveDiff.summary.deleted,
+                      renamed: liveDiff.summary.renamed,
+                      ambiguous: liveDiff.summary.ambiguous,
+                    }
+                  : entry.counts || {};
                 const detailedWarnings = entry.warningsDetailed || [];
                 const warningMessages = entry.warnings || [];
                 const hasDetailedWarnings = detailedWarnings.length > 0;
                 const hasSimpleWarnings = !hasDetailedWarnings && warningMessages.length > 0;
-                const diff: ImportDiff = entry.diff || {
-                  created: [],
-                  updated: [],
-                  deleted: [],
-                  renamed: [],
-                  ambiguities: [],
-                };
+                const diff: ImportDiff = liveDiff
+                  ? buildImportDiffFromDiffResult(liveDiff)
+                  : entry.diff || {
+                      created: [],
+                      updated: [],
+                      deleted: [],
+                      renamed: [],
+                      ambiguities: [],
+                    };
 
                 return (
                   <Fragment key={entry.id}>
                     <tr className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60" onClick={() => toggleRow(entry.id)}>
-                      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100 sm:pl-6">
+                      <td className="py-2.5 pl-2 pr-1 text-xs font-medium text-gray-900 dark:text-gray-100 sm:pl-3">
                         <div className="flex items-center gap-2">
                           {expanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
                           <div>
@@ -166,23 +180,23 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">{entry.filename}</td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">{entry.plant}</td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">{entry.sourceType}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{counts.created ?? 0}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{counts.updated ?? 0}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{counts.deleted ?? 0}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{counts.renamed ?? 0}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{counts.ambiguous ?? 0}</td>
-                      <td className="px-3 py-4 text-sm">
+                      <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">{entry.filename}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">{entry.plant}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">{entry.sourceType}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-center text-gray-700 dark:text-gray-300">{counts.created ?? 0}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-center text-gray-700 dark:text-gray-300">{counts.updated ?? 0}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-center text-gray-700 dark:text-gray-300">{counts.deleted ?? 0}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-center text-gray-700 dark:text-gray-300">{counts.renamed ?? 0}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-center text-gray-700 dark:text-gray-300">{counts.ambiguous ?? 0}</td>
+                      <td className="px-1.5 py-2.5 text-xs">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClassMap[entry.status]}`}>
                           {entry.status === 'clean' ? 'Clean' : 'Needs resolution'}
                         </span>
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">
+                      <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">
                         {entry.warnings && entry.warnings.length > 0 ? `${entry.warnings.length} warning(s)` : '—'}
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-500 text-right">
+                      <td className="px-1.5 py-2.5 text-xs text-gray-500 text-right">
                         <WarningsIcon className="w-4 h-4 inline-block" />
                       </td>
                     </tr>
@@ -285,6 +299,45 @@ function AmbiguitySection({ items }: { items: AmbiguityItem[] }) {
       ))}
     </div>
   );
+}
+
+function buildImportDiffFromDiffResult(diff: DiffResult): ImportDiff {
+  const created: DiffItem[] = diff.creates.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.key}`,
+    detail: `Plant ${item.plantKey}`,
+  }))
+
+  const updated: DiffItem[] = diff.updates.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.key}`,
+    detail: item.changedFields.length ? `Changed: ${item.changedFields.join(', ')}` : undefined,
+  }))
+
+  const deleted: DiffItem[] = diff.deletes.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.key}`,
+    detail: item.lastSeen ? `Last seen ${item.lastSeen}` : undefined,
+  }))
+
+  const renamed: RenameItem[] = diff.renamesOrMoves.map(item => ({
+    from: item.oldKey || 'unknown',
+    to: item.newKey,
+    reason: item.matchReasons?.join(', ') || undefined,
+  }))
+
+  const ambiguities: AmbiguityItem[] = diff.ambiguous.map(item => ({
+    item: `${capitalize(item.entityType)} ${item.newKey}`,
+    candidates: item.candidates.map(c => ({
+      name: c.key,
+      score: c.matchScore / 100,
+      reason: c.reasons.join(', '),
+    })),
+  }))
+
+  return { created, updated, deleted, renamed, ambiguities }
+}
+
+function capitalize(input: string): string {
+  if (!input) return input;
+  return input.charAt(0).toUpperCase() + input.slice(1);
 }
 
 interface WarningsSectionProps {

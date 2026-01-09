@@ -11,6 +11,7 @@ export default function ImportReviewPage() {
   const navigate = useNavigate()
   const { diffResults, importRuns } = useCoreStore()
   const [resolving, setResolving] = useState(false)
+  const [activeTab, setActiveTab] = useState<'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'>('ambiguous')
 
   const diffResult = diffResults.find(d => d.importRunId === importRunId)
   const importRun = importRuns.find(r => r.id === importRunId)
@@ -94,11 +95,66 @@ export default function ImportReviewPage() {
     setResolving(false)
   }
 
+  const handleApproveHighConfidenceRenames = () => {
+    setResolving(true)
+    const threshold = 90
+    const toApprove = renames.filter(r => (r.confidence ?? 0) >= threshold && r.oldKey && r.uid)
+    toApprove.forEach(r => {
+      const rule = createAliasRule(
+        r.oldKey!,
+        r.uid as string,
+        r.entityType as any,
+        `Auto-approved rename (${r.confidence}%)`,
+        'local-user'
+      )
+      coreStore.createAliasRule(rule)
+    })
+    setResolving(false)
+  }
+
+  const handleApproveImport = () => {
+    // For now, consider approval as all ambiguities resolved/ignored.
+    coreStore.updateDiffResult(importRunId!, {
+      ambiguous: [],
+      summary: { ...diffResult.summary, ambiguous: 0 }
+    })
+    navigate('/import-history')
+  }
+
+  const handleRejectImport = () => {
+    navigate('/import-history')
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Review Import"
         subtitle={`${importRun.sourceFileName} - ${ambiguousItems.length} ambiguous items`}
+        actions={
+          <div className="flex gap-2">
+            <button
+              onClick={handleApproveHighConfidenceRenames}
+              disabled={resolving}
+              className="px-3 py-2 text-sm rounded-md bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
+            >
+              Approve high-confidence renames
+            </button>
+            <button
+              onClick={handleApproveImport}
+              disabled={resolving}
+              className="px-3 py-2 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              Approve import
+            </button>
+            <button
+              onClick={handleRejectImport}
+              disabled={resolving}
+              className="px-3 py-2 text-sm rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+            >
+              Reject import
+            </button>
+          </div>
+        }
       />
 
       {ambiguousItems.length === 0 && (
@@ -111,77 +167,32 @@ export default function ImportReviewPage() {
 
       <SummaryGrid items={summaryItems} />
 
-      <DiffSection title="Created" items={creates} renderItem={renderCreate} />
-      <DiffSection title="Updated" items={updates} renderItem={renderUpdate} />
-      <DiffSection title="Renamed / Moved" items={renames} renderItem={renderRename} />
-      <DeleteSection items={deletes} onReactivate={handleReactivate} resolving={resolving} />
+      <TabBar activeTab={activeTab} onSelect={setActiveTab} />
 
-      {ambiguousItems.length > 0 && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-          <p className="text-sm text-yellow-800 dark:text-yellow-400">
-            <strong>No silent guessing:</strong> The following items have multiple possible matches.
-            You must decide whether to link to an existing entity or create a new one.
-          </p>
-        </div>
-      )}
-
-      {ambiguousItems.length > 0 && (
-        <div className="space-y-4">
-          {ambiguousItems.map((item, idx) => (
-            <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                  {item.newKey}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {item.entityType} • Plant: {item.plantKey}
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Possible matches ({item.candidates.length}):
-                </h4>
-                <div className="space-y-2">
-                  {item.candidates.map((candidate, cidx) => (
-                    <div
-                      key={cidx}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex-1">
-                        <p className="font-mono text-sm text-gray-900 dark:text-gray-100">
-                          {candidate.key}
-                        </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Score: {candidate.matchScore} • {candidate.reasons.join(', ')}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleLinkToCandidate(item.newKey, candidate.uid, item.entityType)}
-                        disabled={resolving}
-                        className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        Link to this
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => handleCreateNew(item.newKey)}
-                  disabled={resolving}
-                  className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
-                >
-                  Create as new entity
-                </button>
-              </div>
+      {activeTab === 'creates' && <DiffSection title="Created" items={creates} renderItem={renderCreate} />}
+      {activeTab === 'updates' && <DiffSection title="Updated" items={updates} renderItem={renderUpdateDetailed} />}
+      {activeTab === 'renames' && <DiffSection title="Renamed / Moved" items={renames} renderItem={renderRename} />}
+      {activeTab === 'deletes' && <DeleteSection items={deletes} onReactivate={handleReactivate} resolving={resolving} />}
+      {activeTab === 'ambiguous' && (
+        <>
+          {ambiguousItems.length > 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-400">
+                <strong>No silent guessing:</strong> The following items have multiple possible matches.
+                You must decide whether to link to an existing entity or create a new one.
+              </p>
             </div>
-          ))}
-        </div>
+          )}
+          <AmbiguousList
+            items={ambiguousItems}
+            onLink={handleLinkToCandidate}
+            onCreateNew={handleCreateNew}
+            resolving={resolving}
+          />
+        </>
       )}
 
+      {ambiguousItems.length > 0 && (
       {ambiguousItems.length === 0 && (
         <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
           <p className="text-sm text-green-800 dark:text-green-400">
@@ -250,6 +261,27 @@ function renderUpdate(item: DiffUpdate) {
   )
 }
 
+function renderUpdateDetailed(item: DiffUpdate) {
+  const keys = item.changedFields
+  return (
+    <div className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+      <span className="font-medium">{item.key}</span>
+      <span className="text-gray-600 dark:text-gray-400">Type: {item.entityType} • Plant: {item.plantKey}</span>
+      {keys.length > 0 && (
+        <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+          {keys.map(field => (
+            <div key={field} className="flex flex-col">
+              <span className="font-semibold text-gray-800 dark:text-gray-200">{field}</span>
+              <span>Old: {String(item.oldAttributes[field]) || '—'}</span>
+              <span>New: {String(item.newAttributes[field]) || '—'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function renderRename(item: DiffRenameOrMove) {
   return (
     <div className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
@@ -287,6 +319,98 @@ function DeleteSection({ items, onReactivate, resolving }: { items: DiffDelete[]
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function TabBar({ activeTab, onSelect }: { activeTab: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'; onSelect: (tab: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous') => void }) {
+  const tabs: Array<{ key: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'; label: string }> = [
+    { key: 'creates', label: 'Creates' },
+    { key: 'updates', label: 'Updates' },
+    { key: 'renames', label: 'Renames' },
+    { key: 'deletes', label: 'Deletes' },
+    { key: 'ambiguous', label: 'Ambiguous' }
+  ]
+  return (
+    <div className="flex flex-wrap gap-2">
+      {tabs.map(tab => (
+        <button
+          key={tab.key}
+          onClick={() => onSelect(tab.key)}
+          className={`px-3 py-2 rounded-md text-sm border ${activeTab === tab.key ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800'}`}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function AmbiguousList({
+  items,
+  onLink,
+  onCreateNew,
+  resolving
+}: {
+  items: any[]
+  onLink: (ambiguousKey: string, candidateUid: string, entityType: string) => void
+  onCreateNew: (ambiguousKey: string) => void
+  resolving: boolean
+}) {
+  return (
+    <div className="space-y-4">
+      {items.map((item, idx) => (
+        <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              {item.newKey}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {item.entityType} • Plant: {item.plantKey}
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Possible matches ({item.candidates.length}):
+            </h4>
+            <div className="space-y-2">
+              {item.candidates.map((candidate: any, cidx: number) => (
+                <div
+                  key={cidx}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="flex-1">
+                    <p className="font-mono text-sm text-gray-900 dark:text-gray-100">
+                      {candidate.key}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Score: {candidate.matchScore} • {candidate.reasons.join(', ')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onLink(item.newKey, candidate.uid, item.entityType)}
+                    disabled={resolving}
+                    className="ml-4 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Link to this
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => onCreateNew(item.newKey)}
+              disabled={resolving}
+              className="px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              Create as new entity
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

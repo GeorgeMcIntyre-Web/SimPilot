@@ -2,13 +2,13 @@
 // Enhanced ingestion with full telemetry support
 // Uses the Sheet Sniffer for accurate sheet detection
 
-import { IngestionWarning } from '../domain/core'
+import { IngestionWarning, UnifiedAsset } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
 import { readWorkbook } from './excelUtils'
 import { parseSimulationStatus } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
-import { applyIngestedData, IngestedData } from './applyIngestedData'
+import { applyIngestedData, IngestedData, type ApplyResult } from './applyIngestedData'
 import { SheetCategory } from './sheetSniffer'
 import {
   IngestionStage,
@@ -24,7 +24,8 @@ import {
   generateRunId
 } from './ingestionTelemetry'
 import * as XLSX from 'xlsx'
-import { DiffResult, ImportSourceType } from '../domain/uidTypes'
+import { DiffResult, ImportSourceType, DiffCreate, DiffUpdate, DiffDelete, DiffRenameOrMove, ImportRun } from '../domain/uidTypes'
+import { compareVersions, type VersionComparisonResult } from './versionComparison'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -131,35 +132,121 @@ function mapLegacyKindToCode(kind: IngestionWarning['kind']): FileIngestionWarni
 }
 
 // ============================================================================
-// DIFFRESULT BUILDER (Telemetry Path)
+// DIFFRESULT BUILDER (Telemetry Path, using version comparison)
 // ============================================================================
 
-function buildDiffResultFromTelemetry(
-  runResult: IngestionRunResult,
-  aggregateCounts: { projects: number; areas: number; cells: number; robots: number; tools: number }
+function buildDiffResultFromVersionComparison(
+  importRunId: string,
+  sourceFile: string,
+  sourceType: ImportSourceType,
+  versionComparison: VersionComparisonResult | undefined
 ): DiffResult {
-  const sourceFile = runResult.fileResults[0]?.fileName || 'unknown'
-  const sourceType: ImportSourceType = deriveSourceType(runResult.fileResults)
-  const totalRows = aggregateCounts.cells + aggregateCounts.robots + aggregateCounts.tools
+  const creates: DiffCreate[] = []
+  const updates: DiffUpdate[] = []
+  const deletes: DiffDelete[] = []
+  const renamesOrMoves: DiffRenameOrMove[] = []
+  const ambiguous: DiffAmbiguous[] = []
+  const plantKey = 'PLANT_UNKNOWN'
+
+  if (versionComparison) {
+    for (const change of versionComparison.cells) {
+      const key = resolveCellKey(change.entity)
+      if (change.type === 'ADDED') {
+        creates.push({
+          key,
+          plantKey,
+          entityType: 'station',
+          attributes: change.entity,
+          suggestedName: change.entity.name
+        })
+        continue
+      }
+
+      if (change.type === 'MODIFIED') {
+        updates.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType: 'station',
+          oldAttributes: change.oldEntity || {},
+          newAttributes: change.entity,
+          changedFields: (change.conflicts || []).map(c => c.field)
+        })
+        continue
+      }
+
+      if (change.type === 'REMOVED') {
+        deletes.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType: 'station',
+          lastSeen: change.entity.lastUpdated || new Date().toISOString()
+        })
+      }
+    }
+
+    const assetChanges = [...versionComparison.robots, ...versionComparison.tools]
+    for (const change of assetChanges) {
+      const entityType = change.entity.kind === 'ROBOT' ? 'robot' : 'tool'
+      const key = change.entity.id
+
+      if (change.type === 'ADDED') {
+        creates.push({
+          key,
+          plantKey,
+          entityType,
+          attributes: change.entity,
+          suggestedName: change.entity.name
+        })
+        continue
+      }
+
+      if (change.type === 'MODIFIED') {
+        updates.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType,
+          oldAttributes: change.oldEntity || {},
+          newAttributes: change.entity,
+          changedFields: (change.conflicts || []).map(c => c.field)
+        })
+        continue
+      }
+
+      if (change.type === 'REMOVED') {
+        deletes.push({
+          uid: change.entity.id,
+          key,
+          plantKey,
+          entityType,
+          lastSeen: (change.entity as any).lastUpdated || change.entity.metadata?.lastUpdated || new Date().toISOString()
+        })
+      }
+    }
+  }
+
+  const totalRows = creates.length + updates.length + deletes.length + renamesOrMoves.length + ambiguous.length
 
   return {
-    importRunId: runResult.runId,
+    importRunId,
     sourceFile,
     sourceType,
-    plantKey: 'PLANT_UNKNOWN',
+    plantKey,
     computedAt: new Date().toISOString(),
-    creates: [], // Telemetry path does not yet compute detailed CRUD; placeholder to keep UI in sync
-    updates: [],
-    deletes: [],
-    renamesOrMoves: [],
-    ambiguous: [],
+    creates,
+    updates,
+    deletes,
+    renamesOrMoves,
+    ambiguous,
     summary: {
       totalRows,
-      created: 0,
-      updated: 0,
-      deleted: 0,
-      renamed: 0,
-      ambiguous: 0,
+      created: creates.length,
+      updated: updates.length,
+      deleted: deletes.length,
+      renamed: renamesOrMoves.length,
+      ambiguous: ambiguous.length,
       skipped: 0
     }
   }
@@ -172,6 +259,57 @@ function deriveSourceType(fileResults: FileIngestionResult[]): ImportSourceType 
   if (category === 'SIMULATION_STATUS') return 'simulationStatus'
   if (category === 'ROBOT_SPECS') return 'robotList'
   return 'toolList'
+}
+
+function resolveCellKey(cell: import('../domain/core').Cell): string {
+  return cell.stationId || cell.code || cell.id
+}
+
+function buildVersionComparison(
+  _previousState: ReturnType<typeof coreStore.getState>,
+  applyResult: ApplyResult
+): VersionComparisonResult {
+  const newAssets: UnifiedAsset[] = [
+    ...applyResult.robots.map(r => ({
+      id: r.id,
+      name: r.name,
+      kind: 'ROBOT' as const,
+      sourcing: r.sourcing,
+      metadata: r.metadata || {},
+      areaId: r.areaId,
+      areaName: r.areaName,
+      cellId: r.cellId,
+      stationNumber: r.stationNumber,
+      oemModel: r.oemModel,
+      description: r.description,
+      sourceFile: r.sourceFile,
+      sheetName: r.sheetName,
+      rowIndex: r.rowIndex
+    })),
+    ...applyResult.tools.map(t => ({
+      id: t.id,
+      name: t.name,
+      kind: t.kind,
+      sourcing: t.sourcing,
+      metadata: t.metadata || {},
+      areaId: t.areaId,
+      areaName: t.areaName,
+      cellId: t.cellId,
+      stationNumber: t.stationNumber,
+      oemModel: t.oemModel,
+      description: t.description,
+      sourceFile: t.sourceFile,
+      sheetName: t.sheetName,
+      rowIndex: t.rowIndex
+    }))
+  ]
+
+  return compareVersions(
+    applyResult.projects,
+    applyResult.areas,
+    applyResult.cells,
+    newAssets
+  )
 }
 
 // ============================================================================
@@ -193,6 +331,9 @@ export async function ingestFilesV2(
   const runId = generateRunId()
   const stage = input.stage ?? 'APPLY_TO_STORE'
   const fileResults: FileIngestionResult[] = []
+  const previousState = coreStore.getState()
+  let versionComparison: VersionComparisonResult | undefined = undefined
+  let diffResult: DiffResult | undefined = undefined
 
   // Track data for later application
   const ingestedData: IngestedData = {
@@ -229,6 +370,7 @@ export async function ingestFilesV2(
   // Only apply to store if we're in that stage
   if (stage === 'APPLY_TO_STORE') {
     const applyResult = applyIngestedData(ingestedData)
+    versionComparison = buildVersionComparison(previousState, applyResult)
 
     // Update core store
     const source = determineDataSource(input.fileSources)
@@ -243,6 +385,36 @@ export async function ingestFilesV2(
       tools: applyResult.tools,
       warnings: warningStrings
     }, source)
+
+    // Create DiffResult from version comparison (minimal but real data)
+    const sourceFileName = input.files[0]?.name || 'unknown'
+    const sourceType = deriveSourceType(fileResults)
+    diffResult = buildDiffResultFromVersionComparison(
+      runId,
+      sourceFileName,
+      sourceType,
+      versionComparison
+    )
+    coreStore.addDiffResult(diffResult)
+
+    // Create ImportRun record for tracking
+    const importRun: ImportRun = {
+      id: runId,
+      sourceFileName,
+      sourceType,
+      plantKey: 'PLANT_UNKNOWN',
+      plantKeySource: 'unknown',
+      modelKey: undefined,
+      importedAt: new Date().toISOString(),
+      counts: {
+        created: diffResult.summary.created,
+        updated: diffResult.summary.updated,
+        deleted: diffResult.summary.deleted,
+        renamed: diffResult.summary.renamed,
+        ambiguous: diffResult.summary.ambiguous
+      }
+    }
+    coreStore.addImportRun(importRun)
 
     // Get counts from store
     const state = coreStore.getState()
@@ -302,12 +474,6 @@ export async function ingestFilesV2(
   // Convert telemetry warnings to legacy warnings for backward compat
   const legacyWarnings = runResult.aggregateWarnings.map(telemetryToLegacyWarning)
 
-  // Persist a minimal DiffResult so the Diff Results tab stays in sync for V2 imports.
-  if (stage === 'APPLY_TO_STORE') {
-    const diffResult = buildDiffResultFromTelemetry(runResult, aggregateCounts)
-    coreStore.addDiffResult(diffResult)
-  }
-
   return {
     runResult,
     projectsCount: aggregateCounts.projects,
@@ -316,7 +482,7 @@ export async function ingestFilesV2(
     robotsCount: aggregateCounts.robots,
     toolsCount: aggregateCounts.tools,
     warnings: legacyWarnings,
-    diffResult: stage === 'APPLY_TO_STORE' ? buildDiffResultFromTelemetry(runResult, aggregateCounts) : undefined
+    diffResult
   }
 }
 
