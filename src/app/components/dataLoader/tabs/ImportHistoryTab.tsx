@@ -79,7 +79,6 @@ function formatTimestamp(ts: string) {
 export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
   const { diffResults } = useCoreStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [unlinkedGroupExpanded, setUnlinkedGroupExpanded] = useState<Record<string, boolean>>({});
   const [warningGroupExpanded, setWarningGroupExpanded] = useState<Record<string, boolean>>({});
 
   const rows = useMemo(
@@ -91,14 +90,8 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
     setExpandedId((current) => (current === id ? null : id));
     // Reset group states when switching rows
     if (expandedId !== id) {
-      setUnlinkedGroupExpanded({});
       setWarningGroupExpanded({});
     }
-  };
-
-  const toggleUnlinkedGroup = (entryId: string, groupType: string) => {
-    const key = `${entryId}-${groupType}`;
-    setUnlinkedGroupExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const toggleWarningGroup = (entryId: string, kind: string) => {
@@ -117,7 +110,7 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
         </p>
       </div>
 
-      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-x-auto max-w-5xl custom-scrollbar">
+      <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-x-auto w-full custom-scrollbar">
         {!hasData ? (
           <div className="p-6 text-sm text-gray-600 dark:text-gray-300">
             No imports yet. Run a Data Loader import to see history and detailed diffs here.
@@ -154,10 +147,13 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                       ambiguous: liveDiff.summary.ambiguous,
                     }
                   : entry.counts || {};
-                const detailedWarnings = entry.warningsDetailed || [];
+                const detailedWarningsRaw = entry.warningsDetailed || [];
+                const filteredDetailedWarnings = detailedWarningsRaw.filter((w) => w.kind !== 'LINKING_MISSING_TARGET');
                 const warningMessages = entry.warnings || [];
-                const hasDetailedWarnings = detailedWarnings.length > 0;
+                const hasDetailedWarnings = filteredDetailedWarnings.length > 0;
                 const hasSimpleWarnings = !hasDetailedWarnings && warningMessages.length > 0;
+                const unlinkedItems = entry.unlinked || [];
+                const hasUnlinked = unlinkedItems.length > 0;
                 const diff: ImportDiff = liveDiff
                   ? buildImportDiffFromDiffResult(liveDiff)
                   : entry.diff || {
@@ -205,15 +201,16 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                       <tr>
                         <td colSpan={12} className="bg-gray-50 dark:bg-gray-800/60 px-6 py-4">
                           <div className="space-y-6">
-                            {hasDetailedWarnings || hasSimpleWarnings ? (
+                            {hasDetailedWarnings || hasSimpleWarnings || hasUnlinked ? (
                               <WarningsSection
-                                detailedWarnings={detailedWarnings}
+                                detailedWarnings={filteredDetailedWarnings}
                                 simpleWarnings={warningMessages}
                                 hasDetailedWarnings={hasDetailedWarnings}
                                 hasSimpleWarnings={hasSimpleWarnings}
                                 entryId={entry.id}
                                 warningGroupExpanded={warningGroupExpanded}
                                 toggleWarningGroup={toggleWarningGroup}
+                                unlinkedItems={unlinkedItems}
                               />
                             ) : null}
 
@@ -222,15 +219,6 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                             <DiffSection title="Deleted" items={diff.deleted} />
                             <RenameSection items={diff.renamed} />
                             <AmbiguitySection items={diff.ambiguities} />
-
-                            {entry.unlinked && entry.unlinked.length > 0 && (
-                              <UnlinkedItemsSection
-                                unlinkedItems={entry.unlinked}
-                                entryId={entry.id}
-                                unlinkedGroupExpanded={unlinkedGroupExpanded}
-                                toggleUnlinkedGroup={toggleUnlinkedGroup}
-                              />
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -348,6 +336,7 @@ interface WarningsSectionProps {
   entryId: string;
   warningGroupExpanded: Record<string, boolean>;
   toggleWarningGroup: (entryId: string, kind: string) => void;
+  unlinkedItems: UnlinkedItem[];
 }
 
 function WarningsSection({
@@ -358,6 +347,7 @@ function WarningsSection({
   entryId,
   warningGroupExpanded,
   toggleWarningGroup,
+  unlinkedItems,
 }: WarningsSectionProps) {
   // Group warnings by kind
   const groupedWarnings = useMemo(() => {
@@ -368,6 +358,16 @@ function WarningsSection({
     });
     return groups;
   }, [detailedWarnings]);
+  const groupedUnlinked = useMemo(() => {
+    const groups: Record<string, UnlinkedItem[]> = { Robot: [], Tool: [] };
+    unlinkedItems.forEach((item) => {
+      if (!groups[item.type]) {
+        groups[item.type] = [];
+      }
+      groups[item.type].push(item);
+    });
+    return groups;
+  }, [unlinkedItems]);
 
   const kindColors: Record<string, { bg: string; text: string; border: string; badge: string }> = {
     error: {
@@ -398,6 +398,11 @@ function WarningsSection({
     return kindColors.warning; // default
   };
 
+  const hasUnlinked = unlinkedItems.length > 0;
+  const warningsCount = hasDetailedWarnings ? detailedWarnings.length : hasSimpleWarnings ? simpleWarnings.length : 0;
+  const totalIssues = warningsCount + unlinkedItems.length;
+  const headingLabel = 'Warnings';
+
   return (
     <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-sm overflow-hidden max-w-full">
       {/* Header */}
@@ -406,7 +411,7 @@ function WarningsSection({
           <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
-              Warnings ({hasDetailedWarnings ? detailedWarnings.length : simpleWarnings.length})
+              {headingLabel} ({totalIssues})
             </h3>
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
               Issues found during import that may require attention
@@ -500,152 +505,93 @@ function WarningsSection({
             })}
           </>
         ) : null}
-      </div>
-    </div>
-  );
-}
 
-interface UnlinkedItemsSectionProps {
-  unlinkedItems: UnlinkedItem[];
-  entryId: string;
-  unlinkedGroupExpanded: Record<string, boolean>;
-  toggleUnlinkedGroup: (entryId: string, groupType: string) => void;
-}
+        {hasUnlinked ? (
+          <div className="space-y-2">
+            {Object.entries(groupedUnlinked).map(([type, items]) => {
+              const key = `${entryId}-unlinked-${type}`;
+              const isExpanded = warningGroupExpanded[key] ?? true;
+              const colors = getKindColors(type);
+              const label = type === 'Robot' ? 'UNLINKED ROBOTS' : type === 'Tool' ? 'UNLINKED TOOLS' : `Unlinked ${type}`;
 
-function UnlinkedItemsSection({
-  unlinkedItems,
-  entryId,
-  unlinkedGroupExpanded,
-  toggleUnlinkedGroup,
-}: UnlinkedItemsSectionProps) {
-  // Group by type
-  const groupedItems = useMemo(() => {
-    const groups: Record<string, UnlinkedItem[]> = {};
-    unlinkedItems.forEach((item) => {
-      if (!groups[item.type]) groups[item.type] = [];
-      groups[item.type].push(item);
-    });
-    return groups;
-  }, [unlinkedItems]);
+              return (
+                <div key={type} className={`rounded-lg border ${colors.border} shadow-sm overflow-hidden bg-white dark:bg-gray-900 max-w-full`}>
+                  <button
+                    onClick={() => toggleWarningGroup(entryId, `unlinked-${type}`)}
+                    className={`w-full px-4 py-3 flex items-center justify-between ${colors.bg} hover:opacity-80 transition-opacity`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      {isExpanded ? (
+                        <ChevronDown className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
+                      ) : (
+                        <ChevronRight className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
+                      )}
+                      <div className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${colors.badge} text-white`}>
+                        {label}
+                      </div>
+                      <span className={`text-sm font-semibold ${colors.text} truncate`}>
+                        {items.length} {items.length === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
+                  </button>
 
-  const typeColors: Record<string, { bg: string; text: string; border: string; badge: string }> = {
-    Tool: {
-      bg: 'bg-gray-100 dark:bg-gray-800',
-      text: 'text-gray-900 dark:text-gray-100',
-      border: 'border-gray-300 dark:border-gray-600',
-      badge: 'bg-gray-600 dark:bg-gray-500',
-    },
-    Robot: {
-      bg: 'bg-gray-100 dark:bg-gray-800',
-      text: 'text-gray-900 dark:text-gray-100',
-      border: 'border-gray-300 dark:border-gray-600',
-      badge: 'bg-gray-600 dark:bg-gray-500',
-    },
-  };
+                  {isExpanded && (
+                    <div className="max-h-80 overflow-auto w-full">
+                      {items.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">No unlinked items.</div>
+                      ) : (
+                        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                            <tr>
+                              <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/4 min-w-[150px]">
+                                Item Name
+                              </th>
+                              <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/2 min-w-[200px]">
+                                Reason
+                              </th>
+                              <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-32">
+                                Resolution
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                            {items.map((item, idx) => {
+                              const hasReference = item.reason.toLowerCase().includes('not found') ||
+                                                item.reason.toLowerCase().includes('missing') ||
+                                                item.reason.toLowerCase().includes('unknown');
 
-  const getTypeColors = (type: string) => {
-    return typeColors[type] || typeColors.Tool;
-  };
-
-  return (
-    <div className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 shadow-sm overflow-hidden max-w-full">
-      {/* Header */}
-      <div className="border-b border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">
-              Unlinked Items ({unlinkedItems.length})
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-              Items that could not be linked to existing resources during import
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-4 space-y-3 max-w-full">
-        {Object.entries(groupedItems).map(([type, items]) => {
-          const colors = getTypeColors(type);
-          const key = `${entryId}-${type}`;
-          const isExpanded = unlinkedGroupExpanded[key] ?? true;
-
-          return (
-            <div key={type} className={`rounded-lg border ${colors.border} shadow-sm overflow-hidden bg-white dark:bg-gray-900 max-w-full`}>
-              {/* Group header */}
-              <button
-                onClick={() => toggleUnlinkedGroup(entryId, type)}
-                className={`w-full px-4 py-3 flex items-center justify-between ${colors.bg} hover:opacity-80 transition-opacity`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  {isExpanded ? (
-                    <ChevronDown className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
-                  ) : (
-                    <ChevronRight className={`w-4 h-4 flex-shrink-0 ${colors.text}`} />
+                              return (
+                                <tr key={`${item.item}-${idx}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 max-w-[200px] break-words">
+                                    {item.item}
+                                  </td>
+                                  <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-words">
+                                    {item.reason}
+                                  </td>
+                                  <td className="px-4 py-3 text-xs whitespace-nowrap">
+                                    {hasReference ? (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium">
+                                        Create or link
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                                        Review
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
                   )}
-                  <div className={`px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 ${colors.badge} text-white`}>
-                    {type}
-                  </div>
-                  <span className={`text-sm font-semibold ${colors.text} truncate`}>
-                    {items.length} {items.length === 1 ? 'item' : 'items'}
-                  </span>
                 </div>
-              </button>
-
-              {/* Group content */}
-              {isExpanded && (
-                <div className="max-h-80 overflow-auto w-full">
-                  <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/4 min-w-[150px]">
-                          Item Name
-                        </th>
-                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-1/2 min-w-[200px]">
-                          Reason
-                        </th>
-                        <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider w-32">
-                          Resolution
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                      {items.map((item, idx) => {
-                        // Parse reason to extract actionable info
-                        const hasReference = item.reason.toLowerCase().includes('not found') ||
-                                           item.reason.toLowerCase().includes('missing') ||
-                                           item.reason.toLowerCase().includes('unknown');
-
-                        return (
-                          <tr key={`${item.item}-${idx}`} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 max-w-[200px] break-words">
-                              {item.item}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 break-words">
-                              {item.reason}
-                            </td>
-                            <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              {hasReference ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium">
-                                  Create or link
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                                  Review
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     </div>
   );
