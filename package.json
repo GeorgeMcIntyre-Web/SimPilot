@@ -15,7 +15,10 @@
     "test:e2e": "playwright test",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts,tsx --fix",
-    "ingest:stla-s": "node scripts/ingest_stla_s.cjs"
+    "ingest:stla-s": "node scripts/ingest_stla_s.cjs",
+    "real-data-regress": "npx tsx tools/realDataRegress.ts",
+    "dev:inspect-tool-lists": "npx tsx tools/dev/inspectToolLists.ts",
+    "dev:tool-list-count-contract": "npx tsx tools/dev/toolListCountContract.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
@@ -38,6 +41,7 @@
     "jsdom": "^27.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vitest": "^4.0.14"
@@ -49,6 +53,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "idb": "^8.0.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.555.0",

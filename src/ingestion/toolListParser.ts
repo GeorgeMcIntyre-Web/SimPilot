@@ -75,12 +75,38 @@ const WEAK_KEYWORDS = [
 
 /**
  * Parse a Tool List Excel file (weld guns, sealers, etc.) into Tool entities
- * 
+ *
+ * This function now routes to schema-aware parsing by default, which includes:
+ * - Strike-through deletion detection (rows with struck-through identifiers are excluded)
+ * - Project-specific parsing (BMW J10735, Ford V801, STLA S ZAR)
+ * - Comprehensive validation reporting
+ *
  * @param workbook - The Excel workbook to parse
  * @param fileName - Name of the file (for warnings and metadata)
  * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
  */
 export async function parseToolList(
+  workbook: XLSX.WorkBook,
+  fileName: string,
+  targetSheetName?: string
+): Promise<ToolListResult> {
+  // Route to schema-aware parser with deletion detection
+  // This ensures strike-through rows are excluded and counts are deterministic
+  return parseToolListWithSchemas(workbook, fileName, targetSheetName, false)
+}
+
+/**
+ * LEGACY: Parse a Tool List Excel file using the old parser (without schema awareness)
+ *
+ * This is kept for backwards compatibility but should NOT be used in production.
+ * Use parseToolList() or parseToolListWithSchemas() instead.
+ *
+ * @param workbook - The Excel workbook to parse
+ * @param fileName - Name of the file (for warnings and metadata)
+ * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
+ * @deprecated Use parseToolList() or parseToolListWithSchemas() instead
+ */
+export async function parseToolListLegacy(
   workbook: XLSX.WorkBook,
   fileName: string,
   targetSheetName?: string
@@ -492,4 +518,76 @@ function isCancelledTool(notes: string): boolean {
   ]
 
   return cancelPatterns.some(pattern => notesUpper.includes(pattern))
+}
+
+// ============================================================================
+// SCHEMA-AWARE PARSER (NEW)
+// ============================================================================
+
+import { parseToolListWithSchema } from './toolListSchemas/toolListSchemaAdapter'
+import { toolEntityToTool } from './toolListSchemas/toolEntityToTool'
+
+/**
+ * Parse tool list using schema adapters (BMW/Ford/STLA aware)
+ *
+ * This is the new parser that supports:
+ * - BMW J10735 (atomic station names)
+ * - Ford V801 (station groups + tooling-derived atomic stations)
+ * - STLA (SUB Area Name + opposite tooling)
+ *
+ * @param workbook - The Excel workbook to parse
+ * @param fileName - Name of the file (for project detection)
+ * @param targetSheetName - Optional: specific sheet to parse
+ * @param debug - Enable debug logging
+ */
+export async function parseToolListWithSchemas(
+  workbook: XLSX.WorkBook,
+  fileName: string,
+  targetSheetName?: string,
+  debug = false
+): Promise<ToolListResult> {
+  const warnings: IngestionWarning[] = []
+
+  // Use provided sheet name or default to first sheet
+  const sheetName = targetSheetName ?? workbook.SheetNames[0]
+  if (!sheetName) {
+    throw new Error(`No sheets found in ${fileName}`)
+  }
+
+  // Validate that the target sheet exists
+  if (workbook.SheetNames.includes(sheetName) === false) {
+    throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+  }
+
+  try {
+    const result = await parseToolListWithSchema(workbook, fileName, sheetName, debug)
+
+    // Convert ToolEntity[] to Tool[]
+    const tools = result.entities.map(entity => toolEntityToTool(entity, result.projectHint))
+
+    // Convert validation anomalies to warnings
+    result.validation.anomalies.forEach(anomaly => {
+      warnings.push(createRowSkippedWarning({
+        fileName,
+        sheetName,
+        rowIndex: anomaly.row,
+        reason: `[${anomaly.type}] ${anomaly.message}`
+      }))
+    })
+
+    if (debug) {
+      log.info(`[Tool List Parser] ${fileName} - Parsed ${tools.length} tools using schema adapters`)
+      log.info(`[Tool List Parser] Project: ${result.projectHint}`)
+      log.info(`[Tool List Parser] Validation: ${result.validation.totalEntitiesProduced} entities, ${result.validation.anomalies.length} anomalies`)
+    }
+
+    return {
+      tools,
+      warnings
+    }
+  } catch (error) {
+    // Fall back to old parser if schema detection fails
+    log.warn(`[Tool List Parser] Schema adapter failed for ${fileName}, falling back to legacy parser: ${error}`)
+    return parseToolListLegacy(workbook, fileName, targetSheetName)
+  }
 }

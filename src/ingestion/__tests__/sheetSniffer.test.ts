@@ -431,3 +431,337 @@ describe('edge cases', () => {
     expect(result.category).toBe('UNKNOWN')
   })
 })
+
+// ============================================================================
+// ROW COUNT GUARD TESTS (New Feature)
+// ============================================================================
+
+describe('row count guard', () => {
+  it('should reject small template sheets with < 25 rows and no strong matches', () => {
+    // Create a tiny DATA sheet (3 rows) with only weak matches
+    const workbook = createMockWorkbook({
+      'DATA': [
+        ['AREA', 'STATION', 'ROBOT'], // Only weak keywords
+        ['val1', 'val2', 'val3'],
+        ['val4', 'val5', 'val6']
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    // Should not detect the tiny sheet with only weak matches
+    expect(result.allDetections.length).toBe(0)
+  })
+
+  it('should allow small sheets with strong keyword matches', () => {
+    const workbook = createMockWorkbook({
+      'Summary': [
+        ['1st STAGE SIM COMPLETION', 'FINAL DELIVERABLES', 'ROBOT POSITION - STAGE 1'],
+        ...Array(15).fill(['val1', 'val2', 'val3'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    // Small sheet BUT with strong matches should pass
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.category).toBe('SIMULATION_STATUS')
+  })
+
+  it('should prefer large well-named sheets over tiny generic sheets', () => {
+    const workbook = createMockWorkbook({
+      'DATA': [
+        ['1st STAGE SIM COMPLETION', 'FINAL DELIVERABLES', '1st STAGE SIM', 'ROBOT'],
+        ['val1', 'val2', 'val3', 'val4'],
+        ['val5', 'val6', 'val7', 'val8']
+      ],
+      'SIMULATION': [
+        ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'APPLICATION', 'AREA', 'STATION', 'ROBOT'],
+        ...Array(30).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    // Should choose SIMULATION (large, well-named) over DATA (tiny, generic name)
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.sheetName).toBe('SIMULATION')
+  })
+
+  it('should include maxRow in detection result', () => {
+    const workbook = createMockWorkbook({
+      'SIMULATION': Array(100).fill(['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'AREA'])
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.maxRow).toBeDefined()
+    expect(result.bestOverall?.maxRow).toBeGreaterThan(25)
+  })
+})
+
+// ============================================================================
+// SHEET NAME SCORING TESTS (New Feature)
+// ============================================================================
+
+describe('sheet name scoring', () => {
+  describe('SIMULATION_STATUS name preferences', () => {
+    it('should prefer sheet named "SIMULATION" (+10 bonus)', () => {
+      const workbook = createMockWorkbook({
+        'SIMULATION': [
+          ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'AREA', 'STATION'],
+          ...Array(30).fill(['val1', 'val2', 'val3', 'val4'])
+        ],
+        'DATA': [
+          ['1st STAGE SIM COMPLETION', 'FINAL DELIVERABLES', 'ROBOT POSITION - STAGE 1', 'DCS CONFIGURED'],
+          ...Array(30).fill(['val1', 'val2', 'val3', 'val4'])
+        ]
+      })
+
+      const result = scanWorkbook(workbook, 'test.xlsx')
+
+      expect(result.bestOverall).not.toBeNull()
+      expect(result.bestOverall?.sheetName).toBe('SIMULATION')
+      expect(result.bestOverall?.nameScore).toBe(10)
+    })
+
+    it('should apply +8 bonus for status_* pattern', () => {
+      const workbook = createMockWorkbook({
+        'status_main': [
+          ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'AREA'],
+          ...Array(30).fill(['val1', 'val2', 'val3'])
+        ]
+      })
+
+      const result = scanWorkbook(workbook, 'test.xlsx')
+
+      expect(result.bestOverall).not.toBeNull()
+      expect(result.bestOverall?.nameScore).toBe(8)
+    })
+
+    it('should penalize generic names like DATA and OVERVIEW (-5)', () => {
+      const workbook = createMockWorkbook({
+        'DATA': [
+          ['1st STAGE SIM COMPLETION', 'FINAL DELIVERABLES', 'ROBOT POSITION - STAGE 1'],
+          ...Array(30).fill(['val1', 'val2', 'val3'])
+        ]
+      })
+
+      const result = scanWorkbook(workbook, 'test.xlsx')
+
+      expect(result.bestOverall).not.toBeNull()
+      expect(result.bestOverall?.nameScore).toBe(-5)
+    })
+  })
+
+  describe('IN_HOUSE_TOOLING name preferences', () => {
+    it('should prefer sheet names containing "tool"', () => {
+      const workbook = createMockWorkbook({
+        'ToolList': [
+          ['Tool ID', 'Tool No.', 'Description', 'Gun Type'],
+          ...Array(30).fill(['Tool1', 'T001', 'Desc', 'Type1'])
+        ],
+        'Sheet1': [
+          ['Tool ID', 'Tool No.', 'Description', 'Gun Type'],
+          ...Array(30).fill(['Tool1', 'T001', 'Desc', 'Type1'])
+        ]
+      })
+
+      const result = scanWorkbook(workbook, 'test.xlsx')
+
+      const toolListDetection = result.allDetections.find(d => d.sheetName === 'ToolList')
+      const sheet1Detection = result.allDetections.find(d => d.sheetName === 'Sheet1')
+
+      expect(toolListDetection).toBeDefined()
+      expect(sheet1Detection).toBeDefined()
+
+      // ToolList should have higher score due to name bonus
+      if (toolListDetection && sheet1Detection) {
+        expect(toolListDetection.score).toBeGreaterThan(sheet1Detection.score)
+      }
+    })
+  })
+
+  describe('ROBOT_SPECS name preferences', () => {
+    it('should prefer sheet names containing "robot"', () => {
+      const workbook = createMockWorkbook({
+        'RobotSpecs': [
+          ['ROBOT ID', 'ROBOT NAME', 'MODEL', 'BRAND', 'YEAR'],
+          ...Array(30).fill(['R001', 'Robot1', 'ModelX', 'BrandY', '2023'])
+        ],
+        'Sheet1': [
+          ['ROBOT ID', 'ROBOT NAME', 'MODEL', 'BRAND', 'YEAR'],
+          ...Array(30).fill(['R001', 'Robot1', 'ModelX', 'BrandY', '2023'])
+        ]
+      })
+
+      const result = scanWorkbook(workbook, 'test.xlsx')
+
+      const robotDetection = result.allDetections.find(d => d.sheetName === 'RobotSpecs')
+      const sheet1Detection = result.allDetections.find(d => d.sheetName === 'Sheet1')
+
+      expect(robotDetection).toBeDefined()
+      expect(sheet1Detection).toBeDefined()
+
+      if (robotDetection && sheet1Detection) {
+        expect(robotDetection.score).toBeGreaterThan(sheet1Detection.score)
+      }
+    })
+  })
+
+  it('should include nameScore in detection result', () => {
+    const workbook = createMockWorkbook({
+      'status_data': [
+        ['ROBOT POSITION - STAGE 1', 'AREA'],
+        ...Array(30).fill(['val1', 'val2'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.nameScore).toBeDefined()
+    expect(result.bestOverall?.nameScore).toBe(8)
+  })
+})
+
+// ============================================================================
+// ASSEMBLIES_LIST CATEGORY TESTS (New Feature)
+// ============================================================================
+
+describe('ASSEMBLIES_LIST category', () => {
+  it('should detect ASSEMBLIES_LIST from signature keywords', () => {
+    const workbook = createMockWorkbook({
+      'A_List': [
+        ['1st Stage', 'Detailing', 'Checking', 'Issued', 'Description', 'Status', 'Date'],
+        ...Array(30).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6', 'val7'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.category).toBe('ASSEMBLIES_LIST')
+  })
+
+  it('should prefer sheet named "A_List" (+10 bonus)', () => {
+    const workbook = createMockWorkbook({
+      'A_List': [
+        ['1st Stage', 'Detailing', 'Checking', 'Issued', 'Description', 'Status'],
+        ...Array(30).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6'])
+      ],
+      'Summary': [
+        ['1st Stage', 'Detailing', 'Checking', 'Issued', 'Description', 'Status'],
+        ...Array(30).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.sheetName).toBe('A_List')
+    expect(result.bestOverall?.nameScore).toBe(10)
+  })
+
+  it('should include ASSEMBLIES_LIST in byCategory results', () => {
+    const workbook = createMockWorkbook({
+      'A_List': [
+        ['1st Stage', '2nd Stage', 'Detailing', 'Checking', 'Issued'],
+        ...Array(30).fill(['val1', 'val2', 'val3', 'val4', 'val5'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.byCategory.ASSEMBLIES_LIST).not.toBeNull()
+    expect(result.byCategory.ASSEMBLIES_LIST?.category).toBe('ASSEMBLIES_LIST')
+  })
+
+  it('should map ASSEMBLIES_LIST to AssembliesList FileKind', () => {
+    const fileKind = categoryToFileKind('ASSEMBLIES_LIST')
+    expect(fileKind).toBe('AssembliesList')
+  })
+
+  it('should handle assemblies list with strong matches', () => {
+    const workbook = createMockWorkbook({
+      'Assembly_Data': [
+        ['1st Stage', '2nd Stage', 'Detailing', 'Checking', 'Issued', 'Description', 'Progress'],
+        ...Array(50).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6', 'val7'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.category).toBe('ASSEMBLIES_LIST')
+    expect(result.bestOverall?.strongMatches.length).toBeGreaterThan(0)
+  })
+})
+
+// ============================================================================
+// COMBINED SCORING TESTS (Row Guard + Name Bonus)
+// ============================================================================
+
+describe('combined scoring', () => {
+  it('should combine keyword score + name score correctly', () => {
+    const workbook = createMockWorkbook({
+      'SIMULATION': [
+        ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'APPLICATION', 'AREA', 'STATION', 'ROBOT'],
+        ...Array(30).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6'])
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'test.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+
+    // Total score should be keyword score + name score
+    const totalScore = result.bestOverall?.score || 0
+    const nameScore = result.bestOverall?.nameScore || 0
+    const keywordScore = totalScore - nameScore
+
+    expect(nameScore).toBe(10)
+    expect(keywordScore).toBeGreaterThan(0)
+    expect(totalScore).toBeGreaterThan(nameScore)
+  })
+
+  it('should handle STLA-S simulation status files correctly (real-world scenario)', () => {
+    // Mimics the structure from STLA-S_FRONT_UNIT_Simulation_Status_CSG.xlsx
+    const workbook = createMockWorkbook({
+      'OVERVIEW': Array(17).fill(['Summary', 'Info']),
+      'SIMULATION': [
+        ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'APPLICATION', 'ASSEMBLY LINE', 'AREA', 'STATION', 'ROBOT'],
+        ...Array(100).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6', 'val7'])
+      ],
+      'DATA': [
+        ['1st STAGE SIM COMPLETION', 'FINAL DELIVERABLES', '1st STAGE SIM', 'ROBOT'],
+        ['val1', 'val2', 'val3', 'val4']
+      ]
+    })
+
+    const result = scanWorkbook(workbook, 'STLA-S_FRONT_UNIT_Simulation_Status_CSG.xlsx')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.sheetName).toBe('SIMULATION')
+    expect(result.bestOverall?.category).toBe('SIMULATION_STATUS')
+  })
+
+  it('should handle BMW assemblies list files correctly (real-world scenario)', () => {
+    // Mimics the structure from J10735_BMW_NCAR_C-D-Pillar_Assemblies_List.xlsm
+    const workbook = createMockWorkbook({
+      'Summary': Array(63).fill(['Info']),
+      'A_List': [
+        ['1st Stage', '2nd Stage', 'Detailing', 'Checking', 'Issued', 'Description', 'Status', 'Date', 'Customer', 'Area'],
+        ...Array(100).fill(['val1', 'val2', 'val3', 'val4', 'val5', 'val6', 'val7', 'val8', 'val9', 'val10'])
+      ],
+      'Progress_Report': Array(7).fill(['Info'])
+    })
+
+    const result = scanWorkbook(workbook, 'J10735_BMW_NCAR_C-D-Pillar_Assemblies_List.xlsm')
+
+    expect(result.bestOverall).not.toBeNull()
+    expect(result.bestOverall?.sheetName).toBe('A_List')
+    expect(result.bestOverall?.category).toBe('ASSEMBLIES_LIST')
+  })
+})

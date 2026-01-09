@@ -15,6 +15,8 @@ export default function Sidebar() {
                 <NavLink to="/projects" className={linkClass}>Projects</NavLink>
                 <NavLink to="/equipment" className={linkClass}>Equipment</NavLink>
                 <NavLink to="/data-loader" className={linkClass}>Data Loader</NavLink>
+                <NavLink to="/import-history" className={linkClass}>Import History</NavLink>
+                <NavLink to="/registry" className={linkClass}>Registry</NavLink>
             </nav>
             <div className="p-4 border-t border-gray-800 text-xs text-gray-500">
                 v0.1.0 MVP

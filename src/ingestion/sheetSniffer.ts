@@ -36,6 +36,10 @@ export interface SheetDetection {
   weakMatches: string[]
   /** @deprecated Use strongMatches and weakMatches instead */
   matchedKeywords: string[]
+  /** Number of rows in the sheet (for diagnostic purposes) */
+  maxRow?: number
+  /** Sheet name score bonus (for preferring well-named sheets) */
+  nameScore?: number
 }
 
 export interface SheetScanResult {
@@ -431,6 +435,67 @@ function calculateCategoryScore(
   return { score, strongMatches, weakMatches }
 }
 
+/**
+ * Calculate sheet name score bonus.
+ * Prefer sheets with descriptive names over generic template sheets.
+ *
+ * Returns +10 points for ideal sheet names, +0 for neutral/unknown
+ */
+function calculateSheetNameScore(
+  sheetName: string,
+  category: SheetCategory
+): number {
+  if (category === 'UNKNOWN') {
+    return 0
+  }
+
+  const lower = sheetName.toLowerCase().trim()
+
+  // SIMULATION_STATUS category preferences
+  if (category === 'SIMULATION_STATUS') {
+    // Ideal sheet names
+    if (lower === 'simulation' || lower.includes('simulation') && !lower.includes('data')) {
+      return 10
+    }
+    if (lower.startsWith('status_') || lower.endsWith('_status')) {
+      return 8
+    }
+    // Avoid tiny template sheets
+    if (lower === 'data' || lower === 'overview' || lower === 'summary') {
+      return -5 // Penalty for generic names
+    }
+  }
+
+  // ROBOT_SPECS category preferences
+  if (category === 'ROBOT_SPECS') {
+    if (lower.includes('robot') && lower.includes('list')) {
+      return 10
+    }
+    if (lower.includes('robotlist')) {
+      return 10
+    }
+  }
+
+  // IN_HOUSE_TOOLING category preferences
+  if (category === 'IN_HOUSE_TOOLING') {
+    if (lower === 'toollist' || lower === 'tool list') {
+      return 10
+    }
+    if (lower.includes('equipment') && lower.includes('list')) {
+      return 8
+    }
+  }
+
+  // ASSEMBLIES_LIST category preferences
+  if (category === 'ASSEMBLIES_LIST') {
+    if (lower.includes('assemblies') || lower === 'a_list') {
+      return 10
+    }
+  }
+
+  return 0
+}
+
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -501,6 +566,11 @@ export function sniffSheet(
     return unknownResult
   }
 
+  // Get sheet dimensions for row count guard
+  const sheet = workbook.Sheets[sheetName]
+  const range = sheet ? (sheet['!ref'] ? XLSX.utils.decode_range(sheet['!ref']) : null) : null
+  const maxRow = range ? range.e.r + 1 : rows.length
+
   // Score each category
   let bestCategory: SheetCategory = 'UNKNOWN'
   let bestScore = 0
@@ -510,6 +580,7 @@ export function sniffSheet(
   const categories: Array<Exclude<SheetCategory, 'UNKNOWN'>> = [
     'SIMULATION_STATUS',
     'IN_HOUSE_TOOLING',
+    'ASSEMBLIES_LIST',
     'ROBOT_SPECS',
     'REUSE_WELD_GUNS',
     'REUSE_RISERS',
@@ -524,6 +595,12 @@ export function sniffSheet(
 
     // Minimum score of 5 required (1 strong OR 5 weak)
     if (score < 5) {
+      continue
+    }
+
+    // ROW COUNT GUARD: Sheets with < 25 rows are likely templates/summaries
+    // Only allow if they have strong matches AND good header confidence
+    if (maxRow < 25 && strongMatches.length === 0) {
       continue
     }
 
@@ -545,14 +622,19 @@ export function sniffSheet(
     }
   }
 
+  // Calculate sheet name score bonus
+  const nameScore = calculateSheetNameScore(sheetName, bestCategory)
+
   return {
     fileName,
     sheetName,
     category: bestCategory,
-    score: bestScore,
+    score: bestScore + nameScore,
     strongMatches: bestStrongMatches,
     weakMatches: bestWeakMatches,
-    matchedKeywords: [...bestStrongMatches, ...bestWeakMatches]
+    matchedKeywords: [...bestStrongMatches, ...bestWeakMatches],
+    maxRow,
+    nameScore
   }
 }
 
