@@ -1,5 +1,6 @@
 import { getMsConfig } from './msConfig'
 import { acquireMsGraphToken } from './msAuthClient'
+import { log } from '../../lib/log'
 
 export interface MsDriveItem {
     id: string
@@ -41,7 +42,7 @@ export async function listExcelFilesInConfiguredFolder(): Promise<MsExcelFileIte
         })
 
         if (!response.ok) {
-            console.error('Graph API error:', response.statusText)
+            log.error('Graph API error', response.statusText)
             return []
         }
 
@@ -64,7 +65,7 @@ export async function listExcelFilesInConfiguredFolder(): Promise<MsExcelFileIte
                 lastModifiedDateTime: item.lastModifiedDateTime,
             }))
     } catch (error) {
-        console.error('Failed to list files:', error)
+        log.error('Failed to list files', error)
         return []
     }
 }
@@ -87,13 +88,13 @@ export async function downloadFileAsBlob(itemId: string): Promise<Blob | undefin
         })
 
         if (!response.ok) {
-            console.error('Graph download error:', response.statusText)
+            log.error('Graph download error', response.statusText)
             return undefined
         }
 
         return await response.blob()
     } catch (error) {
-        console.error('Failed to download file:', error)
+        log.error('Failed to download file', error)
         return undefined
     }
 }

@@ -217,7 +217,8 @@ describe('Synthetic Ambiguity - Tools', () => {
     const resolution = resolveToolUid(
       newKey,
       newLabels,
-      {},
+      null, // stationUid
+      {}, // attributes
       context,
       { sourceFile: 'new.xlsx' }
     )

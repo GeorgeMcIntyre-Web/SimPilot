@@ -1,5 +1,6 @@
 import { PublicClientApplication, AccountInfo } from '@azure/msal-browser'
 import { getMsConfig } from './msConfig'
+import { log } from '../../lib/log'
 
 export interface MsAuthState {
     enabled: boolean
@@ -108,7 +109,7 @@ export async function loginWithMicrosoft(): Promise<MsAuthState> {
             account: response.account,
         }
     } catch (error) {
-        console.error('MSAL Login failed:', error)
+        log.error('MSAL Login failed', error)
         // Return current state (likely not signed in)
         const accounts = msal.getAllAccounts()
         return {
@@ -146,7 +147,7 @@ export async function acquireMsGraphToken(scopes: string[] = ['Files.Read.All', 
         })
         return response.accessToken
     } catch (error) {
-        console.warn('Silent token acquisition failed, trying popup', error)
+        log.warn('Silent token acquisition failed, trying popup', error)
         try {
             const response = await msal.acquireTokenPopup({
                 scopes,
@@ -154,7 +155,7 @@ export async function acquireMsGraphToken(scopes: string[] = ['Files.Read.All', 
             })
             return response.accessToken
         } catch (popupError) {
-            console.error('Popup token acquisition failed', popupError)
+            log.error('Popup token acquisition failed', popupError)
             return undefined
         }
     }

@@ -7,6 +7,7 @@
 
 import React, { Component, type ReactNode } from 'react';
 import { logError } from '../utils/logger';
+import { log } from '../lib/log';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -44,7 +45,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Log component stack for debugging
     if (errorInfo.componentStack) {
-      console.error('Component stack:', errorInfo.componentStack);
+      log.error('Component stack', errorInfo.componentStack);
     }
   }
 

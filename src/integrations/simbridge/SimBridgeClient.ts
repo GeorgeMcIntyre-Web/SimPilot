@@ -1,4 +1,5 @@
 import { envConfig } from '../../config/env';
+import { log } from '../../lib/log';
 
 export interface SimBridgeStatus {
     isConnected: boolean;
@@ -34,7 +35,7 @@ class SimBridgeClientImpl implements SimBridgeClient {
             const response = await fetch(this.getUrl('/health'));
             return response.ok;
         } catch (e) {
-            console.error('SimBridge connection failed', e);
+            log.error('SimBridge connection failed', e);
             return false;
         }
     }
@@ -62,7 +63,7 @@ class SimBridgeClientImpl implements SimBridgeClient {
             });
             return response.ok;
         } catch (e) {
-            console.error('Failed to load study', e);
+            log.error('Failed to load study', e);
             return false;
         }
     }
@@ -74,7 +75,7 @@ class SimBridgeClientImpl implements SimBridgeClient {
             const data = await response.json();
             return data.value;
         } catch (e) {
-            console.error('Failed to get signal', e);
+            log.error('Failed to get signal', e);
             return null;
         }
     }
@@ -88,7 +89,7 @@ class SimBridgeClientImpl implements SimBridgeClient {
             });
             return response.ok;
         } catch (e) {
-            console.error('Failed to set signal', e);
+            log.error('Failed to set signal', e);
             return false;
         }
     }

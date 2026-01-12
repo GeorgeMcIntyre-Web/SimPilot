@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, AlertTriangle, Info } from 'lucide-react';
-import type { IngestionWarning } from '../../../domain/core';
+import type { IngestionWarning } from '../../../../ingestion/ingestionCoordinator';
 
 export type ImportStatus = 'clean' | 'needs resolution';
 

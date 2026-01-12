@@ -102,7 +102,7 @@ export function useDemoScenario() {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load exported data';
       onError(errorMsg);
-      console.error('Error loading exported data:', err);
+      log.error('Error loading exported data', err);
     } finally {
       popBusy();
     }

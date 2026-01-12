@@ -51,19 +51,22 @@ export function buildSimPilotSnapshotFromLocalData(): SimPilotDataSnapshot {
       stationCode: cell?.code
     })
 
+    // Check if asset is reuse by checking metadata or sourcing
+    const isReuse = asset.sourcing === 'REUSE' || Boolean(asset.metadata?.reuseStatus)
+
     return {
       id: asset.id,
       kind: 'TOOLING',
       simulationContextKey: contextKey,
       name: asset.name || asset.id,
       itemNumber: asset.stationNumber || asset.name,
-      equipmentNumber: asset.toolId,
+      equipmentNumber: asset.toolId || undefined,
       handedness: undefined,
       designStageStatus: designStage,
       simulationStageStatus: simulationStage,
       manufactureStageStatus: manufactureStage,
       externalSupplierName: undefined,
-      isReuse: Boolean(asset.reuseStatus),
+      isReuse,
       hasAssets: true,
       metadata: asset.metadata || {}
     }
@@ -84,18 +87,22 @@ export function buildSimPilotSnapshotFromLocalData(): SimPilotDataSnapshot {
   const bottleneckSnapshot = createEmptyBottleneckSnapshot()
 
   // Map unified assets to SimplifiedAsset for API completeness
-  const simplifiedAssets: SimplifiedAsset[] = toolingAssets.map(asset => ({
-    project: projectsById.get(asset.projectId || '')?.name ?? null,
-    line: asset.lineCode || null,
-    station: asset.stationNumber || null,
-    robotNumber: null,
-    gunId: asset.toolId || null,
-    partNumber: asset.name || null,
-    model: asset.oemModel || null,
-    serialNumber: null,
-    detailedKind: asset.kind,
-    tags: []
-  }))
+  const simplifiedAssets: SimplifiedAsset[] = toolingAssets.map(asset => {
+    const cell = asset.cellId ? cellsById.get(asset.cellId) : undefined
+    const project = cell ? projectsById.get(cell.projectId) : undefined
+    return {
+      project: project?.name ?? null,
+      line: cell?.lineCode || null,
+      station: asset.stationNumber || null,
+      robotNumber: null,
+      gunId: asset.toolId || null,
+      partNumber: asset.name || null,
+      model: asset.oemModel || null,
+      serialNumber: null,
+      detailedKind: asset.kind,
+      tags: []
+    }
+  })
 
   return {
     assets: simplifiedAssets,
