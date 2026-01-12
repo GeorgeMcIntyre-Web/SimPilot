@@ -2,6 +2,7 @@
 // Addresses DATA_INTEGRITY_ISSUES.md - Issue #4: Referential Integrity
 
 import { Project, Area, Cell, Robot, Tool } from '../domain/core'
+import { log } from '../lib/log'
 
 /**
  * Referential integrity error types
@@ -231,12 +232,12 @@ export function validateRequiredFields(data: {
  */
 export function logIntegrityErrors(result: IntegrityValidationResult): void {
   if (result.isValid) {
-    console.log('[Integrity] ✓ All referential integrity checks passed')
+    log.debug('[Integrity] ✓ All referential integrity checks passed')
     return
   }
 
-  console.error('[Integrity] ✗ Referential integrity violations found:')
-  console.error('[Integrity] Summary:', result.summary)
+  log.warn('[Integrity] ✗ Referential integrity violations found:')
+  log.warn('[Integrity] Summary:', result.summary)
 
   // Group errors by type
   const byType = new Map<string, IntegrityError[]>()
@@ -250,12 +251,12 @@ export function logIntegrityErrors(result: IntegrityValidationResult): void {
 
   // Log grouped errors
   for (const [key, errors] of byType.entries()) {
-    console.error(`[Integrity] ${key}: ${errors.length} violations`)
+    log.warn(`[Integrity] ${key}: ${errors.length} violations`)
     for (const error of errors.slice(0, 5)) { // Show first 5
-      console.error(`  - ${error.message}`)
+      log.warn(`  - ${error.message}`)
     }
     if (errors.length > 5) {
-      console.error(`  ... and ${errors.length - 5} more`)
+      log.warn(`  ... and ${errors.length - 5} more`)
     }
   }
 }

@@ -3,6 +3,7 @@
 
 import { coreStore, CoreStoreState } from '../domain/coreStore'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from '../domain/storeSnapshot'
+import { log } from '../lib/log'
 
 /**
  * Transaction status
@@ -39,7 +40,7 @@ export class IngestionTransaction {
     })
     this.startTime = new Date().toISOString()
     this.status = 'pending'
-    console.log('[Transaction] Transaction started at', this.startTime)
+    log.debug('[Transaction] Transaction started at', this.startTime)
   }
 
   /**
@@ -50,7 +51,7 @@ export class IngestionTransaction {
       throw new Error(`Cannot commit transaction in ${this.status} state`)
     }
     this.status = 'committed'
-    console.log('[Transaction] Transaction committed successfully')
+    log.debug('[Transaction] Transaction committed successfully')
   }
 
   /**
@@ -61,7 +62,7 @@ export class IngestionTransaction {
       throw new Error('No snapshot available for rollback. Did you call begin()?')
     }
 
-    console.log('[Transaction] Rolling back to snapshot from', this.startTime)
+    log.warn('[Transaction] Rolling back to snapshot from', this.startTime)
 
     // Restore the snapshot
     const restoredState = applySnapshotToState(this.snapshot)
@@ -78,7 +79,7 @@ export class IngestionTransaction {
     }, restoredState.dataSource || undefined)
 
     this.status = 'rolled_back'
-    console.log('[Transaction] Rollback completed')
+    log.warn('[Transaction] Rollback completed')
   }
 
   /**
@@ -125,7 +126,7 @@ export async function withTransaction<T>(
     }
   } catch (error) {
     // Rollback on error
-    console.error('[Transaction] Error occurred, rolling back:', error)
+    log.error('[Transaction] Error occurred, rolling back:', error)
     tx.rollback()
 
     return {

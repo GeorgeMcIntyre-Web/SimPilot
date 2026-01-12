@@ -71,7 +71,7 @@ class SeededRandom {
  * Station mutations: stationNo normalization drift
  * "010" -> "10", "008" -> "8", add/remove prefixes
  */
-function mutateStationKey(key: string): string {
+function mutateStationKey(key: string, rng: SeededRandom): string {
   const strategies = [
     // Remove leading zeros: "AL_010-010" -> "AL_10-10"
     (k: string) => k.replace(/(\d+)/g, (match) => String(parseInt(match, 10))),
@@ -89,7 +89,7 @@ function mutateStationKey(key: string): string {
     (k: string) => k.replace(/-/g, '_')
   ]
 
-  const strategy = strategies[Math.floor(Math.random() * strategies.length)]
+  const strategy = strategies[rng.nextInt(strategies.length)]
   return strategy(key)
 }
 
@@ -97,7 +97,7 @@ function mutateStationKey(key: string): string {
  * Tool mutations: spacing/formatting drift
  * "GUN01" <-> "GUN 01", "SEALER_01" <-> "SEALER 01"
  */
-function mutateToolKey(key: string): string {
+function mutateToolKey(key: string, rng: SeededRandom): string {
   const strategies = [
     // Add space before numbers: "GUN01" -> "GUN 01"
     (k: string) => k.replace(/([A-Z]+)(\d+)/g, '$1 $2'),
@@ -115,7 +115,7 @@ function mutateToolKey(key: string): string {
     (k: string) => k.replace(/0+(\d)/g, '$1')
   ]
 
-  const strategy = strategies[Math.floor(Math.random() * strategies.length)]
+  const strategy = strategies[rng.nextInt(strategies.length)]
   return strategy(key)
 }
 
@@ -123,7 +123,7 @@ function mutateToolKey(key: string): string {
  * Robot mutations: caption/number formatting drift
  * "R01" -> "R1", "ROBOT_01" -> "ROBOT01"
  */
-function mutateRobotKey(key: string): string {
+function mutateRobotKey(key: string, rng: SeededRandom): string {
   const strategies = [
     // Remove leading zeros: "R01" -> "R1"
     (k: string) => k.replace(/0+(\d)/g, '$1'),
@@ -141,7 +141,7 @@ function mutateRobotKey(key: string): string {
     (k: string) => k.toLowerCase()
   ]
 
-  const strategy = strategies[Math.floor(Math.random() * strategies.length)]
+  const strategy = strategies[rng.nextInt(strategies.length)]
   return strategy(key)
 }
 
@@ -163,7 +163,7 @@ export function mutateStationRecords(
   for (const record of records) {
     if (rng.next() < config.mutationRate) {
       const oldKey = record.key
-      const newKey = mutateStationKey(oldKey)
+      const newKey = mutateStationKey(oldKey, rng)
 
       if (newKey !== oldKey) {
         mutationLog.push(`Station: "${oldKey}" -> "${newKey}"`)
@@ -197,7 +197,7 @@ export function mutateToolRecords(
   for (const record of records) {
     if (rng.next() < config.mutationRate) {
       const oldKey = record.key
-      const newKey = mutateToolKey(oldKey)
+      const newKey = mutateToolKey(oldKey, rng)
 
       if (newKey !== oldKey) {
         mutationLog.push(`Tool: "${oldKey}" -> "${newKey}"`)
@@ -230,7 +230,7 @@ export function mutateRobotRecords(
   for (const record of records) {
     if (rng.next() < config.mutationRate) {
       const oldKey = record.key
-      const newKey = mutateRobotKey(oldKey)
+      const newKey = mutateRobotKey(oldKey, rng)
 
       if (newKey !== oldKey) {
         mutationLog.push(`Robot: "${oldKey}" -> "${newKey}"`)
@@ -308,7 +308,7 @@ export function mutateCellIds(
     if (rng.next() < config.mutationRate) {
       const oldId = cell.id
       // Apply same mutation strategies as stations
-      const newId = mutateStationKey(oldId)
+      const newId = mutateStationKey(oldId, rng)
 
       if (newId !== oldId) {
         mutationLog.push(`Cell: "${oldId}" -> "${newId}"`)
@@ -338,7 +338,7 @@ export function mutateToolIds(
   for (const tool of tools) {
     if (rng.next() < config.mutationRate) {
       const oldId = tool.id
-      const newId = mutateToolKey(oldId)
+      const newId = mutateToolKey(oldId, rng)
 
       if (newId !== oldId) {
         mutationLog.push(`Tool: "${oldId}" -> "${newId}"`)
@@ -368,7 +368,7 @@ export function mutateRobotIds(
   for (const robot of robots) {
     if (rng.next() < config.mutationRate) {
       const oldId = robot.id
-      const newId = mutateRobotKey(oldId)
+      const newId = mutateRobotKey(oldId, rng)
 
       if (newId !== oldId) {
         mutationLog.push(`Robot: "${oldId}" -> "${newId}"`)

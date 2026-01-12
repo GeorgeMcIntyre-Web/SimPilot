@@ -3,6 +3,7 @@
 
 import { Cell, Robot, Tool } from '../domain/core'
 import { normalizeAreaName, normalizeStationCode, buildStationId } from './normalizers'
+import { log } from '../lib/log'
 
 /**
  * Diagnostic report for a failed link
@@ -211,5 +212,5 @@ export function generateLinkingReport(
  */
 export function logLinkingReport(diagnostics: LinkingDiagnostic[]): void {
   const report = generateLinkingReport(diagnostics)
-  console.log(report)
+  log.debug(report)
 }

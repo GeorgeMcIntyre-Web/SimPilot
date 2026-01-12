@@ -507,7 +507,7 @@ describe('row count guard', () => {
 
 describe('sheet name scoring', () => {
   describe('SIMULATION_STATUS name preferences', () => {
-    it('should prefer sheet named "SIMULATION" (+10 bonus)', () => {
+    it('should prefer sheet named "SIMULATION" (+20 bonus)', () => {
       const workbook = createMockWorkbook({
         'SIMULATION': [
           ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'AREA', 'STATION'],
@@ -523,10 +523,10 @@ describe('sheet name scoring', () => {
 
       expect(result.bestOverall).not.toBeNull()
       expect(result.bestOverall?.sheetName).toBe('SIMULATION')
-      expect(result.bestOverall?.nameScore).toBe(10)
+      expect(result.bestOverall?.nameScore).toBe(20)
     })
 
-    it('should apply +8 bonus for status_* pattern', () => {
+    it('should apply +15 bonus for status_* pattern', () => {
       const workbook = createMockWorkbook({
         'status_main': [
           ['ROBOT POSITION - STAGE 1', 'DCS CONFIGURED', 'AREA'],
@@ -537,10 +537,10 @@ describe('sheet name scoring', () => {
       const result = scanWorkbook(workbook, 'test.xlsx')
 
       expect(result.bestOverall).not.toBeNull()
-      expect(result.bestOverall?.nameScore).toBe(8)
+      expect(result.bestOverall?.nameScore).toBe(15)
     })
 
-    it('should penalize generic names like DATA and OVERVIEW (-5)', () => {
+    it('should penalize generic names like DATA and OVERVIEW (-10)', () => {
       const workbook = createMockWorkbook({
         'DATA': [
           ['1st STAGE SIM COMPLETION', 'FINAL DELIVERABLES', 'ROBOT POSITION - STAGE 1'],
@@ -551,7 +551,7 @@ describe('sheet name scoring', () => {
       const result = scanWorkbook(workbook, 'test.xlsx')
 
       expect(result.bestOverall).not.toBeNull()
-      expect(result.bestOverall?.nameScore).toBe(-5)
+      expect(result.bestOverall?.nameScore).toBe(-10)
     })
   })
 
@@ -559,12 +559,12 @@ describe('sheet name scoring', () => {
     it('should prefer sheet names containing "tool"', () => {
       const workbook = createMockWorkbook({
         'ToolList': [
-          ['Tool ID', 'Tool No.', 'Description', 'Gun Type'],
-          ...Array(30).fill(['Tool1', 'T001', 'Desc', 'Type1'])
+          ['Tool ID', 'Sim. Leader', 'Description', 'Gun Type'],
+          ...Array(30).fill(['Tool1', 'Leader1', 'Desc', 'Type1'])
         ],
         'Sheet1': [
-          ['Tool ID', 'Tool No.', 'Description', 'Gun Type'],
-          ...Array(30).fill(['Tool1', 'T001', 'Desc', 'Type1'])
+          ['Tool ID', 'Sim. Leader', 'Description', 'Gun Type'],
+          ...Array(30).fill(['Tool1', 'Leader1', 'Desc', 'Type1'])
         ]
       })
 
@@ -587,12 +587,12 @@ describe('sheet name scoring', () => {
     it('should prefer sheet names containing "robot"', () => {
       const workbook = createMockWorkbook({
         'RobotSpecs': [
-          ['ROBOT ID', 'ROBOT NAME', 'MODEL', 'BRAND', 'YEAR'],
-          ...Array(30).fill(['R001', 'Robot1', 'ModelX', 'BrandY', '2023'])
+          ['Robotnumber', 'Robot caption', 'Model', 'Reach'],
+          ...Array(30).fill(['R001', 'Robot1', 'ModelX', '1000'])
         ],
         'Sheet1': [
-          ['ROBOT ID', 'ROBOT NAME', 'MODEL', 'BRAND', 'YEAR'],
-          ...Array(30).fill(['R001', 'Robot1', 'ModelX', 'BrandY', '2023'])
+          ['Robotnumber', 'Robot caption', 'Model', 'Reach'],
+          ...Array(30).fill(['R001', 'Robot1', 'ModelX', '1000'])
         ]
       })
 
@@ -622,7 +622,7 @@ describe('sheet name scoring', () => {
 
     expect(result.bestOverall).not.toBeNull()
     expect(result.bestOverall?.nameScore).toBeDefined()
-    expect(result.bestOverall?.nameScore).toBe(8)
+    expect(result.bestOverall?.nameScore).toBe(15)
   })
 })
 
@@ -721,7 +721,7 @@ describe('combined scoring', () => {
     const nameScore = result.bestOverall?.nameScore || 0
     const keywordScore = totalScore - nameScore
 
-    expect(nameScore).toBe(10)
+    expect(nameScore).toBe(20)
     expect(keywordScore).toBeGreaterThan(0)
     expect(totalScore).toBeGreaterThan(nameScore)
   })
