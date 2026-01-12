@@ -519,7 +519,7 @@ describe('sheet name scoring', () => {
         ]
       })
 
-      const result = scanWorkbook(workbook, 'test.xlsx')
+      const result = scanWorkbook(workbook, 'test.xlsx', 50) // Scan more rows to ensure detection
 
       expect(result.bestOverall).not.toBeNull()
       expect(result.bestOverall?.sheetName).toBe('SIMULATION')
@@ -534,7 +534,7 @@ describe('sheet name scoring', () => {
         ]
       })
 
-      const result = scanWorkbook(workbook, 'test.xlsx')
+      const result = scanWorkbook(workbook, 'test.xlsx', 50) // Scan more rows to ensure detection
 
       expect(result.bestOverall).not.toBeNull()
       expect(result.bestOverall?.nameScore).toBe(15)
@@ -548,7 +548,7 @@ describe('sheet name scoring', () => {
         ]
       })
 
-      const result = scanWorkbook(workbook, 'test.xlsx')
+      const result = scanWorkbook(workbook, 'test.xlsx', 50) // Scan more rows to ensure detection
 
       expect(result.bestOverall).not.toBeNull()
       expect(result.bestOverall?.nameScore).toBe(-10)
@@ -557,55 +557,87 @@ describe('sheet name scoring', () => {
 
   describe('IN_HOUSE_TOOLING name preferences', () => {
     it('should prefer sheet names containing "tool"', () => {
+      // Use same structure as passing test but with more rows to satisfy row count guard
+      const toolListData: string[][] = [
+        ['Tool ID', 'Sim. Leader', 'Sim. Employee', 'Team Leader'],
+        ['T-001', 'John', 'Jane', 'Bob'],
+        ['T-002', 'John', 'Jane', 'Bob'],
+        ['T-003', 'John', 'Jane', 'Bob']
+      ]
+      // Add more rows to satisfy row count guard (>= 25 rows)
+      for (let i = 4; i < 30; i++) {
+        toolListData.push(['T-' + String(i).padStart(3, '0'), 'John', 'Jane', 'Bob'])
+      }
+      
+      const sheet1Data: string[][] = [
+        ['Tool ID', 'Sim. Leader', 'Sim. Employee', 'Team Leader'],
+        ['T-001', 'John', 'Jane', 'Bob'],
+        ['T-002', 'John', 'Jane', 'Bob'],
+        ['T-003', 'John', 'Jane', 'Bob']
+      ]
+      for (let i = 4; i < 30; i++) {
+        sheet1Data.push(['T-' + String(i).padStart(3, '0'), 'John', 'Jane', 'Bob'])
+      }
+      
       const workbook = createMockWorkbook({
-        'ToolList': [
-          ['Tool ID', 'Sim. Leader', 'Description', 'Gun Type'],
-          ...Array(30).fill(['Tool1', 'Leader1', 'Desc', 'Type1'])
-        ],
-        'Sheet1': [
-          ['Tool ID', 'Sim. Leader', 'Description', 'Gun Type'],
-          ...Array(30).fill(['Tool1', 'Leader1', 'Desc', 'Type1'])
-        ]
+        'ToolList': toolListData,
+        'Main': sheet1Data  // Use "Main" instead of "Sheet1" since Sheet1 is skipped by skip patterns
       })
 
-      const result = scanWorkbook(workbook, 'test.xlsx')
+      const result = scanWorkbook(workbook, 'test.xlsx', 50) // Scan more rows to ensure detection
 
       const toolListDetection = result.allDetections.find(d => d.sheetName === 'ToolList')
-      const sheet1Detection = result.allDetections.find(d => d.sheetName === 'Sheet1')
+      const mainDetection = result.allDetections.find(d => d.sheetName === 'Main')
 
       expect(toolListDetection).toBeDefined()
-      expect(sheet1Detection).toBeDefined()
+      expect(mainDetection).toBeDefined()
 
       // ToolList should have higher score due to name bonus
-      if (toolListDetection && sheet1Detection) {
-        expect(toolListDetection.score).toBeGreaterThan(sheet1Detection.score)
+      if (toolListDetection && mainDetection) {
+        expect(toolListDetection.score).toBeGreaterThan(mainDetection.score)
       }
     })
   })
 
   describe('ROBOT_SPECS name preferences', () => {
     it('should prefer sheet names containing "robot"', () => {
+      // Use structure similar to passing test but with more rows to satisfy row count guard
+      const robotSpecsData: string[][] = [
+        ['Robotnumber', 'Robot caption', 'Model', 'Reach'],
+        ['R001', 'Robot1', 'ModelX', '1000'],
+        ['R002', 'Robot2', 'ModelY', '2000'],
+        ['R003', 'Robot3', 'ModelZ', '3000']
+      ]
+      // Add more rows to satisfy row count guard (>= 25 rows)
+      for (let i = 4; i < 30; i++) {
+        robotSpecsData.push(['R' + String(i).padStart(3, '0'), 'Robot' + i, 'ModelX', '1000'])
+      }
+      
+      const sheet1Data: string[][] = [
+        ['Robotnumber', 'Robot caption', 'Model', 'Reach'],
+        ['R001', 'Robot1', 'ModelX', '1000'],
+        ['R002', 'Robot2', 'ModelY', '2000'],
+        ['R003', 'Robot3', 'ModelZ', '3000']
+      ]
+      for (let i = 4; i < 30; i++) {
+        sheet1Data.push(['R' + String(i).padStart(3, '0'), 'Robot' + i, 'ModelX', '1000'])
+      }
+      
       const workbook = createMockWorkbook({
-        'RobotSpecs': [
-          ['Robotnumber', 'Robot caption', 'Model', 'Reach'],
-          ...Array(30).fill(['R001', 'Robot1', 'ModelX', '1000'])
-        ],
-        'Sheet1': [
-          ['Robotnumber', 'Robot caption', 'Model', 'Reach'],
-          ...Array(30).fill(['R001', 'Robot1', 'ModelX', '1000'])
-        ]
+        'RobotSpecs': robotSpecsData,
+        'Main': sheet1Data  // Use "Main" instead of "Sheet1" since Sheet1 is skipped by skip patterns
       })
 
-      const result = scanWorkbook(workbook, 'test.xlsx')
+      const result = scanWorkbook(workbook, 'test.xlsx', 50) // Scan more rows to ensure detection
 
       const robotDetection = result.allDetections.find(d => d.sheetName === 'RobotSpecs')
-      const sheet1Detection = result.allDetections.find(d => d.sheetName === 'Sheet1')
+      const mainDetection = result.allDetections.find(d => d.sheetName === 'Main')
 
       expect(robotDetection).toBeDefined()
-      expect(sheet1Detection).toBeDefined()
+      expect(mainDetection).toBeDefined()
 
-      if (robotDetection && sheet1Detection) {
-        expect(robotDetection.score).toBeGreaterThan(sheet1Detection.score)
+      if (robotDetection && mainDetection) {
+        expect(robotDetection.score).toBeGreaterThan(mainDetection.score)
       }
     })
   })

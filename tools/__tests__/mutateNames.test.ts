@@ -27,18 +27,30 @@ describe('--mutate-names flag', () => {
    * Create a mock Excel file with simulation status data
    */
   function createMockSimulationStatusFile(stationCount: number): HeadlessFile {
+    // Match real-world structure:
+    // Row 1: Title row
+    // Row 2: Headers with keywords (strong keywords like "ROBOT POSITION - STAGE 1" are in headers)
+    // Row 3: "DESIGNATION" row
+    // Row 4+: Data rows
     const rows = [
-      ['AREA', 'LOCATION', 'STATION', 'ROBOT', 'STATUS']
+      ['TEST - SIMULATION', '', '', '', '', '', '', ''],
+      ['PERSONS RESPONSIBLE', 'AREA', 'ASSEMBLY LINE', 'STATION', 'ROBOT', 'APPLICATION', 'ROBOT POSITION - STAGE 1', '1st STAGE SIM COMPLETION'],
+      ['DESIGNATION', '', '', '', '', '', 'ROBOT SIMULATION', '']
     ]
 
-    for (let i = 1; i <= stationCount; i++) {
+    // Ensure we have at least 25 rows to pass the row count guard
+    const minRows = Math.max(stationCount, 25)
+    for (let i = 1; i <= minRows; i++) {
       const stationNo = String(i).padStart(3, '0')
       rows.push([
+        'Engineer Name',
         'AL',
-        '010',
+        'AL',
         stationNo,
-        `R${stationNo}`,
-        'Active'
+        `R-${stationNo}`,
+        'Spot Welding',
+        '100%',
+        '100%'
       ])
     }
 
@@ -68,11 +80,16 @@ describe('--mutate-names flag', () => {
       { plantKey, mutateNames: false }
     )
 
+    if (!baselineResult.success) {
+      console.error(`[DEBUG] Baseline ingestion failed: ${baselineResult.error}`)
+      console.error(`[DEBUG] Warnings: ${baselineResult.warnings.join(', ')}`)
+    }
     expect(baselineResult.success).toBe(true)
     expect(baselineResult.stationRecords.length).toBeGreaterThan(0)
 
     // Now ingest a second file with same data (creates existing context)
     // Then ingest third file WITH mutations
+    // Use a higher mutation rate (10%) and a seed to ensure mutations are applied
     const file2 = createMockSimulationStatusFile(50)
 
     const mutatedResult = await ingestFileWithUid(
@@ -80,10 +97,21 @@ describe('--mutate-names flag', () => {
       baselineResult.stationRecords, // Existing records from first import
       baselineResult.toolRecords,
       baselineResult.robotRecords,
-      { plantKey, mutateNames: true }
+      { 
+        plantKey, 
+        mutateNames: true,
+        mutationConfig: {
+          mutationRate: 0.10, // 10% mutation rate to ensure we get mutations
+          seed: 42 // Fixed seed for reproducibility
+        }
+      }
     )
 
     expect(mutatedResult.success).toBe(true)
+
+    // Verify mutations were actually applied
+    expect(mutatedResult.mutationsApplied).toBeDefined()
+    expect(mutatedResult.mutationsApplied).toBeGreaterThan(0)
 
     // Mutations should cause:
     // 1. Ambiguous items (multiple candidates for mutated keys)
@@ -93,6 +121,12 @@ describe('--mutate-names flag', () => {
 
     // At least one of these should be > 0 when mutations are applied
     const hasAmbiguityOrCreates = ambiguousCount > 0 || createsCount > 0
+
+    // Debug: Log what we found
+    if (!hasAmbiguityOrCreates) {
+      console.log(`[DEBUG] Mutations applied: ${mutatedResult.mutationsApplied}, ambiguous: ${ambiguousCount}, creates: ${createsCount}`)
+      console.log(`[DEBUG] Baseline stations: ${baselineResult.stationRecords.length}, mutated stations: ${mutatedResult.stationRecords.length}`)
+    }
 
     expect(hasAmbiguityOrCreates).toBe(true)
 
@@ -134,8 +168,8 @@ describe('--mutate-names flag', () => {
     })
 
     // Expect 1-2 mutations out of 100 (1-2%)
-    expect(result.totalMutations).toBeGreaterThanOrEqual(0)
-    expect(result.totalMutations).toBeLessThanOrEqual(5) // Allow some variance
+    expect(result.mutationsApplied).toBeGreaterThanOrEqual(0)
+    expect(result.mutationsApplied).toBeLessThanOrEqual(5) // Allow some variance
   })
 
   it('should not apply mutations when mutateNames is false', async () => {

@@ -1,4 +1,4 @@
-import { Filter, SlidersHorizontal } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import type { WorkflowStage, WorkflowBottleneckReason } from '../../../domain/workflowTypes';
 
 const STAGE_FILTERS: ReadonlyArray<WorkflowStage | 'ALL'> = [

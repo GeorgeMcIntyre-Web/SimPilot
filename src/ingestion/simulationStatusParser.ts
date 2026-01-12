@@ -611,13 +611,7 @@ function findAllSimulationSheets(workbook: XLSX.WorkBook): string[] {
   return found
 }
 
-/**
- * Find the SIMULATION sheet in the workbook (backward compatibility)
- */
-function findSimulationSheet(workbook: XLSX.WorkBook): string | null {
-  const sheets = findAllSimulationSheets(workbook)
-  return sheets.length > 0 ? sheets[0] : null
-}
+// Removed findSimulationSheet - use findAllSimulationSheets instead
 
 /**
  * Derive project name from filename

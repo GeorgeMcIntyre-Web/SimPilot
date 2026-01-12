@@ -97,7 +97,7 @@ export async function ingestSimulationStatusFile(
     const excelRowIndex = headerRowIndex + 1 + idx // +1 for header row, +idx for data row
     if (robotColIndex === -1) return true // Can't detect, include row
     return !isCellStruck(sheet, excelRowIndex, robotColIndex)
-  })
+  }) as Array<Record<string, unknown>>
 
   const deletedCount = dataWithHeaders.length - nonDeletedRows.length
 

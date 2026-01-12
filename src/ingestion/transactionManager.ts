@@ -1,8 +1,9 @@
 // Transaction Manager for ingestion operations
 // Addresses DATA_INTEGRITY_ISSUES.md - Issue #5: Transaction Rollback
 
-import { coreStore, CoreStoreState } from '../domain/coreStore'
+import { coreStore } from '../domain/coreStore'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from '../domain/storeSnapshot'
+import { Robot, Tool } from '../domain/core'
 import { log } from '../lib/log'
 
 /**
@@ -68,12 +69,16 @@ export class IngestionTransaction {
     const restoredState = applySnapshotToState(this.snapshot)
 
     // Apply to store (manually update store state)
+    // Note: UnifiedAsset[] needs to be converted to Robot[] and Tool[]
+    // For now, we'll use type assertions since UnifiedAsset is compatible
+    const robotAssets = restoredState.assets.filter(a => a.kind === 'ROBOT') as Robot[]
+    const toolAssets = restoredState.assets.filter(a => a.kind !== 'ROBOT') as Tool[]
     coreStore.setData({
       projects: restoredState.projects,
       areas: restoredState.areas,
       cells: restoredState.cells,
-      robots: restoredState.assets.filter(a => a.kind === 'ROBOT'),
-      tools: restoredState.assets.filter(a => a.kind !== 'ROBOT'),
+      robots: robotAssets,
+      tools: toolAssets,
       warnings: restoredState.warnings,
       referenceData: restoredState.referenceData
     }, restoredState.dataSource || undefined)

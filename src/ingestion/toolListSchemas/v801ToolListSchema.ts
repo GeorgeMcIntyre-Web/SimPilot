@@ -200,6 +200,79 @@ export function v801RowToToolEntities(
     return entities
   }
 
+  // Create separate entities for RH and LH when both are present
+  if (hasRH && hasLH) {
+    // Create RH entity
+    const rhCanonicalKey = buildFordStyleCanonicalKey('FORD', normalized.toolingNumberRH, '') || ''
+    const rhDisplayCode = buildDisplayCode(
+      normalized.toolingNumberRH,
+      normalized.equipmentNoShown,
+      normalized.stationAtomic,
+      normalized.equipmentType
+    )
+    const rhAliases = buildAliases(
+      normalized.equipmentNoShown,
+      normalized.toolingNumberRH,
+      '',
+      normalized.stationGroup,
+      normalized.areaName
+    )
+    entities.push({
+      canonicalKey: rhCanonicalKey,
+      displayCode: rhDisplayCode,
+      stationGroup: normalized.stationGroup,
+      stationAtomic: normalized.stationAtomic,
+      areaName: normalized.areaName,
+      aliases: rhAliases,
+      source: {
+        file: normalized.sourceFile,
+        row: normalized.rawRowIndex,
+        sheet: sheetName
+      },
+      raw: normalized.raw
+    })
+
+    // Create LH entity
+    const lhCanonicalKey = buildFordStyleCanonicalKey('FORD', normalized.toolingNumberLH, '') || ''
+    const lhDisplayCode = buildDisplayCode(
+      normalized.toolingNumberLH,
+      normalized.equipmentNoShown,
+      normalized.stationAtomic,
+      normalized.equipmentType
+    )
+    const lhAliases = buildAliases(
+      normalized.equipmentNoShown,
+      '',
+      normalized.toolingNumberLH,
+      normalized.stationGroup,
+      normalized.areaName
+    )
+    entities.push({
+      canonicalKey: lhCanonicalKey,
+      displayCode: lhDisplayCode,
+      stationGroup: normalized.stationGroup,
+      stationAtomic: normalized.stationAtomic,
+      areaName: normalized.areaName,
+      aliases: lhAliases,
+      source: {
+        file: normalized.sourceFile,
+        row: normalized.rawRowIndex,
+        sheet: sheetName
+      },
+      raw: normalized.raw
+    })
+
+    if (debug && entities.length > 0) {
+      log.debug(`[V801] Row ${normalized.rawRowIndex} produced ${entities.length} entities (RH + LH)`)
+      entities.forEach(e => {
+        log.debug(`  - canonicalKey: ${e.canonicalKey}`)
+        log.debug(`    displayCode: ${e.displayCode}`)
+      })
+    }
+
+    return entities
+  }
+
   // Build canonical key preferring electrical identifiers (Tooling) over mechanical (Equipment No)
   let canonicalKey: string | null = null
   let primaryIdentifier = ''

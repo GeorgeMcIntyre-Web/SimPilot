@@ -105,9 +105,16 @@ export function findToolCandidates(
   let debugChecked = 0
   let debugMatched = 0
 
+  // Guard against undefined/null
+  if (!existingRecords || !Array.isArray(existingRecords)) {
+    return candidates
+  }
+
   for (const record of existingRecords) {
     if (record.key === key) continue
-    if (record.plantKey !== plantKey) continue
+    if (record.plantKey !== plantKey) {
+      continue
+    }
 
     const reasons: string[] = []
     let score = 0
@@ -172,6 +179,16 @@ export function findToolCandidates(
     log.debug(`[FuzzyMatcher] Collision key "${key}" (toolCode="${labels.toolCode}"): checked ${debugChecked} existing records, matched ${debugMatched} by toolCode, found ${candidates.length} total candidates`)
     if (candidates.length > 0) {
       log.debug(`  Top candidate: ${candidates[0].key} (score=${candidates[0].matchScore}, reasons: ${candidates[0].reasons.join(', ')})`)
+    }
+  }
+
+  // Debug: Log when no candidates found but should have matches
+  if (candidates.length === 0 && debugChecked > 0 && labels.toolCode) {
+    log.debug(`[FuzzyMatcher] No candidates found for key "${key}" with toolCode="${labels.toolCode}" (checked ${debugChecked} records)`)
+    // Enhanced debug: log what we checked
+    if (debugChecked > 0) {
+      const sampleRecord = existingRecords[0]
+      log.debug(`[FuzzyMatcher] Sample record: key="${sampleRecord?.key}", toolCode="${sampleRecord?.labels?.toolCode}", plantKey="${sampleRecord?.plantKey}" vs search plantKey="${plantKey}"`)
     }
   }
 

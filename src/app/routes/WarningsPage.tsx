@@ -4,6 +4,7 @@ import { useWarnings } from '../../ui/hooks/useDomainData'
 import { AlertTriangle, FileText, Copy, Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { EmptyState } from '../../ui/components/EmptyState'
 import { PageHint } from '../../ui/components/PageHint'
+import { log } from '../../lib/log'
 
 export function WarningsPage() {
     const warnings = useWarnings()
@@ -43,7 +44,7 @@ export function WarningsPage() {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
         } catch (err) {
-            console.error('Failed to copy', err)
+            log.error('Failed to copy', err)
         }
     }
 

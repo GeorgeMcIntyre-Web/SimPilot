@@ -12,8 +12,7 @@ import {
   SimulationStatusValidationAnomaly,
   SimulationStatusValidationReport,
   SimulationMilestones,
-  SIMULATION_MILESTONES,
-  MilestoneValue
+  SIMULATION_MILESTONES
 } from './simulationStatusTypes'
 
 // ============================================================================

@@ -109,7 +109,7 @@ function normalizeString(value: any): string | null {
  */
 export function normalizeRobotEquipmentRows(
   rows: RobotEquipmentRawRow[],
-  sourceFile: string,
+  _sourceFile: string,
   headerRowIndex: number
 ): NormalizedRobotEquipmentRow[] {
   const normalized: NormalizedRobotEquipmentRow[] = []

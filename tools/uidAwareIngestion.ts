@@ -423,7 +423,7 @@ export async function ingestFileWithUid(
       diff,
       ambiguousCount: ambiguousItems.length,
       warnings,
-      mutationsApplied: totalMutations,
+      mutationsApplied: mutateNames ? totalMutations : undefined,
       simulationStatusRowsParsed,
       toolListRowsParsed,
       robotListRowsParsed,

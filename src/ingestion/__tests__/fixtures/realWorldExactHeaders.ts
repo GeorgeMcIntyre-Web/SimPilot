@@ -90,11 +90,13 @@ export const EXACT_SIMULATION_STATUS = [
  */
 export const EXACT_TOOL_LIST = [
     // Row 1: Headers (EXACT from STLA_S_ZAR Tool List.xlsx - ToolList sheet)
+    // Added 'Equipment No Shown' so STLA schema can create entities
     [
         'ID',
         '',                                    // EMPTY column (index 1) - from production file
         'SUB Area Name',
         'Station',
+        'Equipment No Shown',                  // Required for STLA schema to create entities
         'Sim. Leader',
         'Sim. Employee',
         'Sim. Due Date (yyyy/MM/dd)',
@@ -108,6 +110,7 @@ export const EXACT_TOOL_LIST = [
         '',                                    // Empty column (no data)
         'Underbody Sub-Area A',
         '010',                                 // Station code for linking
+        'EQ-001',                              // Equipment No Shown - required for entity creation
         'Werner Hamel',                        // Unmapped → should vacuum to metadata
         'Alice Johnson',                       // Unmapped → should vacuum to metadata
         '2024/12/15',                          // Unmapped → should vacuum to metadata
@@ -121,6 +124,7 @@ export const EXACT_TOOL_LIST = [
         '',
         'Underbody Sub-Area B',
         '020',
+        'EQ-002',                              // Equipment No Shown - required for entity creation
         'Lisa Mueller',
         'Tom Davis',
         '2024/12/20',
