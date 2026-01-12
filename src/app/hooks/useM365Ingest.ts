@@ -5,6 +5,7 @@ import { listExcelFilesInConfiguredFolder, downloadFileAsBlob, blobToFile, MsExc
 import { VersionComparisonResult } from '../../ingestion/versionComparison';
 import { addImportHistoryEntry, buildImportHistoryEntry } from '../features/importHistory/importHistoryStore';
 import { syncSimPilotStoreFromLocalData } from '../../domain/simPilotSnapshotBuilder';
+import { log } from '../../lib/log';
 
 export function useM365Ingest(hasData: boolean) {
   const [m365Items, setM365Items] = useState<MsExcelFileItem[]>([]);
@@ -104,7 +105,7 @@ export function useM365Ingest(hasData: boolean) {
       }
 
     } catch (err) {
-      console.error(err);
+      log.error('M365 ingestion error', err);
       setM365Error(err instanceof Error ? err.message : "An unknown error occurred during M365 ingestion.");
     } finally {
       setIsIngesting(false);
@@ -146,7 +147,7 @@ export function useM365Ingest(hasData: boolean) {
       addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Microsoft 365'));
       syncSimPilotStoreFromLocalData();
     } catch (err) {
-      console.error(err);
+      log.error('M365 ingestion confirmation error', err);
       setM365Error(err instanceof Error ? err.message : "An unknown error occurred during ingestion.");
     } finally {
       setIsIngesting(false);

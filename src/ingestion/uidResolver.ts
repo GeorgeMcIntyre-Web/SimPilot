@@ -93,9 +93,9 @@ export function resolveStationUid(
   sourceInfo: { sourceFile: string; sheetName?: string; rowIndex?: number }
 ): StationResolution {
   // Strategy 1: Check alias rules
-  const aliasRule = context.aliasRules.find(
+  const aliasRule = (context.aliasRules || []).find(
     rule => rule.entityType === 'station' && rule.fromKey === key &&
-           (rule.plantKey === context.plantKey || rule.isGlobal)
+           (!rule.plantKey || rule.plantKey === context.plantKey || rule.isGlobal)
   )
 
   if (aliasRule) {
@@ -107,7 +107,7 @@ export function resolveStationUid(
   }
 
   // Strategy 2: Check existing records by key
-  const existingRecord = context.stationRecords.find(
+  const existingRecord = (context.stationRecords || []).find(
     record => record.key === key && record.status === 'active' && record.plantKey === context.plantKey
   )
 
@@ -120,12 +120,12 @@ export function resolveStationUid(
   }
 
   // Check for inactive match
-  const inactiveRecord = context.stationRecords.find(
+  const inactiveRecord = (context.stationRecords || []).find(
     record => record.key === key && record.status === 'inactive' && record.plantKey === context.plantKey
   )
 
   // Strategy 3: Check fuzzy matches - if found, return ambiguous
-  const candidates = findStationCandidates(key, labels, context.plantKey, context.stationRecords)
+  const candidates = findStationCandidates(key, labels, context.plantKey, context.stationRecords || [])
 
   if (candidates.length > 0) {
     return {
@@ -156,6 +156,9 @@ export function resolveStationUid(
     ...sourceInfo
   }
 
+  if (!context.stationRecords) {
+    context.stationRecords = []
+  }
   context.stationRecords.push(newRecord)
 
   return {
@@ -187,7 +190,7 @@ export function resolveToolUid(
   sourceInfo: { sourceFile: string; sheetName?: string; rowIndex?: number }
 ): ToolResolution {
   // Strategy 1: Check alias rules
-  const aliasRule = context.aliasRules.find(
+  const aliasRule = (context.aliasRules || []).find(
     rule => rule.entityType === 'tool' && rule.fromKey === key &&
            (rule.plantKey === context.plantKey || rule.isGlobal)
   )
@@ -201,7 +204,7 @@ export function resolveToolUid(
   }
 
   // Strategy 2: Check existing records by key
-  const existingRecord = context.toolRecords.find(
+  const existingRecord = (context.toolRecords || []).find(
     record => record.key === key && record.status === 'active' && record.plantKey === context.plantKey
   )
 
@@ -214,12 +217,12 @@ export function resolveToolUid(
   }
 
   // Check for inactive match
-  const inactiveRecord = context.toolRecords.find(
+  const inactiveRecord = (context.toolRecords || []).find(
     record => record.key === key && record.status === 'inactive' && record.plantKey === context.plantKey
   )
 
   // Strategy 3: Check fuzzy matches
-  const candidates = findToolCandidates(key, labels, context.plantKey, context.toolRecords)
+  const candidates = findToolCandidates(key, labels, context.plantKey, context.toolRecords || [])
 
   if (candidates.length > 0) {
     return {
@@ -251,6 +254,9 @@ export function resolveToolUid(
     ...sourceInfo
   }
 
+  if (!context.toolRecords) {
+    context.toolRecords = []
+  }
   context.toolRecords.push(newRecord)
 
   return {
@@ -282,9 +288,9 @@ export function resolveRobotUid(
   sourceInfo: { sourceFile: string; sheetName?: string; rowIndex?: number }
 ): RobotResolution {
   // Strategy 1: Check alias rules
-  const aliasRule = context.aliasRules.find(
+  const aliasRule = (context.aliasRules || []).find(
     rule => rule.entityType === 'robot' && rule.fromKey === key &&
-           (rule.plantKey === context.plantKey || rule.isGlobal)
+           (!rule.plantKey || rule.plantKey === context.plantKey || rule.isGlobal)
   )
 
   if (aliasRule) {
@@ -296,7 +302,7 @@ export function resolveRobotUid(
   }
 
   // Strategy 2: Check existing records by key
-  const existingRecord = context.robotRecords.find(
+  const existingRecord = (context.robotRecords || []).find(
     record => record.key === key && record.status === 'active' && record.plantKey === context.plantKey
   )
 
@@ -309,12 +315,12 @@ export function resolveRobotUid(
   }
 
   // Check for inactive match
-  const inactiveRecord = context.robotRecords.find(
+  const inactiveRecord = (context.robotRecords || []).find(
     record => record.key === key && record.status === 'inactive' && record.plantKey === context.plantKey
   )
 
   // Strategy 3: Check fuzzy matches
-  const candidates = findRobotCandidates(key, labels, context.plantKey, context.robotRecords)
+  const candidates = findRobotCandidates(key, labels, context.plantKey, context.robotRecords || [])
 
   if (candidates.length > 0) {
     return {
@@ -346,6 +352,9 @@ export function resolveRobotUid(
     ...sourceInfo
   }
 
+  if (!context.robotRecords) {
+    context.robotRecords = []
+  }
   context.robotRecords.push(newRecord)
 
   return {

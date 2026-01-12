@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PlantKey } from '../../domain/uidTypes'
+import { log } from '../../lib/log'
 
 interface CanonicalIdDisplayProps {
   plantKey: PlantKey
@@ -25,7 +26,7 @@ export function CanonicalIdDisplay({ plantKey, uid, key, className = '' }: Canon
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error('Failed to copy:', err)
+      log.error('Failed to copy canonical ID', err)
     }
   }
 

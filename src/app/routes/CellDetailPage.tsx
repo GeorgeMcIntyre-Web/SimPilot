@@ -12,6 +12,7 @@ import { FileSpreadsheet, AlertTriangle, User, Check, X, MonitorPlay } from 'luc
 import { CellChaosHint } from '../../ui/components/CellChaosHint';
 import { simBridgeClient } from '../../integrations/simbridge/SimBridgeClient';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
+import { log } from '../../lib/log';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
@@ -91,7 +92,7 @@ export function CellDetailPage() {
                 alert("Failed to load the study. Please check if the file exists on the server.");
             }
         } catch (e) {
-            console.error(e);
+            log.error('Failed to open simulation', e);
             alert("An error occurred while trying to open the simulation.");
         } finally {
             popBusy();
