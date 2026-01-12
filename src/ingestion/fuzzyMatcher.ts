@@ -11,6 +11,7 @@ import {
   EntityUid,
   PlantKey
 } from '../domain/uidTypes'
+import { log } from '../lib/log'
 
 export interface FuzzyCandidate {
   uid: EntityUid
@@ -168,9 +169,9 @@ export function findToolCandidates(
 
   // TEMP DEBUG: Log collision key matching
   if (isCollisionKey) {
-    console.log(`[FuzzyMatcher] Collision key "${key}" (toolCode="${labels.toolCode}"): checked ${debugChecked} existing records, matched ${debugMatched} by toolCode, found ${candidates.length} total candidates`)
+    log.debug(`[FuzzyMatcher] Collision key "${key}" (toolCode="${labels.toolCode}"): checked ${debugChecked} existing records, matched ${debugMatched} by toolCode, found ${candidates.length} total candidates`)
     if (candidates.length > 0) {
-      console.log(`  Top candidate: ${candidates[0].key} (score=${candidates[0].matchScore}, reasons: ${candidates[0].reasons.join(', ')})`)
+      log.debug(`  Top candidate: ${candidates[0].key} (score=${candidates[0].matchScore}, reasons: ${candidates[0].reasons.join(', ')})`)
     }
   }
 
