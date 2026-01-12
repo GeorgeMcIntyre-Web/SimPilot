@@ -12,6 +12,7 @@ import {
   useSimulationStatusEntities,
   simulationStatusStore
 } from '../../ingestion/simulationStatus'
+import type { SimulationStatusEntity } from '../../ingestion/simulationStatus'
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
 
@@ -256,10 +257,10 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
   )
 }
 
-function RobotDetail({ robot }: { robot: any }) {
-  const milestones = Object.entries(robot.milestones).filter(([_, value]) => value !== null)
+function RobotDetail({ robot }: { robot: SimulationStatusEntity }) {
+  const milestones = Object.entries(robot.milestones).filter(([_, value]) => value !== null) as [string, number][]
   const completed = milestones.filter(([_, value]) => value === 100).length
-  const inProgress = milestones.filter(([_, value]) => value! > 0 && value! < 100).length
+  const inProgress = milestones.filter(([_, value]) => value > 0 && value < 100).length
   const notStarted = milestones.filter(([_, value]) => value === 0).length
 
   const formatMilestoneName = (key: string) => {
@@ -349,7 +350,7 @@ function RobotDetail({ robot }: { robot: any }) {
                   className={`h-full transition-all ${
                     value === 100
                       ? 'bg-green-500'
-                      : value! > 0
+                      : value > 0
                       ? 'bg-yellow-500'
                       : 'bg-gray-300 dark:bg-gray-600'
                   }`}

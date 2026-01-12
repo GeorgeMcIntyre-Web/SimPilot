@@ -2,7 +2,7 @@
 // Helper to diagnose why robots/tools cannot be linked to cells
 
 import { Cell, Robot, Tool } from '../domain/core'
-import { normalizeAreaName, normalizeStationCode, buildStationId } from './normalizers'
+import { normalizeAreaName, normalizeStationCode } from './normalizers'
 import { log } from '../lib/log'
 
 /**

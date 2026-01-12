@@ -8,6 +8,7 @@ import { Search, ArrowUpDown, Copy, Check, AlertTriangle, ShieldCheck, Users, Ga
 import { Cell, SchedulePhase } from '../../domain/core';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '../../ui/components/EmptyState';
+import { log } from '../../lib/log';
 
 type SortKey = 'name' | 'cellCount' | 'atRiskCellsCount' | 'avgCompletion';
 type SortDirection = 'asc' | 'desc';
@@ -124,7 +125,7 @@ export function EngineersPage() {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
-            console.error('Failed to copy', err);
+            log.error('Failed to copy', err);
         }
     };
 

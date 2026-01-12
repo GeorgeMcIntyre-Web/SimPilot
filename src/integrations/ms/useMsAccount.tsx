@@ -7,6 +7,7 @@ import {
     logoutFromMicrosoft,
     MsAuthState,
 } from './msAuthClient'
+import { log } from '../../lib/log'
 
 export interface MsAccountContextValue {
     enabled: boolean
@@ -35,7 +36,7 @@ export function MsAuthProvider({ children }: { children: React.ReactNode }) {
                 const initialState = await initializeMsAuth()
                 setState(initialState)
             } catch (error) {
-                console.error('Failed to initialize MSAL:', error)
+                log.error('Failed to initialize MSAL', error)
                 // Fallback to synchronous check if async init fails
                 setState(getMsAuthState())
             }

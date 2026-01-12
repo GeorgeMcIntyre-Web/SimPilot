@@ -14,6 +14,7 @@ import { useHasSimulationData } from '../../ui/hooks/useDomainData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils'
 import { useCells } from '../../domain/coreStore'
+import { log } from '../../lib/log'
 
 import {
   AreaCardsGrid,
@@ -92,7 +93,7 @@ export function DashboardPage() {
     const normalizedStationKey = normalizeStationId(cell.stationKey)
     
     if (!normalizedStationKey) {
-      console.warn('Cannot navigate: invalid stationKey', cell.stationKey)
+      log.warn('Cannot navigate: invalid stationKey', cell.stationKey)
       return
     }
 
@@ -107,7 +108,7 @@ export function DashboardPage() {
     } else {
       // If no legacy cell found, try to navigate using stationKey directly
       // This might work if there's a route that accepts stationKey
-      console.warn('No matching Cell found for stationKey:', cell.stationKey, 'Available cells:', legacyCells.length)
+      log.warn('No matching Cell found for stationKey:', cell.stationKey, 'Available cells:', legacyCells.length)
       // For now, we could show a drawer or modal with station details
       // But since StationDetailDrawer might be on origin/main, we'll just log
     }

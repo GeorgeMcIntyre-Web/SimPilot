@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useAllEngineerMetrics, useCells, useGlobalSimulationMetrics } from '../../ui/hooks/useDomainData'
 import { useChangeLog } from '../../domain/coreStore'
+import { log } from '../../lib/log'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { KpiTile } from '../../ui/components/KpiTile'
 import { DataTable, Column } from '../../ui/components/DataTable'
@@ -108,7 +109,7 @@ export function DaleConsole() {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
         } catch (err) {
-            console.error('Failed to copy', err)
+            log.error('Failed to copy', err)
         }
     }
 
@@ -119,7 +120,7 @@ export function DaleConsole() {
             setChaosCopied(true)
             setTimeout(() => setChaosCopied(false), 2000)
         } catch (err) {
-            console.error('Failed to copy chaos summary', err)
+            log.error('Failed to copy chaos summary', err)
         }
     }
 
