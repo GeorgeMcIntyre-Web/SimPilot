@@ -6,6 +6,8 @@ import { VersionComparisonResult } from '../../ingestion/versionComparison';
 import { addImportHistoryEntry, buildImportHistoryEntry } from '../features/importHistory/importHistoryStore';
 import { syncSimPilotStoreFromLocalData } from '../../domain/simPilotSnapshotBuilder';
 import { log } from '../../lib/log';
+import { saveSnapshot } from '../../storage/indexedDBStore';
+import { coreStore } from '../../domain/coreStore';
 
 export function useM365Ingest(hasData: boolean) {
   const [m365Items, setM365Items] = useState<MsExcelFileItem[]>([]);
@@ -102,6 +104,19 @@ export function useM365Ingest(hasData: boolean) {
         setResult(res);
         addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Microsoft 365'));
         syncSimPilotStoreFromLocalData();
+
+        // Save snapshot to IndexedDB
+        try {
+          const fileNames = simBlobsAsFiles.map(f => f.name);
+          const snapshotTimestamp = await saveSnapshot(
+            coreStore.getState(),
+            fileNames,
+            undefined
+          );
+          log.info('Snapshot saved after M365 import:', snapshotTimestamp);
+        } catch (snapshotErr) {
+          log.error('Failed to save snapshot after M365 import:', snapshotErr);
+        }
       }
 
     } catch (err) {
@@ -146,6 +161,19 @@ export function useM365Ingest(hasData: boolean) {
       setVersionComparison(null);
       addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Microsoft 365'));
       syncSimPilotStoreFromLocalData();
+
+      // Save snapshot to IndexedDB
+      try {
+        const fileNames = input.simulationFiles.map(f => f.name);
+        const snapshotTimestamp = await saveSnapshot(
+          coreStore.getState(),
+          fileNames,
+          undefined
+        );
+        log.info('Snapshot saved after M365 version comparison confirmation:', snapshotTimestamp);
+      } catch (snapshotErr) {
+        log.error('Failed to save snapshot after M365 confirmation:', snapshotErr);
+      }
     } catch (err) {
       log.error('M365 ingestion confirmation error', err);
       setM365Error(err instanceof Error ? err.message : "An unknown error occurred during ingestion.");

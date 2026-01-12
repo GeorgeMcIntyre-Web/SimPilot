@@ -5,6 +5,8 @@ import { VersionComparisonResult } from '../../ingestion/versionComparison';
 import { addImportHistoryEntry, buildImportHistoryEntry } from '../features/importHistory/importHistoryStore';
 import { syncSimPilotStoreFromLocalData } from '../../domain/simPilotSnapshotBuilder';
 import { log } from '../../lib/log';
+import { saveSnapshot } from '../../storage/indexedDBStore';
+import { coreStore } from '../../domain/coreStore';
 
 export function useLocalFileIngest(hasData: boolean) {
   const [simulationFiles, setSimulationFiles] = useState<File[]>([]);
@@ -80,6 +82,20 @@ export function useLocalFileIngest(hasData: boolean) {
         setResult(res);
         addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Local Files'));
         syncSimPilotStoreFromLocalData();
+
+        // Save snapshot to IndexedDB
+        try {
+          const fileNames = simulationFiles.map(f => f.name);
+          const snapshotTimestamp = await saveSnapshot(
+            coreStore.getState(),
+            fileNames,
+            undefined // userNotes (optional)
+          );
+          log.info('Snapshot saved after local file import:', snapshotTimestamp);
+        } catch (snapshotErr) {
+          log.error('Failed to save snapshot after import:', snapshotErr);
+          // Don't break the import flow if snapshot save fails
+        }
       }
     } catch (err) {
       log.error('Local file ingestion error', err);
@@ -105,6 +121,19 @@ export function useLocalFileIngest(hasData: boolean) {
       setVersionComparison(null);
       addImportHistoryEntry(buildImportHistoryEntry(input, res, 'Local Files'));
       syncSimPilotStoreFromLocalData();
+
+      // Save snapshot to IndexedDB
+      try {
+        const fileNames = input.simulationFiles.map(f => f.name);
+        const snapshotTimestamp = await saveSnapshot(
+          coreStore.getState(),
+          fileNames,
+          undefined
+        );
+        log.info('Snapshot saved after version comparison confirmation:', snapshotTimestamp);
+      } catch (snapshotErr) {
+        log.error('Failed to save snapshot after confirmation:', snapshotErr);
+      }
     } catch (err) {
       log.error('Local file ingestion confirmation error', err);
       setError(err instanceof Error ? err.message : "An unknown error occurred during ingestion.");
