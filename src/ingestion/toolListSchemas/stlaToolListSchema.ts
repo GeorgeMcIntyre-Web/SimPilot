@@ -24,6 +24,7 @@ import {
   checkToolingAreaMismatch,
   checkToolingStationMismatch
 } from './normalizeToolListRow'
+import { log } from '../../lib/log'
 
 // ============================================================================
 // TYPES
@@ -266,10 +267,10 @@ export function stlaRowToToolEntities(
   }
 
   if (debug && entities.length > 0) {
-    console.log(`[STLA] Row ${normalized.rawRowIndex} produced ${entities.length} entities`)
+    log.debug(`[STLA] Row ${normalized.rawRowIndex} produced ${entities.length} entities`)
     entities.forEach(e => {
-      console.log(`  - canonicalKey: ${e.canonicalKey}`)
-      console.log(`    displayCode: ${e.displayCode}`)
+      log.debug(`  - canonicalKey: ${e.canonicalKey}`)
+      log.debug(`    displayCode: ${e.displayCode}`)
     })
   }
 

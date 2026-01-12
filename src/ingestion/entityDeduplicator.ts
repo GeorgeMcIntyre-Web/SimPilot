@@ -2,6 +2,7 @@
 // Addresses DATA_INTEGRITY_ISSUES.md - Issue #6: Deduplication
 
 import { Project, Area, Cell, Robot, Tool } from '../domain/core'
+import { log } from '../lib/log'
 
 /**
  * Duplicate detection result
@@ -233,15 +234,15 @@ export function logDeduplicationStats(results: {
   robots: DeduplicationResult<Robot>
   tools: DeduplicationResult<Tool>
 }): void {
-  console.log('[Deduplication] Statistics:')
+  log.debug('[Deduplication] Statistics:')
 
   const logEntityStats = (name: string, result: DeduplicationResult<any>) => {
     if (result.stats.exactDuplicates > 0 || result.stats.idCollisions > 0) {
-      console.log(`  ${name}:`)
-      console.log(`    - Incoming: ${result.stats.incoming}`)
-      console.log(`    - Added: ${result.stats.deduplicated}`)
-      console.log(`    - Exact duplicates skipped: ${result.stats.exactDuplicates}`)
-      console.log(`    - ID collisions detected: ${result.stats.idCollisions}`)
+      log.debug(`  ${name}:`)
+      log.debug(`    - Incoming: ${result.stats.incoming}`)
+      log.debug(`    - Added: ${result.stats.deduplicated}`)
+      log.debug(`    - Exact duplicates skipped: ${result.stats.exactDuplicates}`)
+      log.debug(`    - ID collisions detected: ${result.stats.idCollisions}`)
     }
   }
 
