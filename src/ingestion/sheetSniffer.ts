@@ -441,7 +441,7 @@ function containsKeyword(rowText: string[], keyword: string): boolean {
  */
 function calculateCategoryScore(
   rowText: string[],
-  category: Exclude<SheetCategory, 'UNKNOWN'>
+  category: Exclude<SheetCategory, 'UNKNOWN'>   
 ): { score: number; strongMatches: string[]; weakMatches: string[] } {
   const signatures = CATEGORY_SIGNATURES[category]
   const strongMatches: string[] = []

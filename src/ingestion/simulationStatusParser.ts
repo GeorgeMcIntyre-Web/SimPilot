@@ -537,6 +537,21 @@ export async function parseSimulationStatus(
     cells.push(cell)
   }
 
+  // Debug: log a small sample of parsed simulation data for verification
+  try {
+    const sampleVacuumRows = allVacuumRows.slice(0, 2)
+    console.log('[SimPilot][Debug] parseSimulationStatus result', {
+      file: fileName,
+      sheets: sheetsToParse,
+      projects: project ? 1 : 0,
+      areas: areas.length,
+      cells: cells.length,
+      vacuumRowsSample: sampleVacuumRows
+    })
+  } catch (debugErr) {
+    console.warn('[SimPilot][Debug] Failed to log parseSimulationStatus result', debugErr)
+  }
+
   return {
     projects: [project],
     areas,
