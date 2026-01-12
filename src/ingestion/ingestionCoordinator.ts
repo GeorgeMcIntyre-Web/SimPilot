@@ -613,7 +613,7 @@ async function ingestFilesInternal(
           fileName: file.name,
           previousUploadDate: uploadInfo.uploadedAt
         }))
-        console.log(`[Ingestion] Skipping duplicate file: ${file.name} (previously uploaded ${uploadInfo.uploadedAt})`)
+        log.debug(`[Ingestion] Skipping duplicate file: ${file.name} (previously uploaded ${uploadInfo.uploadedAt})`)
         continue // Skip this file
       }
 
@@ -708,7 +708,7 @@ async function ingestFilesInternal(
         log.info(`[Ingestion] Detected Metadata file: ${file.name} (sheet: ${sheetName}). Skipping for now.`)
       }
     } catch (error) {
-      console.error(`[Ingestion] Error processing file ${file.name}:`, error)
+      log.error(`[Ingestion] Error processing file ${file.name}:`, error)
       allWarnings.push(createParserErrorWarning({
         fileName: file.name,
         error: String(error)
@@ -757,7 +757,7 @@ async function ingestFilesInternal(
   })
 
   if (orphans.robots.length > 0 || orphans.tools.length > 0) {
-    console.warn(`[Integrity] Found ${orphans.robots.length} orphaned robots and ${orphans.tools.length} orphaned tools`)
+    log.warn(`[Integrity] Found ${orphans.robots.length} orphaned robots and ${orphans.tools.length} orphaned tools`)
 
     // Run diagnostics on orphaned assets
     const allOrphans = [...orphans.robots, ...orphans.tools]
@@ -918,7 +918,7 @@ async function ingestFilesInternal(
       stats: crossRefResult.stats
     })
   } catch (error) {
-    console.error('[Ingestion] Failed to build CrossRef data:', error)
+    log.error('[Ingestion] Failed to build CrossRef data:', error)
     // Don't fail the entire ingestion if CrossRef fails
   }
 

@@ -77,7 +77,25 @@ export const CATEGORY_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
       'FINAL DELIVERABLES',
       'ROBOT POSITION - STAGE 1',
       '1st STAGE SIM',
-      '1st Stage Sim'
+      '1st Stage Sim',
+      // MRS_OLP sheet signatures
+      'FULL ROBOT PATHS CREATED WITH AUX DATA SET',
+      'FINAL ROBOT POSITION',
+      'COLLISION CHECKS DONE WITH RCS MODULE',
+      'RCS MULTI RESOURCE SIMULATION',
+      'OLP DONE TO PROGRAMMING GUIDELINE',
+      // DOCUMENTATION sheet signatures
+      'INTERLOCK ZONING DOCUMENTATION CREATED',
+      'WIS7 SPOT LIST UPDATED',
+      'CORE CUBIC S DOCUMENTATION CREATED',
+      'ROBOT INSTALLATION DOCUMENTATION CREATED',
+      '1A4 SHEET CREATED + COMPLETED',
+      // SAFETY_LAYOUT sheet signatures
+      'LIGHT CURTAIN CALCULATIONS VERIFIED',
+      'ROBOT MAIN CABLE LENGTH VERIFIED',
+      '3D CABLE TRAYS CHECKED',
+      '3D FENCING CHECKED',
+      '3D CABINETS CHECKED'
     ],
     weak: [
       'PERSONS RESPONSIBLE',
@@ -90,7 +108,21 @@ export const CATEGORY_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
       'STATION',
       'ROBOT',
       'Reach Status',
-      'REACH'
+      'REACH',
+      // MRS_OLP weak keywords
+      'MULTI RESOURCE SIMULATION',
+      'MRS',
+      'OLP',
+      'OFFLINE PROGRAMMING',
+      'CYCLETIME',
+      // DOCUMENTATION weak keywords
+      'DOCUMENTATION',
+      'WIS7',
+      // SAFETY_LAYOUT weak keywords
+      'SAFETY',
+      'LAYOUT',
+      'CABLE LENGTH',
+      'HOSE LENGTH'
     ]
   },
 
@@ -453,16 +485,30 @@ function calculateSheetNameScore(
 
   // SIMULATION_STATUS category preferences
   if (category === 'SIMULATION_STATUS') {
-    // Ideal sheet names
-    if (lower === 'simulation' || lower.includes('simulation') && !lower.includes('data')) {
-      return 10
+    // Ideal sheet names - exact match gets highest score
+    if (lower === 'simulation') {
+      return 20 // Increased from 10 to ensure name bonus can overcome keyword differences
+    }
+    // Contains "simulation" but not "data"
+    if (lower.includes('simulation') && !lower.includes('data')) {
+      return 20 // Increased from 10
+    }
+    // MRS_OLP, DOCUMENTATION, SAFETY_LAYOUT are valid simulation status sheets
+    if (lower === 'mrs_olp' || lower === 'mrs olp' || lower.includes('mrs') && lower.includes('olp')) {
+      return 15
+    }
+    if (lower === 'documentation') {
+      return 15
+    }
+    if (lower === 'safety_layout' || lower === 'safety layout' || (lower.includes('safety') && lower.includes('layout'))) {
+      return 15
     }
     if (lower.startsWith('status_') || lower.endsWith('_status')) {
-      return 8
+      return 15 // Increased from 8
     }
     // Avoid tiny template sheets
     if (lower === 'data' || lower === 'overview' || lower === 'summary') {
-      return -5 // Penalty for generic names
+      return -10 // Increased penalty from -5 to -10
     }
   }
 
@@ -474,6 +520,10 @@ function calculateSheetNameScore(
     if (lower.includes('robotlist')) {
       return 10
     }
+    // Prefer sheets with "robot" in the name
+    if (lower.includes('robot')) {
+      return 8
+    }
   }
 
   // IN_HOUSE_TOOLING category preferences
@@ -482,6 +532,10 @@ function calculateSheetNameScore(
       return 10
     }
     if (lower.includes('equipment') && lower.includes('list')) {
+      return 8
+    }
+    // Prefer sheets with "tool" in the name
+    if (lower.includes('tool')) {
       return 8
     }
   }
@@ -683,6 +737,7 @@ export function scanWorkbook(
     if (detection.category === 'UNKNOWN') {
       continue
     }
+
 
     allDetections.push(detection)
 

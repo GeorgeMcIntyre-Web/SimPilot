@@ -324,6 +324,7 @@ export function vacuumParseSimulationSheet(
 /**
  * Parse a Simulation Status Excel file into domain entities.
  * Uses vacuum parsing internally but maintains backward-compatible output.
+ * Now supports multiple sheets: SIMULATION, MRS_OLP, DOCUMENTATION, SAFETY_LAYOUT
  * 
  * @param workbook - The Excel workbook to parse
  * @param fileName - Name of the file (for warnings and metadata)
@@ -336,74 +337,121 @@ export async function parseSimulationStatus(
 ): Promise<SimulationStatusResult> {
   const warnings: IngestionWarning[] = []
 
-  // Use provided sheet name or auto-detect
-  const sheetName = targetSheetName ?? findSimulationSheet(workbook)
+  // Determine which sheets to parse
+  const sheetsToParse: string[] = targetSheetName 
+    ? [targetSheetName]  // Single sheet specified
+    : findAllSimulationSheets(workbook)  // Auto-detect all simulation sheets
 
-  if (!sheetName) {
-    throw new Error(`No SIMULATION sheet found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+  if (sheetsToParse.length === 0) {
+    throw new Error(`No simulation sheets found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
 
-  // Validate that the target sheet exists
-  if (workbook.SheetNames.includes(sheetName) === false) {
-    throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
-  }
+  log.info(`[Parser] Parsing ${sheetsToParse.length} sheet(s): ${sheetsToParse.join(', ')}`)
 
-  // Convert to matrix
-  const rows = sheetToMatrix(workbook, sheetName)
+  // Parse each sheet and collect all vacuum rows
+  const allVacuumRows: VacuumParsedRow[] = []
+  const allParsedRows: ParsedSimulationRow[] = []
 
-  if (rows.length < 5) {
-    throw new Error(`Sheet "${sheetName}" has too few rows (${rows.length}). Expected at least 5 rows.`)
-  }
+  for (const sheetName of sheetsToParse) {
+    // Validate that the sheet exists
+    if (workbook.SheetNames.includes(sheetName) === false) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName,
+        error: `Sheet "${sheetName}" not found in workbook`
+      }))
+      continue
+    }
 
-  // Find header row
-  const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
-  log.debug(`[Parser] Header row index: ${headerRowIndex}`)
+    // Convert to matrix
+    const rows = sheetToMatrix(workbook, sheetName)
 
-  if (headerRowIndex === null) {
-    throw new Error(`Could not find header row with required columns: ${REQUIRED_HEADERS.join(', ')}`)
-  }
+    if (rows.length < 5) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName,
+        error: `Sheet has too few rows (${rows.length}). Expected at least 5 rows.`
+      }))
+      continue
+    }
 
-  log.debug(`[Parser] Header row content: ${JSON.stringify(rows[headerRowIndex])}`)
+    // Find header row
+    const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
+    log.debug(`[Parser] ${sheetName}: Header row index: ${headerRowIndex}`)
 
-  // Use vacuum parser
-  const { rows: vacuumRows, warnings: parseWarnings } = vacuumParseSimulationSheet(
-    rows,
-    headerRowIndex,
-    fileName,
-    sheetName
-  )
+    if (headerRowIndex === null) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName,
+        error: `Could not find header row with required columns: ${REQUIRED_HEADERS.join(', ')}`
+      }))
+      continue
+    }
 
-  warnings.push(...parseWarnings)
-
-  if (vacuumRows.length === 0) {
-    warnings.push(createParserErrorWarning({
+    // Use vacuum parser
+    const { rows: vacuumRows, warnings: parseWarnings } = vacuumParseSimulationSheet(
+      rows,
+      headerRowIndex,
       fileName,
-      sheetName,
-      error: 'No valid data rows found after parsing'
+      sheetName
+    )
+
+    warnings.push(...parseWarnings)
+
+    if (vacuumRows.length === 0) {
+      warnings.push(createParserErrorWarning({
+        fileName,
+        sheetName,
+        error: 'No valid data rows found after parsing'
+      }))
+      continue
+    }
+
+    // Prefix metrics with sheet name to avoid conflicts (except for SIMULATION sheet)
+    const prefixedVacuumRows = vacuumRows.map(vr => ({
+      ...vr,
+      metrics: vr.metrics.map(m => ({
+        ...m,
+        label: sheetName === 'SIMULATION' 
+          ? m.label  // Keep original label for SIMULATION sheet
+          : `${sheetName}: ${m.label}`  // Prefix with sheet name for others
+      }))
     }))
+
+    allVacuumRows.push(...prefixedVacuumRows)
+
+    // Convert vacuum rows to legacy format for backward compatibility
+    const parsedRows: ParsedSimulationRow[] = prefixedVacuumRows.map(vr => {
+      const stageMetrics: Record<string, number> = {}
+
+      for (const metric of vr.metrics) {
+        if (metric.percent !== null) {
+          stageMetrics[metric.label] = metric.percent
+        }
+      }
+
+      return {
+        engineer: vr.personResponsible,
+        areaName: vr.area,
+        lineCode: vr.assemblyLine || '',
+        stationCode: vr.stationKey,
+        robotName: vr.robotCaption,
+        application: vr.application,
+        stageMetrics,
+        sourceRowIndex: vr.sourceRowIndex
+      }
+    })
+
+    allParsedRows.push(...parsedRows)
   }
 
-  // Convert vacuum rows to legacy format for backward compatibility
-  const parsedRows: ParsedSimulationRow[] = vacuumRows.map(vr => {
-    const stageMetrics: Record<string, number> = {}
+  if (allParsedRows.length === 0) {
+    throw new Error(`No valid data rows found in any simulation sheet in ${fileName}`)
+  }
 
-    for (const metric of vr.metrics) {
-      if (metric.percent !== null) {
-        stageMetrics[metric.label] = metric.percent
-      }
-    }
-
-    return {
-      engineer: vr.personResponsible,
-      areaName: vr.area,
-      lineCode: vr.assemblyLine || '',
-      stationCode: vr.stationKey,
-      robotName: vr.robotCaption,
-      application: vr.application,
-      stageMetrics,
-      sourceRowIndex: vr.sourceRowIndex
-    }
-  })
+  // Use the first sheet name for backward compatibility (or SIMULATION if available)
+  const primarySheetName = sheetsToParse.find(s => s.toUpperCase() === 'SIMULATION') || sheetsToParse[0]
+  const parsedRows = allParsedRows
 
   // Derive project name from filename
   const projectName = deriveProjectName(fileName)
@@ -452,13 +500,19 @@ export async function parseSimulationStatus(
     // Detect issues (e.g., some stages lagging significantly)
     const hasIssues = detectIssues(cellRows)
 
-    // Build simulation status with all vacuum-captured metrics
+    // Merge metrics from all rows (multiple sheets may contribute to same cell)
+    const mergedMetrics: Record<string, number> = {}
+    for (const row of cellRows) {
+      Object.assign(mergedMetrics, row.stageMetrics)
+    }
+
+    // Build simulation status with all merged metrics from all sheets
     const simulation: SimulationStatus = {
       percentComplete: Math.round(avgComplete),
       hasIssues,
-      metrics: firstRow.stageMetrics,
+      metrics: mergedMetrics,  // Contains metrics from all sheets (prefixed with sheet name)
       sourceFile: fileName,
-      sheetName,
+      sheetName: primarySheetName,  // Primary sheet name for backward compatibility
       rowIndex: firstRow.sourceRowIndex
     }
 
@@ -488,7 +542,7 @@ export async function parseSimulationStatus(
     areas,
     cells,
     warnings,
-    vacuumRows // Include vacuum rows for advanced consumers
+    vacuumRows: allVacuumRows // Include all vacuum rows from all sheets
   }
 }
 
@@ -497,27 +551,72 @@ export async function parseSimulationStatus(
 // ============================================================================
 
 /**
- * Find the SIMULATION sheet in the workbook
+ * Find all simulation-related sheets in the workbook.
+ * Returns sheets in priority order: SIMULATION, MRS_OLP, DOCUMENTATION, SAFETY_LAYOUT
+ */
+function findAllSimulationSheets(workbook: XLSX.WorkBook): string[] {
+  const sheetNames = workbook.SheetNames
+  const found: string[] = []
+  const priorityOrder = ['SIMULATION', 'MRS_OLP', 'DOCUMENTATION', 'SAFETY_LAYOUT']
+
+  // Find sheets in priority order
+  for (const priorityName of priorityOrder) {
+    // Exact match
+    if (sheetNames.includes(priorityName)) {
+      found.push(priorityName)
+      continue
+    }
+
+    // Case-insensitive match
+    const match = sheetNames.find(name => name.toUpperCase() === priorityName.toUpperCase())
+    if (match && !found.includes(match)) {
+      found.push(match)
+      continue
+    }
+
+    // Partial match for MRS_OLP (could be "MRS_OLP", "MRS OLP", etc.)
+    if (priorityName === 'MRS_OLP') {
+      const mrsMatch = sheetNames.find(name => {
+        const upper = name.toUpperCase()
+        return (upper.includes('MRS') && upper.includes('OLP')) || upper.includes('MULTI RESOURCE')
+      })
+      if (mrsMatch && !found.includes(mrsMatch)) {
+        found.push(mrsMatch)
+        continue
+      }
+    }
+
+    // Partial match for SAFETY_LAYOUT
+    if (priorityName === 'SAFETY_LAYOUT') {
+      const safetyMatch = sheetNames.find(name => {
+        const upper = name.toUpperCase()
+        return (upper.includes('SAFETY') && upper.includes('LAYOUT')) || 
+               (upper.includes('SAFETY') && upper.includes('&'))
+      })
+      if (safetyMatch && !found.includes(safetyMatch)) {
+        found.push(safetyMatch)
+        continue
+      }
+    }
+  }
+
+  // Fallback: look for any sheet with "SIMULATION" in the name
+  if (found.length === 0) {
+    const partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
+    if (partial) {
+      found.push(partial)
+    }
+  }
+
+  return found
+}
+
+/**
+ * Find the SIMULATION sheet in the workbook (backward compatibility)
  */
 function findSimulationSheet(workbook: XLSX.WorkBook): string | null {
-  const sheetNames = workbook.SheetNames
-
-  // Look for exact match first
-  if (sheetNames.includes('SIMULATION')) {
-    return 'SIMULATION'
-  }
-
-  // Look for case-insensitive match
-  const match = sheetNames.find(name => name.toUpperCase() === 'SIMULATION')
-
-  if (match) {
-    return match
-  }
-
-  // Look for partial match
-  const partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
-
-  return partial || null
+  const sheets = findAllSimulationSheets(workbook)
+  return sheets.length > 0 ? sheets[0] : null
 }
 
 /**
