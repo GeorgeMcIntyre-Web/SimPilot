@@ -76,6 +76,21 @@ function formatTimestamp(ts: string) {
   return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
+function splitFilenamesList(filenames: string): string[] {
+  return filenames
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+function splitFilenameParts(filename: string): { base: string; dir: string | null } {
+  if (!filename) return { base: '', dir: null };
+  const parts = filename.split(/[\\/]/);
+  const base = parts.pop() || filename;
+  const dir = parts.length ? parts.join('/') : null;
+  return { base, dir };
+}
+
 export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
   const { diffResults } = useCoreStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -120,7 +135,7 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
             <thead className="bg-gray-50 dark:bg-gray-800 text-xs">
               <tr>
                 <th scope="col" className="py-1.5 pl-2 pr-1 text-left font-semibold text-gray-900 dark:text-gray-100 sm:pl-3">Import</th>
-                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Filename</th>
+                <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100 w-48 sm:w-60 md:w-64 lg:w-72">Filename</th>
                 <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Plant</th>
                 <th scope="col" className="px-1.5 py-1.5 text-left font-semibold text-gray-900 dark:text-gray-100">Source</th>
                 <th scope="col" className="px-1.5 py-1.5 text-center font-semibold text-gray-900 dark:text-gray-100">Created</th>
@@ -176,7 +191,35 @@ export function ImportHistoryTab({ entries = [] }: ImportHistoryTabProps) {
                           </div>
                         </div>
                       </td>
-                      <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">{entry.filename}</td>
+                      <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300">
+                        {(() => {
+                          const files = splitFilenamesList(entry.filename);
+                          return (
+                            <div className="w-full max-w-[220px] sm:max-w-[260px] md:max-w-[300px] lg:max-w-[360px]" title={entry.filename}>
+                              <div className="flex flex-wrap gap-1">
+                                {files.length === 0 ? (
+                                  <div className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 px-2 py-0.5 max-w-[170px] sm:max-w-[215px] truncate">
+                                    <span className="truncate font-semibold">—</span>
+                                  </div>
+                                ) : (
+                                  files.map((file, idx) => {
+                                    const { base } = splitFilenameParts(file);
+                                    return (
+                                      <div
+                                        key={`${file}-${idx}`}
+                                        className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 px-2 py-0.5 max-w-[170px] sm:max-w-[215px] truncate"
+                                        title={file}
+                                      >
+                                        <span className="truncate font-semibold">{base || '—'}</span>
+                                      </div>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </td>
                       <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">{entry.plant}</td>
                       <td className="px-1.5 py-2.5 text-xs text-gray-700 dark:text-gray-300 break-words">{entry.sourceType}</td>
                       <td className="px-1.5 py-2.5 text-xs text-center text-gray-700 dark:text-gray-300">{counts.created ?? 0}</td>
