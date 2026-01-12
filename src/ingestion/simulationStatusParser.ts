@@ -90,12 +90,11 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   'PERSONS RESPONSIBLE': ['PERSONS RESPONSIBLE', 'PERSON RESPONSIBLE', 'ENGINEER', 'RESPONSIBLE']
 }
 
+// Required headers for finding the header row
+// AREA and ASSEMBLY LINE are optional - can be derived or missing
 const REQUIRED_HEADERS = [
-  'AREA',
-  'ASSEMBLY LINE',
   'STATION',
-  'ROBOT',
-  'APPLICATION'
+  'ROBOT'
 ]
 
 // ============================================================================
@@ -252,6 +251,11 @@ export function vacuumParseSimulationSheet(
   // Parse data rows (starting after header)
   const dataStartIndex = headerRowIndex + 1
 
+  // DEBUG: Log core indices for troubleshooting
+  console.error(`[DEBUG vacuumParseSimulationSheet] ${fileName}:${sheetName}`)
+  console.error('  Core indices found:', coreIndices)
+  console.error(`  Processing ${rows.length - dataStartIndex} potential data rows starting from index ${dataStartIndex}`)
+
   for (let i = dataStartIndex; i < rows.length; i++) {
     const row = rows[i]
 
@@ -266,15 +270,32 @@ export function vacuumParseSimulationSheet(
     }
 
     // Extract core fields
-    const area = coreIndices['AREA'] !== undefined ? String(row[coreIndices['AREA']] || '').trim() : ''
+    let area = coreIndices['AREA'] !== undefined ? String(row[coreIndices['AREA']] || '').trim() : ''
     const assemblyLine = coreIndices['ASSEMBLY LINE'] !== undefined ? String(row[coreIndices['ASSEMBLY LINE']] || '').trim() : undefined
     const stationKey = coreIndices['STATION'] !== undefined ? String(row[coreIndices['STATION']] || '').trim() : ''
     const robotCaption = coreIndices['ROBOT'] !== undefined ? String(row[coreIndices['ROBOT']] || '').trim() || undefined : undefined
     const application = coreIndices['APPLICATION'] !== undefined ? String(row[coreIndices['APPLICATION']] || '').trim() || undefined : undefined
     const personResponsible = coreIndices['PERSONS RESPONSIBLE'] !== undefined ? String(row[coreIndices['PERSONS RESPONSIBLE']] || '').trim() || undefined : undefined
 
+    // If AREA is missing, try to derive it from STATION
+    // e.g., "9B-100" -> "9B", "ST010" -> "ST010" (keep as is if no pattern)
+    if (!area && stationKey) {
+      const areaMatch = stationKey.match(/^([A-Z0-9]+)[-_]/)
+      if (areaMatch) {
+        area = areaMatch[1]
+      } else {
+        // If no delimiter, use the station as area (e.g., BMW "ST010")
+        area = stationKey
+      }
+    }
+
     // Skip rows without critical data
     if (!area || !stationKey) {
+      // DEBUG: Log why row was skipped
+      if (i < dataStartIndex + 5) {  // Only log first 5 skipped rows to avoid spam
+        console.error(`  Row ${i} SKIPPED: area="${area}", station="${stationKey}", robot="${robotCaption}"`)
+      }
+
       // Only warn if row looks like it might have been intended as data
       // Skip warnings for effectively empty rows (reduces noise)
       if (!isEffectivelyEmptyRow(row, 2)) {
@@ -302,6 +323,11 @@ export function vacuumParseSimulationSheet(
       }
     }
 
+    // DEBUG: Log valid rows (first 3 only)
+    if (vacuumRows.length < 3) {
+      console.error(`  Row ${i} VALID: area="${area}", station="${stationKey}", robot="${robotCaption}", metrics=${metrics.length}`)
+    }
+
     vacuumRows.push({
       area,
       assemblyLine,
@@ -313,6 +339,8 @@ export function vacuumParseSimulationSheet(
       sourceRowIndex: i
     })
   }
+
+  console.error(`  Total valid rows collected: ${vacuumRows.length}`)
 
   return { rows: vacuumRows, warnings }
 }
@@ -338,10 +366,12 @@ export async function parseSimulationStatus(
   const warnings: IngestionWarning[] = []
 
   // Determine which sheets to parse
-  const sheetsToParse: string[] = targetSheetName 
+  console.error(`[PARSE ENTRY] targetSheetName=${targetSheetName}, fileName=${fileName}`)
+  const sheetsToParse: string[] = targetSheetName
     ? [targetSheetName]  // Single sheet specified
     : findAllSimulationSheets(workbook)  // Auto-detect all simulation sheets
 
+  console.error(`[PARSE ENTRY] sheetsToParse:`, sheetsToParse)
   if (sheetsToParse.length === 0) {
     throw new Error(`No simulation sheets found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
@@ -376,7 +406,10 @@ export async function parseSimulationStatus(
     }
 
     // Find header row
+    console.error(`[FIND HEADER DEBUG] Looking for header in ${fileName}:${sheetName}, rows=${rows.length}, searching for: ${REQUIRED_HEADERS.join(', ')}`)
+    console.error(`[FIND HEADER DEBUG] First 3 rows:`, rows.slice(0, 3))
     const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
+    console.error(`[FIND HEADER DEBUG] Header row index found: ${headerRowIndex}`)
     log.debug(`[Parser] ${sheetName}: Header row index: ${headerRowIndex}`)
 
     if (headerRowIndex === null) {
@@ -388,6 +421,9 @@ export async function parseSimulationStatus(
       continue
     }
 
+    // DEBUG: Log before vacuum parsing
+    console.error(`[VACUUM DEBUG] About to parse ${fileName}:${sheetName}, headerRowIndex=${headerRowIndex}, totalRows=${rows.length}`)
+
     // Use vacuum parser
     const { rows: vacuumRows, warnings: parseWarnings } = vacuumParseSimulationSheet(
       rows,
@@ -396,9 +432,13 @@ export async function parseSimulationStatus(
       sheetName
     )
 
+    // DEBUG: Log vacuum result
+    console.error(`[VACUUM DEBUG] Vacuum parsing returned ${vacuumRows.length} rows, ${parseWarnings.length} warnings`)
+
     warnings.push(...parseWarnings)
 
     if (vacuumRows.length === 0) {
+      console.error(`[VACUUM DEBUG] Zero rows returned - adding error warning`)
       warnings.push(createParserErrorWarning({
         fileName,
         sheetName,
@@ -556,6 +596,7 @@ export async function parseSimulationStatus(
  */
 function findAllSimulationSheets(workbook: XLSX.WorkBook): string[] {
   const sheetNames = workbook.SheetNames
+  console.error(`[SHEET DETECTION DEBUG] All sheets in workbook:`, sheetNames)
   const found: string[] = []
   const priorityOrder = ['SIMULATION', 'MRS_OLP', 'DOCUMENTATION', 'SAFETY_LAYOUT']
 
@@ -600,14 +641,30 @@ function findAllSimulationSheets(workbook: XLSX.WorkBook): string[] {
     }
   }
 
-  // Fallback: look for any sheet with "SIMULATION" in the name
+  // Fallback: look for any sheet with "SIMULATION" or "STATUS" in the name
   if (found.length === 0) {
-    const partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
+    console.error(`[SHEET DETECTION DEBUG] No priority sheets found, using fallback`)
+    // Try "SIMULATION" first
+    let partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
     if (partial) {
+      console.error(`[SHEET DETECTION DEBUG] Fallback found SIMULATION sheet:`, partial)
       found.push(partial)
+    }
+
+    // Try "STATUS" for BMW-style sheets (e.g., "Status_Side_Frame_XXX")
+    if (found.length === 0) {
+      partial = sheetNames.find(name => {
+        const upper = name.toUpperCase()
+        return upper.includes('STATUS') && !upper.includes('OVERVIEW') && !upper.includes('DEF')
+      })
+      if (partial) {
+        console.error(`[SHEET DETECTION DEBUG] Fallback found STATUS sheet:`, partial)
+        found.push(partial)
+      }
     }
   }
 
+  console.error(`[SHEET DETECTION DEBUG] Selected sheets:`, found)
   return found
 }
 

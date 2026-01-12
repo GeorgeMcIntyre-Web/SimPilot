@@ -14,6 +14,10 @@ export default defineConfig({
         sourcemap: true,
         rollupOptions: {
             output: {
+                // Force new file names with timestamp to bust cache - BUILD 9
+                entryFileNames: `assets/[name]-[hash]-BUILD9-${Date.now()}.js`,
+                chunkFileNames: `assets/[name]-[hash]-BUILD9-${Date.now()}.js`,
+                assetFileNames: `assets/[name]-[hash]-BUILD9-${Date.now()}.[ext]`,
                 manualChunks: {
                     vendor: ['react', 'react-dom', 'react-router-dom'],
                     xlsx: ['xlsx'],
