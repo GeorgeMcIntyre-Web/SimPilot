@@ -117,6 +117,7 @@ export interface SimulationStatus {
   sheetName: string
   rowIndex: number
   studyPath?: string // Path to the .psz study file
+  application?: string // Robot application from status sheet (e.g., "SW", "MH/SW")
 }
 
 // NOTE: In STLA domain, this represents a station-level simulation row.

@@ -484,7 +484,7 @@ function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedD
     stationKey: normalizeStationId(cell.code) || cell.code,
     areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
     lineCode: cell.lineCode, // Use lineCode field
-    application: undefined, // Not available in Cell type
+    application: cell.simulation?.application, // Propagate application from simulation status
     firstStageCompletion: cell.simulation?.percentComplete, // From simulation status
     finalDeliverablesCompletion: cell.simulation?.percentComplete, // Use same value
     dcsConfigured: undefined, // Not available in Cell type
