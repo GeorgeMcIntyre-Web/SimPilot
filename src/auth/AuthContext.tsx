@@ -7,6 +7,7 @@ import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google'
 import { createContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
 import { getGoogleClientId, isGoogleAuthConfigured } from './googleConfig'
 import { AuthContextValue, AuthUser } from './AuthTypes'
+import { log } from '../lib/log'
 
 const STORAGE_KEY = 'simpilot.auth.google'
 
@@ -171,10 +172,10 @@ function MockAuthProvider({ children }: AuthProviderProps) {
         isLoading: false,
         error: undefined,
         login: () => {
-            console.warn('Mock auth: login called but auth is disabled')
+            log.warn('Mock auth: login called but auth is disabled')
         },
         logout: () => {
-            console.warn('Mock auth: logout called but auth is disabled')
+            log.warn('Mock auth: logout called but auth is disabled')
         }
     }
 
@@ -199,7 +200,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const isConfigured = isGoogleAuthConfigured()
 
     if (!isConfigured) {
-        console.warn('Google OAuth not configured. Running in development mode without authentication.')
+        log.warn('Google OAuth not configured. Running in development mode without authentication.')
         return <MockAuthProvider>{children}</MockAuthProvider>
     }
 

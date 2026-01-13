@@ -5,6 +5,7 @@
 import { FieldId, FieldMatchResult, DEFAULT_FIELD_REGISTRY } from './fieldMatcher'
 import { SheetCategory } from './sheetSniffer'
 import { getFeatureFlag } from '../config/featureFlags'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -142,7 +143,7 @@ export class OpenAILLMMapper implements LLMMapper {
 
   async suggestMappings(input: SheetSemanticModel[]): Promise<LLMSheetSuggestion[]> {
     if (this.isAvailable() === false) {
-      console.warn('[OpenAILLMMapper] API key not configured, falling back to stub')
+      log.warn('[OpenAILLMMapper] API key not configured, falling back to stub')
       const stub = new StubLLMMapper()
       return stub.suggestMappings(input)
     }

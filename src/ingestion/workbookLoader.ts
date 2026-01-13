@@ -3,6 +3,7 @@
 // Handles .xlsx/.xls detection, parsing, and cell normalization.
 
 import * as XLSX from 'xlsx'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -178,7 +179,7 @@ export function loadWorkbookFromBuffer(
 ): NormalizedWorkbook {
   // Validate input
   if (!buffer || buffer.byteLength === 0) {
-    console.error(`[WorkbookLoader] Empty buffer for ${fileName}`)
+    log.error(`[WorkbookLoader] Empty buffer for ${fileName}`)
     return { fileName, sheets: [] }
   }
 
@@ -190,7 +191,7 @@ export function loadWorkbookFromBuffer(
   const fileType = byteType !== 'unknown' ? byteType : extType
 
   if (fileType === 'unknown') {
-    console.error(`[WorkbookLoader] Unknown file type for ${fileName}`)
+    log.error(`[WorkbookLoader] Unknown file type for ${fileName}`)
     return { fileName, sheets: [] }
   }
 
@@ -204,13 +205,13 @@ export function loadWorkbookFromBuffer(
       cellText: false   // Skip rich text
     })
   } catch (error) {
-    console.error(`[WorkbookLoader] Failed to parse ${fileName}:`, error)
+    log.error(`[WorkbookLoader] Failed to parse ${fileName}:`, error)
     return { fileName, sheets: [] }
   }
 
   // Validate workbook has sheets
   if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-    console.error(`[WorkbookLoader] No sheets found in ${fileName}`)
+    log.error(`[WorkbookLoader] No sheets found in ${fileName}`)
     return { fileName, sheets: [] }
   }
 
@@ -268,7 +269,7 @@ export async function loadWorkbook(
     const buffer = await input.arrayBuffer()
     return loadWorkbookFromBuffer(buffer, name)
   } catch (error) {
-    console.error(`[WorkbookLoader] Failed to read ${name}:`, error)
+    log.error(`[WorkbookLoader] Failed to read ${name}:`, error)
     return { fileName: name, sheets: [] }
   }
 }

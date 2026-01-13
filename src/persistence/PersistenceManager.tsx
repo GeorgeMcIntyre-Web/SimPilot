@@ -107,7 +107,7 @@ export function PersistenceManager() {
                     log.debug('[PersistenceManager] SimPilot store synced from persisted data')
                 }
             } catch (err) {
-                console.error('Failed to load persistence:', err)
+                log.error('Failed to load persistence:', err)
             } finally {
                 isLoadedRef.current = true
                 popBusy()
@@ -132,7 +132,7 @@ export function PersistenceManager() {
                     await persistenceService.save(snapshot)
                     log.info('Session saved automatically')
                 } catch (err) {
-                    console.error('Failed to auto-save:', err)
+                    log.error('Failed to auto-save:', err)
                 }
             }, SAVE_DEBOUNCE_MS)
         })

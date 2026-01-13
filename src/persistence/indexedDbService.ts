@@ -1,6 +1,7 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 import { PersistenceService, PersistenceResult, LoadResult } from './persistenceService'
 import { StoreSnapshot } from '../domain/storeSnapshot'
+import { log } from '../lib/log'
 
 interface SimPilotDB extends DBSchema {
     snapshots: {
@@ -32,7 +33,7 @@ export class IndexedDbService implements PersistenceService {
             await db.put(STORE_NAME, snapshot, SNAPSHOT_KEY)
             return { success: true }
         } catch (error) {
-            console.error('Failed to save snapshot:', error)
+            log.error('Failed to save snapshot:', error)
             return { success: false, errorMessage: String(error) }
         }
     }
@@ -48,7 +49,7 @@ export class IndexedDbService implements PersistenceService {
 
             return { success: true, snapshot }
         } catch (error) {
-            console.error('Failed to load snapshot:', error)
+            log.error('Failed to load snapshot:', error)
             return { success: false, errorMessage: String(error) }
         }
     }
@@ -59,7 +60,7 @@ export class IndexedDbService implements PersistenceService {
             await db.delete(STORE_NAME, SNAPSHOT_KEY)
             return { success: true }
         } catch (error) {
-            console.error('Failed to clear snapshot:', error)
+            log.error('Failed to clear snapshot:', error)
             return { success: false, errorMessage: String(error) }
         }
     }

@@ -659,20 +659,6 @@ async function ingestFilesInternal(
         }
         
         const result = await parseSimulationStatus(workbook, file.name, targetSheet)
-        // Temporary debug output to inspect parsed simulation data during ingest
-        try {
-          const sampleVacuumRows = result.vacuumRows?.slice(0, 2) || []
-          console.log('[SimPilot][Debug] SimulationStatus parsed', {
-            file: file.name,
-            sheet: targetSheet || 'auto-detected',
-            projects: result.projects.length,
-            areas: result.areas.length,
-            cells: result.cells.length,
-            vacuumRowsSample: sampleVacuumRows
-          })
-        } catch (debugErr) {
-          console.warn('[SimPilot][Debug] Failed to log simulation status parse result', debugErr)
-        }
 
         if (!ingestedData.simulation) {
           ingestedData.simulation = result
