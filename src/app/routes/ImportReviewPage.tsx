@@ -192,7 +192,6 @@ export default function ImportReviewPage() {
         </>
       )}
 
-      {ambiguousItems.length > 0 && (
       {ambiguousItems.length === 0 && (
         <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
           <p className="text-sm text-green-800 dark:text-green-400">

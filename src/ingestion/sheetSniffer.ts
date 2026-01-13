@@ -5,6 +5,7 @@
 import * as XLSX from 'xlsx'
 import { sheetToMatrix, CellValue } from './excelUtils'
 import { NormalizedWorkbook } from './workbookLoader'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -1094,7 +1095,7 @@ export function scanWorkbookWithConfig(
 
     // Validate override sheet exists
     if (workbook.SheetNames.includes(override) === false) {
-      console.warn(`[Sniffer] Override sheet "${override}" not found in ${fileName}`)
+      log.warn(`[Sniffer] Override sheet "${override}" not found in ${fileName}`)
       continue
     }
 

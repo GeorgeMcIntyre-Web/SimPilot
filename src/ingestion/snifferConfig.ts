@@ -3,6 +3,7 @@
 // Enables manual corrections without code changes
 
 import { SheetCategory } from './sheetSniffer'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -299,7 +300,7 @@ export function saveConfigToStorage(config: SnifferConfig): void {
     }
     localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(serializable))
   } catch {
-    console.warn('[SnifferConfig] Failed to save config to localStorage')
+    log.warn('[SnifferConfig] Failed to save config to localStorage')
   }
 }
 
@@ -322,7 +323,7 @@ export function loadConfigFromStorage(): SnifferConfig | null {
       globalSkipPatterns: (parsed.globalSkipPatterns ?? []).map((s: string) => new RegExp(s, 'i'))
     }
   } catch {
-    console.warn('[SnifferConfig] Failed to load config from localStorage')
+    log.warn('[SnifferConfig] Failed to load config from localStorage')
     return null
   }
 }

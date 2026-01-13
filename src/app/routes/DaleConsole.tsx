@@ -42,6 +42,10 @@ export function DaleConsole() {
     const daleSummary = useDaleSummary()
     const [zenMode, setZenMode] = useState(false)
 
+    // Move hooks before early return to comply with React rules
+    const mood = useDaleDayMood();
+    const [hasSeenIntro, setHasSeenIntro] = useState(() => getUserPreference('simpilot.dale.hasSeenIntro', false));
+
     if (metrics.totalCells === 0) {
         return (
             <div data-testid="dale-console" className="space-y-8 pb-12 bg-[radial-gradient(circle_at_top,_#ffe4e6_0,_#ffffff_45%)] -m-6 p-6 min-h-screen">
@@ -141,8 +145,6 @@ export function DaleConsole() {
 
     // Greeting Strip Logic
     const showGreeting = themeMode === 'flower' && metrics.totalCells > 0;
-    const mood = useDaleDayMood();
-    const [hasSeenIntro, setHasSeenIntro] = useState(() => getUserPreference('simpilot.dale.hasSeenIntro', false));
 
     const handleDismissIntro = () => {
         setHasSeenIntro(true);

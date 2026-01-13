@@ -4,6 +4,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { FieldId, FieldMatchResult, DEFAULT_FIELD_REGISTRY } from '../ingestion/fieldMatcher'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -92,7 +93,7 @@ function loadOverrides(): MappingOverride[] {
     }
     return JSON.parse(stored) as MappingOverride[]
   } catch {
-    console.warn('[MappingOverrides] Failed to load from localStorage')
+    log.warn('[MappingOverrides] Failed to load from localStorage')
     return []
   }
 }
@@ -104,7 +105,7 @@ function saveOverrides(overrides: MappingOverride[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides))
   } catch {
-    console.warn('[MappingOverrides] Failed to save to localStorage')
+    log.warn('[MappingOverrides] Failed to save to localStorage')
   }
 }
 

@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react'
+import type { JSX } from 'react'
 import type { DiffResult, DiffCreate, DiffUpdate, DiffDelete, DiffRenameOrMove, DiffAmbiguous } from '../../../domain/uidTypes'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 

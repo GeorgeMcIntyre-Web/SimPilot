@@ -26,6 +26,7 @@ import {
 import * as XLSX from 'xlsx'
 import { DiffResult, ImportSourceType, DiffCreate, DiffUpdate, DiffDelete, DiffRenameOrMove, ImportRun } from '../domain/uidTypes'
 import { compareVersions, type VersionComparisonResult } from './versionComparison'
+import { log } from '../lib/log'
 
 // ============================================================================
 // PUBLIC API TYPES
@@ -558,7 +559,7 @@ async function processFileWithTelemetry(
     entityCounts.tools = parserResult.tools?.length ?? 0
 
   } catch (error) {
-    console.error(`[IngestionV2] Error processing file ${file.name}:`, error)
+    log.error(`[IngestionV2] Error processing file ${file.name}:`, error)
     errorMessage = error instanceof Error ? error.message : String(error)
 
     warnings.push(createTelemetryWarning({

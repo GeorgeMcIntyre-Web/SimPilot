@@ -48,8 +48,12 @@ function MockAuthProvider({
 describe('AuthGate', () => {
     beforeEach(() => {
         vi.clearAllMocks()
+    })
+
+    afterEach(() => {
         cleanup()
         document.body.innerHTML = ''
+        vi.clearAllMocks()
     })
 
     describe('loading state', () => {

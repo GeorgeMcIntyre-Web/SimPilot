@@ -2,6 +2,8 @@
 // Defines interfaces for text embedding support in column→field matching
 // Provides abstraction layer for different embedding providers
 
+import { log } from '../lib/log'
+
 // ============================================================================
 // CORE TYPES
 // ============================================================================
@@ -292,11 +294,11 @@ export function createEmbeddingProvider(
       return new MockEmbeddingProvider()
     case 'openai':
       // TODO: Implement OpenAI embedding provider
-      console.warn('[EmbeddingProvider] OpenAI provider not yet implemented, using mock')
+      log.warn('[EmbeddingProvider] OpenAI provider not yet implemented, using mock')
       return new MockEmbeddingProvider()
     case 'local':
       // TODO: Implement local model embedding provider
-      console.warn('[EmbeddingProvider] Local provider not yet implemented, using mock')
+      log.warn('[EmbeddingProvider] Local provider not yet implemented, using mock')
       return new MockEmbeddingProvider()
     default:
       return new MockEmbeddingProvider()

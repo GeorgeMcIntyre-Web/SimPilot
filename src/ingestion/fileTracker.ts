@@ -1,6 +1,8 @@
 // File Tracker for detecting duplicate uploads and tracking file history
 // Addresses DATA_INTEGRITY_ISSUES.md - Issue #1: Checksum/Hash Verification
 
+import { log } from '../lib/log'
+
 /**
  * Metadata for a tracked file upload
  */
@@ -78,7 +80,7 @@ export async function generateFileHash(file: File): Promise<string> {
     const hashArray = Array.from(new Uint8Array(hashBuffer))
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   } catch (error) {
-    console.error('[FileTracker] Failed to generate file hash:', error)
+    log.error('[FileTracker] Failed to generate file hash:', error)
     // Fallback: use file name + size + timestamp as pseudo-hash
     return `fallback-${file.name}-${file.size}-${Date.now()}`
   }
