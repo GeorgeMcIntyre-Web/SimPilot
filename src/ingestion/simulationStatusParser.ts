@@ -286,6 +286,13 @@ export function vacuumParseSimulationSheet(
 
     // Skip rows without critical data
     if (!area || !stationKey) {
+      // Build a short preview to help diagnose why the row was skipped
+      const rowPreview = row
+        .slice(0, 6)
+        .map(cell => String(cell ?? '').trim())
+        .filter(cell => cell.length > 0)
+        .join(' | ') || 'empty row'
+
       // Only warn if row looks like it might have been intended as data
       // Skip warnings for effectively empty rows (reduces noise)
       if (!isEffectivelyEmptyRow(row, 2)) {
@@ -293,7 +300,7 @@ export function vacuumParseSimulationSheet(
           fileName,
           sheetName,
           rowIndex: i + 1,
-          reason: 'Missing required fields: AREA or STATION'
+          reason: `Missing required fields: AREA or STATION (area="${area || 'blank'}", station="${stationKey || 'blank'}", preview="${rowPreview}")`
         }))
       }
       continue

@@ -144,6 +144,20 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'STATION NUMBER')
       || getCellString(row, columnMap, 'CELL')
 
+    // Extract assembly line (e.g., "BN", "AL")
+    const lineCode = getCellString(row, columnMap, 'LINE')
+      || getCellString(row, columnMap, 'LINE CODE')
+      || getCellString(row, columnMap, 'ASSEMBLY LINE')
+
+    let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
+      || getCellString(row, columnMap, 'AREA NAME')
+      || getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
+
+    // Infer area from filename if not in row (similar to Assemblies Lists)
+    if (!areaName) {
+      areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
+    }
+
     // Skip rows without station - these are not actual robot entries
     if (!stationCode) {
       continue
@@ -161,15 +175,10 @@ export async function parseRobotList(
         fileName,
         sheetName,
         rowIndex: i + 1,
-        reason: 'No robot caption found (station exists but no robot name)'
+        reason: `No robot caption found (station="${stationCode}", line="${lineCode || 'unknown'}", area="${areaName || 'unknown'}")`
       }))
       continue
     }
-
-    // Extract assembly line (e.g., "BN", "AL")
-    const lineCode = getCellString(row, columnMap, 'LINE')
-      || getCellString(row, columnMap, 'LINE CODE')
-      || getCellString(row, columnMap, 'ASSEMBLY LINE')
 
     // Construct robot ID: AssemblyLine_Station_RobotCaption
     // Example: "BN_010_R01" or "AL_B09_010_R01"
@@ -187,15 +196,6 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'TYPE')
       || getCellString(row, columnMap, 'ROBOT TYPE')
       || getCellString(row, columnMap, 'ROBOT TYPE CONFIRMED')
-
-    let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
-      || getCellString(row, columnMap, 'AREA NAME')
-      || getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
-
-    // Infer area from filename if not in row (similar to Assemblies Lists)
-    if (!areaName) {
-      areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
-    }
 
     // Vacuum Parser: Collect all other columns into metadata
     const metadata: Record<string, string | number | boolean | null> = {
