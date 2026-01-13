@@ -508,6 +508,9 @@ export async function parseSimulationStatus(
       ? allMetrics.reduce((sum, val) => sum + val, 0) / allMetrics.length
       : 0
 
+    // Pick the first non-empty application value for the station (usually consistent)
+    const application = cellRows.find(r => r.application)?.application
+
     // Detect issues (e.g., some stages lagging significantly)
     const hasIssues = detectIssues(cellRows)
 
@@ -524,7 +527,8 @@ export async function parseSimulationStatus(
       metrics: mergedMetrics,  // Contains metrics from all sheets (prefixed with sheet name)
       sourceFile: fileName,
       sheetName: primarySheetName,  // Primary sheet name for backward compatibility
-      rowIndex: firstRow.sourceRowIndex
+      rowIndex: firstRow.sourceRowIndex,
+      application
     }
 
     // Build canonical stationId
