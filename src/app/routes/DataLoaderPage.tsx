@@ -10,6 +10,8 @@ import { coreStore } from '../../domain/coreStore';
 import { simPilotStore } from '../../domain/simPilotStore';
 import { VersionComparisonModal } from '../components/VersionComparisonModal';
 import { log } from '../../lib/log';
+import { downloadSnapshot, uploadSnapshot, clearAllData } from '../../persistence/exportImport';
+import { persistenceService } from '../../persistence/indexedDbService';
 
 // Hooks
 import { useLocalFileIngest } from '../hooks/useLocalFileIngest';
@@ -66,7 +68,8 @@ export function DataLoaderPage() {
     setShowClearDialog(true);
   };
 
-  const confirmClearData = () => {
+  const confirmClearData = async () => {
+    // Clear in-memory stores
     coreStore.clear();
     syncSimulationStore();
     clearCrossRefData();
@@ -76,12 +79,43 @@ export function DataLoaderPage() {
     localIngest.setError(null);
     m365Ingest.setResult(null);
     m365Ingest.setM365Error(null);
+
+    // Clear persisted data in IndexedDB
+    const result = await clearAllData();
+    if (!result.success) {
+      log.error('Failed to clear persisted data:', result.errorMessage);
+    }
+
     setShowClearDialog(false);
     log.info('✅ Data cleared');
   };
 
   const cancelClearData = () => {
     setShowClearDialog(false);
+  };
+
+  const handleExportSnapshot = async () => {
+    const result = await downloadSnapshot();
+    if (result.success) {
+      log.info('✅ Snapshot exported successfully');
+    } else {
+      log.error('Failed to export snapshot:', result.errorMessage);
+    }
+  };
+
+  const handleImportSnapshot = async () => {
+    const result = await uploadSnapshot();
+    if (result.success && result.requiresReload) {
+      log.info('✅ Snapshot imported successfully. Reloading data...');
+      // Reload the snapshot into the store
+      const loadResult = await persistenceService.load();
+      if (loadResult.success && loadResult.snapshot) {
+        coreStore.loadSnapshot(loadResult.snapshot);
+        syncSimulationStore();
+      }
+    } else if (!result.success && result.errorMessage !== 'File selection cancelled') {
+      log.error('Failed to import snapshot:', result.errorMessage);
+    }
   };
 
   const handleLoadDemo = () => {
@@ -125,6 +159,8 @@ export function DataLoaderPage() {
         onDemoIdChange={demoScenario.setSelectedDemoId}
         onLoadDemo={handleLoadDemo}
         onClearData={handleClearData}
+        onExportSnapshot={handleExportSnapshot}
+        onImportSnapshot={handleImportSnapshot}
       />
 
       {/* Ingestion Section */}

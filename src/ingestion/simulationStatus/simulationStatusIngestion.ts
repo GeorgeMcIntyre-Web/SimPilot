@@ -19,6 +19,7 @@ import {
 } from './simulationStatusTypes'
 import { simulationStatusStore } from '../../domain/simulationStatusStore'
 import { isCellStruck } from '../excelUtils'
+import { log } from '../../lib/log'
 
 // ============================================================================
 // RESULT TYPES
@@ -177,12 +178,12 @@ export function linkSimulationStatusToTools(
   const simEntities = simulationStatusStore.getState().entities
 
   if (simEntities.length === 0) {
-    console.warn('No simulation status entities to link')
+    log.warn('No simulation status entities to link')
     return
   }
 
   if (toolEntities.length === 0) {
-    console.warn('No tool entities to link to simulation status')
+    log.warn('No tool entities to link to simulation status')
     return
   }
 

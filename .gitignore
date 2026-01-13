@@ -55,6 +55,7 @@ scripts/find_files.cjs
 scripts/inspect_headers.ts
 scripts/verify_full_dataset.ts
 scripts/verify_local_data.ts
+debug-*.mjs
 
 # Generated data exports (can be regenerated via scripts/export_store_data.ts)
 exported_store_data.json

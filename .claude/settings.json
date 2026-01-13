@@ -2,6 +2,9 @@
   "permissions": {
     "additionalDirectories": [
       "c:\\Users\\georgem\\source\\repos\\SimPilot"
+    ],
+    "allow": [
+      "Bash(findstr:*)"
     ]
   }
 }

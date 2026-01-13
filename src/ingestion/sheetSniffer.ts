@@ -5,6 +5,7 @@
 import * as XLSX from 'xlsx'
 import { sheetToMatrix, CellValue } from './excelUtils'
 import { NormalizedWorkbook } from './workbookLoader'
+import { log } from '../lib/log'
 
 // ============================================================================
 // TYPES
@@ -188,25 +189,34 @@ export const CATEGORY_SIGNATURES: Record<Exclude<SheetCategory, 'UNKNOWN'>, {
 
   // -------------------------------------------------------------------------
   // ROBOT_SPECS
-  // File: Robotlist_ZA...xlsx
-  // Sheet: STLA-S
+  // File: Robotlist_ZA...xlsx, Ford_OHAP_V801N_Robot_Equipment_List.xlsx
+  // Sheet: STLA-S, V801N_Robot_Equipment_List
   // -------------------------------------------------------------------------
   ROBOT_SPECS: {
     strong: [
       'Robotnumber',
       'Robot caption',
       'Dress Pack',
-      'Fanuc order code'
+      'Fanuc order code',
+      'Robo No',           // Ford V801: "Robo No. New", "Robo No. Old"
+      'Robot Key',         // Ford V801: "Robot Key"
+      'Serial #',          // Ford V801: "Serial #"
+      'Robot Order'        // Ford V801: "Robot Order Submitted"
     ],
     weak: [
       'Station Number',
+      'Station No',        // Ford V801: "Station No."
       'Assembly line',
       'Position',
       'E-Number',
       'Robot Type',
       'Model',
       'Payload',
-      'Reach'
+      'Reach',
+      'PLC Name',          // Ford V801: "PLC Name"
+      'Safety Zone',       // Ford V801: "Safety Zone"
+      'Bundle',            // Ford V801: "Bundle"
+      'Person Responsible' // Ford V801: "Person Responsible"
     ]
   },
 
@@ -441,7 +451,7 @@ function containsKeyword(rowText: string[], keyword: string): boolean {
  */
 function calculateCategoryScore(
   rowText: string[],
-  category: Exclude<SheetCategory, 'UNKNOWN'>
+  category: Exclude<SheetCategory, 'UNKNOWN'>   
 ): { score: number; strongMatches: string[]; weakMatches: string[] } {
   const signatures = CATEGORY_SIGNATURES[category]
   const strongMatches: string[] = []
@@ -503,11 +513,15 @@ function calculateSheetNameScore(
     if (lower === 'safety_layout' || lower === 'safety layout' || (lower.includes('safety') && lower.includes('layout'))) {
       return 15
     }
+    // Avoid definition/legend sheets (e.g., "Boardroom_Status_Def")
+    if (lower.includes('_def') || lower.endsWith('def') || lower.includes('definition') || lower.includes('legend')) {
+      return -20 // Strong penalty for definition sheets
+    }
     if (lower.startsWith('status_') || lower.endsWith('_status')) {
       return 15 // Increased from 8
     }
     // Avoid tiny template sheets
-    if (lower === 'data' || lower === 'overview' || lower === 'summary') {
+    if (lower === 'data' || lower === 'overview' || lower === 'summary' || lower.includes('boardroom')) {
       return -10 // Increased penalty from -5 to -10
     }
   }
@@ -1081,7 +1095,7 @@ export function scanWorkbookWithConfig(
 
     // Validate override sheet exists
     if (workbook.SheetNames.includes(override) === false) {
-      console.warn(`[Sniffer] Override sheet "${override}" not found in ${fileName}`)
+      log.warn(`[Sniffer] Override sheet "${override}" not found in ${fileName}`)
       continue
     }
 

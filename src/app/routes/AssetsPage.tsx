@@ -163,21 +163,7 @@ export function AssetsPage() {
     [handleSort, assetBottleneckMap]
   );
 
-  // Empty state
-  if (allAssets.length === 0) {
-    return (
-      <div className="space-y-8">
-        <PageHeader title="Assets" subtitle="View all robots, guns, and tools across projects" />
-        <EmptyState
-          title="No Assets Found"
-          message="Please go to the Data Loader to import your equipment lists."
-          ctaLabel="Go to Data Loader"
-          onCtaClick={() => navigate('/data-loader')}
-        />
-      </div>
-    );
-  }
-
+  // Move hooks before early return to comply with React rules
   const showActiveFilters = hasActiveFilters || onlyBottleneckAssets;
 
   const handleClearAllFilters = useCallback(() => {
@@ -234,6 +220,21 @@ export function AssetsPage() {
     setSearchParams(new URLSearchParams());
     handleClearAllFilters();
   };
+
+  // Empty state - moved after all hooks to comply with React rules
+  if (allAssets.length === 0) {
+    return (
+      <div className="space-y-8">
+        <PageHeader title="Assets" subtitle="View all robots, guns, and tools across projects" />
+        <EmptyState
+          title="No Assets Found"
+          message="Please go to the Data Loader to import your equipment lists."
+          ctaLabel="Go to Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-testid="assets-page">

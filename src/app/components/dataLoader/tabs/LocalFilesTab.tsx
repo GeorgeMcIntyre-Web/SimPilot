@@ -31,12 +31,11 @@ export function LocalFilesTab({
   return (
     <div className="space-y-6">
       <FileDropzone
-        label="Simulation Status Files (Required)"
+        label="Simulation Status Files (Optional)"
         files={simulationFiles}
         onFilesAdded={onSimulationFilesAdded}
         placeholder="Drag & drop simulation files here, or click to select"
         testId="local-simulation-input"
-        required
       />
 
       <FileDropzone
@@ -82,7 +81,7 @@ export function LocalFilesTab({
       <div className="flex justify-end">
         <button
           onClick={onIngest}
-          disabled={isIngesting || simulationFiles.length === 0}
+          disabled={isIngesting || (simulationFiles.length === 0 && equipmentFiles.length === 0 && toolListFiles.length === 0 && assembliesFiles.length === 0)}
           data-testid="local-ingest-button"
           data-testid-ingest="ingest-files-button"
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"

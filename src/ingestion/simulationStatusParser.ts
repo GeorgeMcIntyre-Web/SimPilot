@@ -90,12 +90,11 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   'PERSONS RESPONSIBLE': ['PERSONS RESPONSIBLE', 'PERSON RESPONSIBLE', 'ENGINEER', 'RESPONSIBLE']
 }
 
+// Required headers for finding the header row
+// AREA and ASSEMBLY LINE are optional - can be derived or missing
 const REQUIRED_HEADERS = [
-  'AREA',
-  'ASSEMBLY LINE',
   'STATION',
-  'ROBOT',
-  'APPLICATION'
+  'ROBOT'
 ]
 
 // ============================================================================
@@ -266,12 +265,24 @@ export function vacuumParseSimulationSheet(
     }
 
     // Extract core fields
-    const area = coreIndices['AREA'] !== undefined ? String(row[coreIndices['AREA']] || '').trim() : ''
+    let area = coreIndices['AREA'] !== undefined ? String(row[coreIndices['AREA']] || '').trim() : ''
     const assemblyLine = coreIndices['ASSEMBLY LINE'] !== undefined ? String(row[coreIndices['ASSEMBLY LINE']] || '').trim() : undefined
     const stationKey = coreIndices['STATION'] !== undefined ? String(row[coreIndices['STATION']] || '').trim() : ''
     const robotCaption = coreIndices['ROBOT'] !== undefined ? String(row[coreIndices['ROBOT']] || '').trim() || undefined : undefined
     const application = coreIndices['APPLICATION'] !== undefined ? String(row[coreIndices['APPLICATION']] || '').trim() || undefined : undefined
     const personResponsible = coreIndices['PERSONS RESPONSIBLE'] !== undefined ? String(row[coreIndices['PERSONS RESPONSIBLE']] || '').trim() || undefined : undefined
+
+    // If AREA is missing, try to derive it from STATION
+    // e.g., "9B-100" -> "9B", "ST010" -> "ST010" (keep as is if no pattern)
+    if (!area && stationKey) {
+      const areaMatch = stationKey.match(/^([A-Z0-9]+)[-_]/)
+      if (areaMatch) {
+        area = areaMatch[1]
+      } else {
+        // If no delimiter, use the station as area (e.g., BMW "ST010")
+        area = stationKey
+      }
+    }
 
     // Skip rows without critical data
     if (!area || !stationKey) {
@@ -338,7 +349,7 @@ export async function parseSimulationStatus(
   const warnings: IngestionWarning[] = []
 
   // Determine which sheets to parse
-  const sheetsToParse: string[] = targetSheetName 
+  const sheetsToParse: string[] = targetSheetName
     ? [targetSheetName]  // Single sheet specified
     : findAllSimulationSheets(workbook)  // Auto-detect all simulation sheets
 
@@ -497,6 +508,9 @@ export async function parseSimulationStatus(
       ? allMetrics.reduce((sum, val) => sum + val, 0) / allMetrics.length
       : 0
 
+    // Pick the first non-empty application value for the station (usually consistent)
+    const application = cellRows.find(r => r.application)?.application
+
     // Detect issues (e.g., some stages lagging significantly)
     const hasIssues = detectIssues(cellRows)
 
@@ -513,7 +527,8 @@ export async function parseSimulationStatus(
       metrics: mergedMetrics,  // Contains metrics from all sheets (prefixed with sheet name)
       sourceFile: fileName,
       sheetName: primarySheetName,  // Primary sheet name for backward compatibility
-      rowIndex: firstRow.sourceRowIndex
+      rowIndex: firstRow.sourceRowIndex,
+      application
     }
 
     // Build canonical stationId
@@ -600,11 +615,23 @@ function findAllSimulationSheets(workbook: XLSX.WorkBook): string[] {
     }
   }
 
-  // Fallback: look for any sheet with "SIMULATION" in the name
+  // Fallback: look for any sheet with "SIMULATION" or "STATUS" in the name
   if (found.length === 0) {
-    const partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
+    // Try "SIMULATION" first
+    let partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
     if (partial) {
       found.push(partial)
+    }
+
+    // Try "STATUS" for BMW-style sheets (e.g., "Status_Side_Frame_XXX")
+    if (found.length === 0) {
+      partial = sheetNames.find(name => {
+        const upper = name.toUpperCase()
+        return upper.includes('STATUS') && !upper.includes('OVERVIEW') && !upper.includes('DEF')
+      })
+      if (partial) {
+        found.push(partial)
+      }
     }
   }
 

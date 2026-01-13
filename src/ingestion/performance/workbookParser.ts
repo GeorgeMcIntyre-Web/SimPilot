@@ -11,12 +11,13 @@
 import type { NormalizedWorkbook } from '../workbookLoader'
 import { loadWorkbookFromBuffer } from '../workbookLoader'
 import type { WorkbookCacheConfig } from './workbookCache'
-import { 
-  computeBufferHash, 
-  getGlobalWorkbookCache, 
+import {
+  computeBufferHash,
+  getGlobalWorkbookCache,
   DEFAULT_CACHE_CONFIG,
-  type WorkbookCacheEntry 
+  type WorkbookCacheEntry
 } from './workbookCache'
+import { log } from '../../lib/log'
 
 // ============================================================================
 // TYPES
@@ -310,7 +311,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
     }
 
     this.worker.onerror = (error) => {
-      console.error('[WorkerParser] Worker error:', error)
+      log.error('[WorkerParser] Worker error:', error)
       // Reject all pending requests
       for (const [, request] of this.pendingRequests) {
         request.reject(new Error(`Worker error: ${error.message}`))
@@ -326,7 +327,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
     const request = this.pendingRequests.get(response.id)
     
     if (request === undefined) {
-      console.warn('[WorkerParser] Received response for unknown request:', response.id)
+      log.warn('[WorkerParser] Received response for unknown request:', response.id)
       return
     }
 
