@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getUserPreference, setUserPreference } from '../utils/prefsStorage';
+import { setUserPreference } from '../utils/prefsStorage';
 
-export type ThemeMode = 'flower' | 'professional';
+export type ThemeMode = 'professional';
 
 interface ThemeContextType {
     themeMode: ThemeMode;
@@ -11,24 +11,15 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
-        const saved = getUserPreference<string>('themeMode', 'flower');
-        return saved === 'professional' ? 'professional' : 'flower';
-    });
+    const [themeMode, setThemeModeState] = useState<ThemeMode>('professional');
 
     useEffect(() => {
         setUserPreference('themeMode', themeMode);
-
-        // Update body class for global styling if needed
-        if (themeMode === 'flower') {
-            document.body.classList.add('theme-flower');
-        } else {
-            document.body.classList.remove('theme-flower');
-        }
     }, [themeMode]);
 
     const setThemeMode = (mode: ThemeMode) => {
-        setThemeModeState(mode);
+        // Only professional mode is supported; keep state stable.
+        setThemeModeState('professional');
     };
 
     return (

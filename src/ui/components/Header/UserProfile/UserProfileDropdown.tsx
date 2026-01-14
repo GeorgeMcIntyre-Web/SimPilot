@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, LogOut, Briefcase } from 'lucide-react';
-import { useTheme, type ThemeMode } from '../../../ThemeContext';
-import { FlowerAccent } from '../../FlowerAccent';
+import { ChevronDown, LogOut } from 'lucide-react';
 
 interface UserProfileDropdownProps {
     name: string;
@@ -20,7 +18,6 @@ export function UserProfileDropdown({
 }: UserProfileDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const { themeMode, setThemeMode } = useTheme();
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -42,15 +39,6 @@ export function UserProfileDropdown({
     const providerBadgeColor = provider === 'google'
         ? 'bg-blue-500'
         : 'bg-orange-500';
-
-    const themeLabel: Record<ThemeMode, string> = {
-        flower: "Dale's Flow",
-        professional: 'Professional',
-    };
-
-    const nextTheme = (current: ThemeMode): ThemeMode => {
-        return current === 'flower' ? 'professional' : 'flower';
-    };
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -116,28 +104,6 @@ export function UserProfileDropdown({
                                 </p>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Menu Items */}
-                    <div className="py-0.5">
-                        <button
-                            onClick={() => {
-                                setThemeMode(nextTheme(themeMode));
-                            }}
-                            className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                            <div className="flex items-center">
-                                {themeMode === 'flower' ? (
-                                    <FlowerAccent className="w-3.5 h-3.5 mr-2 text-rose-500" />
-                                ) : (
-                                    <Briefcase className="w-3.5 h-3.5 mr-2 text-slate-600 dark:text-slate-300" />
-                                )}
-                                Theme
-                            </div>
-                            <span className="text-[10px] text-gray-500 dark:text-gray-400">
-                                {themeLabel[themeMode]}
-                            </span>
-                        </button>
                     </div>
 
                     {/* Logout Section */}

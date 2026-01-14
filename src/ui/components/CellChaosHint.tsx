@@ -1,21 +1,13 @@
 import { Cell } from '../../domain/core';
 import { getCellScheduleRisk } from '../../domain/scheduleMetrics';
 import { AlertTriangle, Clock } from 'lucide-react';
-import { useTheme } from '../ThemeContext';
 
 interface CellChaosHintProps {
     cell: Cell;
 }
 
 export function CellChaosHint({ cell }: CellChaosHintProps) {
-    const { themeMode } = useTheme();
     const scheduleRisk = getCellScheduleRisk(cell);
-
-
-    // Only show in Flower mode or if critical
-    if (themeMode !== 'flower' && !cell.simulation?.hasIssues && scheduleRisk.status === 'onTrack') {
-        return null;
-    }
 
     const reasons: { icon: React.ReactNode; text: string; color: string }[] = [];
 

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { getUserPreference, setUserPreference } from '../../utils/prefsStorage';
-import { FlowerAccent } from './FlowerAccent';
 
 export function DaleDashboardIntro() {
     const [isVisible, setIsVisible] = useState(() => !getUserPreference('simpilot.dale.hasSeenDashboardIntro', false));
@@ -17,7 +16,7 @@ export function DaleDashboardIntro() {
     return (
         <div
             data-testid="dale-dashboard-intro"
-            className="bg-gradient-to-r from-indigo-50 to-rose-50 dark:from-indigo-900/20 dark:to-rose-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-5 mb-8 relative animate-fade-in shadow-sm max-w-3xl mx-auto"
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 mb-8 relative animate-fade-in shadow-sm max-w-3xl mx-auto"
         >
             <button
                 onClick={handleDismiss}
@@ -30,8 +29,8 @@ export function DaleDashboardIntro() {
 
             <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-y-4 sm:space-y-0 sm:space-x-5">
                 <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm">
-                        <FlowerAccent className="h-6 w-6 text-rose-400 animate-pulse" />
+                    <div className="w-12 h-12 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full flex items-center justify-center shadow-sm font-semibold">
+                        SP
                     </div>
                 </div>
                 <div className="flex-1">
@@ -39,7 +38,7 @@ export function DaleDashboardIntro() {
                         Hi Dale 🌸, this is your simulation cockpit.
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm leading-relaxed">
-                        Start by loading a sample day via the Data Loader, or ask George to point it at your real Excel sheets.
+                        Start by loading a sample day via the Data Loader, or point it at your real Excel sheets.
                     </p>
                     <div className="flex items-center justify-center sm:justify-start space-x-4">
                         <Link

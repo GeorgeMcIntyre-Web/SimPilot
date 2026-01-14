@@ -1,13 +1,8 @@
 import { useLocation } from 'react-router-dom';
 import { NavLink } from './NavLink';
 import { navItems } from './navItems';
-import { ThemeMode } from '../../../ThemeContext';
 
-interface DesktopNavProps {
-    themeMode: ThemeMode;
-}
-
-export function DesktopNav({ themeMode }: DesktopNavProps) {
+export function DesktopNav() {
     const location = useLocation();
 
     return (
@@ -20,7 +15,6 @@ export function DesktopNav({ themeMode }: DesktopNavProps) {
                         key={item.href}
                         item={item}
                         isActive={isActive}
-                        themeMode={themeMode}
                     />
                 );
             })}
