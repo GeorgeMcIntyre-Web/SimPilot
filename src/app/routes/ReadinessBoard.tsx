@@ -18,14 +18,6 @@ const PHASE_LABELS: Record<SchedulePhase, string> = {
     handover: 'Handover'
 }
 
-const PHASE_ICONS: Record<SchedulePhase, string> = {
-    unspecified: '⚪',
-    presim: '🌱',
-    offline: '🌿',
-    onsite: '🌷',
-    rampup: '🌻',
-    handover: '💐'
-}
 
 const STATUS_STYLES = {
     onTrack: {
@@ -232,7 +224,7 @@ export function ReadinessBoard() {
                         >
                             <option value="all">All Phases</option>
                             {phases.map(p => (
-                                <option key={p} value={p}>{PHASE_ICONS[p]} {PHASE_LABELS[p]}</option>
+                                <option key={p} value={p}>{PHASE_LABELS[p]}</option>
                             ))}
                         </select>
 
@@ -325,21 +317,13 @@ export function ReadinessBoard() {
                                 key={phase}
                                 className="relative bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden flex flex-col shadow-sm backdrop-blur-sm"
                             >
-                                <div className="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 px-3 py-2.5 flex-shrink-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-base">{PHASE_ICONS[phase]}</span>
-                                            <div className="leading-tight">
-                                                <div className="text-[10px] uppercase tracking-[0.06em] text-gray-400 dark:text-gray-500 font-semibold">
-                                                    Phase
-                                                </div>
-                                                <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                                    {PHASE_LABELS[phase]}
-                                                </h3>
-                                            </div>
-                                        </div>
-                                        <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 bg-indigo-50 dark:bg-indigo-900/40 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-700 shadow-sm">
-                                            {risks.length} {risks.length === 1 ? 'cell' : 'cells'}
+                                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2 flex-shrink-0">
+                                    <div className="flex items-center justify-between gap-2 h-6">
+                                        <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                                            {PHASE_LABELS[phase]}
+                                        </h3>
+                                        <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded">
+                                            {risks.length}
                                         </span>
                                     </div>
                                 </div>

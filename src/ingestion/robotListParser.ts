@@ -33,6 +33,8 @@ const POSSIBLE_HEADERS = [
   ['ROBOT ID', 'AREA', 'STATION'],
   ['ROBOT NAME', 'AREA', 'LINE'],
   ['ID', 'AREA', 'STATION'],
+  ['ROBO NO. NEW', 'AREA', 'STATION'],            // Ford equipment list files
+  ['ROBO NO. NEW', 'AREA', 'LINE'],              // Variant with line instead of station
   ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'],  // From Robotlist_ZA files
   ['ROBOTNUMBER (E-NUMBER)', 'ASSEMBLY LINE', 'STATION NUMBER'],
   ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER'],
@@ -125,6 +127,9 @@ export async function parseRobotList(
     'ROBOTS TOTAL',
     'ROBOT TYPE',
     'ROBOT TYPE CONFIRMED'
+    // Ford equipment list variants
+    , 'ROBO NO. NEW',
+    'ROBO NO. OLD'
   ])
 
   // Parse data rows
@@ -167,6 +172,8 @@ export async function parseRobotList(
     const robotCaption = getCellString(row, columnMap, 'ROBOT CAPTION')
       || getCellString(row, columnMap, 'ROBOTS TOTAL')
       || getCellString(row, columnMap, 'ROBOT')
+      || getCellString(row, columnMap, 'ROBO NO. NEW')
+      || getCellString(row, columnMap, 'ROBO NO. OLD')
       || getCellString(row, columnMap, 'ROBOT NAME')
       || getCellString(row, columnMap, 'NAME')
 
