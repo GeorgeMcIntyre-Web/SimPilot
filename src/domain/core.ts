@@ -16,6 +16,7 @@ export type IngestionWarningKind =
   | "LINKING_MISSING_TARGET"
   | "UNKNOWN_FILE_TYPE"
   | "INACTIVE_ENTITY_REFERENCE"
+  | "DUPLICATE_ENTRY"
 
 export interface IngestionWarning {
   id: string

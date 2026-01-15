@@ -67,6 +67,17 @@ export interface ParsedSimulationRow {
   sourceRowIndex: number
 }
 
+/**
+ * Robot extracted from simulation status (station + robot combination)
+ */
+export interface SimulationRobot {
+  stationKey: string
+  robotCaption: string
+  areaKey?: string
+  application?: string
+  sourceRowIndex: number
+}
+
 export interface SimulationStatusResult {
   projects: Project[]
   areas: Area[]
@@ -74,6 +85,8 @@ export interface SimulationStatusResult {
   warnings: IngestionWarning[]
   /** Vacuum-parsed rows for advanced consumers */
   vacuumRows?: VacuumParsedRow[]
+  /** Robots extracted from simulation status (one per unique station+robot combination) */
+  robotsFromSimStatus?: SimulationRobot[]
 }
 
 // ============================================================================
@@ -559,12 +572,21 @@ export async function parseSimulationStatus(
     cells.push(cell)
   }
 
+  // Extract robots from vacuum rows and detect duplicate station+robot combinations
+  const { robots: robotsFromSimStatus, warnings: robotWarnings } = extractRobotsFromVacuumRows(
+    allVacuumRows,
+    fileName,
+    primarySheetName
+  )
+  warnings.push(...robotWarnings)
+
   return {
     projects: [project],
     areas,
     cells,
     warnings,
-    vacuumRows: allVacuumRows // Include all vacuum rows from all sheets
+    vacuumRows: allVacuumRows, // Include all vacuum rows from all sheets
+    robotsFromSimStatus // Include extracted robots for CrossRef consumption
   }
 }
 
@@ -676,7 +698,6 @@ function deriveCustomer(fileName: string): string {
  */
 function groupByCell(rows: ParsedSimulationRow[]): Map<string, ParsedSimulationRow[]> {
   const groups = new Map<string, ParsedSimulationRow[]>()
-
   for (const row of rows) {
     const cellKey = `${row.areaName}:${row.lineCode}:${row.stationCode}`
     const group = groups.get(cellKey)
@@ -725,4 +746,71 @@ function detectIssues(rows: ParsedSimulationRow[]): boolean {
   }
 
   return false
+}
+
+/**
+ * Extract unique robots from vacuum-parsed rows and detect duplicate station+robot combinations.
+ *
+ * Key insight: One station can have multiple robots, so duplicate station entries are expected.
+ * Only if BOTH station AND robot are identical should we flag it as an error.
+ *
+ * @returns Object containing unique robots and any duplicate warnings
+ */
+function extractRobotsFromVacuumRows(
+  vacuumRows: VacuumParsedRow[],
+  fileName: string,
+  sheetName: string
+): { robots: SimulationRobot[]; warnings: IngestionWarning[] } {
+  const warnings: IngestionWarning[] = []
+  const robots: SimulationRobot[] = []
+
+  // Track seen station+robot combinations to detect true duplicates
+  const seenCombinations = new Map<string, { rowIndex: number; robotCaption: string }>()
+
+  for (const row of vacuumRows) {
+    const robotCaption = row.robotCaption?.trim()
+
+    // Skip rows without robot information
+    if (!robotCaption) {
+      continue
+    }
+
+    // Build composite key: station + robot (normalized)
+    const stationKey = row.stationKey.toUpperCase().trim()
+    const robotKey = robotCaption.toUpperCase().trim()
+    const compositeKey = `${stationKey}::${robotKey}`
+
+    const existingEntry = seenCombinations.get(compositeKey)
+
+    if (existingEntry) {
+      // TRUE DUPLICATE: Same station AND same robot - this is an error
+      warnings.push({
+        id: `dup-station-robot-${row.sourceRowIndex}`,
+        kind: 'DUPLICATE_ENTRY',
+        fileName,
+        sheetName,
+        rowIndex: row.sourceRowIndex + 1,
+        message: `Duplicate entry: Station "${row.stationKey}" with Robot "${robotCaption}" already exists (first seen at row ${existingEntry.rowIndex + 1}). Each station+robot combination should be unique.`,
+        createdAt: new Date().toISOString()
+      })
+      continue
+    }
+
+    // Record this combination
+    seenCombinations.set(compositeKey, {
+      rowIndex: row.sourceRowIndex,
+      robotCaption
+    })
+
+    // Add to robots list
+    robots.push({
+      stationKey: row.stationKey,
+      robotCaption,
+      areaKey: row.area,
+      application: row.application,
+      sourceRowIndex: row.sourceRowIndex
+    })
+  }
+
+  return { robots, warnings }
 }

@@ -15,6 +15,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
   const riskLevel = getRiskLevel(cell.flags);
   const completion = getCompletionPercent(cell);
   const application = cell.simulationStatus?.application ?? '-';
+  const robotCount = cell.robots?.length ?? 0;
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
 
@@ -33,6 +34,9 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {application}
+      </td>
+      <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}>
+        {robotCount}
       </td>
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {completion !== null ? (

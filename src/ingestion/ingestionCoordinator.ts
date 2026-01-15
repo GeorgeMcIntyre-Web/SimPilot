@@ -470,9 +470,15 @@ function updateLastSeenForEntities(
 // ============================================================================
 
 /**
- * Convert ApplyResult to CrossRefInput format for dashboard consumption
+ * Convert ApplyResult to CrossRefInput format for dashboard consumption.
+ *
+ * @param applyResult - The result from applyIngestedData
+ * @param simulationRobots - Optional robots extracted from simulation status (station+robot combinations)
  */
-function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedData').ApplyResult): CrossRefInput {
+function buildCrossRefInputFromApplyResult(
+  applyResult: import('./applyIngestedData').ApplyResult,
+  simulationRobots?: import('./simulationStatusParser').SimulationRobot[]
+): CrossRefInput {
   // Build area ID to name mapping
   const areaIdToName = new Map<string, string>()
   applyResult.areas.forEach(area => {
@@ -505,7 +511,7 @@ function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedD
     raw: tool
   }))
 
-  // Convert Robots to RobotSnapshot
+  // Convert Robots from robot list files to RobotSnapshot
   const robotSpecsRows: RobotSnapshot[] = applyResult.robots.map(robot => ({
     stationKey: normalizeStationId(robot.stationNumber || '') || robot.stationNumber || '',
     robotKey: robot.id,
@@ -515,6 +521,40 @@ function buildCrossRefInputFromApplyResult(applyResult: import('./applyIngestedD
     oemModel: robot.oemModel,
     raw: robot
   }))
+
+  // Also add robots extracted from simulation status
+  // These represent station+robot combinations found in the simulation status file
+  // One station can have multiple robots, so this is the authoritative source for robot counts
+  if (simulationRobots && simulationRobots.length > 0) {
+    // Track which station+robot combinations we've already added from robot specs
+    const existingCombinations = new Set(
+      robotSpecsRows.map(r => `${r.stationKey.toUpperCase()}::${(r.caption || '').toUpperCase()}`)
+    )
+
+    for (const simRobot of simulationRobots) {
+      const normalizedStation = normalizeStationId(simRobot.stationKey) || simRobot.stationKey
+      const compositeKey = `${normalizedStation.toUpperCase()}::${simRobot.robotCaption.toUpperCase()}`
+
+      // Skip if we already have this station+robot from robot specs
+      if (existingCombinations.has(compositeKey)) {
+        continue
+      }
+
+      robotSpecsRows.push({
+        stationKey: normalizedStation,
+        robotKey: `simstatus-${simRobot.stationKey}-${simRobot.robotCaption}`.replace(/\s+/g, '_'),
+        caption: simRobot.robotCaption,
+        eNumber: undefined,
+        hasDressPackInfo: false, // Not available from simulation status
+        oemModel: undefined,
+        raw: { source: 'simulationStatus', ...simRobot }
+      })
+
+      existingCombinations.add(compositeKey)
+    }
+
+    log.debug(`[CrossRef] Added ${simulationRobots.length} robots from simulation status`)
+  }
 
   // Empty arrays for data types not available in ApplyResult
   const weldGunRows: any[] = []
@@ -909,13 +949,16 @@ async function ingestFilesInternal(
 
   // NEW: Build and populate CrossRef data for dashboard
   try {
-    const crossRefInput = buildCrossRefInputFromApplyResult(applyResult)
+    // Pass robots from simulation status for accurate robot counts per station
+    const simulationRobots = ingestedData.simulation?.robotsFromSimStatus
+    const crossRefInput = buildCrossRefInputFromApplyResult(applyResult, simulationRobots)
     const crossRefResult = buildCrossRef(crossRefInput)
     setCrossRefData(crossRefResult)
     log.debug('[Ingestion] CrossRef data populated for dashboard:', {
       cells: crossRefResult.cells.length,
       flags: crossRefResult.globalFlags.length,
-      stats: crossRefResult.stats
+      stats: crossRefResult.stats,
+      robotsFromSimStatus: simulationRobots?.length ?? 0
     })
   } catch (error) {
     log.error('[Ingestion] Failed to build CrossRef data:', error)
