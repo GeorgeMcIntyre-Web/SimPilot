@@ -262,7 +262,7 @@ export function vacuumParseSimulationSheet(
     // Skip empty rows
     if (isEmptyRow(row)) {
       continue
-    }
+    }     
 
     // Extract core fields
     let area = coreIndices['AREA'] !== undefined ? String(row[coreIndices['AREA']] || '').trim() : ''
