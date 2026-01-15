@@ -89,8 +89,16 @@ export function ingestRobotEquipmentList(
   const headerRow = headerData[0] as string[]
 
   // Parse data rows starting from dataStartRow
+  // Object-based rows using headers as keys
   const rawData: any[][] = XLSX.utils.sheet_to_json(sheet, {
     header: headerRow,
+    range: dataStartRow,
+    defval: '',
+  })
+
+  // Also read as raw arrays to access Column 0 (area group) which has no header
+  const rawArrayData: any[][] = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,  // Return arrays, not objects
     range: dataStartRow,
     defval: '',
   })
@@ -105,6 +113,7 @@ export function ingestRobotEquipmentList(
   // Normalize rows
   const normalizedRows = normalizeRobotEquipmentRows(
     rawData as RobotEquipmentRawRow[],
+    rawArrayData,
     filePath,
     headerRowIndex
   )

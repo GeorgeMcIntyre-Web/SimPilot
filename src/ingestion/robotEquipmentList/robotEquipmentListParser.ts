@@ -23,12 +23,94 @@ import {
 // COLUMN MAPPING
 // ============================================================================
 
-const COLUMN_MAP = {
-  // Row 0 columns
-  AREA_COLUMN_GROUP: 'Area',
+// Column indices for fields that use Row 2 sub-headers (not accessible via Row 1 header keys)
+// The Excel file has a multi-row header structure where Row 1 has main headers and Row 2 has sub-headers
+const COLUMN_INDEX = {
+  AREA_GROUP: 0,              // Area group name (e.g., "DASH", "FRONT STRUCTURE") - forward-fill needed
+  ROBOT_TYPE_CONFIRMED: 17,   // Row 2: "Robot Type Confirmed"
+  ROBOT_ORDER_SUBMITTED: 18,  // Row 2: "Robot Order Submitted"
+  CABLE_CHANGE_CUTOFF: 19,    // Row 2: "Cable Change Cutoff"
+  COMMENT: 20,                // Row 2: "Comment"
+  FUNCTION: 21,               // Row 2: "Function" (Row 1 is "Robot Application")
+  CODE: 22,                   // Row 2: "Code"
+  DRESSPACK_TYPE: 23,         // Row 2: "Side Mounted LH / Side Mounted RH"
+  DELIVERY_CHECKLIST: 24,     // Row 2: "Robot Unit Dress Pack Check"
+  CONTROLLER_CABLE_CHECK: 25, // Row 2: "Controller Cable Check"
+  BASE_HEIGHT: 26,            // Row 2: "Height "
+  BASE_CODE: 27,              // Row 2: "Base Code"
+  BASE_DATE_APPROVED: 28,     // Row 2: "Date Approved"
+  BASE_DATE_ISSUED: 29,       // Row 2: "Date Issued to Manafacture"
+  BASE_ISSUED_BY: 30,         // Row 2: " Issued By"
+  TRACK_LENGTH: 31,           // Row 2: "Length"
+  TRACK_RISER_HEIGHT: 32,     // Row 2: "Riser Height"
+  TRACK_ROBOT_ORIENTATION: 33,// Row 2: "Robot Orientation"
+  TRACK_PART_NUMBER: 34,      // Row 2: "Part Number"
+  TRACK_CAT_TRACK_POS: 35,    // Row 2: "Cat track position"
+  TRACK_LENGTH_CONFIRMED: 36, // Row 2: "Length Confirmed"
+  TRACK_ORDERED: 37,          // Row 2: "Track Ordered"
+  TRACK_RTU_SERIAL: 38,       // Row 2: "RTU Serial #"
+  TRACK_NOTE: 39,             // Row 2: "Note"
+  TRACK_CAT_DRESSOUT: 40,     // Row 2: "Cat track Dressout Check"
+  DRESSPACK_FTF: 41,          // Row 2: "FTF/FTS"
+  TOOL_CHANGE: 42,            // Row 1: "Tool Change "
+  WELDGUNS_NUMBER: 44,        // Row 2: "No.  Of Weld Guns"
+  WELDGUNS_GUN_TYPE: 45,      // Row 2: "Gun Type"
+  WELDGUNS_GUN_SIZE: 46,      // Row 2: "Gun Size"
+  SEALING_ROBOT_SEALER: 47,   // Row 2: "Robot Sealer"
+  SEALING_PED_STANDS: 48,     // Row 2: "No. Of Ped Stands"
+  SEALING_SEALER: 49,         // Row 2: "Sealer"
+  SEALING_ADHESIVE: 50,       // Row 2: "Adhesive"
+  STUD_WELD: 51,              // Row 2: "Stud Weld"
+  PROJECTION_BOLT: 52,        // Row 2: "Projection Bolt"
+  PROJECTION_NUT: 53,         // Row 2: "Projection Nut"
+  // Main Cable (columns 54-63)
+  MAIN_CABLE_CONTROLLER: 54,
+  MAIN_CABLE_FENCE: 55,
+  MAIN_CABLE_MAINT: 56,
+  MAIN_CABLE_ADDITIONAL: 57,
+  MAIN_CABLE_DESC: 58,
+  MAIN_CABLE_RESERVE: 59,
+  MAIN_CABLE_TOTAL: 60,
+  MAIN_CABLE_DATE: 61,
+  MAIN_CABLE_ORDER: 62,
+  MAIN_CABLE_FTF: 63,
+  // Tipdress Cable (columns 64-74)
+  TIPDRESS_CONTROLLER: 64,
+  TIPDRESS_FENCE: 65,
+  TIPDRESS_MAINT: 66,
+  TIPDRESS_BASE_HEIGHT: 67,
+  TIPDRESS_ADDITIONAL: 68,
+  TIPDRESS_DESC: 69,
+  TIPDRESS_RESERVE: 70,
+  TIPDRESS_TOTAL: 71,
+  TIPDRESS_DATE: 72,
+  TIPDRESS_ORDER: 73,
+  TIPDRESS_FTF: 74,
+  // Teach Pendant Cable (columns 75-82)
+  TEACH_CONTROLLER: 75,
+  TEACH_ADDITIONAL: 76,
+  TEACH_DESC: 77,
+  TEACH_RESERVE: 78,
+  TEACH_TOTAL: 79,
+  TEACH_DATE: 80,
+  TEACH_ORDER: 81,
+  TEACH_FTF: 82,
+  // ESOW (columns 83-88)
+  FTF_APPROVED_DES_LIST: 83,
+  ESOW_ROBOT_TYPE: 84,
+  FTF_APPROVED_ESOW: 85,
+  DIFFERS_FROM_ESOW: 86,
+  ESOW_COMMENT: 87,
+  APPLICATION_CONCERN: 88,
+  // Install Status
+  INSTALL_STATUS: 89,
+}
 
+// Header-based column access (for columns with valid Row 1 headers)
+const COLUMN_MAP = {
   // Identity columns (from header row 1)
-  PERSON_RESPONSIBLE: 'Person Responsible',
+  // Note: Row 1 header "Area" actually contains "Person Responsible" data
+  PERSON_RESPONSIBLE: 'Area',  // This column header is "Area" but contains Person Responsible data
   STATION: 'Station No.',
   BUNDLE: 'Bundle',
   ROBOT_ID: 'Robo No. New',
@@ -43,19 +125,8 @@ const COLUMN_MAP = {
   // Order
   ORDER: 'order',
 
-  // Robot Type
+  // Robot Type (Row 1 header exists)
   ROBOT_TYPE: 'Robot Type',
-  ROBOT_TYPE_CONFIRMED: 'Robot Type Confirmed',
-  ROBOT_ORDER_SUBMITTED: 'Robot Order Submitted',
-  CABLE_CHANGE_CUTOFF: 'Cable Change Cutoff',
-  COMMENT: 'Comment',
-
-  // Application
-  FUNCTION: 'Function',
-  CODE: 'Code',
-
-  // Install Status
-  INSTALL_STATUS: 'Install status'
 }
 
 // ============================================================================
@@ -106,24 +177,42 @@ function normalizeString(value: any): string | null {
 
 /**
  * Normalize raw Excel rows to structured data
+ * @param rows - Object-based rows using header names as keys
+ * @param rawRows - Array-based rows for accessing columns by index (for Column 0 area group)
+ * @param _sourceFile - Source file path
+ * @param headerRowIndex - Row index where headers are located
  */
 export function normalizeRobotEquipmentRows(
   rows: RobotEquipmentRawRow[],
+  rawRows: any[][],
   _sourceFile: string,
   headerRowIndex: number
 ): NormalizedRobotEquipmentRow[] {
   const normalized: NormalizedRobotEquipmentRow[] = []
 
+  // Track the current area group for forward-fill
+  // Column 0 contains area group name but only for the first row of each group
+  let currentAreaGroup = ''
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
+    const rawRow = rawRows[i] || []
     const sourceRow = headerRowIndex + i + 1
 
     // Skip rows without robot ID
     const robotId = normalizeString(row[COLUMN_MAP.ROBOT_ID])
     if (!robotId) continue
 
+    // Forward-fill area group from Column 0
+    // This column only has a value for the first row of each area group
+    const areaGroupValue = normalizeString(rawRow[COLUMN_INDEX.AREA_GROUP])
+    if (areaGroupValue) {
+      currentAreaGroup = areaGroupValue
+    }
+
     // Parse identity
-    const area = normalizeString(row[COLUMN_MAP.PERSON_RESPONSIBLE]) || ''
+    // Note: The "Area" header column actually contains Person Responsible data
+    const personResponsible = normalizeString(row[COLUMN_MAP.PERSON_RESPONSIBLE]) || ''
     const station = normalizeString(row[COLUMN_MAP.STATION]) || ''
 
     // Parse serial number (can be "Not Delivered")
@@ -131,8 +220,8 @@ export function normalizeRobotEquipmentRows(
 
     normalized.push({
       // Identity
-      area,
-      personResponsible: area,
+      area: currentAreaGroup,  // Use forward-filled area group from Column 0
+      personResponsible,       // Person responsible from "Area" column
       station,
       bundle: normalizeString(row[COLUMN_MAP.BUNDLE]) || '',
       robotId,
@@ -147,110 +236,110 @@ export function normalizeRobotEquipmentRows(
       // Order
       order: normalizeNumber(row[COLUMN_MAP.ORDER]),
 
-      // Robot Type
+      // Robot Type - use column indices for fields without Row 1 headers
       robotType: normalizeString(row[COLUMN_MAP.ROBOT_TYPE]) || '',
-      robotTypeConfirmed: !!row[COLUMN_MAP.ROBOT_TYPE_CONFIRMED],
-      robotOrderSubmitted: !!row[COLUMN_MAP.ROBOT_ORDER_SUBMITTED],
-      cableChangeCutoff: normalizeString(row[COLUMN_MAP.CABLE_CHANGE_CUTOFF]),
-      comment: normalizeString(row[COLUMN_MAP.COMMENT]),
+      robotTypeConfirmed: normalizeBoolean(rawRow[COLUMN_INDEX.ROBOT_TYPE_CONFIRMED]),
+      robotOrderSubmitted: normalizeBoolean(rawRow[COLUMN_INDEX.ROBOT_ORDER_SUBMITTED]),
+      cableChangeCutoff: normalizeString(rawRow[COLUMN_INDEX.CABLE_CHANGE_CUTOFF]),
+      comment: normalizeString(rawRow[COLUMN_INDEX.COMMENT]),
 
-      // Application
-      application: normalizeString(row[COLUMN_MAP.FUNCTION]) || '',
-      applicationCode: normalizeString(row[COLUMN_MAP.CODE]) || '',
+      // Application - use column indices
+      application: normalizeString(rawRow[COLUMN_INDEX.FUNCTION]) || '',
+      applicationCode: normalizeString(rawRow[COLUMN_INDEX.CODE]) || '',
 
-      // Dresspack
-      dresspackType: normalizeString(row['Side Mounted LH / Side Mounted RH']),
-      deliveryChecklistComplete: normalizeBoolean(row['Robot Unit Dress Pack Check']),
-      controllerCableCheck: normalizeBoolean(row['Controller Cable Check']),
+      // Dresspack - use column indices
+      dresspackType: normalizeString(rawRow[COLUMN_INDEX.DRESSPACK_TYPE]),
+      deliveryChecklistComplete: normalizeBoolean(rawRow[COLUMN_INDEX.DELIVERY_CHECKLIST]),
+      controllerCableCheck: normalizeBoolean(rawRow[COLUMN_INDEX.CONTROLLER_CABLE_CHECK]),
 
-      // Bases
-      baseHeight: row['Height '] || null,
-      baseCode: normalizeString(row['Base Code']),
-      baseDateApproved: parseExcelDate(row['Date Approved']),
-      baseDateIssuedToManufacture: parseExcelDate(row['Date Issued to Manafacture']),
-      baseIssuedBy: normalizeString(row[' Issued By']),
+      // Bases - use column indices
+      baseHeight: rawRow[COLUMN_INDEX.BASE_HEIGHT] || null,
+      baseCode: normalizeString(rawRow[COLUMN_INDEX.BASE_CODE]),
+      baseDateApproved: parseExcelDate(rawRow[COLUMN_INDEX.BASE_DATE_APPROVED]),
+      baseDateIssuedToManufacture: parseExcelDate(rawRow[COLUMN_INDEX.BASE_DATE_ISSUED]),
+      baseIssuedBy: normalizeString(rawRow[COLUMN_INDEX.BASE_ISSUED_BY]),
 
-      // Track
-      trackLength: normalizeNumber(row['Length']),
-      trackRiserHeight: normalizeNumber(row['Riser Height']),
-      trackRobotOrientation: normalizeString(row['Robot Orientation']),
-      trackPartNumber: normalizeString(row['Part Number']),
-      trackCatTrackPosition: normalizeString(row['Cat track position']),
-      trackLengthConfirmed: normalizeBoolean(row['Length Confirmed']),
-      trackOrdered: normalizeBoolean(row['Track Ordered']),
-      trackRTUSerialNumber: normalizeString(row['RTU Serial #']),
-      trackNote: normalizeString(row['Note']),
-      trackCatTrackDressoutCheck: normalizeBoolean(row['Cat track Dressout Check']),
+      // Track - use column indices
+      trackLength: normalizeNumber(rawRow[COLUMN_INDEX.TRACK_LENGTH]),
+      trackRiserHeight: normalizeNumber(rawRow[COLUMN_INDEX.TRACK_RISER_HEIGHT]),
+      trackRobotOrientation: normalizeString(rawRow[COLUMN_INDEX.TRACK_ROBOT_ORIENTATION]),
+      trackPartNumber: normalizeString(rawRow[COLUMN_INDEX.TRACK_PART_NUMBER]),
+      trackCatTrackPosition: normalizeString(rawRow[COLUMN_INDEX.TRACK_CAT_TRACK_POS]),
+      trackLengthConfirmed: normalizeBoolean(rawRow[COLUMN_INDEX.TRACK_LENGTH_CONFIRMED]),
+      trackOrdered: normalizeBoolean(rawRow[COLUMN_INDEX.TRACK_ORDERED]),
+      trackRTUSerialNumber: normalizeString(rawRow[COLUMN_INDEX.TRACK_RTU_SERIAL]),
+      trackNote: normalizeString(rawRow[COLUMN_INDEX.TRACK_NOTE]),
+      trackCatTrackDressoutCheck: normalizeBoolean(rawRow[COLUMN_INDEX.TRACK_CAT_DRESSOUT]),
 
-      // Dress pack FTF
-      dresspackFTF: normalizeString(row['FTF/FTS']),
+      // Dress pack FTF - use column index
+      dresspackFTF: normalizeString(rawRow[COLUMN_INDEX.DRESSPACK_FTF]),
 
-      // Tool Change
-      toolChange: normalizeString(row['Tool Change ']),
+      // Tool Change - use column index
+      toolChange: normalizeString(rawRow[COLUMN_INDEX.TOOL_CHANGE]),
 
-      // Weldguns
-      weldgunsNumber: normalizeNumber(row['No.  Of Weld Guns']),
-      weldgunsGunType: normalizeString(row['Gun Type']),
-      weldgunsGunSize: normalizeString(row['Gun Size']),
+      // Weldguns - use column indices
+      weldgunsNumber: normalizeNumber(rawRow[COLUMN_INDEX.WELDGUNS_NUMBER]),
+      weldgunsGunType: normalizeString(rawRow[COLUMN_INDEX.WELDGUNS_GUN_TYPE]),
+      weldgunsGunSize: normalizeString(rawRow[COLUMN_INDEX.WELDGUNS_GUN_SIZE]),
 
-      // Sealing
-      sealingRobotSealer: normalizeBoolean(row['Robot Sealer']),
-      sealingNumberOfPedStands: normalizeNumber(row['No. Of Ped Stands']),
-      sealingSealer: normalizeBoolean(row['Sealer']),
-      sealingAdhesive: normalizeBoolean(row['Adhesive']),
+      // Sealing - use column indices
+      sealingRobotSealer: normalizeBoolean(rawRow[COLUMN_INDEX.SEALING_ROBOT_SEALER]),
+      sealingNumberOfPedStands: normalizeNumber(rawRow[COLUMN_INDEX.SEALING_PED_STANDS]),
+      sealingSealer: normalizeBoolean(rawRow[COLUMN_INDEX.SEALING_SEALER]),
+      sealingAdhesive: normalizeBoolean(rawRow[COLUMN_INDEX.SEALING_ADHESIVE]),
 
-      // Arc Stud Welding
-      studWelding: normalizeBoolean(row['Stud Weld']),
+      // Arc Stud Welding - use column index
+      studWelding: normalizeBoolean(rawRow[COLUMN_INDEX.STUD_WELD]),
 
-      // Projection Welding
-      projectionBolt: normalizeBoolean(row['Projection Bolt']),
-      projectionNut: normalizeBoolean(row['Projection Nut']),
+      // Projection Welding - use column indices
+      projectionBolt: normalizeBoolean(rawRow[COLUMN_INDEX.PROJECTION_BOLT]),
+      projectionNut: normalizeBoolean(rawRow[COLUMN_INDEX.PROJECTION_NUT]),
 
-      // Main Cable
-      mainCableControllerToRobot: normalizeNumber(row['Controller To Robot']),
-      mainCableFenceToController: normalizeNumber(row['Fence to Controller']),
-      mainCableMaintLoop: normalizeNumber(row['Maint loop']),
-      mainCableAdditional: normalizeNumber(row['Additional ']),
-      mainCableDescription: normalizeString(row['Description']),
-      mainCableReserve: normalizeNumber(row['Reserve']),
-      mainCableTotal: normalizeNumber(row['Total']),
-      mainCableDateMeasured: parseExcelDate(row['Date Measured']),
-      mainCableOrder: normalizeNumber(row['Order']),
-      mainCableFTFConfirmed: normalizeNumber(row['FTF Confirmed']),
+      // Main Cable - use column indices
+      mainCableControllerToRobot: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_CONTROLLER]),
+      mainCableFenceToController: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_FENCE]),
+      mainCableMaintLoop: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_MAINT]),
+      mainCableAdditional: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_ADDITIONAL]),
+      mainCableDescription: normalizeString(rawRow[COLUMN_INDEX.MAIN_CABLE_DESC]),
+      mainCableReserve: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_RESERVE]),
+      mainCableTotal: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_TOTAL]),
+      mainCableDateMeasured: parseExcelDate(rawRow[COLUMN_INDEX.MAIN_CABLE_DATE]),
+      mainCableOrder: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_ORDER]),
+      mainCableFTFConfirmed: normalizeNumber(rawRow[COLUMN_INDEX.MAIN_CABLE_FTF]),
 
-      // Tipdress Cable
-      tipdressCableControllerToTipdresser: normalizeNumber(row['Controller to Tipdresser']),
-      tipdressCableFenceToController: normalizeNumber(row['Fence to Controller']),
-      tipdressCableMaintLoop: normalizeNumber(row['Maint loop']),
-      tipdressCableBaseHeight: normalizeNumber(row['Base height']),
-      tipdressCableAdditional: normalizeNumber(row['Additional ']),
-      tipdressCableDescription: normalizeString(row['Description']),
-      tipdressCableReserve: normalizeNumber(row['Reserve']),
-      tipdressCableTotal: normalizeNumber(row['Total']),
-      tipdressCableDateMeasured: parseExcelDate(row['Date Measured']),
-      tipdressCableOrder: normalizeNumber(row['Order']),
-      tipdressCableFTFConfirmed: normalizeNumber(row['FTF Confirmed']),
+      // Tipdress Cable - use column indices
+      tipdressCableControllerToTipdresser: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_CONTROLLER]),
+      tipdressCableFenceToController: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_FENCE]),
+      tipdressCableMaintLoop: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_MAINT]),
+      tipdressCableBaseHeight: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_BASE_HEIGHT]),
+      tipdressCableAdditional: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_ADDITIONAL]),
+      tipdressCableDescription: normalizeString(rawRow[COLUMN_INDEX.TIPDRESS_DESC]),
+      tipdressCableReserve: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_RESERVE]),
+      tipdressCableTotal: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_TOTAL]),
+      tipdressCableDateMeasured: parseExcelDate(rawRow[COLUMN_INDEX.TIPDRESS_DATE]),
+      tipdressCableOrder: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_ORDER]),
+      tipdressCableFTFConfirmed: normalizeNumber(rawRow[COLUMN_INDEX.TIPDRESS_FTF]),
 
-      // Teach Pendant Cable
-      teachPendantCableControllerToTeachPoint: normalizeNumber(row['Controller to teach point']),
-      teachPendantCableAdditional: normalizeNumber(row['Additional ']),
-      teachPendantCableDescription: normalizeString(row['Description']),
-      teachPendantCableReserve: normalizeNumber(row['Reserve']),
-      teachPendantCableTotal: normalizeNumber(row['Total']),
-      teachPendantCableDateMeasured: parseExcelDate(row['Date Measured']),
-      teachPendantCableOrder: normalizeNumber(row['Order']),
-      teachPendantCableFTFConfirmed: normalizeNumber(row['FTF Confirmed']),
+      // Teach Pendant Cable - use column indices
+      teachPendantCableControllerToTeachPoint: normalizeNumber(rawRow[COLUMN_INDEX.TEACH_CONTROLLER]),
+      teachPendantCableAdditional: normalizeNumber(rawRow[COLUMN_INDEX.TEACH_ADDITIONAL]),
+      teachPendantCableDescription: normalizeString(rawRow[COLUMN_INDEX.TEACH_DESC]),
+      teachPendantCableReserve: normalizeNumber(rawRow[COLUMN_INDEX.TEACH_RESERVE]),
+      teachPendantCableTotal: normalizeNumber(rawRow[COLUMN_INDEX.TEACH_TOTAL]),
+      teachPendantCableDateMeasured: parseExcelDate(rawRow[COLUMN_INDEX.TEACH_DATE]),
+      teachPendantCableOrder: normalizeNumber(rawRow[COLUMN_INDEX.TEACH_ORDER]),
+      teachPendantCableFTFConfirmed: normalizeNumber(rawRow[COLUMN_INDEX.TEACH_FTF]),
 
-      // ESOW
-      ftfApprovedDesignList: normalizeBoolean(row['FTF Approved Application Des List']),
-      esowRobotType: normalizeString(row['ESOW Robot Type']),
-      ftfApprovedESOW: normalizeBoolean(row['FTF Approved Application ESOW']),
-      differsFromESOW: normalizeBoolean(row['DiffersFrom ESOW?']),
-      esowComment: normalizeString(row['Comment']),
-      applicationConcern: normalizeString(row['Robot Application Concern?']),
+      // ESOW - use column indices
+      ftfApprovedDesignList: normalizeBoolean(rawRow[COLUMN_INDEX.FTF_APPROVED_DES_LIST]),
+      esowRobotType: normalizeString(rawRow[COLUMN_INDEX.ESOW_ROBOT_TYPE]),
+      ftfApprovedESOW: normalizeBoolean(rawRow[COLUMN_INDEX.FTF_APPROVED_ESOW]),
+      differsFromESOW: normalizeBoolean(rawRow[COLUMN_INDEX.DIFFERS_FROM_ESOW]),
+      esowComment: normalizeString(rawRow[COLUMN_INDEX.ESOW_COMMENT]),
+      applicationConcern: normalizeString(rawRow[COLUMN_INDEX.APPLICATION_CONCERN]),
 
-      // Install Status
-      installStatus: normalizeString(row[COLUMN_MAP.INSTALL_STATUS]),
+      // Install Status - use column index
+      installStatus: normalizeString(rawRow[COLUMN_INDEX.INSTALL_STATUS]),
 
       // Metadata
       sourceRow
