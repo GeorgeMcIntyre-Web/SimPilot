@@ -707,6 +707,19 @@ async function ingestFilesInternal(
           ingestedData.simulation.areas.push(...result.areas)
           ingestedData.simulation.cells.push(...result.cells)
           ingestedData.simulation.warnings.push(...result.warnings)
+          // Merge vacuum rows and robots from simulation status
+          if (result.vacuumRows) {
+            ingestedData.simulation.vacuumRows = [
+              ...(ingestedData.simulation.vacuumRows || []),
+              ...result.vacuumRows
+            ]
+          }
+          if (result.robotsFromSimStatus) {
+            ingestedData.simulation.robotsFromSimStatus = [
+              ...(ingestedData.simulation.robotsFromSimStatus || []),
+              ...result.robotsFromSimStatus
+            ]
+          }
         }
       }
 
