@@ -9,7 +9,7 @@ import { createLinkingMissingTargetWarning, createParserErrorWarning } from './w
 import { linkAssetsToSimulation } from './relationshipLinker'
 import { buildStationId, normalizeAreaName, normalizeStationCode } from './normalizers'
 import { log } from '../lib/log'
-import { deduplicateAll, logDeduplicationStats } from './entityDeduplicator'
+import { deduplicateAll, logDeduplicationStats, type DeduplicationResult, type DuplicateDetection } from './entityDeduplicator'
 import { coreStore } from '../domain/coreStore'
 
 // ============================================================================
@@ -30,6 +30,79 @@ export interface ApplyResult {
   tools: Tool[]
   warnings: IngestionWarning[]
   linkCount?: number  // NEW: Number of successful asset→cell links for feedback
+}
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+type DedupResults = {
+  projects: DeduplicationResult<Project>
+  areas: DeduplicationResult<Area>
+  cells: DeduplicationResult<Cell>
+  robots: DeduplicationResult<Robot>
+  tools: DeduplicationResult<Tool>
+}
+
+function describeEntity(entity: Project | Area | Cell | Robot | Tool): string {
+  const id = entity.id
+  const name = (entity as any).name ?? (entity as any).code ?? ''
+  const station =
+    (entity as any).stationNumber ?? (entity as any).stationCode ?? (entity as any).stationId ?? ''
+  const withStation = station ? ` @${station}` : ''
+  const cleanedName = name !== '' ? name : id
+
+  return `${cleanedName}${withStation}`
+}
+
+function buildCollisionSummary(results: DedupResults): {
+  messageSuffix: string
+  details: Record<string, string | number | boolean>
+} {
+  const breakdown = {
+    projects: results.projects.stats.idCollisions,
+    areas: results.areas.stats.idCollisions,
+    cells: results.cells.stats.idCollisions,
+    robots: results.robots.stats.idCollisions,
+    tools: results.tools.stats.idCollisions
+  }
+
+  const breakdownParts = Object.entries(breakdown)
+    .filter(([, count]) => count > 0)
+    .map(([key, count]) => `${key}=${count}`)
+
+  const examples: string[] = []
+  const addExamples = <T>(label: string, dupes: DuplicateDetection<T>[]) => {
+    for (const dup of dupes) {
+      if (examples.length >= 3) break
+      if (dup.conflictType !== 'id_collision') continue
+      const example = `${label}:${(dup.incoming as any).id} (existing=${describeEntity(dup.existing as any)}, incoming=${describeEntity(dup.incoming as any)})`
+      examples.push(example)
+    }
+  }
+
+  addExamples('project', results.projects.duplicates)
+  addExamples('area', results.areas.duplicates)
+  addExamples('cell', results.cells.duplicates)
+  addExamples('robot', results.robots.duplicates)
+  addExamples('tool', results.tools.duplicates)
+
+  const messageSuffix =
+    breakdownParts.length === 0 && examples.length === 0
+      ? ''
+      : ` Breakdown: ${breakdownParts.join(', ')}${examples.length ? `. Examples: ${examples.join(' | ')}` : ''}`
+
+  return {
+    messageSuffix,
+    details: {
+      projects: breakdown.projects,
+      areas: breakdown.areas,
+      cells: breakdown.cells,
+      robots: breakdown.robots,
+      tools: breakdown.tools,
+      examples: examples.join(' | ') || 'n/a'
+    }
+  }
 }
 
 // ============================================================================
@@ -103,11 +176,14 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     deduplicationResults.tools.stats.idCollisions
 
   if (totalCollisions > 0) {
+    const collisionSummary = buildCollisionSummary(deduplicationResults)
+
     warnings.push({
       id: 'id-collisions',
       kind: 'PARSER_ERROR',
       fileName: '',
-      message: `Detected ${totalCollisions} ID collisions (same ID, different data). Keeping existing data to prevent overwrites.`,
+      message: `Detected ${totalCollisions} ID collisions (same ID, different data). Keeping existing data to prevent overwrites.${collisionSummary.messageSuffix}`,
+      details: collisionSummary.details,
       createdAt: new Date().toISOString()
     })
   }
