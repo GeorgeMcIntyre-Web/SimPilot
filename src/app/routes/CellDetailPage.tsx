@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
@@ -6,23 +6,62 @@ import { StatusPill } from '../../ui/components/StatusPill';
 import { Tag } from '../../ui/components/Tag';
 import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics } from '../../ui/hooks/useDomainData';
 import { coreStore } from '../../domain/coreStore';
-import { Robot, Tool } from '../../domain/core';
+import { Tool } from '../../domain/core';
 import { createCellEngineerAssignmentChange } from '../../domain/changeLog';
 import { FileSpreadsheet, AlertTriangle, User, Check, X, MonitorPlay } from 'lucide-react';
 import { CellChaosHint } from '../../ui/components/CellChaosHint';
 import { simBridgeClient } from '../../integrations/simbridge/SimBridgeClient';
 import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { log } from '../../lib/log';
+import { useCrossRefData } from '../../hooks/useCrossRefData';
+import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils';
+import { RobotSnapshot } from '../../domain/crossRef/CrossRefTypes';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
     const location = useLocation();
     const decodedCellId = cellId ? decodeURIComponent(cellId) : undefined;
     const cell = useCellById(decodedCellId);
-    const robots = useRobotsByCell(decodedCellId || '');
+    const legacyRobots = useRobotsByCell(decodedCellId || '');
     const tools = useToolsByCell(decodedCellId || '');
     const allEngineers = useAllEngineerMetrics();
     const { pushBusy, popBusy } = useGlobalBusy();
+
+    // Get robots from CrossRef data (includes robots from simulation status)
+    const { cells: crossRefCells } = useCrossRefData();
+
+    // Find matching CrossRef cell to get robots from simulation status
+    const crossRefRobots = useMemo(() => {
+        if (!cell?.code) return [];
+
+        const normalizedCode = normalizeStationId(cell.code);
+        const matchingCell = crossRefCells.find(c => c.stationKey === normalizedCode);
+
+        return matchingCell?.robots || [];
+    }, [cell?.code, crossRefCells]);
+
+    // Merge legacy robots with CrossRef robots (prefer CrossRef as it includes simulation status robots)
+    const robots = useMemo(() => {
+        // If we have CrossRef robots, use those (they include simulation status robots)
+        if (crossRefRobots.length > 0) {
+            // Convert RobotSnapshot to a display-friendly format
+            return crossRefRobots.map((r: RobotSnapshot) => ({
+                id: r.robotKey,
+                name: r.caption || r.robotKey,
+                oemModel: r.oemModel,
+                stationCode: r.stationKey,
+                sourceFile: (r.raw as any)?.source === 'simulationStatus' ? 'Simulation Status' : (r.raw as any)?.sourceFile,
+                sheetName: (r.raw as any)?.sheetName,
+                rowIndex: (r.raw as any)?.sourceRowIndex,
+                // Additional fields for display
+                hasDressPackInfo: r.hasDressPackInfo,
+                eNumber: r.eNumber
+            }));
+        }
+
+        // Fall back to legacy robots
+        return legacyRobots;
+    }, [crossRefRobots, legacyRobots]);
 
     const [isEditingEngineer, setIsEditingEngineer] = useState(false);
     const [selectedEngineer, setSelectedEngineer] = useState<string>('');
@@ -99,11 +138,13 @@ export function CellDetailPage() {
         }
     };
 
-    const robotColumns: Column<Robot>[] = [
+    // Use a flexible type for robot columns since we merge CrossRef and legacy robots
+    type RobotDisplay = { name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number };
+    const robotColumns: Column<RobotDisplay>[] = [
         { header: 'Name', accessor: (r) => r.name },
         { header: 'Model', accessor: (r) => r.oemModel || '-' },
         { header: 'Station', accessor: (r) => r.stationCode || '-' },
-        { header: 'Source', accessor: (r) => r.sourceFile ? <span className="text-xs text-gray-500" title={`${r.sourceFile} (Sheet: ${r.sheetName}, Row: ${r.rowIndex})`}>{r.sourceFile}</span> : '-' },
+        { header: 'Source', accessor: (r) => r.sourceFile ? <span className="text-xs text-gray-500" title={`${r.sourceFile}${r.sheetName ? ` (Sheet: ${r.sheetName}` : ''}${r.rowIndex ? `, Row: ${r.rowIndex})` : ')'}`}>{r.sourceFile}</span> : '-' },
     ];
 
     const toolColumns: Column<Tool>[] = [
