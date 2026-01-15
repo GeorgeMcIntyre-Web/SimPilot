@@ -687,7 +687,6 @@ function groupByCell(rows: ParsedSimulationRow[]): Map<string, ParsedSimulationR
       groups.set(cellKey, [row])
     }
   }
-
   return groups
 }
 
