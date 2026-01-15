@@ -159,7 +159,7 @@ export const filterBySearch = (cells: CellSnapshot[], searchTerm: string): CellS
 // SORTING
 // ============================================================================
 
-export type SortKey = 'station' | 'area' | 'application' | 'robots' | 'completion' | 'flags' | 'risk'
+export type SortKey = 'station' | 'area' | 'application' | 'robots' | 'completion' | 'risk'
 export type SortDirection = 'asc' | 'desc'
 
 /**
@@ -199,10 +199,6 @@ export const sortCells = (
       const compA = getCompletionPercent(a) ?? -1
       const compB = getCompletionPercent(b) ?? -1
       comparison = compA - compB
-    }
-
-    if (sortKey === 'flags') {
-      comparison = a.flags.length - b.flags.length
     }
 
     if (sortKey === 'risk') {

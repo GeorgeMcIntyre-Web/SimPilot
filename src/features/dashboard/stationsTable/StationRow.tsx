@@ -66,15 +66,6 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         )}
       </td>
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
-        {cell.flags.length > 0 ? (
-          <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs font-medium">
-            {cell.flags.length}
-          </span>
-        ) : (
-          <span className="text-gray-400">0</span>
-        )}
-      </td>
-      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         <RiskBadge riskLevel={riskLevel} />
       </td>
     </tr>

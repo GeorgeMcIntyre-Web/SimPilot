@@ -251,18 +251,6 @@ describe('dashboardUtils', () => {
       expect(result[0].areaKey).toBe('X')
       expect(result[2].areaKey).toBe('Z')
     })
-
-    it('sorts by flags count', () => {
-      const cellsWithFlags = [
-        makeCell({ stationKey: 'ST_001', flags: [] }),
-        makeCell({ stationKey: 'ST_002', flags: [makeWarningFlag('A', 'ST_002'), makeWarningFlag('B', 'ST_002')] }),
-        makeCell({ stationKey: 'ST_003', flags: [makeWarningFlag('C', 'ST_003')] })
-      ]
-
-      const result = sortCells(cellsWithFlags, 'flags', 'desc')
-      expect(result[0].flags.length).toBe(2)
-      expect(result[2].flags.length).toBe(0)
-    })
   })
 
   describe('generateFocusItems', () => {
