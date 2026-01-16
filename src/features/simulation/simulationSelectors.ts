@@ -306,6 +306,7 @@ export interface LineAggregation {
   stationCount: number
   assetCounts: AssetCounts
   sourcingCounts: SourcingCounts
+  avgCompletion: number | null
 }
 
 export function useLineAggregations(stations: StationContext[]): LineAggregation[] {
@@ -324,27 +325,36 @@ export function useLineAggregations(stations: StationContext[]): LineAggregation
     for (const [lineKey, lineStations] of lineMap) {
       const assetCounts: AssetCounts = { total: 0, robots: 0, guns: 0, tools: 0, other: 0 }
       const sourcingCounts: SourcingCounts = { reuse: 0, freeIssue: 0, newBuy: 0, unknown: 0 }
-      
+      let completionSum = 0
+      let completionCount = 0
+
       for (const station of lineStations) {
         assetCounts.total += station.assetCounts.total
         assetCounts.robots += station.assetCounts.robots
         assetCounts.guns += station.assetCounts.guns
         assetCounts.tools += station.assetCounts.tools
         assetCounts.other += station.assetCounts.other
-        
+
         sourcingCounts.reuse += station.sourcingCounts.reuse
         sourcingCounts.freeIssue += station.sourcingCounts.freeIssue
         sourcingCounts.newBuy += station.sourcingCounts.newBuy
         sourcingCounts.unknown += station.sourcingCounts.unknown
+
+        const completion = station.simulationStatus?.firstStageCompletion
+        if (completion !== undefined) {
+          completionSum += completion
+          completionCount++
+        }
       }
-      
+
       aggregations.push({
         lineKey,
         unit: lineStations[0].unit,
         line: lineStations[0].line,
         stationCount: lineStations.length,
         assetCounts,
-        sourcingCounts
+        sourcingCounts,
+        avgCompletion: completionCount > 0 ? Math.round(completionSum / completionCount) : null
       })
     }
     

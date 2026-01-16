@@ -32,6 +32,7 @@ interface LineGroupProps {
   stations: StationContext[]
   robotCount: number
   gunCount: number
+  avgCompletion: number | null
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
   isExpanded: boolean
@@ -45,16 +46,17 @@ interface LineGroupProps {
 function LineGroup({
   lineKey: _lineKey,
   unit,
-  line,
+  line: _line,
   stations,
   robotCount,
   gunCount,
+  avgCompletion,
   onStationClick,
   selectedStationKey,
   isExpanded,
   onToggle
 }: LineGroupProps) {
-  // _lineKey is for identification but not displayed directly
+  // _lineKey and _line are for identification but not displayed directly
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
@@ -74,12 +76,19 @@ function LineGroup({
             <ChevronRight className="h-4 w-4 text-gray-500" />
           )}
           <Layers className="h-4 w-4 text-blue-500" />
-          <div className="text-left">
-            <span className="font-semibold text-gray-900 dark:text-white">{line}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-              in {unit}
-            </span>
-          </div>
+          <span className={cn(
+            'font-semibold w-12 text-right',
+            avgCompletion === null ? 'text-gray-500 dark:text-gray-400' :
+            avgCompletion >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+            avgCompletion >= 50 ? 'text-blue-600 dark:text-blue-400' :
+            avgCompletion >= 25 ? 'text-amber-600 dark:text-amber-400' :
+            'text-red-600 dark:text-red-400'
+          )}>
+            {avgCompletion !== null ? `${avgCompletion}%` : '-'}
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            in {unit}
+          </span>
         </div>
 
         <div className="flex items-center gap-4">
@@ -216,6 +225,7 @@ export function SimulationBoardGrid({
               stations={lineStations}
               robotCount={aggregation.assetCounts.robots}
               gunCount={aggregation.assetCounts.guns}
+              avgCompletion={aggregation.avgCompletion}
               onStationClick={onStationClick}
               selectedStationKey={selectedStationKey}
               isExpanded={expandedLines.has(lineKey)}
