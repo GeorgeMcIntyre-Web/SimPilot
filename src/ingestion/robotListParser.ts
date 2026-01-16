@@ -175,7 +175,7 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'ROBO NO. NEW')
       || getCellString(row, columnMap, 'ROBO NO. OLD')
       || getCellString(row, columnMap, 'ROBOT NAME')
-      || getCellString(row, columnMap, 'NAME')
+      || getCellString(row, columnMap, 'NAME') 
 
     if (!robotCaption) {
       warnings.push(createRowSkippedWarning({
