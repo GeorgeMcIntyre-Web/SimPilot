@@ -221,14 +221,45 @@ export function vacuumParseSimulationSheet(
   }
 
   // Build column index map for core fields
+  // Strategy: First pass looks for exact matches, second pass allows partial matches
+  // This prevents "PERSONS RESPONSIBLE" from matching "AREA" due to includes() logic
   const coreIndices: Record<string, number> = {}
 
+  // First pass: exact matches only
   for (const [coreField, aliases] of Object.entries(COLUMN_ALIASES)) {
     for (let i = 0; i < headerRow.length; i++) {
       const headerText = String(headerRow[i] || '').toUpperCase().trim()
 
       for (const alias of aliases) {
-        if (headerText === alias.toUpperCase() || headerText.includes(alias.toUpperCase())) {
+        if (headerText === alias.toUpperCase()) {
+          coreIndices[coreField] = i
+          break
+        }
+      }
+
+      if (coreIndices[coreField] !== undefined) {
+        break
+      }
+    }
+  }
+
+  // Second pass: partial matches for fields not yet found
+  for (const [coreField, aliases] of Object.entries(COLUMN_ALIASES)) {
+    // Skip if already found via exact match
+    if (coreIndices[coreField] !== undefined) {
+      continue
+    }
+
+    for (let i = 0; i < headerRow.length; i++) {
+      // Skip columns already assigned to other core fields
+      if (Object.values(coreIndices).includes(i)) {
+        continue
+      }
+
+      const headerText = String(headerRow[i] || '').toUpperCase().trim()
+
+      for (const alias of aliases) {
+        if (headerText.includes(alias.toUpperCase())) {
           coreIndices[coreField] = i
           break
         }
