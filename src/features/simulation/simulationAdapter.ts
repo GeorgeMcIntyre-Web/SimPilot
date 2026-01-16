@@ -14,6 +14,7 @@ import {
 } from './simulationStore'
 import type { Cell, Project, Area, UnifiedAsset } from '../../domain/core'
 import { log } from '../../lib/log'
+import { normalizeStationCode } from '../../ingestion/normalizers'
 
 // ============================================================================
 // TYPES
@@ -147,20 +148,23 @@ function getAssetsForCell(cellId: string, assets: UnifiedAsset[]): UnifiedAsset[
 
 /**
  * Get assets associated with a station by station number
+ * Uses normalizeStationCode for consistent matching (handles leading zeros, prefixes, case)
  */
 function getAssetsByStation(stationNumber: string, assets: UnifiedAsset[]): UnifiedAsset[] {
-  const normalized = stationNumber.toLowerCase().trim()
-  
+  const normalized = normalizeStationCode(stationNumber)
+  if (!normalized) return []
+
   return assets.filter(asset => {
-    const assetStation = asset.stationNumber?.toLowerCase().trim()
-    if (assetStation === normalized) return true
-    
+    const assetNormalized = normalizeStationCode(asset.stationNumber)
+    if (assetNormalized === normalized) return true
+
     // Also check metadata for station code
     const metaStation = asset.metadata?.stationCode
-    if (typeof metaStation === 'string' && metaStation.toLowerCase().trim() === normalized) {
-      return true
+    if (typeof metaStation === 'string') {
+      const metaNormalized = normalizeStationCode(metaStation)
+      if (metaNormalized === normalized) return true
     }
-    
+
     return false
   })
 }

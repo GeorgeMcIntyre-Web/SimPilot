@@ -1,4 +1,4 @@
-import { CheckCircle, AlertTriangle, RotateCcw } from 'lucide-react';
+import { CheckCircle, AlertTriangle, RotateCcw, Link2 } from 'lucide-react';
 import { IngestFilesResult } from '../../../../ingestion/ingestionCoordinator';
 import { IngestionWarning } from '../../../../domain/core';
 import { coreStore } from '../../../../domain/coreStore';
@@ -92,6 +92,47 @@ export function IngestionResults({ result }: IngestionResultsProps) {
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tools</div>
         </div>
       </div>
+
+      {/* Linking Statistics */}
+      {result.linkStats && (
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+          <div className="flex items-center gap-2 mb-3">
+            <Link2 className="h-4 w-4 text-blue-500" />
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Asset Linking Summary</h4>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                {result.linkStats.linkedCells}/{result.linkStats.totalCells}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Cells Linked ({result.linkStats.totalCells > 0
+                  ? Math.round((result.linkStats.linkedCells / result.linkStats.totalCells) * 100)
+                  : 0}%)
+              </div>
+            </div>
+            <div>
+              <div className={`text-lg font-bold ${result.linkStats.orphanedAssets === 0
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'}`}>
+                {result.linkStats.orphanedAssets}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Orphaned Assets</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                {result.robotsCount + result.toolsCount - result.linkStats.orphanedAssets}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Assets Linked</div>
+            </div>
+          </div>
+          {result.linkStats.orphanedAssets > 0 && (
+            <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+              Orphaned assets could not be matched to any station. Check warnings below for details.
+            </p>
+          )}
+        </div>
+      )}
 
       {result.warnings.length > 0 && (
         <div className="border-t border-gray-200 dark:border-gray-700 pt-4">

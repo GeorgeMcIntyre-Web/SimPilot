@@ -12,7 +12,8 @@ import {
   getCellString,
   isEmptyRow,
   isTotalRow,
-  isEffectivelyEmptyRow
+  isEffectivelyEmptyRow,
+  isCellStruck
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 import { buildStationId, buildToolId, inferAssembliesAreaName } from './normalizers'
@@ -124,6 +125,9 @@ export async function parseToolListLegacy(
     throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
 
+  // Get sheet reference for strikethrough detection
+  const sheet = workbook.Sheets[sheetName]
+
   // Convert to matrix
   const rows = sheetToMatrix(workbook, sheetName)
   if (rows.length < 2) {
@@ -202,11 +206,20 @@ export async function parseToolListLegacy(
   // Check if "EQUIPMENT NO SHOWN" column exists in the header
   const hasEquipmentNoColumn = columnMap['EQUIPMENT NO SHOWN'] !== null || columnMap['EQUIPMENT NO'] !== null
 
+  // Identify key columns for strikethrough detection
+  const idColumnIndex = columnMap['EQUIPMENT NO SHOWN'] ?? columnMap['EQUIPMENT NO'] ?? columnMap['GUN ID'] ?? columnMap['TOOL ID'] ?? 0
+
   for (let i = dataStartIndex; i < rows.length; i++) {
     const row = rows[i]
 
     // Skip empty or total rows
     if (isEmptyRow(row) || isTotalRow(row)) continue
+
+    // Skip struck-through rows (deleted tools)
+    if (isCellStruck(sheet, i, idColumnIndex)) {
+      log.debug(`[ToolListParser] Skipping struck-through row ${i + 1} in ${fileName}`)
+      continue
+    }
 
     // FILTER: Only parse rows where "Equipment No \nShown" is not empty
     // This column indicates real tool positions (excludes metadata/summary rows)

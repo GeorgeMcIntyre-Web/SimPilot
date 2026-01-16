@@ -74,6 +74,11 @@ export interface IngestFilesResult {
   versionComparison?: VersionComparisonResult
   diffResult?: DiffResult
   importRunId?: string
+  linkStats?: {
+    linkedCells: number
+    totalCells: number
+    orphanedAssets: number
+  }
 }
 
 // ============================================================================
@@ -916,7 +921,8 @@ async function ingestFilesInternal(
       warnings: allWarnings,
       versionComparison,
       diffResult,
-      importRunId
+      importRunId,
+      linkStats: applyResult.linkStats
     }
   }
 
@@ -990,7 +996,8 @@ async function ingestFilesInternal(
     warnings: allWarnings,
     versionComparison,
     diffResult,
-    importRunId
+    importRunId,
+    linkStats: applyResult.linkStats
   }
 }
 

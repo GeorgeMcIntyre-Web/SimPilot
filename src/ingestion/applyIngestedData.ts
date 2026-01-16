@@ -29,7 +29,11 @@ export interface ApplyResult {
   robots: Robot[]
   tools: Tool[]
   warnings: IngestionWarning[]
-  linkCount?: number  // NEW: Number of successful asset→cell links for feedback
+  linkStats?: {
+    linkedCells: number
+    totalCells: number
+    orphanedAssets: number
+  }
 }
 
 // ============================================================================
@@ -211,7 +215,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
   // NEW: Link assets to simulation cells (relational engine)
   // This enriches cells with sourcing, OEM model, and metadata from asset files
-  let linkCount = 0
+  let linkStats: ApplyResult['linkStats'] = undefined
   if (cells.length > 0 && (robots.length > 0 || tools.length > 0)) {
     const allAssets = [...robots, ...tools]
 
@@ -227,9 +231,48 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     cells.length = 0
     cells.push(...linkResult.linkedCells)
 
-    linkCount = linkResult.linkCount
+    // Add warnings from linker (ambiguous matches, etc.)
+    warnings.push(...linkResult.warnings)
 
-    log.info(`[Relational Linker] Linked ${linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed)`)
+    log.info(`[Relational Linker] Linked ${linkResult.linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed, ${linkResult.ambiguousCount} ambiguous)`)
+
+    // Track orphaned assets (those without cellId after linking)
+    const orphanedAssets = allAssets.filter(a => !a.cellId)
+
+    // Build linkStats for user feedback
+    linkStats = {
+      linkedCells: linkResult.linkCount,
+      totalCells: linkResult.totalCells,
+      orphanedAssets: orphanedAssets.length
+    }
+
+    if (orphanedAssets.length > 0) {
+      const maxWarnings = 10
+      const orphanedToReport = orphanedAssets.slice(0, maxWarnings)
+
+      for (const asset of orphanedToReport) {
+        warnings.push(createLinkingMissingTargetWarning({
+          entityType: asset.kind === 'ROBOT' ? 'ROBOT' : 'TOOL',
+          entityId: asset.id,
+          entityName: asset.name,
+          fileName: asset.sourceFile,
+          matchKey: asset.stationId ?? asset.stationNumber ?? 'unknown',
+          reason: 'No matching cell found - asset will appear in global assets but not in station views'
+        }))
+      }
+
+      if (orphanedAssets.length > maxWarnings) {
+        warnings.push({
+          id: `orphaned-assets-summary-${Date.now()}`,
+          kind: 'LINKING_MISSING_TARGET',
+          fileName: '',
+          message: `... and ${orphanedAssets.length - maxWarnings} more orphaned assets could not be linked to cells`,
+          createdAt: new Date().toISOString()
+        })
+      }
+
+      log.warn(`[Relational Linker] ${orphanedAssets.length} assets could not be linked to any cell`)
+    }
   }
 
   // Link robots to cells and areas
@@ -248,7 +291,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     robots,
     tools,
     warnings,
-    linkCount  // Return for user feedback
+    linkStats
   }
 }
 
