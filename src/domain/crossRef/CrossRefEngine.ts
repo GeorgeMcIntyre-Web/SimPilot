@@ -97,13 +97,15 @@ const getOrCreateCell = (
   const existing = stations.get(key)
   if (existing) {
     // Immutable update: create new object if fields need updating
-    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode)
+    const shouldUpdateArea = rawArea && rawArea !== existing.areaKey
+    const shouldUpdateLine = lineCode && lineCode !== existing.lineCode
+    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode) || shouldUpdateArea || shouldUpdateLine
 
     if (needsUpdate) {
       const updated: CellSnapshot = {
         ...existing,
-        areaKey: existing.areaKey || rawArea,
-        lineCode: existing.lineCode || lineCode
+        areaKey: shouldUpdateArea ? rawArea : existing.areaKey || rawArea,
+        lineCode: shouldUpdateLine ? lineCode : existing.lineCode || lineCode
       }
       stations.set(key, updated)
       return updated

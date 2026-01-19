@@ -177,6 +177,39 @@ describe('CrossRefEngine', () => {
     })
   })
 
+  describe('updates with newer simulation data', () => {
+    it('should overwrite area and simulation fields when the same station appears in a later upload', () => {
+      const input: CrossRefInput = {
+        ...emptyInput,
+        simulationStatusRows: [
+          createSimStatus('010', {
+            areaKey: 'OLD_AREA',
+            application: 'Welding',
+            firstStageCompletion: 10
+          }),
+          createSimStatus('010', {
+            areaKey: 'NEW_AREA',
+            application: 'Sealer',
+            firstStageCompletion: 80
+          })
+        ],
+        toolingRows: [],
+        robotSpecsRows: [],
+        weldGunRows: [],
+        gunForceRows: [],
+        riserRows: []
+      }
+
+      const result = buildCrossRef(input)
+      const cell = result.cells.find(c => c.stationKey === '010')
+
+      expect(cell).toBeDefined()
+      expect(cell?.areaKey).toBe('NEW_AREA')
+      expect(cell?.simulationStatus?.application).toBe('Sealer')
+      expect(cell?.simulationStatus?.firstStageCompletion).toBe(80)
+    })
+  })
+
   describe('gun force linking', () => {
     it('should flag missing gun force', () => {
       const input: CrossRefInput = {
