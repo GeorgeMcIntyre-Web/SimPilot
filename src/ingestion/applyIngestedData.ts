@@ -70,8 +70,18 @@ function buildCollisionSummary(results: DedupResults): {
     robots: results.robots.stats.idCollisions,
     tools: results.tools.stats.idCollisions
   }
+  const replacements = {
+    projects: results.projects.stats.replacements ?? 0,
+    areas: results.areas.stats.replacements ?? 0,
+    cells: results.cells.stats.replacements ?? 0,
+    robots: results.robots.stats.replacements ?? 0,
+    tools: results.tools.stats.replacements ?? 0
+  }
 
   const breakdownParts = Object.entries(breakdown)
+    .filter(([, count]) => count > 0)
+    .map(([key, count]) => `${key}=${count}`)
+  const replacementParts = Object.entries(replacements)
     .filter(([, count]) => count > 0)
     .map(([key, count]) => `${key}=${count}`)
 
@@ -91,10 +101,19 @@ function buildCollisionSummary(results: DedupResults): {
   addExamples('robot', results.robots.duplicates)
   addExamples('tool', results.tools.duplicates)
 
-  const messageSuffix =
-    breakdownParts.length === 0 && examples.length === 0
-      ? ''
-      : ` Breakdown: ${breakdownParts.join(', ')}${examples.length ? `. Examples: ${examples.join(' | ')}` : ''}`
+  const suffixSegments: string[] = []
+  if (breakdownParts.length > 0 || examples.length > 0) {
+    const breakdownMessage = breakdownParts.length
+      ? `Breakdown: ${breakdownParts.join(', ')}`
+      : undefined
+    const exampleMessage = examples.length ? `Examples: ${examples.join(' | ')}` : undefined
+    suffixSegments.push([breakdownMessage, exampleMessage].filter(Boolean).join('. '))
+  }
+  if (replacementParts.length > 0) {
+    suffixSegments.push(`Updated with latest upload: ${replacementParts.join(', ')}`)
+  }
+
+  const messageSuffix = suffixSegments.length === 0 ? '' : ` ${suffixSegments.join(' ')}`
 
   return {
     messageSuffix,
@@ -104,6 +123,11 @@ function buildCollisionSummary(results: DedupResults): {
       cells: breakdown.cells,
       robots: breakdown.robots,
       tools: breakdown.tools,
+      projectsReplaced: replacements.projects,
+      areasReplaced: replacements.areas,
+      cellsReplaced: replacements.cells,
+      robotsReplaced: replacements.robots,
+      toolsReplaced: replacements.tools,
       examples: examples.join(' | ') || 'n/a'
     }
   }
@@ -186,7 +210,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
       id: 'id-collisions',
       kind: 'PARSER_ERROR',
       fileName: '',
-      message: `Detected ${totalCollisions} ID collisions (same ID, different data). Keeping existing data to prevent overwrites.${collisionSummary.messageSuffix}`,
+      message: `Detected ${totalCollisions} ID collisions (same ID, different data). Replaced existing records with the latest upload so the dashboard reflects current data.${collisionSummary.messageSuffix}`,
       details: collisionSummary.details,
       createdAt: new Date().toISOString()
     })

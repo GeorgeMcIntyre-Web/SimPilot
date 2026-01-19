@@ -24,6 +24,7 @@ export interface DeduplicationResult<T> {
     deduplicated: number
     exactDuplicates: number
     idCollisions: number
+    replacements: number
   }
 }
 
@@ -45,50 +46,54 @@ export function deduplicateById<T extends { id: string }>(
   const duplicates: DuplicateDetection<T>[] = []
   const idMap = new Map<string, T>()
 
-  // Add existing entities to map
+  // Seed map with existing entities
   for (const entity of existing) {
     idMap.set(entity.id, entity)
   }
 
-  // Process incoming entities
-  const deduplicated: T[] = []
+  let addedCount = 0
+  let replacedCount = 0
 
+  // Process incoming entities
   for (const incomingEntity of incoming) {
     const existingEntity = idMap.get(incomingEntity.id)
 
     if (!existingEntity) {
-      // New entity, add it
-      deduplicated.push(incomingEntity)
+      // Brand new entity
       idMap.set(incomingEntity.id, incomingEntity)
-    } else {
-      // Duplicate detected
-      if (isDeepEqual(existingEntity, incomingEntity)) {
-        // Exact duplicate, skip
-        duplicates.push({
-          existing: existingEntity,
-          incoming: incomingEntity,
-          conflictType: 'exact'
-        })
-      } else {
-        // ID collision with different data
-        duplicates.push({
-          existing: existingEntity,
-          incoming: incomingEntity,
-          conflictType: 'id_collision'
-        })
-        // Keep existing by default (KEEP_FIRST strategy)
-      }
+      addedCount++
+      continue
     }
+
+    // Duplicate detected
+    if (isDeepEqual(existingEntity, incomingEntity)) {
+      duplicates.push({
+        existing: existingEntity,
+        incoming: incomingEntity,
+        conflictType: 'exact'
+      })
+      continue
+    }
+
+    // ID collision with different data -> prefer latest incoming value
+    duplicates.push({
+      existing: existingEntity,
+      incoming: incomingEntity,
+      conflictType: 'id_collision'
+    })
+    idMap.set(incomingEntity.id, incomingEntity)
+    replacedCount++
   }
 
   return {
-    deduplicated: [...existing, ...deduplicated],
+    deduplicated: Array.from(idMap.values()),
     duplicates,
     stats: {
       incoming: incoming.length,
-      deduplicated: deduplicated.length,
+      deduplicated: addedCount,
       exactDuplicates: duplicates.filter(d => d.conflictType === 'exact').length,
-      idCollisions: duplicates.filter(d => d.conflictType === 'id_collision').length
+      idCollisions: duplicates.filter(d => d.conflictType === 'id_collision').length,
+      replacements: replacedCount
     }
   }
 }
@@ -145,7 +150,8 @@ export function deduplicateProjects(
       incoming: incoming.length,
       deduplicated: deduplicated.length,
       exactDuplicates: duplicates.filter(d => d.conflictType === 'exact').length,
-      idCollisions: duplicates.filter(d => d.conflictType === 'id_collision').length
+      idCollisions: duplicates.filter(d => d.conflictType === 'id_collision').length,
+      replacements: 0
     }
   }
 }
@@ -241,6 +247,9 @@ export function logDeduplicationStats(results: {
       log.debug(`  ${name}:`)
       log.debug(`    - Incoming: ${result.stats.incoming}`)
       log.debug(`    - Added: ${result.stats.deduplicated}`)
+      if (result.stats.replacements > 0) {
+        log.debug(`    - Replaced with latest: ${result.stats.replacements}`)
+      }
       log.debug(`    - Exact duplicates skipped: ${result.stats.exactDuplicates}`)
       log.debug(`    - ID collisions detected: ${result.stats.idCollisions}`)
     }
