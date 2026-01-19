@@ -16,6 +16,7 @@ import { log } from '../../lib/log';
 import { useCrossRefData } from '../../hooks/useCrossRefData';
 import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils';
 import { RobotSnapshot } from '../../domain/crossRef/CrossRefTypes';
+import { FlagsList } from '../../ui/components/FlagBadge';
 
 export function CellDetailPage() {
     const { cellId } = useParams<{ cellId: string }>();
@@ -31,14 +32,18 @@ export function CellDetailPage() {
     const { cells: crossRefCells } = useCrossRefData();
 
     // Find matching CrossRef cell to get robots from simulation status
-    const crossRefRobots = useMemo(() => {
-        if (!cell?.code) return [];
+    const crossRefCell = useMemo(() => {
+        if (!cell?.code) return undefined;
 
         const normalizedCode = normalizeStationId(cell.code);
-        const matchingCell = crossRefCells.find(c => c.stationKey === normalizedCode);
-
-        return matchingCell?.robots || [];
+        return crossRefCells.find(c => c.stationKey === normalizedCode);
     }, [cell?.code, crossRefCells]);
+
+    const crossRefRobots = useMemo(() => {
+        return crossRefCell?.robots || [];
+    }, [crossRefCell]);
+
+    const crossRefFlags = crossRefCell?.flags || [];
 
     // Merge legacy robots with CrossRef robots (prefer CrossRef as it includes simulation status robots)
     const robots = useMemo(() => {
@@ -169,7 +174,7 @@ export function CellDetailPage() {
             {/* Header Card */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-b border-blue-200 dark:border-blue-800 px-4 py-3">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
                                 <p className="text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400">Station {cell.code || '-'}</p>
@@ -180,157 +185,109 @@ export function CellDetailPage() {
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2">
                                 <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">{cell.name}</h1>
                                 <StatusPill status={cell.status} />
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] text-gray-600 dark:text-gray-400 flex-wrap">
+                            <div className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400 flex-wrap mt-2">
+                                {cell.areaId && <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">Area {cell.areaId}</span>}
                                 {cell.lineCode && <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">Line {cell.lineCode}</span>}
                                 {cell.oemRef && <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">OEM: {cell.oemRef}</span>}
+                                {cell.simulation?.sourceFile && (
+                                    <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5 truncate">
+                                        Src: {cell.simulation.sourceFile}
+                                    </span>
+                                )}
                             </div>
                         </div>
+                        {cell.simulation?.studyPath && (
+                            <button
+                                onClick={handleOpenSimulation}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded text-white bg-indigo-600 hover:bg-indigo-700"
+                            >
+                                <MonitorPlay className="h-4 w-4" />
+                                Open Simulation
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                <div className="p-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                        <StatPill label="Engineer" value={cell.assignedEngineer || 'Unassigned'} />
-                        <StatPill label="Complete" value={cell.simulation ? `${cell.simulation.percentComplete}%` : 'No data'} />
-                        <StatPill label="Issues" value={cell.simulation ? (cell.simulation.hasIssues ? 'Flagged' : 'Clear') : 'Not linked'} tone={cell.simulation?.hasIssues ? 'warn' : cell.simulation ? 'ok' : 'muted'} />
-                        <StatPill label="Updated" value={cell.lastUpdated ? new Date(cell.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown'} />
+                <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <InfoPill
+                            label="Engineer"
+                            value={isEditingEngineer ? undefined : (cell.assignedEngineer || 'Unassigned')}
+                            onEdit={isEditingEngineer ? undefined : handleEditEngineer}
+                            editing={isEditingEngineer}
+                            editContent={
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        list="engineers-list"
+                                        value={selectedEngineer}
+                                        onChange={(e) => setSelectedEngineer(e.target.value)}
+                                        className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Enter engineer name..."
+                                    />
+                                    <datalist id="engineers-list">
+                                        {allEngineers.map(e => (
+                                            <option key={e.name} value={e.name} />
+                                        ))}
+                                    </datalist>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={handleSaveEngineer}
+                                            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[11px] font-semibold hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
+                                            title="Save"
+                                            data-testid="save-engineer-button"
+                                        >
+                                            <Check className="h-3 w-3" />
+                                            Save
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditingEngineer(false)}
+                                            className="px-2 py-1.5 bg-gray-100 text-gray-700 border border-gray-200 rounded text-[11px] hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+                                            title="Cancel"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        />
+                        <InfoPill
+                            label="Completion"
+                            value={cell.simulation ? `${cell.simulation.percentComplete}%` : 'No data'}
+                        />
+                        <InfoPill
+                            label="Issues"
+                            value={cell.simulation ? (cell.simulation.hasIssues ? 'Flagged' : 'Clear') : 'Not linked'}
+                            tone={cell.simulation?.hasIssues ? 'warn' : cell.simulation ? 'ok' : 'muted'}
+                        />
+                        <InfoPill
+                            label="Updated"
+                            value={cell.lastUpdated ? new Date(cell.lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown'}
+                        />
                     </div>
                     <CellChaosHint cell={cell} />
                 </div>
             </div>
 
-            {/* Engineer & Simulation Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* Engineer Card */}
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <User className="h-3.5 w-3.5 text-blue-500" />
-                                <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Engineer</h3>
-                            </div>
-                            {!isEditingEngineer && (
-                                <button
-                                    onClick={handleEditEngineer}
-                                    className="text-[10px] text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
-                                    title="Edit Engineer"
-                                    data-testid="edit-engineer-button"
-                                >
-                                    Edit
-                                </button>
-                            )}
+            {/* Issues + Assets Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden lg:col-span-2">
+                    <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Issues ({crossRefFlags.length})</h3>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                            Flags from cross-reference checks
                         </div>
                     </div>
-                    <div className="p-3">
-                        {isEditingEngineer ? (
-                            <div className="space-y-2">
-                                <input
-                                    type="text"
-                                    list="engineers-list"
-                                    value={selectedEngineer}
-                                    onChange={(e) => setSelectedEngineer(e.target.value)}
-                                    className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Enter engineer name..."
-                                />
-                                <datalist id="engineers-list">
-                                    {allEngineers.map(e => (
-                                        <option key={e.name} value={e.name} />
-                                    ))}
-                                </datalist>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={handleSaveEngineer}
-                                        className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[11px] font-semibold hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
-                                        title="Save"
-                                        data-testid="save-engineer-button"
-                                    >
-                                        <Check className="h-3 w-3" />
-                                        Save
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditingEngineer(false)}
-                                        className="px-2 py-1.5 bg-gray-100 text-gray-700 border border-gray-200 rounded text-[11px] hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
-                                        title="Cancel"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-sm text-gray-900 dark:text-white font-semibold">
-                                {cell.assignedEngineer || <span className="text-gray-400">Unassigned</span>}
-                            </div>
-                        )}
+                    <div className="p-3 max-h-72 overflow-y-auto custom-scrollbar space-y-2">
+                        <FlagsList flags={crossRefFlags} />
                     </div>
                 </div>
 
-                {/* Simulation Card */}
-                <div className="md:col-span-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <FileSpreadsheet className="h-3.5 w-3.5 text-blue-500" />
-                                <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Simulation</h3>
-                            </div>
-                            {cell.simulation?.studyPath && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${simStatus === 'online' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' :
-                                    simStatus === 'offline' ? 'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600' :
-                                        'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800'
-                                    }`}>
-                                    {simStatus === 'online' ? '● Online' :
-                                        simStatus === 'offline' ? '○ Offline' :
-                                            '◐ Linked'}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                    <div className="p-3 space-y-3">
-                        {cell.simulation ? (
-                            <>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded p-2">
-                                        <div className="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Progress</div>
-                                        <div className="text-sm font-bold text-gray-900 dark:text-white">{cell.simulation.percentComplete}%</div>
-                                    </div>
-                                    <div className={`rounded p-2 ${cell.simulation.hasIssues ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-emerald-50 dark:bg-emerald-950/30'}`}>
-                                        <div className="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Status</div>
-                                        <div className={`text-sm font-bold ${cell.simulation.hasIssues ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
-                                            {cell.simulation.hasIssues ? 'Flagged' : 'Clear'}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                    <div className="min-w-0 flex-1">
-                                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Source</div>
-                                        <div className="text-xs font-medium text-gray-900 dark:text-white truncate">{cell.simulation.sourceFile}</div>
-                                        <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                                            {cell.simulation.sheetName} • Row {cell.simulation.rowIndex}
-                                        </div>
-                                    </div>
-                                    {cell.simulation.studyPath && (
-                                        <button
-                                            onClick={handleOpenSimulation}
-                                            className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold rounded text-white bg-indigo-600 hover:bg-indigo-700"
-                                        >
-                                            <MonitorPlay className="h-3.5 w-3.5" />
-                                            Open
-                                        </button>
-                                    )}
-                                </div>
-                            </>
-                        ) : (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">No simulation data available.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Robots & Tools Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {/* Robots */}
                 {/* Robots */}
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
@@ -347,35 +304,38 @@ export function CellDetailPage() {
                         />
                     </div>
                 </div>
+            </div>
 
-                {/* Tools */}
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Tools ({tools.length})</h3>
-                            <div className="text-[10px] text-gray-500 dark:text-gray-400">Guns, grippers, others</div>
-                        </div>
+            {/* Tools */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Tools ({tools.length})</h3>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Guns, grippers, others</div>
                     </div>
-                    <div className="p-3">
-                        <DataTable
-                            data={tools}
-                            columns={toolColumns}
-                            emptyMessage="No tools assigned to this cell."
-                        />
-                    </div>
+                </div>
+                <div className="p-3">
+                    <DataTable
+                        data={tools}
+                        columns={toolColumns}
+                        emptyMessage="No tools assigned to this cell."
+                    />
                 </div>
             </div>
         </div>
     );
 }
 
-interface StatPillProps {
+interface InfoPillProps {
     label: string;
-    value: string;
+    value?: string;
     tone?: 'warn' | 'ok' | 'muted';
+    onEdit?: () => void;
+    editing?: boolean;
+    editContent?: React.ReactNode;
 }
 
-function StatPill({ label, value, tone }: StatPillProps) {
+function InfoPill({ label, value, tone, onEdit, editing, editContent }: InfoPillProps) {
     const toneClasses = tone === 'warn'
         ? 'border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300'
         : tone === 'ok'
@@ -383,9 +343,21 @@ function StatPill({ label, value, tone }: StatPillProps) {
             : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-gray-800 dark:text-gray-200';
 
     return (
-        <div className={`rounded border px-2 py-1.5 ${toneClasses}`}>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">{label}</div>
-            <div className="text-xs font-bold truncate">{value}</div>
+        <div className={`rounded border px-3 py-2 ${toneClasses}`}>
+            <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                <span>{label}</span>
+                {onEdit && !editing && (
+                    <button
+                        onClick={onEdit}
+                        className="text-[10px] text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
+                    >
+                        Edit
+                    </button>
+                )}
+            </div>
+            <div className="mt-1 text-sm font-bold text-gray-900 dark:text-white truncate">
+                {editing ? editContent : (value || '—')}
+            </div>
         </div>
     );
 }
