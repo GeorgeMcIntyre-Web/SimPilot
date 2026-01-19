@@ -8,6 +8,8 @@ import { describe, it, expect } from 'vitest'
 import * as XLSX from 'xlsx'
 import { ingestFiles } from '../ingestionCoordinator'
 import { MESSY_GUN_SHEET, MESSY_ROBOT_SHEET, MESSY_SIMULATION_SHEET } from './fixtures/realWorldMock'
+import { coreStore } from '../../domain/coreStore'
+import { clearCrossRefData } from '../../hooks/useCrossRefData'
 
 /**
  * Helper: Create a workbook from a 2D array
@@ -37,6 +39,47 @@ async function createFileFromWorkbook(
 }
 
 describe('ingestionCoordinator - Header Sniffing', () => {
+    describe('Preview mode', () => {
+        beforeEach(() => {
+            coreStore.clear()
+            clearCrossRefData()
+        })
+
+        it('does not mark preview uploads as duplicates so confirmation can apply changes', async () => {
+            // Seed store with initial data
+            const baseWorkbook = createWorkbookFromArray(MESSY_SIMULATION_SHEET, 'SIMULATION')
+            const baseFile = await createFileFromWorkbook(baseWorkbook, 'sim-initial.xlsx')
+            const initialResult = await ingestFiles({
+                simulationFiles: [baseFile],
+                equipmentFiles: []
+            })
+            expect(initialResult.cellsCount).toBeGreaterThan(0)
+
+            // Create an updated simulation file with an extra station
+            const updatedSheet = [
+                ...MESSY_SIMULATION_SHEET,
+                ['P1Mx', 'BN_B05', 'OP-50', 'R-005', 'Spot Welding', 'PASS', 'OK', 'New station']
+            ]
+            const updatedWorkbook = createWorkbookFromArray(updatedSheet, 'SIMULATION')
+            const updatedFile = await createFileFromWorkbook(updatedWorkbook, 'sim-updated.xlsx')
+
+            // Preview-only pass should not persist or mark the file as uploaded
+            const previewResult = await ingestFiles({
+                simulationFiles: [updatedFile],
+                equipmentFiles: [],
+                previewOnly: true
+            })
+            expect(previewResult.versionComparison).toBeDefined()
+
+            // Confirmation run should process the same file (not flagged as duplicate) and apply the new station
+            const confirmedResult = await ingestFiles({
+                simulationFiles: [updatedFile],
+                equipmentFiles: []
+            })
+            expect(confirmedResult.cellsCount).toBe(initialResult.cellsCount + 1)
+        })
+    })
+
     describe('File Classification: Ignore Filename, Use Headers', () => {
         it('should detect ToolList from headers even if file is named "Budget_V1.xlsx"', async () => {
             // Arrange: Create a file with gun data but misleading name

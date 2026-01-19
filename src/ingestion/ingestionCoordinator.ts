@@ -880,16 +880,20 @@ async function ingestFilesInternal(
   }
 
   // Track uploaded files with their created entity IDs
-  const allEntityIds = [
-    ...applyResult.projects.map(p => p.id),
-    ...applyResult.areas.map(a => a.id),
-    ...applyResult.cells.map(c => c.id),
-    ...applyResult.robots.map(r => r.id),
-    ...applyResult.tools.map(t => t.id)
-  ]
+  // NOTE: Skip tracking when running in preview-only mode so the confirmation
+  // pass can process the same files without being treated as duplicates.
+  if (!input.previewOnly) {
+    const allEntityIds = [
+      ...applyResult.projects.map(p => p.id),
+      ...applyResult.areas.map(a => a.id),
+      ...applyResult.cells.map(c => c.id),
+      ...applyResult.robots.map(r => r.id),
+      ...applyResult.tools.map(t => t.id)
+    ]
 
-  for (const file of fileHashToFile.values()) {
-    await trackUploadedFile(file, allEntityIds)
+    for (const file of fileHashToFile.values()) {
+      await trackUploadedFile(file, allEntityIds)
+    }
   }
 
   // NEW: Perform version comparison if store has existing data
