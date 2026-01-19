@@ -139,14 +139,23 @@ const groupByArea = (cells: CellSnapshot[]): Record<string, CellSnapshot[]> => {
 /**
  * Determine risk level from flags
  */
-const getRiskLevel = (flags: CrossRefFlag[]): CellRiskLevel => {
-  if (flags.length === 0) return 'OK'
+const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
+  const flags = cell.flags || []
 
   const hasError = flags.some(f => f.severity === 'ERROR')
   if (hasError) return 'CRITICAL'
 
+  if (cell.simulationStatus?.hasIssues) {
+    return 'AT_RISK'
+  }
+
   const hasWarning = flags.some(f => f.severity === 'WARNING')
   if (hasWarning) return 'AT_RISK'
+
+  const completion = cell.simulationStatus?.firstStageCompletion
+  if (typeof completion === 'number' && completion > 0 && completion < 50) {
+    return 'AT_RISK'
+  }
 
   return 'OK'
 }
@@ -161,7 +170,7 @@ const buildAreaSummary = (areaKey: string, cells: CellSnapshot[]): AreaSummary =
   let totalFlags = 0
 
   for (const cell of cells) {
-    const riskLevel = getRiskLevel(cell.flags)
+    const riskLevel = getRiskLevel(cell)
     totalFlags += cell.flags.length
 
     if (riskLevel === 'CRITICAL') {
@@ -308,7 +317,7 @@ export function useCrossRefCellsByRisk(riskLevel: CellRiskLevel): CellSnapshot[]
   const { cells } = useCrossRefData()
 
   return useMemo(() => {
-    return cells.filter(cell => getRiskLevel(cell.flags) === riskLevel)
+    return cells.filter(cell => getRiskLevel(cell) === riskLevel)
   }, [cells, riskLevel])
 }
 

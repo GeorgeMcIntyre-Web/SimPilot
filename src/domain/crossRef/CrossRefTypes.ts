@@ -27,6 +27,7 @@ export interface SimulationStatusSnapshot {
   application?: string
   firstStageCompletion?: number
   finalDeliverablesCompletion?: number
+  hasIssues?: boolean
   dcsConfigured?: boolean
   engineer?: string
   raw: ParsedSimulationRow | Cell | Record<string, unknown>

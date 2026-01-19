@@ -1,23 +1,34 @@
 // Dashboard Utility Functions
 // Pure functions for deriving dashboard metrics and status
 
-import { CellSnapshot, CrossRefFlag, CellRiskLevel } from '../../domain/crossRef/CrossRefTypes'
+import { CellSnapshot, CellRiskLevel } from '../../domain/crossRef/CrossRefTypes'
 
 // ============================================================================
 // RISK CALCULATION
 // ============================================================================
 
 /**
- * Determine risk level from flags
+ * Determine risk level combining flags + simulation signals
  */
-export const getRiskLevel = (flags: CrossRefFlag[]): CellRiskLevel => {
-  if (flags.length === 0) return 'OK'
+export const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
+  const flags = cell.flags || []
 
   const hasError = flags.some(f => f.severity === 'ERROR')
   if (hasError) return 'CRITICAL'
 
+  // Simulation signals push to At Risk even without flags
+  if (cell.simulationStatus?.hasIssues) {
+    return 'AT_RISK'
+  }
+
   const hasWarning = flags.some(f => f.severity === 'WARNING')
   if (hasWarning) return 'AT_RISK'
+
+  // Very low completion without other signals is still At Risk
+  const completion = getCompletionPercent(cell)
+  if (completion !== null && completion > 0 && completion < 50) {
+    return 'AT_RISK'
+  }
 
   return 'OK'
 }
@@ -85,7 +96,7 @@ export const countByRisk = (cells: CellSnapshot[]): AreaCounts => {
   let ok = 0
 
   for (const cell of cells) {
-    const risk = getRiskLevel(cell.flags)
+    const risk = getRiskLevel(cell)
 
     if (risk === 'CRITICAL') {
       critical++
@@ -203,8 +214,8 @@ export const sortCells = (
 
     if (sortKey === 'risk') {
       const riskOrder = { OK: 0, AT_RISK: 1, CRITICAL: 2 }
-      const riskA = riskOrder[getRiskLevel(a.flags)]
-      const riskB = riskOrder[getRiskLevel(b.flags)]
+      const riskA = riskOrder[getRiskLevel(a)]
+      const riskB = riskOrder[getRiskLevel(b)]
       comparison = riskA - riskB
     }
 
@@ -291,7 +302,7 @@ export const generateFocusItems = (cells: CellSnapshot[]): FocusItem[] => {
   }
 
   // Count critical stations
-  const criticalStations = cells.filter(c => getRiskLevel(c.flags) === 'CRITICAL')
+  const criticalStations = cells.filter(c => getRiskLevel(c) === 'CRITICAL')
   if (criticalStations.length > 0) {
     items.push({
       id: 'critical-stations',

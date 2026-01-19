@@ -28,6 +28,7 @@ function buildCrossRefFromCoreStore() {
         areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
         lineCode: cell.lineCode,
         application: undefined,
+        hasIssues: cell.simulation?.hasIssues,
         firstStageCompletion: cell.simulation?.percentComplete,
         finalDeliverablesCompletion: cell.simulation?.percentComplete,
         dcsConfigured: undefined,

@@ -153,7 +153,7 @@ function AssetCountBadge({ icon, label, count }: AssetCountBadgeProps) {
 export function StationDetailDrawer({ station, isOpen, onClose }: StationDetailDrawerProps) {
   if (!station) return null
 
-  const riskLevel = getRiskLevel(station.flags)
+  const riskLevel = getRiskLevel(station)
   const errorCount = station.flags.filter(f => f.severity === 'ERROR').length
   const warningCount = station.flags.filter(f => f.severity === 'WARNING').length
 

@@ -12,7 +12,7 @@ interface StationRowProps {
 }
 
 export function StationRow({ cell, onClick, density }: StationRowProps) {
-  const riskLevel = getRiskLevel(cell.flags);
+  const riskLevel = getRiskLevel(cell);
   const completion = getCompletionPercent(cell);
   const application = cell.simulationStatus?.application ?? '-';
   const robotCount = cell.robots?.length ?? 0;

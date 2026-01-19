@@ -37,6 +37,7 @@ const makeSimStatus = (
 ): SimulationStatusSnapshot => ({
   stationKey: partial.stationKey ?? '010',
   areaKey: partial.areaKey,
+  hasIssues: partial.hasIssues,
   firstStageCompletion: partial.firstStageCompletion,
   finalDeliverablesCompletion: partial.finalDeliverablesCompletion,
   application: partial.application,
@@ -64,12 +65,13 @@ const makeErrorFlag = (type: string, stationKey: string): CrossRefFlag => ({
 describe('dashboardUtils', () => {
   describe('getRiskLevel', () => {
     it('returns OK for cells with no flags', () => {
-      expect(getRiskLevel([])).toBe('OK')
+      const cell = makeCell({ flags: [] })
+      expect(getRiskLevel(cell)).toBe('OK')
     })
 
     it('returns AT_RISK for cells with only warnings', () => {
-      const flags = [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010')]
-      expect(getRiskLevel(flags)).toBe('AT_RISK')
+      const cell = makeCell({ flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010')] })
+      expect(getRiskLevel(cell)).toBe('AT_RISK')
     })
 
     it('returns CRITICAL for cells with any errors', () => {
@@ -77,7 +79,24 @@ describe('dashboardUtils', () => {
         makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010'),
         makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_010')
       ]
-      expect(getRiskLevel(flags)).toBe('CRITICAL')
+      const cell = makeCell({ flags })
+      expect(getRiskLevel(cell)).toBe('CRITICAL')
+    })
+
+    it('returns AT_RISK when simulation has issues even without flags', () => {
+      const cell = makeCell({
+        flags: [],
+        simulationStatus: makeSimStatus({ hasIssues: true, firstStageCompletion: 80 })
+      })
+      expect(getRiskLevel(cell)).toBe('AT_RISK')
+    })
+
+    it('returns AT_RISK for very low completion without other signals', () => {
+      const cell = makeCell({
+        flags: [],
+        simulationStatus: makeSimStatus({ firstStageCompletion: 20 })
+      })
+      expect(getRiskLevel(cell)).toBe('AT_RISK')
     })
   })
 
