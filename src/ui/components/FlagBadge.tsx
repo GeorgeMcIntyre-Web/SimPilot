@@ -4,6 +4,7 @@
 import { AlertTriangle, AlertCircle, Info } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { CrossRefFlag, CrossRefFlagType } from '../../domain/crossRef/CrossRefTypes'
+import { DataTable, Column } from './DataTable'
 
 // ============================================================================
 // FLAG TYPE LABELS
@@ -168,13 +169,49 @@ export function FlagsList({ flags, compact = false, className }: FlagsListProps)
   const warningFlags = flags.filter(f => f.severity === 'WARNING')
 
   return (
-    <div className={cn('space-y-2', className)}>
-      {errorFlags.map((flag, index) => (
-        <FlagBadge key={`error-${index}`} flag={flag} compact={compact} />
-      ))}
-      {warningFlags.map((flag, index) => (
-        <FlagBadge key={`warning-${index}`} flag={flag} compact={compact} />
-      ))}
+    <div className={cn(className)}>
+      <FlagsTable flags={[...errorFlags, ...warningFlags]} />
     </div>
+  )
+}
+
+interface FlagsTableRow {
+  type: string
+  severity: string
+  message: string
+  stationKey?: string
+}
+
+interface FlagsTableProps {
+  flags: CrossRefFlag[]
+}
+
+const severityChip = (severity: 'ERROR' | 'WARNING') => {
+  const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold'
+  if (severity === 'ERROR') return <span className={`${base} bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200`}>Error</span>
+  return <span className={`${base} bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200`}>Warning</span>
+}
+
+function FlagsTable({ flags }: FlagsTableProps) {
+  const rows: FlagsTableRow[] = flags.map(flag => ({
+    type: FLAG_TYPE_LABELS[flag.type] ?? flag.type,
+    severity: flag.severity,
+    message: flag.message,
+    stationKey: flag.stationKey
+  }))
+
+  const columns: Column<FlagsTableRow>[] = [
+    { header: 'Severity', accessor: (r) => severityChip(r.severity as 'ERROR' | 'WARNING') },
+    { header: 'Issue', accessor: (r) => r.type },
+    { header: 'Message', accessor: (r) => <span className="text-gray-600 dark:text-gray-300">{r.message}</span> },
+    { header: 'Station', accessor: (r) => r.stationKey || '-' }
+  ]
+
+  return (
+    <DataTable
+      data={rows}
+      columns={columns}
+      emptyMessage="No flags for this station."
+    />
   )
 }
