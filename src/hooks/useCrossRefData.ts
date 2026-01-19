@@ -64,14 +64,19 @@ const crossRefSubscribers = new Set<() => void>()
  * Set cross-reference data (called by ingestion pipeline)
  */
 export const setCrossRefData = (result: CrossRefResult): void => {
-  log.debug('[setCrossRefData] Setting CrossRef data:', {
+  const uniqueAreas = result.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
+  log.info('[setCrossRefData] Setting CrossRef data:', {
     cellsCount: result.cells.length,
     subscribersCount: crossRefSubscribers.size,
-    areas: result.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
+    uniqueAreas: uniqueAreas.length,
+    areaNames: uniqueAreas.slice(0, 10) // First 10 areas for debugging
   })
   crossRefStore = result
-  crossRefSubscribers.forEach(cb => cb())
-  log.debug('[setCrossRefData] Notified all subscribers')
+  crossRefSubscribers.forEach(cb => {
+    log.debug('[setCrossRefData] Notifying subscriber')
+    cb()
+  })
+  log.info(`[setCrossRefData] Notified ${crossRefSubscribers.size} subscribers`)
 }
 
 /**
@@ -222,19 +227,20 @@ export function useCrossRefData(): CrossRefDataResult {
   const [data, setData] = useState<CrossRefResult | null>(crossRefStore)
 
   useEffect(() => {
-    log.debug('[useCrossRefData] Hook mounted, initial data:', crossRefStore ? `${crossRefStore.cells.length} cells` : 'null')
+    log.info('[useCrossRefData] Hook mounted, initial data:', crossRefStore ? `${crossRefStore.cells.length} cells` : 'null')
 
     // Sync with current store state
     setData(crossRefStore)
 
     // Subscribe to future changes
     const unsubscribe = subscribeToCrossRef(() => {
-      log.debug('[useCrossRefData] Store updated, refreshing component')
-      setData(getCrossRefData())
+      const newData = getCrossRefData()
+      log.info('[useCrossRefData] Store updated, refreshing component with', newData ? `${newData.cells.length} cells` : 'null')
+      setData(newData)
     })
 
     return () => {
-      log.debug('[useCrossRefData] Hook unmounting')
+      log.info('[useCrossRefData] Hook unmounting')
       unsubscribe()
     }
   }, [])

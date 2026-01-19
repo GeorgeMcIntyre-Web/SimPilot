@@ -1002,6 +1002,10 @@ async function ingestFilesInternal(
 
   // Update core store (backward compat: store warnings as strings)
   const warningStrings = allWarnings.map(w => w.message)
+
+  // Log what we're about to store for debugging
+  log.info(`[Ingestion] Storing to coreStore: ${applyResult.projects.length} projects, ${applyResult.areas.length} areas, ${applyResult.cells.length} cells, ${applyResult.robots.length} robots, ${applyResult.tools.length} tools`)
+
   coreStore.setData({
     projects: applyResult.projects,
     areas: applyResult.areas,
