@@ -7,7 +7,6 @@ import { EmptyState } from '../../ui/components/EmptyState';
 import { FilterControls } from './stationsTable/FilterControls';
 import { SortableHeader } from './stationsTable/SortableHeader';
 import { StationRow } from './stationsTable/StationRow';
-import { Pagination } from './stationsTable/Pagination';
 import { useStationsFiltering } from './stationsTable/useStationsFiltering';
 
 interface StationsTableProps {
@@ -30,14 +29,10 @@ export function StationsTable({
     severityFilter,
     sortKey,
     sortDirection,
-    currentPage,
-    totalPages,
     setSearchTerm,
     setSeverityFilter,
     handleSort,
-    handlePageChange,
     filteredCells,
-    pagedCells,
   } = useStationsFiltering(cells, selectedArea);
 
   // Empty state
@@ -69,7 +64,7 @@ export function StationsTable({
             'overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
         )}
       >
-        <div className="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
+        <div className="overflow-x-auto max-h-[640px] overflow-y-auto custom-scrollbar">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
             <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
               <tr>
@@ -137,7 +132,7 @@ export function StationsTable({
                   </td>
                 </tr>
               ) : (
-                pagedCells.map((cell) => (
+                filteredCells.map((cell) => (
                   <StationRow
                     key={cell.stationKey}
                     cell={cell}
@@ -149,13 +144,6 @@ export function StationsTable({
             </tbody>
           </table>
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          displayedCount={pagedCells.length}
-          totalCount={filteredCells.length}
-          onPageChange={handlePageChange}
-        />
       </div>
     </div>
   );

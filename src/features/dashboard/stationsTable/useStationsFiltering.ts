@@ -10,14 +10,11 @@ import {
   SeverityFilter,
 } from '../dashboardUtils';
 
-const PAGE_SIZE = 10;
-
 export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string | null) {
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
   const [sortKey, setSortKey] = useState<SortKey>('risk');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [page, setPage] = useState(1);
 
   // Apply filters and sorting
   const filteredCells = useMemo(() => {
@@ -35,20 +32,8 @@ export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string
     // Apply sorting
     result = sortCells(result, sortKey, sortDirection);
 
-    setPage(1); // reset page when filters change
     return result;
   }, [cells, selectedArea, severityFilter, searchTerm, sortKey, sortDirection]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredCells.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pagedCells = filteredCells.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  const handlePageChange = (direction: 'prev' | 'next') => {
-    setPage((prev) => {
-      if (direction === 'prev') return Math.max(1, prev - 1);
-      return Math.min(totalPages, prev + 1);
-    });
-  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -66,8 +51,6 @@ export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string
     severityFilter,
     sortKey,
     sortDirection,
-    currentPage,
-    totalPages,
 
     // Setters
     setSearchTerm,
@@ -75,10 +58,8 @@ export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string
 
     // Handlers
     handleSort,
-    handlePageChange,
 
     // Filtered data
     filteredCells,
-    pagedCells,
   };
 }
