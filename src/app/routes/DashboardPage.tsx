@@ -39,24 +39,34 @@ export function DashboardPage() {
   const [areaFilter, setAreaFilter] = useState<AreaFilter>('all')
 
   // Data from CrossRef
-  const { cells, byArea, hasData: hasCrossRefData } = useCrossRefData()
+  const { cells, hasData: hasCrossRefData } = useCrossRefData()
 
   // Legacy cells for navigation mapping
   const legacyCells = useCells()
 
   // Fallback to check if simulation data exists (legacy)
   const hasLegacyData = useHasSimulationData()
-  const hasData = hasCrossRefData || hasLegacyData
+  const visibleCells = useMemo(
+    () => cells.filter(c => c.simulationStatus && c.areaKey),
+    [cells]
+  )
+  const hasData = (hasCrossRefData && visibleCells.length > 0) || hasLegacyData
 
   // Derived data
-  const focusItems = useMemo(() => generateFocusItems(cells), [cells])
+  const focusItems = useMemo(() => generateFocusItems(visibleCells), [visibleCells])
 
   const areaData = useMemo(() => {
-    return Object.entries(byArea).map(([areaKey, areaCells]) => ({
+    const grouped: Record<string, typeof visibleCells> = {}
+    for (const cell of visibleCells) {
+      const key = cell.areaKey || 'Unknown'
+      grouped[key] = grouped[key] ? [...grouped[key], cell] : [cell]
+    }
+
+    return Object.entries(grouped).map(([areaKey, areaCells]) => ({
       areaKey,
       counts: countByRisk(areaCells)
     }))
-  }, [byArea])
+  }, [visibleCells])
 
   const filteredAreas = useMemo(() => {
     const term = areaSearch.trim().toLowerCase()
@@ -245,14 +255,14 @@ export function DashboardPage() {
               {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
             </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {cells.length} {cells.length === 1 ? 'station' : 'stations'}
+              {visibleCells.length} {visibleCells.length === 1 ? 'station' : 'stations'}
             </p>
           </div>
         </div>
         <div className="px-4 pb-4">
           <StationsTable
             variant="plain"
-            cells={cells}
+            cells={visibleCells}
             selectedArea={selectedArea}
             onSelectStation={handleSelectStation}
             onClearAreaFilter={handleClearAreaFilter}
