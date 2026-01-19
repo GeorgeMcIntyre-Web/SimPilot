@@ -1,7 +1,6 @@
 import { cn } from '../../../ui/lib/utils';
 import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes';
-import { RiskBadge } from '../../../ui/components/BadgePill';
-import { getRiskLevel, getCompletionPercent } from '../dashboardUtils';
+import { getCompletionPercent } from '../dashboardUtils';
 
 type Density = 'comfortable' | 'compact';
 
@@ -12,12 +11,34 @@ interface StationRowProps {
 }
 
 export function StationRow({ cell, onClick, density }: StationRowProps) {
-  const riskLevel = getRiskLevel(cell);
   const completion = getCompletionPercent(cell);
   const application = cell.simulationStatus?.application ?? '-';
   const robotCount = cell.robots?.length ?? 0;
+  const issueCount = cell.flags?.length ?? 0;
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
+
+  const status = (() => {
+    if (completion === null) {
+      return { label: 'No data', className: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }
+    }
+    if (completion >= 95) {
+      return { label: 'Complete', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200' }
+    }
+    if (completion >= 80) {
+      return { label: 'Nearly Complete', className: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-200' }
+    }
+    if (completion >= 60) {
+      return { label: 'On Track', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200' }
+    }
+    if (completion >= 30) {
+      return { label: 'In Progress', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200' }
+    }
+    if (completion > 0) {
+      return { label: 'Starting', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200' }
+    }
+    return { label: 'Not Started', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' }
+  })()
 
   return (
     <tr
@@ -37,6 +58,18 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}>
         {robotCount}
+      </td>
+      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
+        <span
+          className={cn(
+            'inline-flex items-center justify-center rounded-full px-2.5 py-1 font-semibold min-w-[2.5rem]',
+            issueCount > 0
+              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200'
+              : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
+          )}
+        >
+          {issueCount}
+        </span>
       </td>
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {completion !== null ? (
@@ -66,7 +99,9 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         )}
       </td>
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
-        <RiskBadge riskLevel={riskLevel} />
+        <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 font-medium', status.className)}>
+          {status.label}
+        </span>
       </td>
     </tr>
   );
