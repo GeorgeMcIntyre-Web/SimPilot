@@ -2,6 +2,7 @@
 // Displays cross-reference flags with severity indicators
 
 import { AlertTriangle, AlertCircle, Info } from 'lucide-react'
+import { useState } from 'react'
 import { cn } from '../lib/utils'
 import { CrossRefFlag, CrossRefFlagType } from '../../domain/crossRef/CrossRefTypes'
 import { DataTable, Column } from './DataTable'
@@ -180,6 +181,7 @@ interface FlagsTableRow {
   severity: string
   message: string
   stationKey?: string
+  status: 'Yes' | 'No' | 'Pending'
 }
 
 interface FlagsTableProps {
@@ -193,18 +195,42 @@ const severityChip = (severity: 'ERROR' | 'WARNING') => {
 }
 
 function FlagsTable({ flags }: FlagsTableProps) {
-  const rows: FlagsTableRow[] = flags.map(flag => ({
+  const initialRows: FlagsTableRow[] = flags.map(flag => ({
     type: FLAG_TYPE_LABELS[flag.type] ?? flag.type,
     severity: flag.severity,
     message: flag.message,
-    stationKey: flag.stationKey
+    stationKey: flag.stationKey,
+    status: (flag as any).resolved === true
+      ? 'Yes'
+      : (flag as any).resolved === 'Pending'
+        ? 'Pending'
+        : 'No'
   }))
+
+  const [rows, setRows] = useState<FlagsTableRow[]>(initialRows)
 
   const columns: Column<FlagsTableRow>[] = [
     { header: 'Severity', accessor: (r) => severityChip(r.severity as 'ERROR' | 'WARNING') },
     { header: 'Issue', accessor: (r) => r.type },
     { header: 'Message', accessor: (r) => <span className="text-gray-600 dark:text-gray-300">{r.message}</span> },
-    { header: 'Station', accessor: (r) => r.stationKey || '-' }
+    { header: 'Station', accessor: (r) => r.stationKey || '-' },
+    {
+      header: 'Resolved',
+      accessor: (r, idx) => (
+        <select
+          value={r.status}
+          onChange={(e) => {
+            const next = e.target.value as FlagsTableRow['status']
+            setRows(prev => prev.map((row, i) => i === idx ? { ...row, status: next } : row))
+          }}
+          className="text-xs border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
+        >
+          <option value="Yes">Yes</option>
+          <option value="No">No</option>
+          <option value="Pending">Pending</option>
+        </select>
+      )
+    }
   ]
 
   return (
@@ -213,7 +239,7 @@ function FlagsTable({ flags }: FlagsTableProps) {
       columns={columns}
       emptyMessage="No flags for this station."
       density="compact"
-      maxHeight="11.5rem"
+      maxHeight="16rem"
     />
   )
 }

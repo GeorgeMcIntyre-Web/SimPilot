@@ -3,7 +3,7 @@ import { cn } from '../lib/utils';
 
 export interface Column<T> {
     header: ReactNode;
-    accessor: (item: T) => ReactNode;
+    accessor: (item: T, index?: number) => ReactNode;
     className?: string;
     sortValue?: (item: T) => string | number | null | undefined;
 }
@@ -136,7 +136,7 @@ export function DataTable<T>({
                                             col.className
                                         )}
                                     >
-                                        {col.accessor(item)}
+                                        {col.accessor(item, rowIdx)}
                                     </td>
                                 ))}
                             </tr>
