@@ -477,6 +477,11 @@ function updateLastSeenForEntities(
 /**
  * Convert ApplyResult to CrossRefInput format for dashboard consumption.
  *
+ * IMPORTANT: This function merges BOTH the newly ingested data (applyResult) AND
+ * existing data from coreStore to ensure complete linking across multiple file loads.
+ * This allows equipment loaded before simulation status to be properly linked when
+ * simulation status is loaded later (and vice versa).
+ *
  * @param applyResult - The result from applyIngestedData
  * @param simulationRobots - Optional robots extracted from simulation status (station+robot combinations)
  */
@@ -484,14 +489,55 @@ function buildCrossRefInputFromApplyResult(
   applyResult: import('./applyIngestedData').ApplyResult,
   simulationRobots?: import('./simulationStatusParser').SimulationRobot[]
 ): CrossRefInput {
-  // Build area ID to name mapping
+  // Get existing data from the store to merge with new data
+  const existingState = coreStore.getState()
+
+  // Merge areas: combine existing + new, deduplicate by ID
+  const allAreasMap = new Map<string, import('../domain/core').Area>()
+  existingState.areas.forEach(area => allAreasMap.set(area.id, area))
+  applyResult.areas.forEach(area => allAreasMap.set(area.id, area)) // New data overwrites
+  const allAreas = Array.from(allAreasMap.values())
+
+  // Merge cells: combine existing + new, deduplicate by ID
+  const allCellsMap = new Map<string, import('../domain/core').Cell>()
+  existingState.cells.forEach(cell => allCellsMap.set(cell.id, cell))
+  applyResult.cells.forEach(cell => allCellsMap.set(cell.id, cell)) // New data overwrites
+  const allCells = Array.from(allCellsMap.values())
+
+  // Merge robots: combine existing + new, deduplicate by ID
+  const existingRobots = existingState.assets.filter(a => a.kind === 'ROBOT') as unknown as import('../domain/core').Robot[]
+  const allRobotsMap = new Map<string, import('../domain/core').Robot>()
+  existingRobots.forEach(robot => allRobotsMap.set(robot.id, robot))
+  applyResult.robots.forEach(robot => allRobotsMap.set(robot.id, robot)) // New data overwrites
+  const allRobots = Array.from(allRobotsMap.values())
+
+  // Merge tools: combine existing + new, deduplicate by ID
+  const existingTools = existingState.assets.filter(a => a.kind !== 'ROBOT') as unknown as import('../domain/core').Tool[]
+  const allToolsMap = new Map<string, import('../domain/core').Tool>()
+  existingTools.forEach(tool => allToolsMap.set(tool.id, tool))
+  applyResult.tools.forEach(tool => allToolsMap.set(tool.id, tool)) // New data overwrites
+  const allTools = Array.from(allToolsMap.values())
+
+  log.debug('[CrossRef] Merging data for CrossRef input:', {
+    existingCells: existingState.cells.length,
+    newCells: applyResult.cells.length,
+    mergedCells: allCells.length,
+    existingRobots: existingRobots.length,
+    newRobots: applyResult.robots.length,
+    mergedRobots: allRobots.length,
+    existingTools: existingTools.length,
+    newTools: applyResult.tools.length,
+    mergedTools: allTools.length
+  })
+
+  // Build area ID to name mapping from merged areas
   const areaIdToName = new Map<string, string>()
-  applyResult.areas.forEach(area => {
+  allAreas.forEach(area => {
     areaIdToName.set(area.id, area.name)
   })
 
-  // Convert Cells to SimulationStatusSnapshot
-  const simulationStatusRows: SimulationStatusSnapshot[] = applyResult.cells.map(cell => ({
+  // Convert Cells to SimulationStatusSnapshot (using merged cells)
+  const simulationStatusRows: SimulationStatusSnapshot[] = allCells.map(cell => ({
     stationKey: normalizeStationId(cell.code) || cell.code,
     areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
     lineCode: cell.lineCode, // Use lineCode field
@@ -503,8 +549,8 @@ function buildCrossRefInputFromApplyResult(
     raw: cell
   }))
 
-  // Convert Tools to ToolSnapshot
-  const toolingRows: ToolSnapshot[] = applyResult.tools.map(tool => ({
+  // Convert Tools to ToolSnapshot (using merged tools)
+  const toolingRows: ToolSnapshot[] = allTools.map(tool => ({
     stationKey: normalizeStationId(tool.stationNumber || '') || tool.stationNumber || '',
     areaKey: tool.areaName,
     toolId: tool.id,
@@ -516,8 +562,8 @@ function buildCrossRefInputFromApplyResult(
     raw: tool
   }))
 
-  // Convert Robots from robot list files to RobotSnapshot
-  const robotSpecsRows: RobotSnapshot[] = applyResult.robots.map(robot => ({
+  // Convert Robots from robot list files to RobotSnapshot (using merged robots)
+  const robotSpecsRows: RobotSnapshot[] = allRobots.map(robot => ({
     stationKey: normalizeStationId(robot.stationNumber || '') || robot.stationNumber || '',
     robotKey: robot.id,
     caption: robot.name,

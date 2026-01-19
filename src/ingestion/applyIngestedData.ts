@@ -204,6 +204,72 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
   tools.length = 0
   tools.push(...deduplicationResults.tools.deduplicated)
 
+  // IMPORTANT: When new cells are loaded (e.g., from simulation status), we need to
+  // re-link ALL existing equipment to the new cells. The deduplication above only
+  // includes NEW entities, but existing equipment in the store may now have matching
+  // cells that didn't exist before.
+  const hasNewCells = data.simulation && data.simulation.cells.length > 0
+  const existingRobots = currentState.assets.filter(a => a.kind === 'ROBOT') as Robot[]
+  const existingTools = currentState.assets.filter(a => a.kind !== 'ROBOT') as Tool[]
+
+  if (hasNewCells && (existingRobots.length > 0 || existingTools.length > 0)) {
+    log.info(`[ApplyIngestedData] New cells detected - re-linking ${existingRobots.length} existing robots and ${existingTools.length} existing tools`)
+
+    // Include existing equipment that wasn't in the current ingestion (not already in robots/tools arrays)
+    const currentRobotIds = new Set(robots.map(r => r.id))
+    const currentToolIds = new Set(tools.map(t => t.id))
+
+    let addedRobots = 0
+    let addedTools = 0
+
+    for (const robot of existingRobots) {
+      if (!currentRobotIds.has(robot.id)) {
+        // Clone the robot so we can update its links without mutating the store
+        robots.push({ ...robot })
+        addedRobots++
+      }
+    }
+
+    for (const tool of existingTools) {
+      if (!currentToolIds.has(tool.id)) {
+        // Clone the tool so we can update its links without mutating the store
+        tools.push({ ...tool })
+        addedTools++
+      }
+    }
+
+    log.info(`[ApplyIngestedData] Added ${addedRobots} existing robots and ${addedTools} existing tools for re-linking`)
+    log.debug(`[ApplyIngestedData] After merging: ${robots.length} robots, ${tools.length} tools, ${cells.length} cells`)
+  }
+
+  // Also handle the reverse case: when equipment is loaded and cells already exist in the store
+  const hasNewEquipment = (data.robots && data.robots.robots.length > 0) || (data.tools && data.tools.tools.length > 0)
+  const existingCells = currentState.cells
+
+  if (hasNewEquipment && existingCells.length > 0 && cells.length === 0) {
+    log.info(`[ApplyIngestedData] New equipment detected with ${existingCells.length} existing cells - including cells for linking`)
+
+    // Include existing cells that weren't in the current ingestion
+    for (const cell of existingCells) {
+      cells.push({ ...cell })
+    }
+
+    // Also include existing areas and projects for proper linking
+    for (const area of currentState.areas) {
+      if (!areas.find(a => a.id === area.id)) {
+        areas.push({ ...area })
+      }
+    }
+
+    for (const project of currentState.projects) {
+      if (!projects.find(p => p.id === project.id)) {
+        projects.push({ ...project })
+      }
+    }
+
+    log.debug(`[ApplyIngestedData] After including existing data: ${cells.length} cells, ${areas.length} areas, ${projects.length} projects`)
+  }
+
   // Validate we have simulation data
   if (projects.length === 0) {
     warnings.push(createParserErrorWarning({
@@ -280,6 +346,11 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
   // Link tools to cells and areas
   linkToolsToCells(tools, cells, areas, projects, warnings)
+
+  // Log linking results for debugging
+  const linkedRobots = robots.filter(r => r.cellId)
+  const linkedTools = tools.filter(t => t.cellId)
+  log.info(`[ApplyIngestedData] Linking complete: ${linkedRobots.length}/${robots.length} robots linked, ${linkedTools.length}/${tools.length} tools linked`)
 
   // Update cell robot/tool counts
   updateCellEquipmentLinks(cells, robots, tools)

@@ -253,6 +253,16 @@ export function useSimulationSync(): void {
  */
 export function syncSimulationStore(): void {
   const state = coreStore.getState()
+
+  // Log the state being synced for debugging
+  const assetsWithCellId = state.assets.filter(a => a.cellId)
+  log.info(`[syncSimulationStore] Syncing: ${state.cells.length} cells, ${state.assets.length} assets (${assetsWithCellId.length} with cellId)`)
+
   const stationContexts = transformToStationContexts(state)
+
+  // Log sample station contexts for debugging
+  const stationsWithAssets = stationContexts.filter(s => s.assetCounts.total > 0)
+  log.info(`[syncSimulationStore] Generated ${stationContexts.length} station contexts (${stationsWithAssets.length} with assets)`)
+
   simulationStore.setStations(stationContexts)
 }
