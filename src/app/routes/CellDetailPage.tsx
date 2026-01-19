@@ -286,17 +286,18 @@ export function CellDetailPage() {
                         <FlagsList flags={crossRefFlags} />
                     </div>
                 </div>
+            </div>
 
-                {/* Robots */}
-                {/* Robots */}
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            {/* Tools and Robots side by side with matched heights */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col">
                     <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Robots ({robots.length})</h3>
                             <div className="text-[10px] text-gray-500 dark:text-gray-400">Station assets</div>
                         </div>
                     </div>
-                    <div className="p-3">
+                    <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
                         <DataTable
                             data={robots}
                             columns={robotColumns}
@@ -304,22 +305,21 @@ export function CellDetailPage() {
                         />
                     </div>
                 </div>
-            </div>
 
-            {/* Tools */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Tools ({tools.length})</h3>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Guns, grippers, others</div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col">
+                    <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xs font-semibold text-gray-900 dark:text-white">Tools ({tools.length})</h3>
+                            <div className="text-[10px] text-gray-500 dark:text-gray-400">Guns, grippers, others</div>
+                        </div>
                     </div>
-                </div>
-                <div className="p-3">
-                    <DataTable
-                        data={tools}
-                        columns={toolColumns}
-                        emptyMessage="No tools assigned to this cell."
-                    />
+                    <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
+                        <DataTable
+                            data={tools}
+                            columns={toolColumns}
+                            emptyMessage="No tools assigned to this cell."
+                        />
+                    </div>
                 </div>
             </div>
         </div>
