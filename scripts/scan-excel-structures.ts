@@ -68,8 +68,18 @@ interface DiscoveryOutput {
 // CONFIGURATION
 // ============================================================================
 
-const DATA_ROOT = process.env.SIMPILOT_DATA_PATH || 'C:\\Users\\georgem\\source\\repos\\SimPilot_Data'
-const OUTPUT_DIR = path.join(__dirname, '..', 'docs')
+const dataRootArg = process.argv[2]
+const resolvedDataRoot = dataRootArg || process.env.SIMPILOT_DATA_PATH
+
+if (!resolvedDataRoot) {
+  console.error('❌ Please provide a data root (arg: <path>) or set SIMPILOT_DATA_PATH env var.')
+  process.exit(1)
+}
+
+const DATA_ROOT = path.resolve(resolvedDataRoot)
+const OUTPUT_DIR = process.env.SIMPILOT_OUTPUT_DIR
+  ? path.resolve(process.env.SIMPILOT_OUTPUT_DIR)
+  : path.join(__dirname, '..', 'docs')
 const JSON_OUTPUT = path.join(OUTPUT_DIR, 'EXCEL_DISCOVERY_OUTPUT.json')
 const MD_OUTPUT = path.join(OUTPUT_DIR, 'EXCEL_DISCOVERY_OUTPUT.md')
 
