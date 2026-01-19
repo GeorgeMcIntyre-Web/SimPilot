@@ -212,6 +212,8 @@ function FlagsTable({ flags }: FlagsTableProps) {
       data={rows}
       columns={columns}
       emptyMessage="No flags for this station."
+      density="compact"
+      maxHeight="11.5rem"
     />
   )
 }

@@ -316,7 +316,7 @@ export function CellDetailPage() {
                         Flags from cross-reference checks
                     </div>
                 </div>
-                <div className="p-3 max-h-72 overflow-y-auto custom-scrollbar space-y-2">
+                <div className="p-3">
                     <FlagsList flags={crossRefFlags} />
                 </div>
             </div>
