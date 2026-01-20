@@ -101,6 +101,7 @@ export function createAssetsTableColumns(
         const status =
           extractMetadata<string>(asset, 'installStatus') ||
           extractMetadata<string>(asset, 'Install Status') ||
+          extractMetadata<string>(asset, 'Install status') ||
           extractMetadata<string>(asset, 'install status') ||
           (asset as any).installStatus ||
           null;

@@ -916,8 +916,12 @@ async function ingestFilesInternal(
           function: r.application,
           application: r.application,
           applicationCode: r.applicationCode,
-          robotType: (r as any).robotType || r.metadata?.robotType,
-          installStatus: (r as any).installStatus || r.metadata?.installStatus
+          robotType: (r as any).robotType || r.metadata?.robotType || r.metadata?.['Robot Type'],
+          installStatus:
+            (r as any).installStatus ||
+            r.metadata?.installStatus ||
+            r.metadata?.['Install status'] ||
+            r.metadata?.['Install Status']
         },
         areaId: r.areaId,
         areaName: r.areaName,
