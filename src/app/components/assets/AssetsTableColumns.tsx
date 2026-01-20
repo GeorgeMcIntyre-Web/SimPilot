@@ -57,11 +57,17 @@ export function createAssetsTableColumns(
     {
       header: 'Serial #',
       accessor: (asset) => {
-        const serial =
+        const rawSerial =
           extractMetadata<string>(asset, 'serialNumber') ||
+          extractMetadata<string>(asset, 'Serial #') ||
+          extractMetadata<string>(asset, 'Serial') ||
+          extractMetadata<string>(asset, 'serial') ||
           extractMetadata<string>(asset, 'eNumber') ||
+          (asset as any).serialNumber ||
+          (asset as any).serial ||
           null;
-        return serial || '—';
+        const serial = rawSerial && rawSerial.toString().trim().length > 0 ? rawSerial : null;
+        return serial && serial.toLowerCase() !== 'not delivered' ? serial : '-';
       },
     },
     {
