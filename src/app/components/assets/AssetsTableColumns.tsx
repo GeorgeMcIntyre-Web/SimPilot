@@ -69,8 +69,15 @@ export function createAssetsTableColumns(
       accessor: (asset) => {
         const fn =
           extractMetadata<string>(asset, 'function') ||
+          extractMetadata<string>(asset, 'Function') ||
           extractMetadata<string>(asset, 'application') ||
           extractMetadata<string>(asset, 'applicationCode') ||
+          extractMetadata<string>(asset, 'robotApplication') ||
+          extractMetadata<string>(asset, 'Robot Application') ||
+          // Fallback to direct fields if present on the asset
+          (asset as any).function ||
+          (asset as any).application ||
+          (asset as any).applicationCode ||
           null;
         return fn || '—';
       },
