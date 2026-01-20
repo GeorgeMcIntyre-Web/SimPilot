@@ -276,7 +276,12 @@ function buildVersionComparison(
       name: r.name,
       kind: 'ROBOT' as const,
       sourcing: r.sourcing,
-      metadata: r.metadata || {},
+      metadata: {
+        ...(r.metadata || {}),
+        function: r.application,
+        application: r.application,
+        applicationCode: r.applicationCode
+      },
       areaId: r.areaId,
       areaName: r.areaName,
       cellId: r.cellId,

@@ -910,7 +910,13 @@ async function ingestFilesInternal(
         name: r.name,
         kind: 'ROBOT' as const,
         sourcing: r.sourcing,
-        metadata: r.metadata || {},
+        metadata: {
+          ...(r.metadata || {}),
+          // Surface robot application/function for downstream tables
+          function: r.application,
+          application: r.application,
+          applicationCode: r.applicationCode
+        },
         areaId: r.areaId,
         areaName: r.areaName,
         cellId: r.cellId,

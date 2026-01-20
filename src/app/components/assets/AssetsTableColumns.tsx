@@ -51,26 +51,29 @@ export function createAssetsTableColumns(
       },
     },
     {
-      header: 'Program',
-      accessor: (asset) => {
-        const projectCode = extractMetadata<string>(asset, 'projectCode');
-        return projectCode ?? '—';
-      },
-    },
-    {
-      header: <SortHeader label="Area" keyName="area" onSort={onSort} />,
-      accessor: (asset) => asset.areaName ?? '—',
-    },
-    {
-      header: 'Line',
-      accessor: (asset) => {
-        const lineCode = extractMetadata<string>(asset, 'lineCode') ?? extractMetadata<string>(asset, 'assemblyLine');
-        return lineCode ?? '—';
-      },
-    },
-    {
       header: <SortHeader label="Station" keyName="station" onSort={onSort} />,
       accessor: (asset) => asset.stationNumber ?? '—',
+    },
+    {
+      header: 'Serial #',
+      accessor: (asset) => {
+        const serial =
+          extractMetadata<string>(asset, 'serialNumber') ||
+          extractMetadata<string>(asset, 'eNumber') ||
+          null;
+        return serial || '—';
+      },
+    },
+    {
+      header: 'Function',
+      accessor: (asset) => {
+        const fn =
+          extractMetadata<string>(asset, 'function') ||
+          extractMetadata<string>(asset, 'application') ||
+          extractMetadata<string>(asset, 'applicationCode') ||
+          null;
+        return fn || '—';
+      },
     },
     {
       header: <SortHeader label="Sourcing" keyName="sourcing" onSort={onSort} />,
