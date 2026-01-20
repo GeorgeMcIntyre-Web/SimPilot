@@ -124,42 +124,6 @@ export function createAssetsTableColumns(
         return serial && serial.toLowerCase() !== 'not delivered' ? serial : '-';
       },
     },
-    {
-      header: <SortHeader label="Sourcing" keyName="sourcing" onSort={onSort} />,
-      accessor: (asset) => {
-        const bottleneck = assetBottleneckMap.get(asset.id);
-        return (
-          <div className="flex flex-col gap-1">
-            <SourcingBadge sourcing={asset.sourcing} />
-            {bottleneck && (
-              <BottleneckBadge
-                stage={bottleneck.stage}
-                reason={bottleneck.reason}
-                severity={bottleneck.severity}
-              />
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: 'Reuse Status',
-      accessor: (asset) => {
-        if (asset.sourcing !== 'REUSE') {
-          return <span className="text-gray-400 text-xs">—</span>;
-        }
-        const reuseStatus = extractMetadata<ReuseAllocationStatus>(asset, 'reuseAllocationStatus');
-        if (reuseStatus === undefined) {
-          return <ReuseStatusBadge status="UNKNOWN" />;
-        }
-        return <ReuseStatusBadge status={reuseStatus} />;
-      },
-    },
-    {
-      header: <SortHeader label="Asset" keyName="name" onSort={onSort} />,
-      accessor: (asset) => (
-        <span className="font-medium text-gray-900 dark:text-white">{asset.name || '—'}</span>
-      ),
-    },
+    // Sourcing, Reuse Status, and Asset columns intentionally removed per request
   ];
 }
