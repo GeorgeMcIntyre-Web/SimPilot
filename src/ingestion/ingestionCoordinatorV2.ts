@@ -281,7 +281,8 @@ function buildVersionComparison(
         function: r.application,
         application: r.application,
         applicationCode: r.applicationCode,
-        robotType: (r as any).robotType || r.metadata?.robotType
+        robotType: (r as any).robotType || r.metadata?.robotType,
+        installStatus: (r as any).installStatus || r.metadata?.installStatus
       },
       areaId: r.areaId,
       areaName: r.areaName,
