@@ -265,51 +265,27 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation, f
           </section>
         )}
 
-        {(comment || applicationConcern) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {comment && (
-              <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-800/60">
-                <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide mb-1.5">
-                  Comment
-                </h3>
-                <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                  {comment}
-                </p>
-              </section>
-            )}
-            {applicationConcern && (
-              <section className="rounded-lg border border-amber-100 dark:border-amber-800/60 p-3 bg-amber-50/60 dark:bg-amber-900/20">
-                <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide mb-1.5">
-                  Robot Application Concern
-                </h3>
-                <p className="text-sm text-amber-900 dark:text-amber-100 leading-relaxed whitespace-pre-wrap">
-                  {applicationConcern}
-                </p>
-              </section>
-            )}
-          </div>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-800/60">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide mb-1.5">
+              Comment
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+              {comment || '—'}
+            </p>
+          </section>
+          <section className="rounded-lg border border-amber-100 dark:border-amber-800/60 p-3 bg-amber-50/60 dark:bg-amber-900/20">
+            <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide mb-1.5">
+              Robot Application Concern
+            </h3>
+            <p className="text-sm text-amber-900 dark:text-amber-100 leading-relaxed whitespace-pre-wrap">
+              {applicationConcern || '—'}
+            </p>
+          </section>
+        </div>
 
-          {(asset.id || detailedKind || stationId || robotNumber || gunId || asset.toolId) && (
-            <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-gray-50/60 dark:bg-gray-800/40">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Shield className="h-3.5 w-3.5 text-gray-400" />
-                <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                  Identifiers
-                </h3>
-              </div>
-              <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                <DetailItem label="Asset ID" value={asset.id} />
-                <DetailItem label="Detailed Kind" value={detailedKind} />
-                <DetailItem label="Station ID" value={stationId} />
-                <DetailItem label="Robot ID" value={asset.robotId ?? robotNumber} />
-                <DetailItem label="Tool ID" value={asset.toolId ?? gunId} />
-              </dl>
-            </section>
-          )}
-
-          {/* Reuse Information */}
-          {hasReuseInfo && (
+        {/* Reuse Information */}
+        {hasReuseInfo && (
             <section className="rounded-lg border border-emerald-100 dark:border-emerald-800/60 p-3 bg-emerald-50/50 dark:bg-emerald-900/20">
               <div className="flex items-center gap-1.5 mb-3">
                 <Recycle className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
