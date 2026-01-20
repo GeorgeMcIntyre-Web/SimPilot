@@ -133,5 +133,17 @@ export function createAssetsTableColumns(
         return '—';
       },
     },
+    {
+      header: 'Install Status',
+      accessor: (asset) => {
+        const status =
+          extractMetadata<string>(asset, 'installStatus') ||
+          extractMetadata<string>(asset, 'Install Status') ||
+          extractMetadata<string>(asset, 'install status') ||
+          (asset as any).installStatus ||
+          null;
+        return status && status.toString().trim().length > 0 ? status : '-';
+      },
+    },
   ];
 }
