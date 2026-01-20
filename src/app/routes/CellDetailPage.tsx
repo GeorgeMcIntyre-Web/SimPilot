@@ -15,7 +15,6 @@ import { useGlobalBusy } from '../../ui/GlobalBusyContext';
 import { log } from '../../lib/log';
 import { useCrossRefData } from '../../hooks/useCrossRefData';
 import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils';
-import { RobotSnapshot } from '../../domain/crossRef/CrossRefTypes';
 import { FlagsList } from '../../ui/components/FlagBadge';
 
 export function CellDetailPage() {
@@ -39,34 +38,12 @@ export function CellDetailPage() {
         return crossRefCells.find(c => c.stationKey === normalizedCode);
     }, [cell?.code, crossRefCells]);
 
-    const crossRefRobots = useMemo(() => {
-        return crossRefCell?.robots || [];
-    }, [crossRefCell]);
-
     const crossRefFlags = crossRefCell?.flags || [];
 
-    // Merge legacy robots with CrossRef robots (prefer CrossRef as it includes simulation status robots)
+    // Use robots from the equipment list only (not simulation status)
     const robots = useMemo(() => {
-        // If we have CrossRef robots, use those (they include simulation status robots)
-        if (crossRefRobots.length > 0) {
-            // Convert RobotSnapshot to a display-friendly format
-            return crossRefRobots.map((r: RobotSnapshot) => ({
-                id: r.robotKey,
-                name: r.caption || r.robotKey,
-                oemModel: r.oemModel,
-                stationCode: r.stationKey,
-                sourceFile: (r.raw as any)?.source === 'simulationStatus' ? 'Simulation Status' : (r.raw as any)?.sourceFile,
-                sheetName: (r.raw as any)?.sheetName,
-                rowIndex: (r.raw as any)?.sourceRowIndex,
-                // Additional fields for display
-                hasDressPackInfo: r.hasDressPackInfo,
-                eNumber: r.eNumber
-            }));
-        }
-
-        // Fall back to legacy robots
         return legacyRobots;
-    }, [crossRefRobots, legacyRobots]);
+    }, [legacyRobots]);
 
     const [isEditingEngineer, setIsEditingEngineer] = useState(false);
     const [selectedEngineer, setSelectedEngineer] = useState<string>('');
