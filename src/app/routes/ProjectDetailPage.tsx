@@ -74,7 +74,25 @@ export function ProjectDetailPage() {
         },
         {
             header: '% Complete',
-            accessor: (c) => c.simulation ? `${c.simulation.percentComplete}%` : '-',
+            accessor: (c) => {
+                const percent = c.simulation?.percentComplete;
+                if (percent === undefined || percent === null) {
+                    return <span className="text-gray-400">-</span>;
+                }
+                const bounded = Math.max(0, Math.min(percent, 100));
+                const barColor = bounded >= 90 ? 'bg-emerald-500' : bounded >= 50 ? 'bg-amber-500' : 'bg-rose-500';
+                return (
+                    <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden w-16 h-1.5">
+                            <div
+                                className={`h-full rounded-full transition-all ${barColor}`}
+                                style={{ width: `${bounded}%` }}
+                            />
+                        </div>
+                        <span className="text-gray-700 dark:text-gray-300 font-medium">{bounded}%</span>
+                    </div>
+                );
+            },
             sortValue: (c) => c.simulation?.percentComplete ?? -1
         },
         {
