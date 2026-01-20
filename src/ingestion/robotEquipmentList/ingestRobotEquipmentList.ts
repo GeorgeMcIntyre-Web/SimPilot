@@ -27,6 +27,7 @@ export interface RobotEquipmentListIngestionOptions {
   headerRowIndex?: number    // Default: 1 (0-based) - Row 1 has column group headers
   dataStartRow?: number      // Default: 4 (0-based, skip header + metadata rows)
   verbose?: boolean
+  debugLogPath?: string      // Optional path to write debug JSON of raw area/person responsible fields
 }
 
 export interface RobotEquipmentListIngestionResult {
@@ -110,12 +111,17 @@ export function ingestRobotEquipmentList(
     console.log(`Processing data...\n`)
   }
 
+  const debugRows: any[] = []
+
   // Normalize rows
   const normalizedRows = normalizeRobotEquipmentRows(
     rawData as RobotEquipmentRawRow[],
     rawArrayData,
     filePath,
-    headerRowIndex
+    headerRowIndex,
+    options.debugLogPath
+      ? (info) => debugRows.push(info)
+      : undefined
   )
 
   if (verbose) {
@@ -194,6 +200,17 @@ export function ingestRobotEquipmentList(
 
   if (verbose) {
     console.log(`═══════════════════════════════════════════════════════════════\n`)
+  }
+
+  if (options.debugLogPath) {
+    try {
+      fs.writeFileSync(options.debugLogPath, JSON.stringify(debugRows, null, 2), 'utf-8')
+      if (verbose) {
+        console.log(`Debug log written to ${options.debugLogPath}`)
+      }
+    } catch (err) {
+      console.error(`Failed to write debug log to ${options.debugLogPath}:`, err)
+    }
   }
 
   return {

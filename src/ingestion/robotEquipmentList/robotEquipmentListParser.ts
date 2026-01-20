@@ -183,12 +183,22 @@ function normalizeString(value: any): string | null {
  * @param rawRows - Array-based rows for accessing columns by index (for Column 0 area group)
  * @param _sourceFile - Source file path
  * @param headerRowIndex - Row index where headers are located
+ * @param debugRow - Optional callback for logging raw vs normalized fields
  */
 export function normalizeRobotEquipmentRows(
   rows: RobotEquipmentRawRow[],
   rawRows: any[][],
   _sourceFile: string,
-  headerRowIndex: number
+  headerRowIndex: number,
+  debugRow?: (info: {
+    sourceRow: number
+    robotId: string | null
+    station: string | null
+    areaGroup: string
+    areaAdjacent: string | null
+    areaUsed: string
+    personResponsible: string | null
+  }) => void
 ): NormalizedRobotEquipmentRow[] {
   const normalized: NormalizedRobotEquipmentRow[] = []
 
@@ -348,6 +358,18 @@ export function normalizeRobotEquipmentRows(
       // Metadata
       sourceRow
     })
+
+    if (debugRow) {
+      debugRow({
+        sourceRow,
+        robotId,
+        station: station || null,
+        areaGroup: currentAreaGroup,
+        areaAdjacent: areaFromAdjacentCell || null,
+        areaUsed: areaFullName || '',
+        personResponsible: personResponsible || null
+      })
+    }
   }
 
   return normalized
