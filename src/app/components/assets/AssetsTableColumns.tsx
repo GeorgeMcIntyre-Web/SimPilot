@@ -39,15 +39,9 @@ export function createAssetsTableColumns(
   return [
     {
       header: <SortHeader label="Asset" keyName="name" onSort={onSort} />,
-      accessor: (asset) => {
-        const detailedKind = extractMetadata<DetailedAssetKind>(asset, 'detailedKind');
-        return (
-          <div className="flex items-center gap-2">
-            <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} showIcon={false} />
-            <span className="font-medium text-gray-900 dark:text-white">{asset.name || '—'}</span>
-          </div>
-        );
-      },
+      accessor: (asset) => (
+        <span className="font-medium text-gray-900 dark:text-white">{asset.name || '—'}</span>
+      ),
     },
     {
       header: <SortHeader label="Kind" keyName="kind" onSort={onSort} />,
