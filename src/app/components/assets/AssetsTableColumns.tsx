@@ -54,10 +54,10 @@ export function createAssetsTableColumns(
           (asset as any).robotNumber;
         const gunId = extractMetadata<string>(asset, 'gunId');
         if (robotNumber !== undefined) {
-          return <span className="font-mono text-sm">{robotNumber}</span>;
+          return <span className="text-gray-900 dark:text-white">{robotNumber}</span>;
         }
         if (gunId !== undefined) {
-          return <span className="font-mono text-sm text-gray-500">{gunId}</span>;
+          return <span className="text-gray-500 dark:text-gray-400">{gunId}</span>;
         }
         return '—';
       },
