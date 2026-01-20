@@ -42,7 +42,14 @@ export function CellDetailPage() {
 
     // Use robots from the equipment list only (not simulation status)
     const robots = useMemo(() => {
-        return legacyRobots;
+        return legacyRobots.map(r => ({
+            ...r,
+            name:
+                r.metadata?.['Robo No. New'] ||
+                r.metadata?.['ROBO NO. NEW'] ||
+                r.metadata?.robotNumber ||
+                r.name
+        }));
     }, [legacyRobots]);
 
     const [isEditingEngineer, setIsEditingEngineer] = useState(false);
