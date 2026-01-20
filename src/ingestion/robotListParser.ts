@@ -197,6 +197,12 @@ export async function parseRobotList(
     const eNumber = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
       || getCellString(row, columnMap, 'ROBOTNUMBER')
 
+    // Robot type
+    const robotType =
+      getCellString(row, columnMap, 'ROBOT TYPE') ||
+      getCellString(row, columnMap, 'ROBOT TYPE CONFIRMED') ||
+      undefined
+
     // Extract optional fields
     const oemModel = getCellString(row, columnMap, 'OEM MODEL')
       || getCellString(row, columnMap, 'MODEL')
@@ -260,7 +266,8 @@ export async function parseRobotList(
       metadata: {
         ...metadata,
         // Store lineCode in metadata for UnifiedAsset access
-        ...(lineCode ? { lineCode } : {})
+        ...(lineCode ? { lineCode } : {}),
+        ...(robotType ? { robotType } : {})
       },
       sourceFile: fileName,
       sheetName,

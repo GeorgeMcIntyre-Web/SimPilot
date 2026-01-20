@@ -38,12 +38,6 @@ export function createAssetsTableColumns(
 ): Column<AssetWithMetadata>[] {
   return [
     {
-      header: <SortHeader label="Asset" keyName="name" onSort={onSort} />,
-      accessor: (asset) => (
-        <span className="font-medium text-gray-900 dark:text-white">{asset.name || '—'}</span>
-      ),
-    },
-    {
       header: <SortHeader label="Kind" keyName="kind" onSort={onSort} />,
       accessor: (asset) => {
         const detailedKind = extractMetadata<DetailedAssetKind>(asset, 'detailedKind');
@@ -51,23 +45,36 @@ export function createAssetsTableColumns(
       },
     },
     {
+      header: 'Robot #',
+      accessor: (asset) => {
+        const robotNumber =
+          extractMetadata<string>(asset, 'robotNumber') ||
+          extractMetadata<string>(asset, 'Robo No. New') ||
+          extractMetadata<string>(asset, 'ROBO NO. NEW') ||
+          (asset as any).robotNumber;
+        const gunId = extractMetadata<string>(asset, 'gunId');
+        if (robotNumber !== undefined) {
+          return <span className="font-mono text-sm">{robotNumber}</span>;
+        }
+        if (gunId !== undefined) {
+          return <span className="font-mono text-sm text-gray-500">{gunId}</span>;
+        }
+        return '—';
+      },
+    },
+    {
       header: <SortHeader label="Station" keyName="station" onSort={onSort} />,
       accessor: (asset) => asset.stationNumber ?? '—',
     },
     {
-      header: 'Serial #',
+      header: 'Robot Type',
       accessor: (asset) => {
-        const rawSerial =
-          extractMetadata<string>(asset, 'serialNumber') ||
-          extractMetadata<string>(asset, 'Serial #') ||
-          extractMetadata<string>(asset, 'Serial') ||
-          extractMetadata<string>(asset, 'serial') ||
-          extractMetadata<string>(asset, 'eNumber') ||
-          (asset as any).serialNumber ||
-          (asset as any).serial ||
+        const type =
+          extractMetadata<string>(asset, 'robotType') ||
+          extractMetadata<string>(asset, 'Robot Type') ||
+          (asset as any).robotType ||
           null;
-        const serial = rawSerial && rawSerial.toString().trim().length > 0 ? rawSerial : null;
-        return serial && serial.toLowerCase() !== 'not delivered' ? serial : '-';
+        return type || '—';
       },
     },
     {
@@ -86,6 +93,34 @@ export function createAssetsTableColumns(
           (asset as any).applicationCode ||
           null;
         return fn || '—';
+      },
+    },
+    {
+      header: 'Install Status',
+      accessor: (asset) => {
+        const status =
+          extractMetadata<string>(asset, 'installStatus') ||
+          extractMetadata<string>(asset, 'Install Status') ||
+          extractMetadata<string>(asset, 'install status') ||
+          (asset as any).installStatus ||
+          null;
+        return status && status.toString().trim().length > 0 ? status : '-';
+      },
+    },
+    {
+      header: 'Serial #',
+      accessor: (asset) => {
+        const rawSerial =
+          extractMetadata<string>(asset, 'serialNumber') ||
+          extractMetadata<string>(asset, 'Serial #') ||
+          extractMetadata<string>(asset, 'Serial') ||
+          extractMetadata<string>(asset, 'serial') ||
+          extractMetadata<string>(asset, 'eNumber') ||
+          (asset as any).serialNumber ||
+          (asset as any).serial ||
+          null;
+        const serial = rawSerial && rawSerial.toString().trim().length > 0 ? rawSerial : null;
+        return serial && serial.toLowerCase() !== 'not delivered' ? serial : '-';
       },
     },
     {
@@ -120,30 +155,10 @@ export function createAssetsTableColumns(
       },
     },
     {
-      header: 'Robot #',
-      accessor: (asset) => {
-        const robotNumber = extractMetadata<string>(asset, 'robotNumber');
-        const gunId = extractMetadata<string>(asset, 'gunId');
-        if (robotNumber !== undefined) {
-          return <span className="font-mono text-sm">{robotNumber}</span>;
-        }
-        if (gunId !== undefined) {
-          return <span className="font-mono text-sm text-gray-500">{gunId}</span>;
-        }
-        return '—';
-      },
-    },
-    {
-      header: 'Install Status',
-      accessor: (asset) => {
-        const status =
-          extractMetadata<string>(asset, 'installStatus') ||
-          extractMetadata<string>(asset, 'Install Status') ||
-          extractMetadata<string>(asset, 'install status') ||
-          (asset as any).installStatus ||
-          null;
-        return status && status.toString().trim().length > 0 ? status : '-';
-      },
+      header: <SortHeader label="Asset" keyName="name" onSort={onSort} />,
+      accessor: (asset) => (
+        <span className="font-medium text-gray-900 dark:text-white">{asset.name || '—'}</span>
+      ),
     },
   ];
 }

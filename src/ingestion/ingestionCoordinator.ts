@@ -915,7 +915,8 @@ async function ingestFilesInternal(
           // Surface robot application/function for downstream tables
           function: r.application,
           application: r.application,
-          applicationCode: r.applicationCode
+          applicationCode: r.applicationCode,
+          robotType: (r as any).robotType || r.metadata?.robotType
         },
         areaId: r.areaId,
         areaName: r.areaName,
