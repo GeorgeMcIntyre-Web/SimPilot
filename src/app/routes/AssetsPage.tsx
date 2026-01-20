@@ -29,11 +29,12 @@ import {
 import { AssetDetailPanel } from '../../features/assets/AssetDetailPanel';
 import type { ReuseAllocationStatus } from '../../ingestion/excelIngestionTypes';
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
-import { Filter } from 'lucide-react';
+import { Filter, ExternalLink } from 'lucide-react';
 import { AssetsFilterBar, AssetsSummaryStrip } from '../../features/assets/AssetsFilters';
 import { useAssetBottlenecks } from '../hooks/assets/useAssetBottlenecks';
 import { useAssetsSorting } from '../hooks/assets/useAssetsSorting';
 import { createAssetsTableColumns } from '../components/assets/AssetsTableColumns';
+import { Link } from 'react-router-dom';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -78,7 +79,9 @@ export function AssetsPage() {
 
   const [onlyBottleneckAssets, setOnlyBottleneckAssets] = useState(false);
   const [linkedContextLabel, setLinkedContextLabel] = useState<string | null>(null);
+  const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
   const appliedLinkKeyRef = useRef<string | null>(null);
+  const appliedAssetIdRef = useRef<string | null>(null);
 
   // Bottleneck integration
   const { assetBottleneckMap } = useAssetBottlenecks(allAssets);
@@ -215,8 +218,32 @@ export function AssetsPage() {
     setAreaFilter,
   ]);
 
+  // Handle assetId deep-link - auto-select and open asset detail panel
+  useEffect(() => {
+    const assetIdParam = searchParams.get('assetId');
+    if (!assetIdParam) {
+      return;
+    }
+    if (appliedAssetIdRef.current === assetIdParam) {
+      return;
+    }
+
+    // Find the asset by ID
+    const targetAsset = allAssets.find(a => a.id === assetIdParam);
+    if (!targetAsset) {
+      return;
+    }
+
+    // Auto-select the asset to open detail panel
+    setSelectedAsset(targetAsset);
+    setLinkedAssetId(assetIdParam);
+    setLinkedContextLabel(`Asset: ${targetAsset.name}`);
+    appliedAssetIdRef.current = assetIdParam;
+  }, [searchParams, allAssets]);
+
   const handleClearLinkedContext = () => {
     setLinkedContextLabel(null);
+    setLinkedAssetId(null);
     setSearchParams(new URLSearchParams());
     handleClearAllFilters();
   };

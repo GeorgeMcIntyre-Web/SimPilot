@@ -121,9 +121,17 @@ export function CellDetailPage() {
     };
 
     // Use a flexible type for robot columns since we merge CrossRef and legacy robots
-    type RobotDisplay = { name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number };
+    type RobotDisplay = { id?: string; name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number };
     const robotColumns: Column<RobotDisplay>[] = [
-        { header: 'Name', accessor: (r) => r.name },
+        { header: 'Name', accessor: (r) => r.id ? (
+            <Link
+                to={`/assets?assetId=${encodeURIComponent(r.id)}`}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {r.name}
+            </Link>
+        ) : r.name },
         { header: 'Model', accessor: (r) => r.oemModel || '-' },
         { header: 'Station', accessor: (r) => r.stationCode || '-' },
         { header: 'Source', accessor: (r) => r.sourceFile ? <span className="text-xs text-gray-500" title={`${r.sourceFile}${r.sheetName ? ` (Sheet: ${r.sheetName}` : ''}${r.rowIndex ? `, Row: ${r.rowIndex})` : ')'}`}>{r.sourceFile}</span> : '-' },
