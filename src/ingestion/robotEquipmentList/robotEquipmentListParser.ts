@@ -27,6 +27,8 @@ import {
 // The Excel file has a multi-row header structure where Row 1 has main headers and Row 2 has sub-headers
 const COLUMN_INDEX = {
   AREA_GROUP: 0,              // Area group name (e.g., "DASH", "FRONT STRUCTURE") - forward-fill needed
+  PERSON_RESPONSIBLE: 1,      // Row 2: "Person Responsible" (header mislabeled as Area)
+  AREA_NAME: 2,               // Row 2: Actual Area value stored adjacent to Person Responsible
   ROBOT_TYPE_CONFIRMED: 17,   // Row 2: "Robot Type Confirmed"
   ROBOT_ORDER_SUBMITTED: 18,  // Row 2: "Robot Order Submitted"
   CABLE_CHANGE_CUTOFF: 19,    // Row 2: "Cable Change Cutoff"
@@ -213,6 +215,8 @@ export function normalizeRobotEquipmentRows(
     // Parse identity
     // Note: The "Area" header column actually contains Person Responsible data
     const personResponsible = normalizeString(row[COLUMN_MAP.PERSON_RESPONSIBLE]) || ''
+    const areaFromAdjacentCell = normalizeString(rawRow[COLUMN_INDEX.AREA_NAME])
+    const areaFullName = areaFromAdjacentCell || currentAreaGroup
     const station = normalizeString(row[COLUMN_MAP.STATION]) || ''
 
     // Parse serial number (can be "Not Delivered")
@@ -220,7 +224,7 @@ export function normalizeRobotEquipmentRows(
 
     normalized.push({
       // Identity
-      area: currentAreaGroup,  // Use forward-filled area group from Column 0
+      area: areaFullName,      // Use adjacent cell (actual area); fallback to area group
       personResponsible,       // Person responsible from "Area" column
       station,
       bundle: normalizeString(row[COLUMN_MAP.BUNDLE]) || '',
