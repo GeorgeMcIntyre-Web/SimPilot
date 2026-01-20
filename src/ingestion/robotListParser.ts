@@ -99,9 +99,38 @@ export async function parseRobotList(
     throw new Error(`Could not find header row in any sheet of ${fileName}. Tried combinations: ${POSSIBLE_HEADERS.map(h => h.join(', ')).join(' | ')}`)
   }
 
-  // Build column map
+  // Build column map from primary header row
   const headerRow = rows[headerRowIndex]
-  const columnMap = buildColumnMap(headerRow, [
+
+  // For Ford Robot Equipment List files with two-tier headers,
+  // check if the next row looks like a secondary header row (has text but no station data)
+  // and merge headers from it to capture fields like "Install status"
+  const potentialSecondaryRow = rows[headerRowIndex + 1] || []
+  const hasSecondaryHeaders = potentialSecondaryRow.length > 0 &&
+    potentialSecondaryRow.some((cell, idx) => {
+      // Check if there are header-like values in columns that are empty in the primary row
+      const primaryEmpty = !headerRow[idx] || !String(headerRow[idx]).trim()
+      const hasValue = cell && String(cell).trim()
+      return primaryEmpty && hasValue
+    })
+
+  const secondaryHeaderRow = hasSecondaryHeaders ? potentialSecondaryRow : []
+
+  // Merge headers - ensure we capture all columns from both rows
+  const maxLength = Math.max(headerRow.length, secondaryHeaderRow.length)
+  const mergedHeaderRow: CellValue[] = []
+  for (let idx = 0; idx < maxLength; idx++) {
+    const primaryVal = headerRow[idx]
+    const secondaryVal = secondaryHeaderRow[idx]
+    // Use primary header if present, otherwise fall back to secondary
+    if (primaryVal && String(primaryVal).trim()) {
+      mergedHeaderRow[idx] = primaryVal
+    } else {
+      mergedHeaderRow[idx] = secondaryVal
+    }
+  }
+
+  const columnMap = buildColumnMap(mergedHeaderRow, [
     'ROBOT',
     'ROBOT ID',
     'ROBOT NAME',
@@ -126,13 +155,17 @@ export async function parseRobotList(
     'ROBOT CAPTION',
     'ROBOTS TOTAL',
     'ROBOT TYPE',
-    'ROBOT TYPE CONFIRMED'
+    'ROBOT TYPE CONFIRMED',
     // Ford equipment list variants
-    , 'ROBO NO. NEW',
-    'ROBO NO. OLD'
+    'ROBO NO. NEW',
+    'ROBO NO. OLD',
+    // Install status for Ford Robot Equipment List
+    'INSTALL STATUS'
   ])
 
   // Parse data rows
+  // Start from the row after the primary header
+  // Rows without valid station codes will be skipped automatically
   const dataStartIndex = headerRowIndex + 1
   const robots: Robot[] = []
 
@@ -233,11 +266,12 @@ export async function parseRobotList(
     })
 
     // Iterate over the row to find unconsumed data
+    // Use mergedHeaderRow to capture headers from both primary and secondary header rows
     row.forEach((cell, index) => {
-      if (index >= headerRow.length) return // Skip if no header
+      if (index >= mergedHeaderRow.length) return // Skip if no header
       if (consumedIndices.has(index)) return // Skip consumed columns
 
-      const header = String(headerRow[index] || '').trim()
+      const header = String(mergedHeaderRow[index] || '').trim()
       if (!header) return // Skip empty headers
 
       // Add to metadata
