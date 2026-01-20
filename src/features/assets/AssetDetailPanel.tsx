@@ -115,6 +115,15 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation, f
   const payloadClass = asset.payloadClass ?? extractMetadata<string>(asset, 'payloadClass');
   const standNumber = asset.standNumber ?? extractMetadata<string>(asset, 'standNumber');
   const isActive = asset.isActive ?? true;
+  const comment =
+    extractMetadata<string>(asset, 'comment') ||
+    extractMetadata<string>(asset, 'Comment') ||
+    extractMetadata<string>(asset, 'esowComment') ||
+    extractMetadata<string>(asset, 'ESOW Comment');
+  const applicationConcern =
+    extractMetadata<string>(asset, 'applicationConcern') ||
+    extractMetadata<string>(asset, 'Application Concern') ||
+    extractMetadata<string>(asset, 'Robot application concern');
 
   // Reuse location info
   const oldProject = extractMetadata<string>(asset, 'oldProject');
@@ -246,15 +255,40 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation, f
             </section>
           </div>
 
-          {/* Description */}
-          {description && (
-            <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-800/60">
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide mb-1.5">
-                Description
-              </h3>
-              <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{description}</p>
-            </section>
-          )}
+        {/* Description */}
+        {description && (
+          <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-800/60">
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide mb-1.5">
+              Description
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{description}</p>
+          </section>
+        )}
+
+        {(comment || applicationConcern) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {comment && (
+              <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-white dark:bg-gray-800/60">
+                <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide mb-1.5">
+                  Comment
+                </h3>
+                <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                  {comment}
+                </p>
+              </section>
+            )}
+            {applicationConcern && (
+              <section className="rounded-lg border border-amber-100 dark:border-amber-800/60 p-3 bg-amber-50/60 dark:bg-amber-900/20">
+                <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide mb-1.5">
+                  Robot Application Concern
+                </h3>
+                <p className="text-sm text-amber-900 dark:text-amber-100 leading-relaxed whitespace-pre-wrap">
+                  {applicationConcern}
+                </p>
+              </section>
+            )}
+          </div>
+        )}
 
           {(asset.id || detailedKind || stationId || robotNumber || gunId || asset.toolId) && (
             <section className="rounded-lg border border-gray-100 dark:border-gray-800 p-3 bg-gray-50/60 dark:bg-gray-800/40">

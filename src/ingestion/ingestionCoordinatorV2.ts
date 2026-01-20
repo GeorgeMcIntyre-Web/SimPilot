@@ -286,7 +286,16 @@ function buildVersionComparison(
           (r as any).installStatus ||
           r.metadata?.installStatus ||
           r.metadata?.['Install status'] ||
-          r.metadata?.['Install Status']
+          r.metadata?.['Install Status'],
+        applicationConcern:
+          (r as any).applicationConcern ||
+          r.metadata?.applicationConcern ||
+          r.metadata?.['Robot application concern'],
+        comment:
+          (r as any).comment ||
+          r.metadata?.comment ||
+          r.metadata?.esowComment ||
+          r.metadata?.['ESOW Comment']
       },
       areaId: r.areaId,
       areaName: r.areaName,
