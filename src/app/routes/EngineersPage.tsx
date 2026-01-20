@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { useAllEngineerMetrics, useCells, useProjects } from '../../ui/hooks/useDomainData';
 import { Search, ArrowUpDown, Copy, Check, AlertTriangle, ShieldCheck, Users, Gauge } from 'lucide-react';
 import { Cell, SchedulePhase } from '../../domain/core';
-import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '../../ui/components/EmptyState';
 import { log } from '../../lib/log';
 
@@ -27,6 +26,7 @@ export function EngineersPage() {
     const [completionBand, setCompletionBand] = useState<'all' | 'low' | 'mid' | 'high' | 'no-data'>('all');
     const [loadFilter, setLoadFilter] = useState<'all' | 'light' | 'medium' | 'heavy'>('all');
     const [phaseFilter, setPhaseFilter] = useState<SchedulePhase | 'all'>('all');
+    const [searchParams] = useSearchParams();
 
     const atRiskEngineers = metrics.filter(m => m.atRiskCellsCount > 0).length;
     const avgCompletion =
@@ -193,6 +193,17 @@ export function EngineersPage() {
     const selectedEngineerCells = selectedEngineerName
         ? allCells.filter(c => c.assignedEngineer === selectedEngineerName)
         : [];
+    const highlightedEngineer = searchParams.get('highlightEngineer')?.trim();
+
+    useEffect(() => {
+        if (!highlightedEngineer) return;
+        const match = metrics.find(m => m.name.toLowerCase() === highlightedEngineer.toLowerCase());
+        if (match) {
+            setSelectedEngineerName(match.name);
+        } else {
+            setSelectedEngineerName(highlightedEngineer);
+        }
+    }, [highlightedEngineer, metrics]);
 
     const cellColumns: Column<Cell>[] = [
         { header: 'Cell Name', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline">{c.name}</Link> },
@@ -365,6 +376,9 @@ export function EngineersPage() {
                     emptyMessage="No engineers match your filter."
                     density="compact"
                     onRowClick={(row) => setSelectedEngineerName(row.name === selectedEngineerName ? null : row.name)}
+                    rowClassName={(row) => row.name === selectedEngineerName
+                        ? 'bg-indigo-50/80 dark:bg-indigo-900/30 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-700'
+                        : undefined}
                 />
             </div>
 

@@ -56,7 +56,20 @@ export function ProjectDetailPage() {
         },
         {
             header: 'Engineer',
-            accessor: (c) => c.assignedEngineer || '-',
+            accessor: (c) => {
+                const engineer = c.assignedEngineer?.trim();
+                if (!engineer) {
+                    return <span className="text-xs font-semibold text-gray-500">UNASSIGNED</span>;
+                }
+                return (
+                    <Link
+                        to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
+                        className="text-blue-600 hover:underline font-medium"
+                    >
+                        {engineer}
+                    </Link>
+                );
+            },
             sortValue: (c) => c.assignedEngineer || ''
         },
         {
