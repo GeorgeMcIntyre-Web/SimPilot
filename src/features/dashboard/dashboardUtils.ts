@@ -9,12 +9,18 @@ import { CellSnapshot, CellRiskLevel } from '../../domain/crossRef/CrossRefTypes
 
 /**
  * Determine risk level combining flags + simulation signals
+ * Completed stations (100%) are considered OK unless they have ERROR-level flags
  */
 export const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
   const flags = cell.flags || []
+  const completion = getCompletionPercent(cell)
+  const isComplete = completion === 100
 
   const hasError = flags.some(f => f.severity === 'ERROR')
   if (hasError) return 'CRITICAL'
+
+  // Completed stations are OK - warnings are informational only
+  if (isComplete) return 'OK'
 
   // Simulation signals push to At Risk even without flags
   if (cell.simulationStatus?.hasIssues) {
@@ -25,7 +31,6 @@ export const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
   if (hasWarning) return 'AT_RISK'
 
   // Very low completion without other signals is still At Risk
-  const completion = getCompletionPercent(cell)
   if (completion !== null && completion > 0 && completion < 50) {
     return 'AT_RISK'
   }
