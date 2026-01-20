@@ -26,7 +26,6 @@ import {
   type AssetWithMetadata,
   summarizeAssetsForCounts,
 } from '../../features/assets';
-import { AssetDetailPanel } from '../../features/assets/AssetDetailPanel';
 import type { ReuseAllocationStatus } from '../../ingestion/excelIngestionTypes';
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
 import { Filter, ExternalLink } from 'lucide-react';
@@ -103,19 +102,6 @@ export function AssetsPage() {
     [filteredByBottleneck]
   );
 
-  // Detail panel state
-  const [selectedAsset, setSelectedAsset] = useState<AssetWithMetadata | null>(null);
-
-  // Row click handler
-  const handleRowClick = useCallback((asset: AssetWithMetadata) => {
-    setSelectedAsset(asset);
-  }, []);
-
-  // Close detail panel
-  const handleCloseDetail = useCallback(() => {
-    setSelectedAsset(null);
-  }, []);
-
   // Open in Simulation Status
   const handleOpenInSimulation = useCallback((asset: AssetWithMetadata) => {
     const params = new URLSearchParams();
@@ -143,8 +129,6 @@ export function AssetsPage() {
     const queryString = params.toString();
     const path = queryString.length > 0 ? `/simulation?${queryString}` : '/simulation';
     navigate(path);
-
-    setSelectedAsset(null);
   }, [navigate]);
 
   // Summary strip filter click handler
@@ -336,20 +320,13 @@ export function AssetsPage() {
             <DataTable
               data={sortedAssets}
               columns={columns}
-              onRowClick={handleRowClick}
+              onRowClick={(asset) => navigate(`/assets/${encodeURIComponent(asset.id)}`)}
               emptyMessage="No assets match the current filters."
               maxHeight={520}
             />
           </div>
         </div>
       </div>
-
-      <AssetDetailPanel
-        asset={selectedAsset}
-        isOpen={selectedAsset !== null}
-        onClose={handleCloseDetail}
-        onOpenInSimulation={handleOpenInSimulation}
-      />
     </div>
   );
 }

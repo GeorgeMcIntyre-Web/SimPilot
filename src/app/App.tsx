@@ -20,6 +20,7 @@ const AssetsPage = lazy(() => import('./routes/AssetsPage'))
 const DataLoaderPage = lazy(() => import('./routes/DataLoaderPage'))
 const ImportHistoryPage = lazy(() => import('./routes/ImportHistoryPage'))
 const EngineersPage = lazy(() => import('./routes/EngineersPage'))
+const AssetDetailPage = lazy(() => import('./routes/AssetDetailPage'))
 const DaleConsole = lazy(() => import('./routes/DaleConsole'))
 const WarningsPage = lazy(() => import('./routes/WarningsPage'))
 const ChangesPage = lazy(() => import('./routes/ChangesPage'))
@@ -70,6 +71,7 @@ function App() {
                                             <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
                                             <Route path="cells/:cellId" element={<CellDetailPage />} />
                                             <Route path="engineers" element={<EngineersPage />} />
+                                            <Route path="assets/:assetId" element={<AssetDetailPage />} />
                                             <Route path="tools" element={<ToolsPage />} />
                                             <Route path="assets" element={<AssetsPage />} />
                                             <Route path="data-loader" element={<DataLoaderPage />} />

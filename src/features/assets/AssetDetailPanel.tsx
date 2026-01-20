@@ -38,6 +38,7 @@ type AssetDetailPanelProps = {
   isOpen: boolean;
   onClose: () => void;
   onOpenInSimulation: (asset: AssetWithMetadata) => void;
+  fullPage?: boolean;
 };
 
 // ============================================================================
@@ -93,7 +94,7 @@ function DetailItem({ label, value, className }: DetailItemProps) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }: AssetDetailPanelProps) {
+export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation, fullPage = false }: AssetDetailPanelProps) {
   if (!isOpen || asset === null) {
     return null;
   }
@@ -134,12 +135,18 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
   const hasOldLocation = oldProject !== undefined || oldLine !== undefined || oldStation !== undefined;
   const hasTargetLocation = targetProject !== undefined || targetLine !== undefined || targetStation !== undefined;
 
+  const containerClass = fullPage
+    ? 'flex items-start justify-center px-4 py-6'
+    : 'fixed inset-0 z-50 flex items-start justify-center px-4 py-6 sm:py-12';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 py-6 sm:py-12">
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/70"
-        onClick={onClose}
-      />
+    <div className={containerClass}>
+      {!fullPage && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm dark:bg-black/70"
+          onClick={onClose}
+        />
+      )}
 
       <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 flex flex-col">
         {/* Header */}
@@ -181,13 +188,15 @@ export function AssetDetailPanel({ asset, isOpen, onClose, onOpenInSimulation }:
                 <ExternalLink className="h-4 w-4" />
                 Open in Simulation
               </button>
-              <button
-                onClick={onClose}
-                className="rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <span className="sr-only">Close panel</span>
-                <X className="h-5 w-5" />
-              </button>
+              {!fullPage && (
+                <button
+                  onClick={onClose}
+                  className="rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <span className="sr-only">Close panel</span>
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
           </div>
         </div>
