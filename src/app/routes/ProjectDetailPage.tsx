@@ -35,24 +35,19 @@ export function ProjectDetailPage() {
 
     const columns: Column<Cell>[] = [
         {
+            header: 'Station Name',
+            accessor: (c) => <Link to={`/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link>,
+            sortValue: (c) => c.name
+        },
+        {
             header: 'Area',
             accessor: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '-',
             sortValue: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || ''
         },
         {
-            header: 'Line',
-            accessor: (c) => c.lineCode || '-',
-            sortValue: (c) => c.lineCode || ''
-        },
-        {
             header: 'Station',
             accessor: (c) => c.code,
             sortValue: (c) => c.code || ''
-        },
-        {
-            header: 'Station Name',
-            accessor: (c) => <Link to={`/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link>,
-            sortValue: (c) => c.name
         },
         {
             header: 'Engineer',
