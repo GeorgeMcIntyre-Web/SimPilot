@@ -142,7 +142,10 @@ function matchesSearchTerm(asset: AssetWithMetadata, term: string): boolean {
   }
 
   // Check robot number
-  const robotNumber = extractMetadataField<string>(asset, 'robotNumber');
+  const robotNumber =
+    extractMetadataField<string>(asset, 'robotNumber') ||
+    extractMetadataField<string>(asset, 'Robo No. New') ||
+    extractMetadataField<string>(asset, 'ROBO NO. NEW');
   if (robotNumber !== undefined && normalizeForSearch(robotNumber).includes(searchLower)) {
     return true;
   }

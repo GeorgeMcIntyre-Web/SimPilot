@@ -204,6 +204,7 @@ export function AssetsPage() {
   // Handle assetId deep-link - auto-select and open asset detail panel
   useEffect(() => {
     const assetIdParam = searchParams.get('assetId');
+    const robotNumberParam = searchParams.get('robotNumber');
     if (!assetIdParam) {
       return;
     }
@@ -220,10 +221,17 @@ export function AssetsPage() {
     // Clear existing filters and focus on the targeted asset
     clearFilters();
     setOnlyBottleneckAssets(false);
-    setSearchTerm(assetIdParam);
+    const robotNumber =
+      robotNumberParam ||
+      extractMetadata<string>(targetAsset, 'robotNumber') ||
+      extractMetadata<string>(targetAsset, 'Robo No. New') ||
+      extractMetadata<string>(targetAsset, 'ROBO NO. NEW') ||
+      targetAsset.name ||
+      assetIdParam;
+    setSearchTerm(robotNumber);
 
     // Auto-select the asset to open detail panel
-    setLinkedContextLabel(`Asset: ${targetAsset.name}`);
+    setLinkedContextLabel(`Asset: ${robotNumber}`);
     appliedAssetIdRef.current = assetIdParam;
   }, [searchParams, allAssets, clearFilters, setSearchTerm]);
 
