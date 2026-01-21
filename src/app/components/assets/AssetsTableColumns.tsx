@@ -37,22 +37,6 @@ export function createAssetsTableColumns(
   assetBottleneckMap: Map<string, { stage: WorkflowStage; reason: BottleneckReason; severity: BottleneckSeverity }>
 ): Column<AssetWithMetadata>[] {
   return [
-    // DEBUG: Temporary Asset ID column for debugging navigation issues
-    {
-      header: 'Asset ID (DEBUG)',
-      accessor: (asset) => (
-        <span className="font-mono text-[10px] text-gray-500 dark:text-gray-400 max-w-[150px] truncate block" title={asset.id}>
-          {asset.id}
-        </span>
-      ),
-    },
-    {
-      header: <SortHeader label="Kind" keyName="kind" onSort={onSort} />,
-      accessor: (asset) => {
-        const detailedKind = extractMetadata<DetailedAssetKind>(asset, 'detailedKind');
-        return <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />;
-      },
-    },
     {
       header: 'Robot #',
       accessor: (asset) => {
@@ -69,6 +53,13 @@ export function createAssetsTableColumns(
           return <span className="text-gray-500 dark:text-gray-400">{gunId}</span>;
         }
         return '—';
+      },
+    },
+    {
+      header: <SortHeader label="Kind" keyName="kind" onSort={onSort} />,
+      accessor: (asset) => {
+        const detailedKind = extractMetadata<DetailedAssetKind>(asset, 'detailedKind');
+        return <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />;
       },
     },
     {
