@@ -64,7 +64,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         ) : (
           <Link
             to={`/engineers?highlightEngineer=${encodeURIComponent(simulator)}`}
-            className="text-indigo-600 hover:underline"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
             {simulator}
