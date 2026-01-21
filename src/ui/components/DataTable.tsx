@@ -12,6 +12,7 @@ interface DataTableProps<T> {
     data: T[];
     columns: Column<T>[];
     onRowClick?: (item: T) => void;
+    onRowDoubleClick?: (item: T) => void;
     rowClassName?: (item: T, index: number) => string | undefined;
     emptyMessage?: string;
     enableSorting?: boolean;
@@ -27,6 +28,7 @@ export function DataTable<T>({
     data,
     columns,
     onRowClick,
+    onRowDoubleClick,
     rowClassName,
     emptyMessage = "No data available",
     enableSorting = false,
@@ -129,8 +131,9 @@ export function DataTable<T>({
                             <tr
                                 key={keyExtractor ? keyExtractor(item, rowIdx) : rowIdx}
                                 onClick={() => onRowClick?.(item)}
+                                onDoubleClick={() => onRowDoubleClick?.(item)}
                                 className={cn(
-                                    onRowClick ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" : "",
+                                    (onRowClick || onRowDoubleClick) ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" : "",
                                     rowClassName?.(item, rowIdx)
                                 )}
                             >

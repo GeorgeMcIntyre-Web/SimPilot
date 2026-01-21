@@ -329,7 +329,7 @@ export function AssetsPage() {
             <DataTable
               data={sortedAssets}
               columns={columns}
-              onRowClick={(asset) => navigate(`/assets/${encodeURIComponent(asset.id)}`)}
+              onRowDoubleClick={(asset) => navigate(`/assets/${encodeURIComponent(asset.id)}`)}
               emptyMessage="No assets match the current filters."
               maxHeight={520}
               keyExtractor={(asset) => asset.id}
