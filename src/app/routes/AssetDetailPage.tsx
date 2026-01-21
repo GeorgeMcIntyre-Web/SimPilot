@@ -32,20 +32,6 @@ function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefine
   return value as T
 }
 
-function formatLocation(line: string | null | undefined, station: string | null | undefined): string {
-  const parts: string[] = []
-  if (line !== null && line !== undefined && line.length > 0) {
-    parts.push(line)
-  }
-  if (station !== null && station !== undefined && station.length > 0) {
-    parts.push(station)
-  }
-  if (parts.length === 0) {
-    return '—'
-  }
-  return parts.join(' / ')
-}
-
 // Use consistent blue gradient matching CellDetailPage
 const HEADER_GRADIENT = {
   light: 'from-blue-50 to-blue-100',
@@ -180,10 +166,6 @@ export function AssetDetailPage() {
   const gunNumber = asset.gunNumber ?? extractMetadata<string>(asset, 'gunNumber')
   const lastUpdated = asset.lastUpdated
 
-  const hasReuseInfo = asset.sourcing === 'REUSE' && (oldProject !== undefined || targetProject !== undefined)
-  const hasOldLocation = oldProject !== undefined || oldLine !== undefined || oldStation !== undefined
-  const hasTargetLocation = targetProject !== undefined || targetLine !== undefined || targetStation !== undefined
-
   return (
     <div className="space-y-4" data-testid="asset-detail-root">
       {/* Breadcrumb */}
@@ -298,15 +280,9 @@ export function AssetDetailPage() {
               <DetailItem label="Reference #" value={referenceNumber} />
               <DetailItem label="Payload Class" value={payloadClass} />
               <DetailItem label="Stand #" value={standNumber} />
-              {simulationSourceKind && (
-                <DetailItem label="Source Type" value={simulationSourceKind === 'InternalSimulation' ? 'Internal' : 'Outsource'} />
-              )}
-              {siteLocation && siteLocation !== 'Unknown' && (
-                <DetailItem label="Site Location" value={siteLocation} />
-              )}
-              {lastUpdated && (
-                <DetailItem label="Last Updated" value={new Date(lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} />
-              )}
+              <DetailItem label="Source Type" value={simulationSourceKind ? (simulationSourceKind === 'InternalSimulation' ? 'Internal' : 'Outsource') : undefined} />
+              <DetailItem label="Site Location" value={siteLocation && siteLocation !== 'Unknown' ? siteLocation : undefined} />
+              <DetailItem label="Last Updated" value={lastUpdated ? new Date(lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined} />
             </dl>
           </div>
         </div>
@@ -327,75 +303,49 @@ export function AssetDetailPage() {
               <DetailItem label="Area" value={asset.areaName} />
               <DetailItem label="Line" value={assemblyLine} />
               <DetailItem label="Station" value={station} />
-              {robotNumber !== undefined && (
-                <DetailItem label="Robot #" value={robotNumber} />
-              )}
-              {gunId !== undefined && (
-                <DetailItem label="Gun ID" value={gunId} />
-              )}
-              {gunNumber !== undefined && (
-                <DetailItem label="Gun Number" value={gunNumber} />
-              )}
-              {applicationCode && (
-                <DetailItem label="Application" value={applicationCode} />
-              )}
-              {technologyCode && (
-                <DetailItem label="Technology" value={technologyCode} />
-              )}
+              <DetailItem label="Robot #" value={robotNumber} />
+              <DetailItem label="Gun ID" value={gunId} />
+              <DetailItem label="Gun Number" value={gunNumber} />
+              <DetailItem label="Application" value={applicationCode} />
+              <DetailItem label="Technology" value={technologyCode} />
             </dl>
           </div>
         </div>
       </div>
 
-      {/* Technical Specifications - Only show if we have technical data */}
-      {(robotType || robotOrderCode || payloadKg !== undefined || reachMm !== undefined || trackUsed !== undefined || maxForce !== undefined) && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              <Package className="h-3.5 w-3.5 text-gray-400" />
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                Technical Specifications
-              </h3>
-            </div>
-          </div>
-          <div className="p-3">
-            <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
-              {robotType && (
-                <DetailItem label="Robot Type" value={robotType} />
-              )}
-              {robotOrderCode && (
-                <DetailItem label="Order Code" value={robotOrderCode} />
-              )}
-              {payloadKg !== undefined && (
-                <DetailItem label="Payload" value={`${payloadKg} kg`} />
-              )}
-              {reachMm !== undefined && (
-                <DetailItem label="Reach" value={`${reachMm} mm`} />
-              )}
-              {trackUsed !== undefined && (
-                <DetailItem label="Track Used" value={trackUsed ? 'Yes' : 'No'} />
-              )}
-              {maxForce !== undefined && (
-                <DetailItem label="Max Force" value={`${maxForce} kN`} />
-              )}
-            </dl>
-          </div>
-        </div>
-      )}
-
-      {/* Description */}
-      {description && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+      {/* Technical Specifications */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            <Package className="h-3.5 w-3.5 text-gray-400" />
             <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-              Description
+              Technical Specifications
             </h3>
           </div>
-          <div className="p-3">
-            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{description}</p>
-          </div>
         </div>
-      )}
+        <div className="p-3">
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
+            <DetailItem label="Robot Type" value={robotType} />
+            <DetailItem label="Order Code" value={robotOrderCode} />
+            <DetailItem label="Payload" value={payloadKg !== undefined ? `${payloadKg} kg` : undefined} />
+            <DetailItem label="Reach" value={reachMm !== undefined ? `${reachMm} mm` : undefined} />
+            <DetailItem label="Track Used" value={trackUsed !== undefined ? (trackUsed ? 'Yes' : 'No') : undefined} />
+            <DetailItem label="Max Force" value={maxForce !== undefined ? `${maxForce} kN` : undefined} />
+          </dl>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+          <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
+            Description
+          </h3>
+        </div>
+        <div className="p-3">
+          <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{description || '—'}</p>
+        </div>
+      </div>
 
       {/* Comment and Application Concern Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -435,104 +385,88 @@ export function AssetDetailPage() {
       </div>
 
       {/* Reuse Information */}
-      {hasReuseInfo && (
-        <div className="bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-lg overflow-hidden">
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-800/60 px-3 py-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Recycle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-200 uppercase tracking-wide">
-                  Reuse Allocation
-                </h3>
-              </div>
-              {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="md" />}
-            </div>
-          </div>
-          <div className="p-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {hasOldLocation && (
-                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-3">
-                  <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">
-                    Original Location
-                  </div>
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    {oldProject !== undefined && (
-                      <DetailItem label="Project" value={oldProject} />
-                    )}
-                    {oldArea !== undefined && (
-                      <DetailItem label="Area" value={oldArea} />
-                    )}
-                    <DetailItem label="Line / Station" value={formatLocation(oldLine, oldStation)} className="col-span-2" />
-                  </dl>
-                </div>
-              )}
-
-              {hasTargetLocation && (
-                <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-900/20 p-3">
-                  <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-200 uppercase tracking-wide mb-2">
-                    Target Location
-                  </div>
-                  <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    {targetProject !== undefined && (
-                      <DetailItem label="Project" value={targetProject} />
-                    )}
-                    {targetSector !== undefined && (
-                      <DetailItem label="Sector" value={targetSector} />
-                    )}
-                    <DetailItem label="Line / Station" value={formatLocation(targetLine, targetStation)} className="col-span-2" />
-                  </dl>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Provenance */}
-      {(primaryWorkbookId !== undefined || sourceWorkbookIds.length > 0 || asset.sourceFile || asset.sheetName) && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+      <div className="bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-lg overflow-hidden">
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-800/60 px-3 py-2">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                Provenance
+              <Recycle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-200 uppercase tracking-wide">
+                Reuse Allocation
               </h3>
             </div>
+            {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="md" />}
           </div>
-          <div className="p-3 space-y-3">
-            {primaryWorkbookId !== undefined && (
-              <div className="flex items-center gap-2 text-sm">
-                <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
-                <span className="font-medium text-gray-700 dark:text-gray-300">Primary Workbook:</span>
-                <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{primaryWorkbookId}</span>
+        </div>
+        <div className="p-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-3">
+              <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">
+                Original Location
               </div>
-            )}
-            {sourceWorkbookIds.length > 0 && (
-              <div className="flex items-start gap-2 text-sm">
-                <ArrowRight className="w-3.5 h-3.5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Sources</div>
-                  <ul className="list-disc list-inside space-y-0.5">
-                    {sourceWorkbookIds.map((id) => (
-                      <li key={id} className="font-mono text-xs text-gray-600 dark:text-gray-400">{id}</li>
-                    ))}
-                  </ul>
-                </div>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <DetailItem label="Project" value={oldProject} />
+                <DetailItem label="Area" value={oldArea} />
+                <DetailItem label="Line" value={oldLine} />
+                <DetailItem label="Station" value={oldStation} />
+              </dl>
+            </div>
+
+            <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-900/20 p-3">
+              <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-200 uppercase tracking-wide mb-2">
+                Target Location
               </div>
-            )}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <DetailItem label="Source File" value={asset.sourceFile} />
-              <DetailItem label="Sheet / Row" value={`${asset.sheetName ?? '—'}${asset.rowIndex !== undefined ? ` / ${asset.rowIndex}` : ''}`} />
-              <DetailItem label="Station ID" value={asset.stationId} />
-              <DetailItem label="Robot ID" value={asset.robotId} />
-              <DetailItem label="Tool ID" value={asset.toolId} />
-              {asset.notes && (
-                <DetailItem label="Notes" value={asset.notes} className="col-span-2 md:col-span-3" />
-              )}
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <DetailItem label="Project" value={targetProject} />
+                <DetailItem label="Sector" value={targetSector} />
+                <DetailItem label="Line" value={targetLine} />
+                <DetailItem label="Station" value={targetStation} />
+              </dl>
             </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Provenance */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+            <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
+              Provenance
+            </h3>
+          </div>
+        </div>
+        <div className="p-3 space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
+            <span className="font-medium text-gray-700 dark:text-gray-300">Primary Workbook:</span>
+            <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{primaryWorkbookId || '—'}</span>
+          </div>
+          <div className="flex items-start gap-2 text-sm">
+            <ArrowRight className="w-3.5 h-3.5 text-gray-400 mt-0.5" />
+            <div>
+              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Sources</div>
+              {sourceWorkbookIds.length > 0 ? (
+                <ul className="list-disc list-inside space-y-0.5">
+                  {sourceWorkbookIds.map((id) => (
+                    <li key={id} className="font-mono text-xs text-gray-600 dark:text-gray-400">{id}</li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="text-sm text-gray-500 dark:text-gray-400">—</span>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <DetailItem label="Source File" value={asset.sourceFile} />
+            <DetailItem label="Sheet / Row" value={`${asset.sheetName ?? '—'}${asset.rowIndex !== undefined ? ` / ${asset.rowIndex}` : ''}`} />
+            <DetailItem label="Station ID" value={asset.stationId} />
+            <DetailItem label="Robot ID" value={asset.robotId} />
+            <DetailItem label="Tool ID" value={asset.toolId} />
+            <DetailItem label="Notes" value={asset.notes} className="col-span-2 md:col-span-3" />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
