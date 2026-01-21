@@ -1,5 +1,8 @@
 import { ArrowUpDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { coreStore } from '../../../domain/coreStore';
+import { normalizeStationId } from '../../../domain/crossRef/CrossRefUtils';
+import { normalizeStationCode } from '../../../ingestion/normalizers';
 import type { Column } from '../../../ui/components/DataTable';
 import type { AssetWithMetadata } from '../../../features/assets';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../../ingestion/excelIngestionTypes';
@@ -74,7 +77,31 @@ export function createAssetsTableColumns(
     },
     {
       header: <SortHeader label="Station" keyName="station" onSort={onSort} />,
-      accessor: (asset) => asset.stationNumber ?? '—',
+      accessor: (asset) => {
+        const station =
+          asset.stationNumber ||
+          (asset.metadata?.stationCode as string) ||
+          '';
+        if (!station) return '—';
+
+        // Normalize using the same logic as ingestion to find a matching cell
+        const normalizedStation = normalizeStationCode(station) || normalizeStationId(station);
+        const cell = coreStore.getState().cells.find(c => {
+          const normalizedCellCode = normalizeStationCode(c.code) || normalizeStationId(c.code);
+          return normalizedCellCode === normalizedStation;
+        });
+
+        if (!cell) return station;
+        return (
+          <Link
+            to={`/cells/${encodeURIComponent(cell.id)}`}
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {station}
+          </Link>
+        );
+      },
     },
     {
       header: 'Robot Type',
