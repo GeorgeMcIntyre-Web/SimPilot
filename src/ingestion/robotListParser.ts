@@ -220,11 +220,11 @@ export async function parseRobotList(
       continue
     }
 
-    // Construct robot ID: AssemblyLine_Station_RobotCaption
-    // Example: "BN_010_R01" or "AL_B09_010_R01"
-    const robotId = lineCode
-      ? `${lineCode}_${stationCode}_${robotCaption}`.replace(/\s+/g, '')
-      : `${stationCode}_${robotCaption}`.replace(/\s+/g, '')
+    // Construct robot number/id using the human-readable robot caption
+    // Keep delimiters consistent (hyphens) so UI robot numbers align with IDs
+    const normalizedStation = (stationCode || '').replace(/\s+/g, '')
+    const normalizedCaption = robotCaption.replace(/\s+/g, '')
+    const robotId = generateId('robot', normalizedStation, normalizedCaption)
 
     // Extract E-Number (serial number) - this is METADATA, not the robot ID
     const eNumber = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
@@ -246,7 +246,8 @@ export async function parseRobotList(
     // Vacuum Parser: Collect all other columns into metadata
     const metadata: Record<string, string | number | boolean | null> = {
       // Store E-Number as serialNumber metadata
-      ...(eNumber ? { serialNumber: eNumber } : {})
+      ...(eNumber ? { serialNumber: eNumber } : {}),
+      robotNumber: robotCaption
     }
     const consumedHeaders = [
       'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
@@ -285,9 +286,9 @@ export async function parseRobotList(
     // Build robot entity
     // Map stationCode to stationNumber for UnifiedAsset compatibility
     const robot: Robot = {
-      id: generateId('robot', robotId),
+      id: robotId,
       kind: 'ROBOT',
-      name: robotId,
+      name: robotCaption,
       oemModel: oemModel || undefined,
       areaName: areaName || undefined,
       lineCode: lineCode || undefined,
