@@ -133,6 +133,16 @@ export function createAssetsTableColumns(
       },
     },
     {
+      header: 'Robot Application Concern',
+      accessor: (asset) => {
+        const concern =
+          extractMetadata<string>(asset, 'applicationConcern') ||
+          extractMetadata<string>(asset, 'Application Concern') ||
+          extractMetadata<string>(asset, 'Robot application concern');
+        return concern && concern.toString().trim().length > 0 ? concern : '—';
+      },
+    },
+    {
       header: 'Install Status',
       accessor: (asset) => {
         const status =
