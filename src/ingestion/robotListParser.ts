@@ -201,16 +201,17 @@ export async function parseRobotList(
       continue
     }
 
-    // Extract robot caption (e.g., "R01", "R02")
+    // Extract primary robot number from "ROBO NO. NEW" if present, else fall back to caption fields
+    const roboNoNew = getCellString(row, columnMap, 'ROBO NO. NEW')
     const robotCaption = getCellString(row, columnMap, 'ROBOT CAPTION')
       || getCellString(row, columnMap, 'ROBOTS TOTAL')
       || getCellString(row, columnMap, 'ROBOT')
-      || getCellString(row, columnMap, 'ROBO NO. NEW')
       || getCellString(row, columnMap, 'ROBO NO. OLD')
       || getCellString(row, columnMap, 'ROBOT NAME')
-      || getCellString(row, columnMap, 'NAME') 
+      || getCellString(row, columnMap, 'NAME')
+    const robotNumber = roboNoNew || robotCaption
 
-    if (!robotCaption) {
+    if (!robotNumber) {
       warnings.push(createRowSkippedWarning({
         fileName,
         sheetName,
@@ -220,11 +221,11 @@ export async function parseRobotList(
       continue
     }
 
-    // Construct robot number/id using the human-readable robot caption
+    // Construct robot number/id using the human-readable robot number (prefer "ROBO NO. NEW")
     // Keep delimiters consistent (hyphens) so UI robot numbers align with IDs
     const normalizedStation = (stationCode || '').replace(/\s+/g, '')
-    const normalizedCaption = robotCaption.replace(/\s+/g, '')
-    const robotId = generateId('robot', normalizedStation, normalizedCaption)
+    const normalizedRobotNumber = robotNumber.replace(/\s+/g, '')
+    const robotId = generateId('robot', normalizedStation, normalizedRobotNumber)
 
     // Extract E-Number (serial number) - this is METADATA, not the robot ID
     const eNumber = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
@@ -247,7 +248,8 @@ export async function parseRobotList(
     const metadata: Record<string, string | number | boolean | null> = {
       // Store E-Number as serialNumber metadata
       ...(eNumber ? { serialNumber: eNumber } : {}),
-      robotNumber: robotCaption
+      robotNumber: robotNumber,
+      ...(roboNoNew ? { 'Robo No. New': roboNoNew } : {})
     }
     const consumedHeaders = [
       'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
@@ -288,7 +290,7 @@ export async function parseRobotList(
     const robot: Robot = {
       id: robotId,
       kind: 'ROBOT',
-      name: robotCaption,
+      name: robotNumber,
       oemModel: oemModel || undefined,
       areaName: areaName || undefined,
       lineCode: lineCode || undefined,
