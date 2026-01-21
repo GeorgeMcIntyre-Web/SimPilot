@@ -1032,11 +1032,22 @@ async function ingestFilesInternal(
   // Log what we're about to store for debugging
   log.info(`[Ingestion] Storing to coreStore: ${applyResult.projects.length} projects, ${applyResult.areas.length} areas, ${applyResult.cells.length} cells, ${applyResult.robots.length} robots, ${applyResult.tools.length} tools`)
 
+  // Enrich robots with application concern in metadata for downstream tables
+  const robotsWithEnrichment = applyResult.robots.map(r => ({
+    ...r,
+    metadata: {
+      ...(r.metadata || {}),
+      ...(r as any).applicationConcern ? { applicationConcern: (r as any).applicationConcern } : {},
+      ...(r as any).application ? { application: (r as any).application } : {},
+      ...(r as any).installStatus ? { installStatus: (r as any).installStatus } : {},
+    }
+  }))
+
   coreStore.setData({
     projects: applyResult.projects,
     areas: applyResult.areas,
     cells: applyResult.cells,
-    robots: applyResult.robots,
+    robots: robotsWithEnrichment,
     tools: applyResult.tools,
     warnings: warningStrings
   }, input.dataSource)

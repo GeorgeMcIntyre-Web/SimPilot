@@ -398,11 +398,21 @@ export async function ingestFilesV2(
     const allWarnings = fileResults.flatMap(r => r.warnings)
     const warningStrings = allWarnings.map(w => w.message)
 
+    const robotsWithEnrichment = applyResult.robots.map(r => ({
+      ...r,
+      metadata: {
+        ...(r.metadata || {}),
+        ...(r as any).applicationConcern ? { applicationConcern: (r as any).applicationConcern } : {},
+        ...(r as any).application ? { application: (r as any).application } : {},
+        ...(r as any).installStatus ? { installStatus: (r as any).installStatus } : {},
+      }
+    }))
+
     coreStore.setData({
       projects: applyResult.projects,
       areas: applyResult.areas,
       cells: applyResult.cells,
-      robots: applyResult.robots,
+      robots: robotsWithEnrichment,
       tools: applyResult.tools,
       warnings: warningStrings
     }, source)
