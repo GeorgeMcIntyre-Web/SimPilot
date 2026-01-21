@@ -22,12 +22,20 @@ function buildCrossRefFromCoreStore() {
         areaIdToName.set(area.id, area.name)
     })
 
+    // Map cells by id for reliable robot -> station matching
+    const cellById = new Map<string, typeof state.cells[number]>()
+    state.cells.forEach(cell => {
+        if (cell.id) {
+            cellById.set(cell.id, cell)
+        }
+    })
+
     // Convert Cells to SimulationStatusSnapshot
     const simulationStatusRows: SimulationStatusSnapshot[] = state.cells.map(cell => ({
         stationKey: normalizeStationId(cell.code) || cell.code,
         areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
         lineCode: cell.lineCode,
-        application: undefined,
+        application: cell.simulation?.application || (cell as any).application || (cell.metadata as any)?.application,
         hasIssues: cell.simulation?.hasIssues,
         firstStageCompletion: cell.simulation?.percentComplete,
         finalDeliverablesCompletion: cell.simulation?.percentComplete,
@@ -38,29 +46,51 @@ function buildCrossRefFromCoreStore() {
 
     // Convert Tools to ToolSnapshot
     const tools = state.assets.filter(a => a.kind !== 'ROBOT')
-    const toolingRows: ToolSnapshot[] = tools.map(tool => ({
-        stationKey: normalizeStationId(tool.stationNumber || '') || tool.stationNumber || '',
-        areaKey: tool.areaName || '',
-        toolId: tool.id,
-        simLeader: undefined,
-        simEmployee: undefined,
-        teamLeader: undefined,
-        simDueDate: undefined,
-        toolType: tool.kind,
-        raw: tool as unknown as Record<string, unknown>
-    }))
+    const toolingRows: ToolSnapshot[] = tools.map(tool => {
+        const matchingCell = tool.cellId ? cellById.get(tool.cellId) : undefined
+        const stationKeyFromCell = matchingCell ? (normalizeStationId(matchingCell.code) || matchingCell.code) : ''
+        const stationKeyFallback =
+            normalizeStationId(tool.stationNumber || '') ||
+            tool.stationNumber ||
+            normalizeStationId(tool.metadata?.stationCode || '') ||
+            (tool.metadata?.stationCode as string) ||
+            ''
+
+        return {
+            stationKey: stationKeyFromCell || stationKeyFallback,
+            areaKey: matchingCell?.areaId ? (areaIdToName.get(matchingCell.areaId) || matchingCell.areaId) : (tool.areaName || ''),
+            toolId: tool.id,
+            simLeader: undefined,
+            simEmployee: undefined,
+            teamLeader: undefined,
+            simDueDate: undefined,
+            toolType: tool.kind,
+            raw: tool as unknown as Record<string, unknown>
+        }
+    })
 
     // Convert Robots to RobotSnapshot
     const robots = state.assets.filter(a => a.kind === 'ROBOT')
-    const robotSpecsRows: RobotSnapshot[] = robots.map(robot => ({
-        stationKey: normalizeStationId(robot.stationNumber || '') || robot.stationNumber || '',
-        robotKey: robot.id,
-        caption: robot.name,
-        eNumber: undefined,
-        hasDressPackInfo: false,
-        oemModel: robot.oemModel,
-        raw: robot as unknown as Record<string, unknown>
-    }))
+    const robotSpecsRows: RobotSnapshot[] = robots.map(robot => {
+        const matchingCell = robot.cellId ? cellById.get(robot.cellId) : undefined
+        const stationKeyFromCell = matchingCell ? (normalizeStationId(matchingCell.code) || matchingCell.code) : ''
+        const stationKeyFallback =
+            normalizeStationId(robot.stationNumber || '') ||
+            robot.stationNumber ||
+            normalizeStationId(robot.metadata?.stationCode || '') ||
+            (robot.metadata?.stationCode as string) ||
+            ''
+
+        return {
+            stationKey: stationKeyFromCell || stationKeyFallback,
+            robotKey: robot.id,
+            caption: robot.name,
+            eNumber: undefined,
+            hasDressPackInfo: false,
+            oemModel: robot.oemModel,
+            raw: robot as unknown as Record<string, unknown>
+        }
+    })
 
     return {
         simulationStatusRows,

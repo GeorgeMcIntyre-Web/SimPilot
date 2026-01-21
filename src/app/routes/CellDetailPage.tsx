@@ -5,7 +5,7 @@ import { DataTable, Column } from '../../ui/components/DataTable';
 import { StatusPill } from '../../ui/components/StatusPill';
 import { Tag } from '../../ui/components/Tag';
 import { useCellById, useRobotsByCell, useToolsByCell, useAllEngineerMetrics } from '../../ui/hooks/useDomainData';
-import { coreStore } from '../../domain/coreStore';
+import { coreStore, useCoreStore } from '../../domain/coreStore';
 import { Tool } from '../../domain/core';
 import { createCellEngineerAssignmentChange } from '../../domain/changeLog';
 import { AlertTriangle, Check, X, MonitorPlay } from 'lucide-react';
@@ -41,17 +41,49 @@ export function CellDetailPage() {
 
     const crossRefFlags = crossRefCell?.flags || [];
 
-    // Use robots from the equipment list only (not simulation status)
+    const { assets } = useCoreStore();
+
+    const normalizeRobotNumber = (value: string | null | undefined) =>
+        (value ?? '')
+            .toString()
+            .toLowerCase()
+            .replace(/[\s_-]+/g, '');
+
+    // Use robots from the equipment list only (not simulation status) and align link target to matching asset number
     const robots = useMemo(() => {
-        return legacyRobots.map(r => ({
-            ...r,
-            name:
+        const normalizedStation = normalizeRobotNumber(cell?.code);
+
+        return legacyRobots.map(r => {
+            const displayNumber =
                 r.metadata?.['Robo No. New'] ||
                 r.metadata?.['ROBO NO. NEW'] ||
                 r.metadata?.robotNumber ||
-                r.name
-        }));
-    }, [legacyRobots]);
+                r.name;
+            const normalizedDisplay = normalizeRobotNumber(displayNumber);
+
+            const matchedAsset = assets.find(a => {
+                if (a.kind !== 'ROBOT') return false;
+                const candidateNumber = normalizeRobotNumber(
+                    (a.metadata?.robotNumber as string) ||
+                    (a.metadata?.['Robo No. New'] as string) ||
+                    (a.metadata?.['ROBO NO. NEW'] as string) ||
+                    (a.name as string)
+                );
+
+                const sameNumber = normalizedDisplay.length > 0 && candidateNumber === normalizedDisplay;
+                if (!sameNumber) return false;
+
+                if (!normalizedStation) return true;
+                return normalizeRobotNumber(a.stationNumber) === normalizedStation;
+            });
+
+            return {
+                ...r,
+                name: displayNumber,
+                linkAssetId: matchedAsset?.id ?? r.id
+            };
+        });
+    }, [legacyRobots, assets, cell?.code]);
 
     const [isEditingEngineer, setIsEditingEngineer] = useState(false);
     const [selectedEngineer, setSelectedEngineer] = useState<string>('');
@@ -129,13 +161,14 @@ export function CellDetailPage() {
     };
 
     // Use a flexible type for robot columns since we merge CrossRef and legacy robots
-    type RobotDisplay = { id?: string; name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number };
+    type RobotDisplay = { id?: string; linkAssetId?: string; name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number };
     const robotColumns: Column<RobotDisplay>[] = [
         { header: 'Name', accessor: (r) => {
             const robotLabel = r.name;
-            if (!r.id) return robotLabel;
+            const assetId = r.linkAssetId || r.id;
+            if (!assetId) return robotLabel;
             const searchParams = new URLSearchParams();
-            searchParams.set('assetId', r.id);
+            searchParams.set('assetId', assetId);
             if (robotLabel) {
                 searchParams.set('robotNumber', robotLabel);
             }
