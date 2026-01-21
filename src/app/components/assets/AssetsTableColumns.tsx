@@ -1,4 +1,5 @@
 import { ArrowUpDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Column } from '../../../ui/components/DataTable';
 import type { AssetWithMetadata } from '../../../features/assets';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../../ingestion/excelIngestionTypes';
@@ -47,7 +48,16 @@ export function createAssetsTableColumns(
           (asset as any).robotNumber;
         const gunId = extractMetadata<string>(asset, 'gunId');
         if (robotNumber !== undefined) {
-          return <span className="text-gray-900 dark:text-white">{robotNumber}</span>;
+          return (
+            <Link
+              to={`/assets/${encodeURIComponent(asset.id)}`}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+              title={`View ${robotNumber}`}
+            >
+              {robotNumber}
+            </Link>
+          );
         }
         if (gunId !== undefined) {
           return <span className="text-gray-500 dark:text-gray-400">{gunId}</span>;
