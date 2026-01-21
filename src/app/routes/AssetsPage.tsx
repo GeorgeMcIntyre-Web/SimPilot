@@ -217,10 +217,15 @@ export function AssetsPage() {
       return;
     }
 
+    // Clear existing filters and focus on the targeted asset
+    clearFilters();
+    setOnlyBottleneckAssets(false);
+    setSearchTerm(assetIdParam);
+
     // Auto-select the asset to open detail panel
     setLinkedContextLabel(`Asset: ${targetAsset.name}`);
     appliedAssetIdRef.current = assetIdParam;
-  }, [searchParams, allAssets]);
+  }, [searchParams, allAssets, clearFilters, setSearchTerm]);
 
   const handleClearLinkedContext = () => {
     setLinkedContextLabel(null);

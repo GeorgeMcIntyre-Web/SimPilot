@@ -110,6 +110,11 @@ function matchesSearchTerm(asset: AssetWithMetadata, term: string): boolean {
 
   const searchLower = term.toLowerCase();
 
+  // Check id (for deep links)
+  if (asset.id.toLowerCase().includes(searchLower)) {
+    return true;
+  }
+
   // Check name
   if (normalizeForSearch(asset.name).includes(searchLower)) {
     return true;
