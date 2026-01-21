@@ -37,6 +37,15 @@ export function createAssetsTableColumns(
   assetBottleneckMap: Map<string, { stage: WorkflowStage; reason: BottleneckReason; severity: BottleneckSeverity }>
 ): Column<AssetWithMetadata>[] {
   return [
+    // DEBUG: Temporary Asset ID column for debugging navigation issues
+    {
+      header: 'Asset ID (DEBUG)',
+      accessor: (asset) => (
+        <span className="font-mono text-[10px] text-gray-500 dark:text-gray-400 max-w-[150px] truncate block" title={asset.id}>
+          {asset.id}
+        </span>
+      ),
+    },
     {
       header: <SortHeader label="Kind" keyName="kind" onSort={onSort} />,
       accessor: (asset) => {

@@ -222,9 +222,14 @@ export async function parseRobotList(
 
     // Construct robot ID: AssemblyLine_Station_RobotCaption
     // Example: "BN_010_R01" or "AL_B09_010_R01"
-    const robotId = lineCode
-      ? `${lineCode}_${stationCode}_${robotCaption}`.replace(/\s+/g, '')
-      : `${stationCode}_${robotCaption}`.replace(/\s+/g, '')
+    // For Ford equipment lists, robotCaption already contains the full robot number (e.g., "9B-120-02")
+    // Detect if robotCaption looks like a full robot identifier (contains dashes like "9B-120-02")
+    const isFordRobotNumber = robotCaption.includes('-') && /^\d+[A-Z]?-\d+-\d+$/i.test(robotCaption)
+    const robotId = isFordRobotNumber
+      ? robotCaption.replace(/\s+/g, '') // Use Ford robot number directly
+      : lineCode
+        ? `${lineCode}_${stationCode}_${robotCaption}`.replace(/\s+/g, '')
+        : `${stationCode}_${robotCaption}`.replace(/\s+/g, '')
 
     // Extract E-Number (serial number) - this is METADATA, not the robot ID
     const eNumber = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
@@ -246,7 +251,9 @@ export async function parseRobotList(
     // Vacuum Parser: Collect all other columns into metadata
     const metadata: Record<string, string | number | boolean | null> = {
       // Store E-Number as serialNumber metadata
-      ...(eNumber ? { serialNumber: eNumber } : {})
+      ...(eNumber ? { serialNumber: eNumber } : {}),
+      // Store the robot number/caption for display and lookup
+      robotNumber: robotCaption
     }
     const consumedHeaders = [
       'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
