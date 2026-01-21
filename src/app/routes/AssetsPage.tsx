@@ -78,7 +78,6 @@ export function AssetsPage() {
 
   const [onlyBottleneckAssets, setOnlyBottleneckAssets] = useState(false);
   const [linkedContextLabel, setLinkedContextLabel] = useState<string | null>(null);
-  const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
   const appliedLinkKeyRef = useRef<string | null>(null);
   const appliedAssetIdRef = useRef<string | null>(null);
 
@@ -219,15 +218,12 @@ export function AssetsPage() {
     }
 
     // Auto-select the asset to open detail panel
-    setSelectedAsset(targetAsset);
-    setLinkedAssetId(assetIdParam);
     setLinkedContextLabel(`Asset: ${targetAsset.name}`);
     appliedAssetIdRef.current = assetIdParam;
   }, [searchParams, allAssets]);
 
   const handleClearLinkedContext = () => {
     setLinkedContextLabel(null);
-    setLinkedAssetId(null);
     setSearchParams(new URLSearchParams());
     handleClearAllFilters();
   };
