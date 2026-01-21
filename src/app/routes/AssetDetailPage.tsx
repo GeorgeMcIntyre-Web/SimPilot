@@ -238,17 +238,10 @@ export function AssetDetailPage() {
                     {projectCode}
                   </span>
                 )}
-              </div>
             </div>
-            <button
-              onClick={() => handleOpenInSimulation(asset)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open in Simulation
-            </button>
           </div>
         </div>
+      </div>
 
         {/* Key Metrics Grid */}
         <div className="p-4">
