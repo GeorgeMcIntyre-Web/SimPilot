@@ -19,6 +19,8 @@ interface DataTableProps<T> {
     defaultSortDirection?: 'asc' | 'desc';
     density?: 'default' | 'compact';
     maxHeight?: number | string;
+    /** Extracts a unique key for each row. Required for correct behavior when sorting/filtering. */
+    keyExtractor?: (item: T, index: number) => string | number;
 }
 
 export function DataTable<T>({
@@ -31,7 +33,8 @@ export function DataTable<T>({
     defaultSortIndex,
     defaultSortDirection = 'asc',
     density = 'default',
-    maxHeight
+    maxHeight,
+    keyExtractor
 }: DataTableProps<T>) {
     const [sortIndex, setSortIndex] = useState<number | null>(enableSorting ? defaultSortIndex ?? null : null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
@@ -124,7 +127,7 @@ export function DataTable<T>({
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                         {sortedData.map((item, rowIdx) => (
                             <tr
-                                key={rowIdx}
+                                key={keyExtractor ? keyExtractor(item, rowIdx) : rowIdx}
                                 onClick={() => onRowClick?.(item)}
                                 className={cn(
                                     onRowClick ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" : "",

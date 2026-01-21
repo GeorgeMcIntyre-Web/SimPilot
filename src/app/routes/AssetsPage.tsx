@@ -332,6 +332,7 @@ export function AssetsPage() {
               onRowClick={(asset) => navigate(`/assets/${encodeURIComponent(asset.id)}`)}
               emptyMessage="No assets match the current filters."
               maxHeight={520}
+              keyExtractor={(asset) => asset.id}
             />
           </div>
         </div>
