@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { DataTable, Column } from '../../ui/components/DataTable';
@@ -27,6 +27,7 @@ export function EngineersPage() {
     const [loadFilter, setLoadFilter] = useState<'all' | 'light' | 'medium' | 'heavy'>('all');
     const [phaseFilter, setPhaseFilter] = useState<SchedulePhase | 'all'>('all');
     const [searchParams] = useSearchParams();
+    const detailRef = useRef<HTMLDivElement | null>(null);
 
     const atRiskEngineers = metrics.filter(m => m.atRiskCellsCount > 0).length;
     const avgCompletion =
@@ -204,6 +205,12 @@ export function EngineersPage() {
             setSelectedEngineerName(highlightedEngineer);
         }
     }, [highlightedEngineer, metrics]);
+
+    useEffect(() => {
+        if (selectedEngineerName && detailRef.current) {
+            detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [selectedEngineerName]);
 
     const cellColumns: Column<Cell>[] = [
         { header: 'Cell Name', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline">{c.name}</Link> },
@@ -384,7 +391,10 @@ export function EngineersPage() {
 
             {/* Selected Engineer Detail */}
             {selectedEngineerName && (
-                <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-indigo-200 dark:border-indigo-700 p-6 animate-fade-in">
+                <div
+                    ref={detailRef}
+                    className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-indigo-200 dark:border-indigo-700 p-6 animate-fade-in"
+                >
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <p className="text-[11px] uppercase tracking-[0.08em] text-indigo-500 font-semibold">Assignments</p>

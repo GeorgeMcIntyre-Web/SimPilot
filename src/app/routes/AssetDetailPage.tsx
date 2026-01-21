@@ -155,7 +155,7 @@ export function AssetDetailPage() {
   // Additional metadata fields
   const simulationSourceKind = extractMetadata<string>(asset, 'simulationSourceKind')
   const siteLocation = extractMetadata<string>(asset, 'siteLocation')
-  const robotType = extractMetadata<string>(asset, 'robotType')
+  const robotType = extractMetadata<string>(asset, 'robotType') ?? extractMetadata<string>(asset, 'Robot Type')
   const robotOrderCode = extractMetadata<string>(asset, 'robotOrderCode')
   const applicationCode = extractMetadata<string>(asset, 'applicationCode')
   const technologyCode = extractMetadata<string>(asset, 'technologyCode')
@@ -165,6 +165,27 @@ export function AssetDetailPage() {
   const maxForce = asset.maxForce ?? extractMetadata<number>(asset, 'maxForce')
   const gunNumber = asset.gunNumber ?? extractMetadata<string>(asset, 'gunNumber')
   const lastUpdated = asset.lastUpdated
+
+  // Robot-specific fields: Install Status, Serial Number, Function
+  const installStatus =
+    extractMetadata<string>(asset, 'installStatus') ||
+    extractMetadata<string>(asset, 'Install Status') ||
+    extractMetadata<string>(asset, 'Install status') ||
+    extractMetadata<string>(asset, 'install status')
+
+  const serialNumber =
+    extractMetadata<string>(asset, 'serialNumber') ||
+    extractMetadata<string>(asset, 'Serial #') ||
+    extractMetadata<string>(asset, 'Serial') ||
+    extractMetadata<string>(asset, 'serial') ||
+    extractMetadata<string>(asset, 'eNumber')
+
+  const robotFunction =
+    extractMetadata<string>(asset, 'function') ||
+    extractMetadata<string>(asset, 'Function') ||
+    extractMetadata<string>(asset, 'application') ||
+    extractMetadata<string>(asset, 'robotApplication') ||
+    extractMetadata<string>(asset, 'Robot Application')
 
   return (
     <div className="space-y-4" data-testid="asset-detail-root">
@@ -306,8 +327,11 @@ export function AssetDetailPage() {
               <DetailItem label="Robot #" value={robotNumber} />
               <DetailItem label="Gun ID" value={gunId} />
               <DetailItem label="Gun Number" value={gunNumber} />
-              <DetailItem label="Application" value={applicationCode} />
+              <DetailItem label="Function" value={robotFunction} />
+              <DetailItem label="Application Code" value={applicationCode} />
               <DetailItem label="Technology" value={technologyCode} />
+              <DetailItem label="Install Status" value={installStatus} />
+              <DetailItem label="Serial #" value={serialNumber} />
             </dl>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { cn } from '../../../ui/lib/utils';
 import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes';
 import { getCompletionPercent } from '../dashboardUtils';
@@ -13,6 +14,7 @@ interface StationRowProps {
 export function StationRow({ cell, onClick, density }: StationRowProps) {
   const completion = getCompletionPercent(cell);
   const application = cell.simulationStatus?.application ?? '-';
+  const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
   const robotCount = cell.robots?.length ?? 0;
   const issueCount = cell.flags?.length ?? 0;
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
@@ -55,6 +57,19 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {application}
+      </td>
+      <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)} title={simulator}>
+        {simulator === 'UNASSIGNED' ? (
+          simulator
+        ) : (
+          <Link
+            to={`/engineers?highlightEngineer=${encodeURIComponent(simulator)}`}
+            className="text-indigo-600 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {simulator}
+          </Link>
+        )}
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}>
         {robotCount}
