@@ -135,7 +135,8 @@ export function createAssetsTableColumns(
         const concern =
           extractMetadata<string>(asset, 'applicationConcern') ||
           extractMetadata<string>(asset, 'Application Concern') ||
-          extractMetadata<string>(asset, 'Robot application concern');
+          extractMetadata<string>(asset, 'Robot application concern') ||
+          (asset as any).applicationConcern;
         return concern && concern.toString().trim().length > 0 ? concern : '—';
       },
     },

@@ -132,7 +132,8 @@ export function AssetDetailPage() {
   const applicationConcern =
     extractMetadata<string>(asset, 'applicationConcern') ||
     extractMetadata<string>(asset, 'Application Concern') ||
-    extractMetadata<string>(asset, 'Robot application concern')
+    extractMetadata<string>(asset, 'Robot application concern') ||
+    (asset as any).applicationConcern
 
   // Reuse location info
   const oldProject = extractMetadata<string>(asset, 'oldProject')
