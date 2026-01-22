@@ -39,20 +39,6 @@ export function createAssetsTableColumns(
 ): Column<AssetWithMetadata>[] {
   return [
     {
-      header: <SortHeader label="Area" keyName="area" onSort={onSort} />,
-      accessor: (asset) => {
-        const area =
-          asset.areaName ||
-          extractMetadata<string>(asset, 'areaGroup') ||
-          extractMetadata<string>(asset, 'areaFull') ||
-          extractMetadata<string>(asset, 'area') ||
-          extractMetadata<string>(asset, 'Area') ||
-          (asset as any).areaName ||
-          null;
-        return area || '—';
-      },
-    },
-    {
       header: <SortHeader label="Robot #" keyName="robotNumber" onSort={onSort} />,
       accessor: (asset) => {
         const robotNumber =
@@ -112,6 +98,20 @@ export function createAssetsTableColumns(
             {station}
           </Link>
         );
+      },
+    },
+    {
+      header: <SortHeader label="Area" keyName="area" onSort={onSort} />,
+      accessor: (asset) => {
+        const area =
+          asset.areaName ||
+          extractMetadata<string>(asset, 'areaGroup') ||
+          extractMetadata<string>(asset, 'areaFull') ||
+          extractMetadata<string>(asset, 'area') ||
+          extractMetadata<string>(asset, 'Area') ||
+          (asset as any).areaName ||
+          null;
+        return area || '—';
       },
     },
     {
