@@ -80,11 +80,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}>
         {robotCount}
       </td>
-      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
-        <span className="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2 py-1 text-gray-700 dark:text-gray-300">
-          {areaName}
-        </span>
-      </td>
+
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {completion !== null ? (
           <div className="flex items-center gap-2">
