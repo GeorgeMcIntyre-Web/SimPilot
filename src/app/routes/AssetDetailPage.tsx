@@ -115,6 +115,7 @@ export function AssetDetailPage() {
   const projectCode = extractMetadata<string>(asset, 'projectCode')
   const assemblyLine = extractMetadata<string>(asset, 'assemblyLine') ?? extractMetadata<string>(asset, 'lineCode')
   const station = asset.stationNumber ?? extractMetadata<string>(asset, 'station')
+  const area = asset.areaName ?? extractMetadata<string>(asset, 'areaName') ?? extractMetadata<string>(asset, 'area')
   const robotNumber = extractMetadata<string>(asset, 'robotNumber')
   const gunId = extractMetadata<string>(asset, 'gunId')
   const model = asset.oemModel ?? extractMetadata<string>(asset, 'model')
@@ -196,77 +197,96 @@ export function AssetDetailPage() {
 
       {/* Header Card */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className={`bg-gradient-to-r ${HEADER_GRADIENT.light} ${HEADER_GRADIENT.dark} border-b ${HEADER_GRADIENT.border} px-4 py-3`}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+        <div className={`bg-gradient-to-r ${HEADER_GRADIENT.light} ${HEADER_GRADIENT.dark} border-b ${HEADER_GRADIENT.border} px-4 py-4`}>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1">
                   {asset.kind} Asset
                 </p>
-                {isActive === false && (
-                  <span className="inline-flex items-center gap-1 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-200">
-                    <Shield className="h-3 w-3" />
-                    Inactive
-                  </span>
-                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                    {asset.name || 'Unnamed Asset'}
+                  </h1>
+                  <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
+                  <SourcingBadge sourcing={asset.sourcing} />
+                  {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
+                  {isActive === false && (
+                    <span className="inline-flex items-center gap-1 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-200">
+                      <Shield className="h-3 w-3" />
+                      Inactive
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
-                  {asset.name || 'Unnamed Asset'}
-                </h1>
-                <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
-                <SourcingBadge sourcing={asset.sourcing} />
-                {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
-              </div>
-              <div className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400 flex-wrap mt-2">
-                {assemblyLine && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    <MapPin className="h-3 w-3" />
-                    Line {assemblyLine}
-                  </span>
-                )}
-                {station && (
-                  <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    Station {station}
-                  </span>
-                )}
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-700 dark:text-gray-300">
                 {projectCode && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-gray-900/60 px-2 py-1">
                     <LayoutGrid className="h-3 w-3" />
                     {projectCode}
                   </span>
                 )}
+                {assemblyLine && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-gray-900/60 px-2 py-1">
+                    <MapPin className="h-3 w-3" />
+                    Line {assemblyLine}
+                  </span>
+                )}
+                {area && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-gray-900/60 px-2 py-1">
+                    <MapPin className="h-3 w-3" />
+                    Area {area}
+                  </span>
+                )}
+                {station && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/60 dark:bg-gray-900/60 px-2 py-1">
+                    <MapPin className="h-3 w-3" />
+                    Station {station}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs text-gray-700 dark:text-gray-300">
+              {gunId && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-white/70 dark:bg-gray-900/60 px-2 py-1">
+                  Gun ID {gunId}
+                </span>
+              )}
+              {applicationCode && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-white/70 dark:bg-gray-900/60 px-2 py-1">
+                  Code {applicationCode}
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-        {/* Key Metrics Grid */}
-        <div className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <InfoPill
-              label="Model"
-              value={model || 'Unknown'}
-              icon={<Package className="h-3 w-3" />}
-            />
-            <InfoPill
-              label="Supplier"
-              value={supplier || 'Unknown'}
-              icon={<Building2 className="h-3 w-3" />}
-            />
-            <InfoPill
-              label="Sourcing"
-              value={asset.sourcing}
-              tone={asset.sourcing === 'REUSE' ? 'ok' : undefined}
-              icon={<Recycle className="h-3 w-3" />}
-            />
-            <InfoPill
-              label="Status"
-              value={isActive ? 'Active' : 'Inactive'}
-              tone={isActive ? 'ok' : 'warn'}
-              icon={<Shield className="h-3 w-3" />}
-            />
-          </div>
+      {/* Key Metrics Grid */}
+      <div className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <InfoPill
+            label="Model"
+            value={model || 'Unknown'}
+            icon={<Package className="h-3 w-3" />}
+          />
+          <InfoPill
+            label="Supplier"
+            value={supplier || 'Unknown'}
+            icon={<Building2 className="h-3 w-3" />}
+          />
+          <InfoPill
+            label="Sourcing"
+            value={asset.sourcing}
+            tone={asset.sourcing === 'REUSE' ? 'ok' : undefined}
+            icon={<Recycle className="h-3 w-3" />}
+          />
+          <InfoPill
+            label="Status"
+            value={isActive ? 'Active' : 'Inactive'}
+            tone={isActive ? 'ok' : 'warn'}
+            icon={<Shield className="h-3 w-3" />}
+          />
         </div>
       </div>
 
