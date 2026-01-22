@@ -14,6 +14,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { EquipmentSourcing, UnifiedAsset } from '../../domain/UnifiedModel';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes';
+import { getMetadataValue } from '../../utils/metadata';
 
 // ============================================================================
 // FILTER TYPES
@@ -89,11 +90,7 @@ const INITIAL_FILTER_STATE: AssetsFilterState = {
 // ============================================================================
 
 function extractMetadataField<T>(asset: UnifiedAsset, key: string): T | undefined {
-  const value = asset.metadata?.[key];
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  return value as T;
+  return getMetadataValue<T>(asset, key);
 }
 
 function normalizeForSearch(value: string | null | undefined): string {

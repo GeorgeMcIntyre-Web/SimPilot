@@ -28,6 +28,7 @@ import { cn } from '../../ui/lib/utils';
 import type { AssetWithMetadata } from './useAssetsFilters';
 import { SourcingBadge, ReuseStatusBadge, AssetKindBadge } from './AssetBadges';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes';
+import { getMetadataValue } from '../../utils/metadata';
 
 // ============================================================================
 // TYPES
@@ -46,11 +47,7 @@ type AssetDetailPanelProps = {
 // ============================================================================
 
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
-  const value = asset.metadata?.[key];
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  return value as T;
+  return getMetadataValue<T>(asset, key);
 }
 
 function formatLocation(line: string | null | undefined, station: string | null | undefined): string {

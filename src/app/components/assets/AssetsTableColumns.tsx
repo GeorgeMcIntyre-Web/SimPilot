@@ -9,13 +9,10 @@ import type { ReuseAllocationStatus, DetailedAssetKind } from '../../../ingestio
 import { AssetKindBadge, SourcingBadge, ReuseStatusBadge, BottleneckBadge } from '../../../features/assets/AssetBadges';
 import type { SortKey } from '../../hooks/assets/useAssetsSorting';
 import type { BottleneckSeverity, BottleneckReason, WorkflowStage } from '../../../domain/toolingBottleneckStore';
+import { getMetadataValue } from '../../../utils/metadata';
 
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
-  const value = asset.metadata?.[key];
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  return value as T;
+  return getMetadataValue<T>(asset, key);
 }
 
 type SortHeaderProps = {

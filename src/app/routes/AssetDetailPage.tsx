@@ -5,6 +5,7 @@ import { InfoPill } from '../../ui/components/InfoPill'
 import { SourcingBadge, ReuseStatusBadge, AssetKindBadge } from '../../features/assets/AssetBadges'
 import type { AssetWithMetadata } from '../../features/assets'
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes'
+import { getMetadataValue } from '../../utils/metadata'
 import {
   ExternalLink,
   MapPin,
@@ -25,11 +26,7 @@ import {
 // ============================================================================
 
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
-  const value = asset.metadata?.[key]
-  if (value === null || value === undefined) {
-    return undefined
-  }
-  return value as T
+  return getMetadataValue<T>(asset, key)
 }
 
 // Use consistent blue gradient matching CellDetailPage

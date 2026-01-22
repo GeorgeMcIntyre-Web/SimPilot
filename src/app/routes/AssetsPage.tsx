@@ -34,17 +34,14 @@ import { useAssetBottlenecks } from '../hooks/assets/useAssetBottlenecks';
 import { useAssetsSorting } from '../hooks/assets/useAssetsSorting';
 import { createAssetsTableColumns } from '../components/assets/AssetsTableColumns';
 import { Link } from 'react-router-dom';
+import { getMetadataValue } from '../../utils/metadata';
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
-  const value = asset.metadata?.[key];
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  return value as T;
+  return getMetadataValue<T>(asset, key);
 }
 
 // ============================================================================

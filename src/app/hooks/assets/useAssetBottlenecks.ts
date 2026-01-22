@@ -2,13 +2,10 @@ import { useMemo } from 'react';
 import { useToolingBottleneckState } from '../../../domain/toolingBottleneckStore';
 import type { BottleneckSeverity, BottleneckReason, WorkflowStage } from '../../../domain/toolingBottleneckStore';
 import type { AssetWithMetadata } from '../../../features/assets';
+import { getMetadataValue } from '../../../utils/metadata';
 
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
-  const value = asset.metadata?.[key];
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  return value as T;
+  return getMetadataValue<T>(asset, key);
 }
 
 export function useAssetBottlenecks(assets: AssetWithMetadata[]) {
