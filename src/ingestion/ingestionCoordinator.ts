@@ -540,6 +540,7 @@ function buildCrossRefInputFromApplyResult(
   const simulationStatusRows: SimulationStatusSnapshot[] = allCells.map(cell => ({
     stationKey: normalizeStationId(cell.code) || cell.code,
     areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
+    areaName: areaIdToName.get(cell.areaId) || cell.areaId,
     lineCode: cell.lineCode, // Use lineCode field
     application: cell.simulation?.application, // Propagate application from simulation status
     hasIssues: cell.simulation?.hasIssues,

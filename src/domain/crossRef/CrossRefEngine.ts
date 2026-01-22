@@ -89,6 +89,7 @@ const getOrCreateCell = (
   stations: Map<StationKey, CellSnapshot>,
   rawStation: string | undefined,
   rawArea: string | undefined,
+  rawAreaName?: string,
   lineCode?: string
 ): CellSnapshot | null => {
   const key = normalizeStationId(rawStation)
@@ -98,13 +99,15 @@ const getOrCreateCell = (
   if (existing) {
     // Immutable update: create new object if fields need updating
     const shouldUpdateArea = rawArea && rawArea !== existing.areaKey
+    const shouldUpdateAreaName = rawAreaName && rawAreaName !== existing.areaName
     const shouldUpdateLine = lineCode && lineCode !== existing.lineCode
-    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode) || shouldUpdateArea || shouldUpdateLine
+    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.areaName && rawAreaName) || (!existing.lineCode && lineCode) || shouldUpdateArea || shouldUpdateAreaName || shouldUpdateLine
 
     if (needsUpdate) {
       const updated: CellSnapshot = {
         ...existing,
         areaKey: shouldUpdateArea ? rawArea : existing.areaKey || rawArea,
+        areaName: shouldUpdateAreaName ? rawAreaName : existing.areaName || rawAreaName || rawArea,
         lineCode: shouldUpdateLine ? lineCode : existing.lineCode || lineCode
       }
       stations.set(key, updated)
@@ -117,6 +120,7 @@ const getOrCreateCell = (
   const newCell: CellSnapshot = {
     stationKey: key,
     areaKey: rawArea,
+    areaName: rawAreaName || rawArea,
     lineCode,
     tools: [],
     robots: [],
@@ -140,7 +144,7 @@ const seedStations = (
   if (rows.length === 0) return
 
   for (const row of rows) {
-    getOrCreateCell(stations, row.stationKey, row.areaKey, row.lineCode)
+    getOrCreateCell(stations, row.stationKey, row.areaKey, row.areaName, row.lineCode)
   }
 }
 

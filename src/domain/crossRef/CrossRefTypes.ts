@@ -23,6 +23,7 @@ export type AreaKey = string
 export interface SimulationStatusSnapshot {
   stationKey: StationKey
   areaKey?: AreaKey
+  areaName?: string
   lineCode?: string
   application?: string
   firstStageCompletion?: number
@@ -137,6 +138,7 @@ export interface CrossRefFlag {
 export interface CellSnapshot {
   stationKey: StationKey
   areaKey?: AreaKey
+  areaName?: string
   lineCode?: string
 
   simulationStatus?: SimulationStatusSnapshot

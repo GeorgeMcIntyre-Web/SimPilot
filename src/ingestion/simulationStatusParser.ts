@@ -215,6 +215,10 @@ export function vacuumParseSimulationSheet(
   const vacuumRows: VacuumParsedRow[] = []
 
   const headerRow = rows[headerRowIndex]
+  const sheetTitleCell = String(rows[0]?.[0] ?? '').trim()
+  const areaFromSheetTitle = sheetTitleCell.toUpperCase().endsWith('- SIMULATION')
+    ? sheetTitleCell.replace(/-\\s*SIMULATION$/i, '').trim()
+    : sheetTitleCell
 
   if (!headerRow || headerRow.length === 0) {
     return { rows: [], warnings }
@@ -318,6 +322,10 @@ export function vacuumParseSimulationSheet(
 
     // If AREA is missing, try to derive it from STATION
     // e.g., "9B-100" -> "9B", "ST010" -> "ST010" (keep as is if no pattern)
+    if (!area && areaFromSheetTitle) {
+      area = areaFromSheetTitle
+    }
+
     if (!area && stationKey) {
       const areaMatch = stationKey.match(/^([A-Z0-9]+)[-_]/)
       if (areaMatch) {

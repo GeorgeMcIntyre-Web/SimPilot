@@ -34,6 +34,7 @@ function buildCrossRefFromCoreStore() {
     const simulationStatusRows: SimulationStatusSnapshot[] = state.cells.map(cell => ({
         stationKey: normalizeStationId(cell.code) || cell.code,
         areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
+        areaName: areaIdToName.get(cell.areaId) || cell.areaId,
         lineCode: cell.lineCode,
         application: cell.simulation?.application || (cell as any).application || (cell.metadata as any)?.application,
         hasIssues: cell.simulation?.hasIssues,
