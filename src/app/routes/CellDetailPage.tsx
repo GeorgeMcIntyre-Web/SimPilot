@@ -161,7 +161,7 @@ export function CellDetailPage() {
     };
 
     // Use a flexible type for robot columns since we merge CrossRef and legacy robots
-    type RobotDisplay = { id?: string; linkAssetId?: string; name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number };
+    type RobotDisplay = { id?: string; linkAssetId?: string; name: string; oemModel?: string; stationCode?: string; sourceFile?: string; sheetName?: string; rowIndex?: number; metadata?: Record<string, unknown> };
     const robotColumns: Column<RobotDisplay>[] = [
         { header: 'Name', accessor: (r) => {
             const robotLabel = r.name;
@@ -184,7 +184,15 @@ export function CellDetailPage() {
         } },
         { header: 'Model', accessor: (r) => r.oemModel || '-' },
         { header: 'Station', accessor: (r) => r.stationCode || '-' },
-        { header: 'Source', accessor: (r) => r.sourceFile ? <span className="text-xs text-gray-500" title={`${r.sourceFile}${r.sheetName ? ` (Sheet: ${r.sheetName}` : ''}${r.rowIndex ? `, Row: ${r.rowIndex})` : ')'}`}>{r.sourceFile}</span> : '-' },
+        { header: 'Comment', accessor: (r) => {
+            const comment =
+                (r.metadata?.comment as string) ||
+                (r.metadata?.Comment as string) ||
+                (r.metadata?.esowComment as string) ||
+                (r.metadata?.['ESOW Comment'] as string) ||
+                null;
+            return comment && comment.toString().trim().length > 0 ? comment : '—';
+        } },
     ];
 
     const toolColumns: Column<Tool>[] = [

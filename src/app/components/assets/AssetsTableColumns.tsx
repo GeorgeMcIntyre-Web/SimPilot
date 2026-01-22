@@ -153,6 +153,19 @@ export function createAssetsTableColumns(
         return status && status.toString().trim().length > 0 ? status : '-';
       },
     },
+    {
+      header: 'Comment',
+      accessor: (asset) => {
+        const comment =
+          extractMetadata<string>(asset, 'comment') ||
+          extractMetadata<string>(asset, 'Comment') ||
+          extractMetadata<string>(asset, 'esowComment') ||
+          extractMetadata<string>(asset, 'ESOW Comment') ||
+          (asset as any).comment ||
+          null;
+        return comment && comment.toString().trim().length > 0 ? comment : '—';
+      },
+    },
     // Sourcing, Reuse Status, and Asset columns intentionally removed per request
   ];
 }
