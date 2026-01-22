@@ -112,21 +112,22 @@ export function createAssetsTableColumns(
       },
     },
     {
-      header: 'Function',
+      header: 'Code',
       accessor: (asset) => {
-        const fn =
+        const code =
+          extractMetadata<string>(asset, 'applicationCode') ||
+          extractMetadata<string>(asset, 'Code') ||
+          (asset as any).applicationCode ||
+          // Fallback to legacy function/application fields if code is missing
           extractMetadata<string>(asset, 'function') ||
           extractMetadata<string>(asset, 'Function') ||
           extractMetadata<string>(asset, 'application') ||
-          extractMetadata<string>(asset, 'applicationCode') ||
           extractMetadata<string>(asset, 'robotApplication') ||
           extractMetadata<string>(asset, 'Robot Application') ||
-          // Fallback to direct fields if present on the asset
           (asset as any).function ||
           (asset as any).application ||
-          (asset as any).applicationCode ||
           null;
-        return fn || '—';
+        return code || '—';
       },
     },
     {
