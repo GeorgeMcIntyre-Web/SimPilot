@@ -328,7 +328,8 @@ export function AssetsPage() {
               columns={columns}
               onRowDoubleClick={(asset) => navigate(`/assets/${encodeURIComponent(asset.id)}`)}
               emptyMessage="No assets match the current filters."
-              maxHeight={520}
+              // Allow the table to grow with the viewport while keeping header pinned
+              maxHeight="70vh"
               keyExtractor={(asset) => asset.id}
             />
           </div>
