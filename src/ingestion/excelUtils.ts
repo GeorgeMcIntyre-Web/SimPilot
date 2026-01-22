@@ -37,6 +37,17 @@ async function readWorkbookFromExcelInput(
     throw new Error(`Invalid file type: ${name}. Expected Excel file (.xlsx, .xlsm, or .xls)`)
   }
 
+  // CRITICAL: Check file size BEFORE loading into memory to prevent crashes
+  const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB limit
+  if (input.size > MAX_FILE_SIZE) {
+    const sizeMB = (input.size / (1024 * 1024)).toFixed(2)
+    const maxMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0)
+    throw new Error(
+      `File too large: ${name} (${sizeMB}MB exceeds ${maxMB}MB limit). ` +
+      `Please split the file into smaller chunks or remove unnecessary data.`
+    )
+  }
+
   try {
     // Use ArrayBuffer for reliable reading from any source
     const arrayBuffer = await input.arrayBuffer()
@@ -63,7 +74,8 @@ async function readWorkbookFromExcelInput(
     if (error instanceof Error && (
       error.message.includes('empty') ||
       error.message.includes('invalid') ||
-      error.message.includes('File is empty')
+      error.message.includes('File is empty') ||
+      error.message.includes('too large')
     )) {
       throw error
     }

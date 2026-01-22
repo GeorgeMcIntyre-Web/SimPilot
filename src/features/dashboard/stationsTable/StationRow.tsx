@@ -16,7 +16,13 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
   const application = cell.simulationStatus?.application ?? '-';
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
   const robotCount = cell.robots?.length ?? 0;
-  const areaName = cell.areaName ?? cell.areaKey ?? 'Unknown';
+  
+  // Remove everything after '-' character in area name
+  const rawAreaName = cell.areaName ?? cell.areaKey ?? 'Unknown';
+  const areaName = rawAreaName.includes('-') 
+    ? rawAreaName.split('-')[0].trim() 
+    : rawAreaName;
+  
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
 

@@ -48,6 +48,19 @@ export interface LoadOptions {
 }
 
 // ============================================================================
+// SAFETY LIMITS
+// ============================================================================
+
+/** Maximum file size in bytes (100MB) - prevents memory crashes */
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+
+/** Maximum rows to process per sheet - prevents infinite loops */
+const MAX_ROWS_PER_SHEET = 100000
+
+/** Maximum sheets to process per workbook */
+const MAX_SHEETS_PER_WORKBOOK = 50
+
+// ============================================================================
 // MAGIC BYTES FOR FILE TYPE DETECTION
 // ============================================================================
 
@@ -183,6 +196,14 @@ export function loadWorkbookFromBuffer(
     return { fileName, sheets: [] }
   }
 
+  // Check file size to prevent memory crashes
+  if (buffer.byteLength > MAX_FILE_SIZE) {
+    const sizeMB = (buffer.byteLength / (1024 * 1024)).toFixed(2)
+    const maxMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0)
+    log.error(`[WorkbookLoader] File too large: ${fileName} (${sizeMB}MB exceeds ${maxMB}MB limit)`)
+    return { fileName, sheets: [] }
+  }
+
   // Detect file type
   const byteType = detectFileTypeFromBytes(buffer)
   const extType = detectFileTypeFromExtension(fileName)
@@ -215,10 +236,16 @@ export function loadWorkbookFromBuffer(
     return { fileName, sheets: [] }
   }
 
+  // Limit number of sheets to prevent excessive processing
+  if (workbook.SheetNames.length > MAX_SHEETS_PER_WORKBOOK) {
+    log.warn(`[WorkbookLoader] ${fileName} has ${workbook.SheetNames.length} sheets, limiting to ${MAX_SHEETS_PER_WORKBOOK}`)
+  }
+
   // Normalize each sheet
   const sheets: NormalizedSheet[] = []
+  const sheetsToProcess = workbook.SheetNames.slice(0, MAX_SHEETS_PER_WORKBOOK)
 
-  for (const sheetName of workbook.SheetNames) {
+  for (const sheetName of sheetsToProcess) {
     const sheet = workbook.Sheets[sheetName]
 
     if (!sheet) {
@@ -232,8 +259,14 @@ export function loadWorkbookFromBuffer(
       raw: false  // Get formatted string values for reliable normalization
     })
 
+    // Limit rows to prevent memory issues and infinite loops
+    const rowsToProcess = rawRows.slice(0, MAX_ROWS_PER_SHEET)
+    if (rawRows.length > MAX_ROWS_PER_SHEET) {
+      log.warn(`[WorkbookLoader] Sheet "${sheetName}" has ${rawRows.length} rows, limiting to ${MAX_ROWS_PER_SHEET}`)
+    }
+
     // Normalize each row
-    const normalizedRows = rawRows.map(row => normalizeRow(row as unknown[]))
+    const normalizedRows = rowsToProcess.map(row => normalizeRow(row as unknown[]))
 
     // Remove completely empty trailing rows
     while (
@@ -264,6 +297,14 @@ export async function loadWorkbook(
   fileName?: string
 ): Promise<NormalizedWorkbook> {
   const name = fileName ?? (input instanceof File ? input.name : 'unknown.xlsx')
+
+  // Check file size before reading
+  if (input.size > MAX_FILE_SIZE) {
+    const sizeMB = (input.size / (1024 * 1024)).toFixed(2)
+    const maxMB = (MAX_FILE_SIZE / (1024 * 1024)).toFixed(0)
+    log.error(`[WorkbookLoader] File too large: ${name} (${sizeMB}MB exceeds ${maxMB}MB limit)`)
+    return { fileName: name, sheets: [] }
+  }
 
   try {
     const buffer = await input.arrayBuffer()
