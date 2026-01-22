@@ -34,18 +34,34 @@ function normalizeNumber(val: unknown): number | null {
  * Parse station identifier like "9B-100" into area and station
  */
 function parseStationIdentifier(stationFull: string): { area: string; station: string } | null {
-  const match = stationFull.match(/^([A-Z0-9]+)-(\d+)$/)
+  // Allow any characters in area code, split on last hyphen for station
+  const match = stationFull.match(/^(.+)-(\d+)$/)
   if (!match) return null
-  return { area: match[1], station: match[2] }
+  
+  let area = match[1].trim()
+  // Clean area name: keep only text before the first hyphen
+  if (area.includes('-')) {
+    area = area.split('-')[0].trim()
+  }
+  
+  return { area, station: match[2] }
 }
 
 /**
  * Parse robot identifier like "9B-100-03" into area, station, and robot
  */
 function parseRobotIdentifier(robotFullId: string): { area: string; station: string; robot: string } | null {
-  const match = robotFullId.match(/^([A-Z0-9]+)-(\d+)-(\d+)$/)
+  // Allow any characters in area code
+  const match = robotFullId.match(/^(.+)-(\d+)-(\d+)$/)
   if (!match) return null
-  return { area: match[1], station: match[2], robot: match[3] }
+
+  let area = match[1].trim()
+  // Clean area name: keep only text before the first hyphen
+  if (area.includes('-')) {
+    area = area.split('-')[0].trim()
+  }
+
+  return { area, station: match[2], robot: match[3] }
 }
 
 /**
