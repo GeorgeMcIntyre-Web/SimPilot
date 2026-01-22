@@ -46,6 +46,7 @@ export interface SimulationMetric {
  */
 export interface VacuumParsedRow {
   area: string
+  areaName?: string
   assemblyLine?: string
   stationKey: string
   robotCaption?: string
