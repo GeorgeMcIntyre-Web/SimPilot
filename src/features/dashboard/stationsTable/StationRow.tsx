@@ -59,7 +59,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         </span>
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
-        {cell.areaKey ?? 'Unknown'}
+        {areaName}
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {application}
