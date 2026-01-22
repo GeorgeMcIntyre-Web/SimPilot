@@ -141,6 +141,23 @@ export function normalizeAreaName(raw: string | null | undefined): string | null
 }
 
 /**
+ * Clean area name by truncating at the first hyphen
+ * Ensures consistent short names like "BODYSIDES LH" from "BODYSIDES LH - SAFETY"
+ */
+export function cleanAreaName(rawAreaName: string | null | undefined): string | null {
+  if (!rawAreaName) return null
+  const trimmed = String(rawAreaName).trim()
+  if (!trimmed) return null
+  
+  // Truncate at first hyphen
+  if (trimmed.includes('-')) {
+    return trimmed.split('-')[0].trim()
+  }
+  
+  return trimmed
+}
+
+/**
  * Normalize station code to consistent format
  * Examples:
  *   "CA008" → "CA8"

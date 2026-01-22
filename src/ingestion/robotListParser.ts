@@ -13,7 +13,7 @@ import {
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
-import { buildStationId, buildRobotId, inferAssembliesAreaName } from './normalizers'
+import { buildStationId, buildRobotId, inferAssembliesAreaName, cleanAreaName } from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -234,6 +234,12 @@ export async function parseRobotList(
     // Infer area from filename if not in row (similar to Assemblies Lists)
     if (!areaName) {
       areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
+    }
+
+    // Clean area name (truncate at hyphen) as per user requirement
+    if (areaName) {
+      const cleaned = cleanAreaName(areaName)
+      if (cleaned) areaName = cleaned
     }
 
     // Skip rows without station - these are not actual robot entries
