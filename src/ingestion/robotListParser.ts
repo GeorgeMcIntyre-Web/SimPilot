@@ -169,11 +169,26 @@ export async function parseRobotList(
   const dataStartIndex = headerRowIndex + 1
   const robots: Robot[] = []
 
+  // Track area group for forward-fill (for Ford Robot Equipment List files where
+  // column 0 contains area group names in merged cells, e.g., "DASH", "UNDERBODY")
+  let currentAreaGroup = ''
+
   for (let i = dataStartIndex; i < rows.length; i++) {
     const row = rows[i]
 
     // Skip empty or total rows
     if (isEmptyRow(row) || isTotalRow(row)) continue
+
+    // Forward-fill area group from column 0 (for Robot Equipment List files)
+    // Column 0 may contain area group names in merged cells that need to be carried forward
+    const col0Value = row[0]
+    if (col0Value !== null && col0Value !== undefined && String(col0Value).trim()) {
+      const col0Str = String(col0Value).trim()
+      // Only treat as area group if it looks like an area name (all caps or title case, no numbers at start)
+      if (/^[A-Z][A-Za-z\s]+$/.test(col0Str) && col0Str.length > 2) {
+        currentAreaGroup = col0Str
+      }
+    }
 
     // Extract station code first - CRITICAL: Only count rows with station numbers
     // This ensures we get exactly 166 robots (rows with stations), not 172 (all rows)
@@ -187,9 +202,34 @@ export async function parseRobotList(
       || getCellString(row, columnMap, 'LINE CODE')
       || getCellString(row, columnMap, 'ASSEMBLY LINE')
 
-    let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
+    // For Ford Robot Equipment List files, the "Area" header column actually contains
+    // "Person Responsible" data, not area names. The real area comes from column 0 (forward-filled).
+    // Also, due to partial matching in buildColumnMap, "AREA" might map to "Robot count per area"
+    // which contains numeric values like "1", "2", "3".
+    // We check if the value from AREA column looks like:
+    // - A number (from "Robot count per area" column)
+    // - A person's name (mixed case with spaces like "Robyn Holtzhausen")
+    const areaColumnValue = getCellString(row, columnMap, 'AREA')
       || getCellString(row, columnMap, 'AREA NAME')
       || getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
+
+    // Check if the area column value is invalid (numeric or a person's name)
+    // - Numeric values come from "Robot count per area" column
+    // - Person names typically have mixed case and spaces (e.g., "Robyn Holtzhausen")
+    // - Area names are typically all caps or title case without spaces (e.g., "DASH", "UNDERBODY")
+    const isNumeric = areaColumnValue && /^\d+$/.test(areaColumnValue)
+    const looksLikePersonName = areaColumnValue &&
+      /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(areaColumnValue)
+    const isInvalidArea = isNumeric || looksLikePersonName
+
+    let areaName: string | undefined
+
+    // Prefer forward-filled area group if we have it and the AREA column value is invalid
+    if (currentAreaGroup && (!areaColumnValue || isInvalidArea)) {
+      areaName = currentAreaGroup
+    } else {
+      areaName = areaColumnValue
+    }
 
     // Infer area from filename if not in row (similar to Assemblies Lists)
     if (!areaName) {
@@ -304,7 +344,9 @@ export async function parseRobotList(
         ...metadata,
         // Store lineCode in metadata for UnifiedAsset access
         ...(lineCode ? { lineCode } : {}),
-        ...(robotType ? { robotType } : {})
+        ...(robotType ? { robotType } : {}),
+        // Store areaGroup in metadata for display in assets table
+        ...(areaName ? { areaGroup: areaName } : {})
       },
       sourceFile: fileName,
       sheetName,

@@ -87,7 +87,14 @@ function getSortValue(asset: AssetWithMetadata, key: SortKey): string {
   }
 
   if (key === 'area') {
-    return normalize(asset.areaName) || normalize(getMetadataValue(asset, 'areaName'));
+    return (
+      normalize(asset.areaName) ||
+      normalize(getMetadataValue(asset, 'areaGroup')) ||
+      normalize(getMetadataValue(asset, 'areaFull')) ||
+      normalize(getMetadataValue(asset, 'area')) ||
+      normalize(getMetadataValue(asset, 'Area')) ||
+      normalize((asset as any).areaName)
+    );
   }
 
   if (key === 'sourcing') {

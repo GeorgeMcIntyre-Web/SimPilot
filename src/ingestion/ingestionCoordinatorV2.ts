@@ -295,7 +295,12 @@ function buildVersionComparison(
           (r as any).comment ||
           r.metadata?.comment ||
           r.metadata?.esowComment ||
-          r.metadata?.['ESOW Comment']
+          r.metadata?.['ESOW Comment'],
+        areaGroup:
+          r.areaName ||
+          r.metadata?.areaGroup ||
+          r.metadata?.areaFull ||
+          r.metadata?.['Area']
       },
       areaId: r.areaId,
       areaName: r.areaName,
