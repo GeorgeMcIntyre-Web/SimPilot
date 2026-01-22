@@ -24,6 +24,7 @@ export function AreaOverviewCard({
   density = 'comfortable'
 }: AreaOverviewCardProps) {
   const { total, critical, atRisk, ok } = counts
+  const areaName = areaKey.includes('-') ? areaKey.split('-')[0].trim() : areaKey
   const healthState =
     critical > 0
       ? {
@@ -85,7 +86,7 @@ export function AreaOverviewCard({
                 className="font-semibold text-gray-900 dark:text-white leading-tight whitespace-normal line-clamp-2"
                 title={areaKey}
               >
-                {areaKey}
+                {areaName}
               </h3>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
                 {ok} healthy · {atRisk} risk · {critical} critical
