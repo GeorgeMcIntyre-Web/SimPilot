@@ -239,7 +239,8 @@ function FlagsTable({ flags }: FlagsTableProps) {
       columns={columns}
       emptyMessage="No flags for this station."
       density="compact"
-      maxHeight="16rem"
+      // Adaptive height similar to Assets table for better scrolling
+      maxHeight="70vh"
     />
   )
 }
