@@ -115,8 +115,8 @@ export function StationsTable({
                 </th>
                 <th scope="col" className="px-3 py-3.5 text-left text-sm">
                   <SortableHeader
-                    label="Issues"
-                    sortKey="issues"
+                    label="Area Name"
+                    sortKey="areaName"
                     currentSort={sortKey}
                     direction={sortDirection}
                     onSort={handleSort}

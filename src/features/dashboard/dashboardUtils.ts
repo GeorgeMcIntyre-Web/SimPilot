@@ -175,7 +175,7 @@ export const filterBySearch = (cells: CellSnapshot[], searchTerm: string): CellS
 // SORTING
 // ============================================================================
 
-export type SortKey = 'station' | 'area' | 'application' | 'simulator' | 'robots' | 'issues' | 'completion' | 'risk'
+export type SortKey = 'station' | 'area' | 'application' | 'simulator' | 'robots' | 'issues' | 'completion' | 'risk' | 'areaName'
 export type SortDirection = 'asc' | 'desc'
 
 /**
@@ -227,6 +227,12 @@ export const sortCells = (
       const issuesA = a.flags?.length ?? 0
       const issuesB = b.flags?.length ?? 0
       comparison = issuesA - issuesB
+    }
+
+    if (sortKey === 'areaName') {
+      const areaNameA = a.areaName ?? a.areaKey ?? ''
+      const areaNameB = b.areaName ?? b.areaKey ?? ''
+      comparison = areaNameA.localeCompare(areaNameB)
     }
 
     if (sortKey === 'risk') {
