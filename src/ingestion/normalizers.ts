@@ -25,6 +25,33 @@
 // ============================================================================
 
 /**
+ * Truncate area name by removing everything after the first "-" character
+ * Used when reading area names from document metadata cells (e.g., first cell of SIMULATION sheet)
+ *
+ * Examples:
+ *   "UNDERBODY - SIMULATION" → "UNDERBODY"
+ *   "FRONT UNIT - STATUS" → "FRONT UNIT"
+ *   "REAR_UNIT" → "REAR_UNIT" (no dash, unchanged)
+ *   null → null
+ */
+export function truncateAreaName(raw: string | null | undefined): string | null {
+  if (!raw) return null
+
+  const trimmed = String(raw).trim()
+  if (!trimmed) return null
+
+  // Split on "-" and take only the first part
+  const dashIndex = trimmed.indexOf('-')
+  if (dashIndex === -1) {
+    // No dash found, return trimmed value
+    return trimmed.trim()
+  }
+
+  // Take everything before the dash and trim whitespace
+  return trimmed.substring(0, dashIndex).trim()
+}
+
+/**
  * Expand area name abbreviations to full names using pattern-based matching
  *
  * Strategy: Extract prefix patterns and map to canonical area names

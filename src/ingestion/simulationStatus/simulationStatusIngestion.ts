@@ -12,6 +12,7 @@ import {
   validateSimulationStatusEntities,
   linkSimulationToTooling
 } from './simulationStatusParser'
+import { truncateAreaName } from '../normalizers'
 import {
   SimulationStatusEntity,
   SimulationStatusValidationAnomaly,
@@ -30,6 +31,8 @@ export interface SimulationStatusIngestionResult {
   report: SimulationStatusValidationReport
   sourceFile: string
   sheetName: string
+  /** Area name extracted from the first cell of the sheet (e.g., "UNDERBODY" from "UNDERBODY - SIMULATION") */
+  documentAreaName: string | null
 }
 
 export interface SimulationStatusIngestionError {
@@ -67,6 +70,10 @@ export async function ingestSimulationStatusFile(
 
   // Find header row
   const rawData: any[] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
+
+  // Extract document area name from first cell (e.g., "UNDERBODY - SIMULATION" → "UNDERBODY")
+  const firstCellValue = rawData[0]?.[0]
+  const documentAreaName = truncateAreaName(firstCellValue)
   let headerRowIndex = -1
 
   for (let i = 0; i < Math.min(10, rawData.length); i++) {
@@ -133,7 +140,8 @@ export async function ingestSimulationStatusFile(
     entities,
     report,
     sourceFile: fileName,
-    sheetName: targetSheetName
+    sheetName: targetSheetName,
+    documentAreaName
   }
 }
 
