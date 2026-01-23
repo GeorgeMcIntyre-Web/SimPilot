@@ -129,10 +129,14 @@ function expandAreaAbbreviation(areaName: string): string {
 export function normalizeAreaName(raw: string | null | undefined): string | null {
   if (!raw) return null
 
-  const trimmed = String(raw).trim()
+  // Clean the area name first (truncate at hyphen) to ensure consistency
+  const cleaned = cleanAreaName(raw)
+  if (!cleaned) return null
+
+  const trimmed = cleaned.trim()
   if (!trimmed) return null
 
-  // First expand abbreviations
+  // Then expand abbreviations
   const expanded = expandAreaAbbreviation(trimmed)
 
   return expanded

@@ -24,6 +24,7 @@ import {
   checkToolingAreaMismatch,
   checkToolingStationMismatch
 } from './normalizeToolListRow'
+import { cleanAreaName } from '../normalizers'
 import { log } from '../../lib/log'
 
 // ============================================================================
@@ -67,7 +68,7 @@ export function normalizeV801Rows(
 
     // Section header row: Area Name exists but Station is empty
     if (areaNameCell && !station) {
-      currentArea = areaNameCell
+      currentArea = cleanAreaName(areaNameCell) || areaNameCell
       continue
     }
 
@@ -77,7 +78,8 @@ export function normalizeV801Rows(
     }
 
     // Use currentArea if this row has no area name
-    const areaName = areaNameCell || currentArea
+    const rawArea = areaNameCell || currentArea
+    const areaName = cleanAreaName(rawArea) || rawArea
 
     const equipmentNo = normalizeStr(raw['Equipment No'])
     const toolingRH = normalizeStr(raw['Tooling Number RH'])

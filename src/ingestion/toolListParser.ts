@@ -16,7 +16,7 @@ import {
   isCellStruck
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
-import { buildStationId, buildToolId, inferAssembliesAreaName } from './normalizers'
+import { buildStationId, buildToolId, inferAssembliesAreaName, cleanAreaName } from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -286,6 +286,12 @@ export async function parseToolListLegacy(
     // Infer area from filename if not in row (similar to Assemblies Lists)
     if (!areaName) {
       areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
+    }
+
+    // Clean area name as per user requirement (truncate at hyphen)
+    if (areaName) {
+      const cleaned = cleanAreaName(areaName)
+      if (cleaned) areaName = cleaned
     }
 
     const lineCode = getCellString(row, columnMap, 'LINE')

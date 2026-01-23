@@ -24,6 +24,7 @@ import {
   checkToolingAreaMismatch,
   checkToolingStationMismatch
 } from './normalizeToolListRow'
+import { cleanAreaName } from '../normalizers'
 import { log } from '../../lib/log'
 
 // ============================================================================
@@ -57,7 +58,8 @@ export function normalizeSTLARow(
   sourceFile: string,
   rowIndex: number
 ): NormalizedToolRow {
-  const areaName = normalizeStr(raw['SUB Area Name'])
+  const rawArea = normalizeStr(raw['SUB Area Name'])
+  const areaName = cleanAreaName(rawArea) || rawArea
   const station = normalizeStr(raw['Station']) || normalizeStr(raw['Work Cell / Station Group'])
   const equipmentNoShown = normalizeStr(raw['Equipment No Shown'])
   const equipmentNoOpposite = normalizeStr(raw['Equipment No Opposite'])

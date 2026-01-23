@@ -17,6 +17,7 @@ import {
   buildBMWCanonicalKey,
   buildDisplayCode
 } from './normalizeToolListRow'
+import { cleanAreaName } from '../normalizers'
 import { log } from '../../lib/log'
 
 // ============================================================================
@@ -46,7 +47,8 @@ export function normalizeBMWRow(
   sourceFile: string,
   rowIndex: number
 ): NormalizedToolRow {
-  const areaName = normalizeStr(raw['Area Name'])
+  const rawArea = normalizeStr(raw['Area Name'])
+  const areaName = cleanAreaName(rawArea) || rawArea
   const station = normalizeStr(raw['Station'])
   const equipmentType = normalizeStr(raw['Equipment Type'])
   const equipmentNo = normalizeStr(raw['Equipment No'])

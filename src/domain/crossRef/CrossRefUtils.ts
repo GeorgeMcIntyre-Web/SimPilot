@@ -89,6 +89,11 @@ export const normalizeAreaKey = (value: unknown): AreaKey => {
   const base = normalizeBasic(value)
   if (!base) return ''
 
+  // Clean hyphenated names: "BODYSIDES LH - SAFETY" -> "BODYSIDES LH"
+  if (base.includes('-')) {
+    return base.split('-')[0].trim()
+  }
+
   return base
 }
 
