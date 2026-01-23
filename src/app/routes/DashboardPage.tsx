@@ -63,8 +63,7 @@ export function DashboardPage() {
     }
 
     return Object.entries(grouped).map(([areaKey, areaCells]) => {
-      const lineCode = areaCells.find(c => c.lineCode)?.lineCode
-      const displayTitle = lineCode ? `${lineCode} - ${areaKey}` : areaKey
+      const displayTitle = areaKey
 
       return {
         areaKey,
