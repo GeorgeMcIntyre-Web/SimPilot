@@ -6,6 +6,7 @@
 
 import { Tool, ToolType, ToolMountType, AssetKind, EquipmentSourcing, generateId } from '../../domain/core'
 import { ToolEntity, ProjectHint } from './normalizeToolListRow'
+import { buildStationId } from '../normalizers'
 
 // ============================================================================
 // CONVERTER
@@ -27,7 +28,7 @@ export function toolEntityToTool(entity: ToolEntity, projectHint: ProjectHint): 
     areaName: entity.areaName || undefined,
     stationCode: entity.stationAtomic || undefined,
     stationNumber: entity.stationAtomic || undefined,
-    stationId: entity.stationAtomic || undefined,
+    stationId: buildStationId(entity.areaName, entity.stationAtomic),
     toolId: entity.canonicalKey,
     canonicalKey: entity.canonicalKey,
     toolNo: entity.displayCode,

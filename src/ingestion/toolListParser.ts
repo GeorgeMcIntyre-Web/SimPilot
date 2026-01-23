@@ -361,7 +361,7 @@ export async function parseToolListLegacy(
 
     // Build tool entity
     const tool: Tool = {
-      id: generateId('tool', toolId),
+      id: generateId('tool', canonicalToolId || toolId),
       kind,
       name: toolId,
       toolType,

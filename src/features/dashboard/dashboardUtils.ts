@@ -171,14 +171,27 @@ export const filterByArea = (cells: CellSnapshot[], areaKey: string | null): Cel
   return cells.filter(c => (c.areaKey ?? 'Unknown') === areaKey)
 }
 
+import { normalizeStationCode } from '../../ingestion/normalizers'
+
 /**
  * Filter cells by search term (matches station key)
  */
 export const filterBySearch = (cells: CellSnapshot[], searchTerm: string): CellSnapshot[] => {
   if (searchTerm.trim() === '') return cells
 
-  const term = searchTerm.toLowerCase()
-  return cells.filter(c => c.stationKey.toLowerCase().includes(term))
+  const normTerm = normalizeStationCode(searchTerm);
+  const searchLower = searchTerm.toLowerCase();
+
+  return cells.filter(c => {
+    // Try matching by normalized station code first (e.g., "010" matches "10")
+    if (normTerm) {
+      const normStation = normalizeStationCode(c.stationKey);
+      if (normStation && normStation.includes(normTerm)) return true;
+    }
+
+    // Fallback: check if search term is in raw station key
+    return c.stationKey.toLowerCase().includes(searchLower);
+  })
 }
 
 // ============================================================================

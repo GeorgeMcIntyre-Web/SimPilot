@@ -15,6 +15,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { EquipmentSourcing, UnifiedAsset } from '../../domain/UnifiedModel';
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes';
 import { getMetadataValue } from '../../utils/metadata';
+import { normalizeStationCode, normalizeAreaName } from '../../ingestion/normalizers';
 
 // ============================================================================
 // FILTER TYPES
@@ -117,8 +118,10 @@ function matchesSearchTerm(asset: AssetWithMetadata, term: string): boolean {
     return true;
   }
 
-  // Check station
-  if (normalizeForSearch(asset.stationNumber).includes(searchLower)) {
+  // Check station - use robust normalization for station matches
+  const normStation = normalizeStationCode(asset.stationNumber);
+  const normTerm = normalizeStationCode(term);
+  if (normStation && normTerm && normStation.includes(normTerm)) {
     return true;
   }
 
@@ -202,7 +205,14 @@ function matchesHierarchyFilter(asset: AssetWithMetadata, filter: AssetsFilterSt
   // Area filter
   if (filter.area !== null) {
     const assetArea = asset.areaName ?? extractMetadataField<string>(asset, 'areaName');
-    if (assetArea === undefined || assetArea !== filter.area) {
+    if (assetArea === undefined) {
+      return false;
+    }
+
+    const normAssetArea = normalizeAreaName(assetArea);
+    const normFilterArea = normalizeAreaName(filter.area);
+
+    if (normAssetArea !== normFilterArea) {
       return false;
     }
   }
@@ -218,7 +228,14 @@ function matchesHierarchyFilter(asset: AssetWithMetadata, filter: AssetsFilterSt
   // Station filter
   if (filter.station !== null) {
     const assetStation = asset.stationNumber ?? extractMetadataField<string>(asset, 'station');
-    if (assetStation === undefined || assetStation !== filter.station) {
+    if (assetStation === undefined) {
+      return false;
+    }
+
+    const normAssetStation = normalizeStationCode(assetStation);
+    const normFilterStation = normalizeStationCode(filter.station);
+
+    if (normAssetStation !== normFilterStation) {
       return false;
     }
   }

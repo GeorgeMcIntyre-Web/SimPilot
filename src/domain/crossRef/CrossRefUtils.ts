@@ -41,6 +41,13 @@ export const normalizeStationId = (value: unknown): StationKey => {
   processed = processed.replace(/^ST\.\s*/i, '')
   processed = processed.replace(/^OP[\-\s]*/i, '')
 
+  // Strip leading zeros from numeric parts (e.g., "010" -> "10")
+  // This ensures consistency between different source files
+  processed = processed.replace(/(\d+)/g, (match) => {
+    const num = parseInt(match, 10)
+    return num.toString()
+  })
+
   // Normalize separators to underscores
   return processed.replace(/[\s\-]+/g, '_')
 }

@@ -2,13 +2,12 @@ import { ArrowUpDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { coreStore } from '../../../domain/coreStore';
 import { normalizeStationId } from '../../../domain/crossRef/CrossRefUtils';
-import { normalizeStationCode } from '../../../ingestion/normalizers';
+import { normalizeStationCode, normalizeAreaName } from '../../../ingestion/normalizers';
 import type { Column } from '../../../ui/components/DataTable';
 import type { AssetWithMetadata } from '../../../features/assets';
-import type { ReuseAllocationStatus, DetailedAssetKind } from '../../../ingestion/excelIngestionTypes';
-import { AssetKindBadge, SourcingBadge, ReuseStatusBadge, BottleneckBadge } from '../../../features/assets/AssetBadges';
+import { AssetKindBadge } from '../../../features/assets/AssetBadges';
 import type { SortKey } from '../../hooks/assets/useAssetsSorting';
-import type { BottleneckSeverity, BottleneckReason, WorkflowStage } from '../../../domain/toolingBottleneckStore';
+import type { DetailedAssetKind } from '../../../ingestion/excelIngestionTypes';
 import { getMetadataValue } from '../../../utils/metadata';
 
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
@@ -34,8 +33,7 @@ function SortHeader({ label, keyName, onSort }: SortHeaderProps) {
 }
 
 export function createAssetsTableColumns(
-  onSort: (key: SortKey) => void,
-  assetBottleneckMap: Map<string, { stage: WorkflowStage; reason: BottleneckReason; severity: BottleneckSeverity }>
+  onSort: (key: SortKey) => void
 ): Column<AssetWithMetadata>[] {
   return [
     {
@@ -79,14 +77,42 @@ export function createAssetsTableColumns(
           asset.stationNumber ||
           (asset.metadata?.stationCode as string) ||
           '';
+        const area =
+          asset.areaName ||
+          extractMetadata<string>(asset, 'areaName') ||
+          extractMetadata<string>(asset, 'areaGroup') ||
+          (asset as any).areaName ||
+          '';
+
         if (!station) return '—';
 
-        // Normalize using the same logic as ingestion to find a matching cell
-        const normalizedStation = normalizeStationCode(station) || normalizeStationId(station);
-        const cell = coreStore.getState().cells.find(c => {
-          const normalizedCellCode = normalizeStationCode(c.code) || normalizeStationId(c.code);
-          return normalizedCellCode === normalizedStation;
-        });
+        // Preferred: Match by canonical stationId if available
+        let cell = asset.stationId
+          ? coreStore.getState().cells.find(c => c.stationId === asset.stationId)
+          : undefined;
+
+        // Fallback: Match by station number AND area name
+        if (!cell) {
+          const normalizedStation = normalizeStationCode(station) || normalizeStationId(station);
+          const normAssetAreaName = normalizeAreaName(area);
+
+          cell = coreStore.getState().cells.find(c => {
+            const normalizedCellCode = normalizeStationCode(c.code) || normalizeStationId(c.code);
+            
+            // Try matching by station plus a check on the area if both are available
+            const stationMatches = normalizedCellCode === normalizedStation;
+            if (!stationMatches) return false;
+            
+            // If we have an area name for the asset, try to match it against the cell's area name
+            if (normAssetAreaName) {
+              const cellArea = coreStore.getState().areas.find(a => a.id === c.areaId);
+              const normCellAreaName = normalizeAreaName(cellArea?.name || '');
+              return normAssetAreaName === normCellAreaName;
+            }
+
+            return true;
+          });
+        }
 
         if (!cell) return station;
         return (

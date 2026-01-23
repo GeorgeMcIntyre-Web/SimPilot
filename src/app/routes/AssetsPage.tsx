@@ -28,12 +28,12 @@ import {
 } from '../../features/assets';
 import type { ReuseAllocationStatus } from '../../ingestion/excelIngestionTypes';
 import type { EquipmentSourcing } from '../../domain/UnifiedModel';
-import { Filter, ExternalLink } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import { AssetsFilterBar, AssetsSummaryStrip } from '../../features/assets/AssetsFilters';
 import { useAssetBottlenecks } from '../hooks/assets/useAssetBottlenecks';
 import { useAssetsSorting } from '../hooks/assets/useAssetsSorting';
 import { createAssetsTableColumns } from '../components/assets/AssetsTableColumns';
-import { Link } from 'react-router-dom';
+
 import { getMetadataValue } from '../../utils/metadata';
 
 // ============================================================================
@@ -98,34 +98,7 @@ export function AssetsPage() {
     [filteredByBottleneck]
   );
 
-  // Open in Simulation Status
-  const handleOpenInSimulation = useCallback((asset: AssetWithMetadata) => {
-    const params = new URLSearchParams();
-    const stationId =
-      asset.stationId ??
-      extractMetadata<string>(asset, 'stationId');
-    const areaName = asset.areaName ?? extractMetadata<string>(asset, 'areaName');
-    const lineCode = extractMetadata<string>(asset, 'lineCode') ?? extractMetadata<string>(asset, 'assemblyLine');
-    const station = asset.stationNumber ?? extractMetadata<string>(asset, 'station');
 
-    // Prefer navigating directly to Simulation tab with station preselected
-    if (stationId) {
-      params.set('stationId', stationId);
-    }
-    if (areaName !== undefined) {
-      params.set('area', areaName);
-    }
-    if (lineCode !== undefined) {
-      params.set('line', lineCode);
-    }
-    if (station !== undefined) {
-      params.set('station', station);
-    }
-
-    const queryString = params.toString();
-    const path = queryString.length > 0 ? `/simulation?${queryString}` : '/simulation';
-    navigate(path);
-  }, [navigate]);
 
   // Summary strip filter click handler
   const handleSummaryFilterClick = useCallback(
@@ -142,8 +115,8 @@ export function AssetsPage() {
 
   // Table columns
   const columns = useMemo(
-    () => createAssetsTableColumns(handleSort, assetBottleneckMap),
-    [handleSort, assetBottleneckMap]
+    () => createAssetsTableColumns(handleSort),
+    [handleSort]
   );
 
   // Move hooks before early return to comply with React rules

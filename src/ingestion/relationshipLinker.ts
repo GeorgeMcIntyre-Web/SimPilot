@@ -37,41 +37,6 @@ export interface LinkingResult {
     warnings: IngestionWarning[]
 }
 
-// ============================================================================
-// LEGACY NORMALIZATION (kept for backward compatibility)
-// ============================================================================
-// NOTE: New code should use normalizers.ts for canonical ID building
-
-/**
- * @deprecated Use normalizers.ts normalizeStationCode instead
- */
-export function normalizeStationCode(code: string | undefined | null): string {
-    if (!code) return ''
-
-    let normalized = code
-        .toLowerCase()
-        .replace(/^(op|station|st)[-_\s]*/i, '')
-        .trim()
-
-    normalized = normalized.replace(/(\d+)/g, (match) => {
-        const num = parseInt(match, 10)
-        return num.toString()
-    })
-
-    return normalized
-}
-
-/**
- * @deprecated Use normalizers.ts normalizeAreaName instead
- */
-export function normalizeAreaName(name: string | undefined | null): string {
-    if (!name) return ''
-
-    return name
-        .toLowerCase()
-        .trim()
-        .replace(/\s+/g, ' ')
-}
 
 // ============================================================================
 // INDEXING (V2 - Canonical StationId)

@@ -13,7 +13,7 @@ import {
   CellValue
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
-import { buildStationId, buildRobotId, inferAssembliesAreaName } from './normalizers'
+import { buildStationId, buildRobotId, inferAssembliesAreaName, normalizeStationCode } from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -263,7 +263,7 @@ export async function parseRobotList(
 
     // Construct robot number/id using the human-readable robot number (prefer "ROBO NO. NEW")
     // Keep delimiters consistent (hyphens) so UI robot numbers align with IDs
-    const normalizedStation = (stationCode || '').replace(/\s+/g, '')
+    const normalizedStation = normalizeStationCode(stationCode) || (stationCode || '').replace(/\s+/g, '')
     const normalizedRobotNumber = robotNumber.replace(/\s+/g, '')
     const robotId = generateId('robot', normalizedStation, normalizedRobotNumber)
 

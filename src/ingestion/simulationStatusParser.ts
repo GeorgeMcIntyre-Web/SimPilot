@@ -23,7 +23,7 @@ import {
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 import { deriveCustomerFromFileName } from './customerMapping'
-import { buildStationId } from './normalizers'
+import { buildStationId, normalizeStationCode } from './normalizers'
 
 // ============================================================================
 // VACUUM PARSER TYPES
@@ -626,7 +626,7 @@ export async function parseSimulationStatus(
 
     // Build cell
     const cell: Cell = {
-      id: generateId(area.id, 'cell', firstRow.stationCode),
+      id: generateId(area.id, 'cell', normalizeStationCode(firstRow.stationCode) || firstRow.stationCode),
       projectId: project.id,
       areaId: area.id,
       name: `${firstRow.areaName} - ${firstRow.stationCode}`,

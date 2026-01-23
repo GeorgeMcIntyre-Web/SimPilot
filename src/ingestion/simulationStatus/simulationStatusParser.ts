@@ -14,6 +14,7 @@ import {
   SimulationMilestones,
   SIMULATION_MILESTONES
 } from './simulationStatusTypes'
+import { normalizeAreaName, normalizeStationCode } from '../normalizers'
 
 // ============================================================================
 // HELPERS
@@ -319,16 +320,25 @@ export function validateSimulationStatusEntities(
  * Check if a simulation station matches a tool list station (handles ranges)
  */
 export function stationMatches(simStation: string, toolStation: string): boolean {
-  // Exact match: "100" === "100"
-  if (simStation === toolStation) return true
+  const normSim = normalizeStationCode(simStation)
+  const normTool = normalizeStationCode(toolStation)
 
-  // Handle range: "115" in "110-120"
+  if (!normSim || !normTool) return false
+
+  // Exact match: "10" === "10"
+  if (normSim === normTool) return true
+
+  // Handle range in toolStation: "10-20"
   if (toolStation.includes('-')) {
-    const [start, end] = toolStation.split('-').map(s => parseInt(s.trim(), 10))
-    const simNum = parseInt(simStation, 10)
+    const parts = toolStation.split('-')
+    if (parts.length === 2) {
+      const start = parseInt(normalizeStationCode(parts[0]) || '', 10)
+      const end = parseInt(normalizeStationCode(parts[1]) || '', 10)
+      const simNum = parseInt(normSim, 10)
 
-    if (!isNaN(start) && !isNaN(end) && !isNaN(simNum)) {
-      return simNum >= start && simNum <= end
+      if (!isNaN(start) && !isNaN(end) && !isNaN(simNum)) {
+        return simNum >= start && simNum <= end
+      }
     }
   }
 
@@ -346,10 +356,13 @@ export function linkSimulationToTooling(
     const linkedKeys: string[] = []
 
     for (const toolEntity of toolEntities) {
-      // Match by area
-      if (toolEntity.areaName !== simEntity.area) continue
+      // Match by area (normalized)
+      const normToolArea = normalizeAreaName(toolEntity.areaName)
+      const normSimArea = normalizeAreaName(simEntity.area)
+      
+      if (normToolArea && normSimArea && normToolArea !== normSimArea) continue
 
-      // Match by station (handle ranges)
+      // Match by station (handle ranges, normalized)
       if (!stationMatches(simEntity.station, toolEntity.stationGroup)) continue
 
       // This tool entity is used at this station

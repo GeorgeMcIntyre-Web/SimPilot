@@ -390,7 +390,7 @@ export async function parseAssembliesList(
 
     // Create Tool entity
     const tool: Tool = {
-      id: generateId(),
+      id: generateId('tool', canonicalToolId || toolNumber),
       kind: toolType === 'SPOT_WELD' ? 'GUN' : 'TOOL',
       name: toolNumber,
       toolType,
