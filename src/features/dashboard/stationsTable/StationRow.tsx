@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { cn } from '../../../ui/lib/utils';
 import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes';
-import { getCompletionPercent } from '../dashboardUtils';
+import { getCompletionPercent, getStatusLabel, StatusLabel } from '../dashboardUtils';
 
 type Density = 'comfortable' | 'compact';
 
@@ -20,27 +20,17 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
 
-  const status = (() => {
-    if (completion === null) {
-      return { label: 'No data', className: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }
-    }
-    if (completion >= 95) {
-      return { label: 'Complete', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200' }
-    }
-    if (completion >= 80) {
-      return { label: 'Nearly Complete', className: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-200' }
-    }
-    if (completion >= 60) {
-      return { label: 'On Track', className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200' }
-    }
-    if (completion >= 30) {
-      return { label: 'In Progress', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200' }
-    }
-    if (completion > 0) {
-      return { label: 'Starting', className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200' }
-    }
-    return { label: 'Not Started', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200' }
-  })()
+  const label = getStatusLabel(completion);
+  
+  const statusClasses: Record<StatusLabel, string> = {
+    'Complete': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+    'Nearly Complete': 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-200',
+    'On Track': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200',
+    'In Progress': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200',
+    'Starting': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200',
+    'Not Started': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200',
+    'No data': 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+  };
 
   return (
     <tr
@@ -114,8 +104,8 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         )}
       </td>
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
-        <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 font-medium', status.className)}>
-          {status.label}
+        <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 font-medium', statusClasses[label])}>
+          {label}
         </span>
       </td>
     </tr>

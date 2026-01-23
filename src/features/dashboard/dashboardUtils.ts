@@ -125,31 +125,41 @@ export const countByRisk = (cells: CellSnapshot[]): AreaCounts => {
 }
 
 // ============================================================================
+// STATUS LABELS
+// ============================================================================
+
+export type StatusLabel = 'Complete' | 'Nearly Complete' | 'On Track' | 'In Progress' | 'Starting' | 'Not Started' | 'No data'
+
+/**
+ * Derives status label from completion percentage
+ */
+export const getStatusLabel = (completion: number | null): StatusLabel => {
+  if (completion === null) return 'No data'
+  if (completion >= 95) return 'Complete'
+  if (completion >= 80) return 'Nearly Complete'
+  if (completion >= 60) return 'On Track'
+  if (completion >= 30) return 'In Progress'
+  if (completion > 0) return 'Starting'
+  return 'Not Started'
+}
+
+// ============================================================================
 // FILTER TYPES
 // ============================================================================
 
-export type SeverityFilter = 'all' | 'error' | 'warning' | 'none'
+export type SeverityFilter = 'all' | StatusLabel
 
 /**
- * Filter cells by severity
+ * Filter cells by progress status label
  */
 export const filterBySeverity = (cells: CellSnapshot[], filter: SeverityFilter): CellSnapshot[] => {
   if (filter === 'all') return cells
 
-  if (filter === 'error') {
-    return cells.filter(c => c.flags.some(f => f.severity === 'ERROR'))
-  }
-
-  if (filter === 'warning') {
-    return cells.filter(c => {
-      const hasWarning = c.flags.some(f => f.severity === 'WARNING')
-      const hasError = c.flags.some(f => f.severity === 'ERROR')
-      return hasWarning && !hasError
-    })
-  }
-
-  // 'none' - no flags
-  return cells.filter(c => c.flags.length === 0)
+  // Handle status label filtering
+  return cells.filter(c => {
+    const completion = getCompletionPercent(c)
+    return getStatusLabel(completion) === filter
+  })
 }
 
 /**

@@ -45,10 +45,14 @@ export function FilterControls({
               onChange={(e) => onSeverityChange(e.target.value as SeverityFilter)}
               className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="all">All Stations</option>
-              <option value="error">Critical Only</option>
-              <option value="warning">At Risk Only</option>
-              <option value="none">On Track Only</option>
+              <option value="all">All Statuses</option>
+              <option value="Complete">Complete</option>
+              <option value="Nearly Complete">Nearly Complete</option>
+              <option value="On Track">On Track</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Starting">Starting</option>
+              <option value="Not Started">Not Started</option>
+              <option value="No data">No data</option>
             </select>
           </div>
         </div>
