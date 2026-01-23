@@ -913,9 +913,9 @@ async function ingestFilesInternal(
         metadata: {
           ...(r.metadata || {}),
           // Surface robot application/function for downstream tables
-          function: r.application,
-          application: r.application,
-          applicationCode: r.applicationCode,
+          function: (r as any).application,
+          application: (r as any).application,
+          applicationCode: (r as any).applicationCode,
           robotType: (r as any).robotType || r.metadata?.robotType || r.metadata?.['Robot Type'],
           installStatus:
             (r as any).installStatus ||

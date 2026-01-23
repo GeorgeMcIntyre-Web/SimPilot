@@ -212,7 +212,8 @@ export function vacuumParseSimulationSheet(
   rows: CellValue[][],
   headerRowIndex: number,
   fileName: string,
-  sheetName: string
+  sheetName: string,
+  globalAreaName?: string
 ): { rows: VacuumParsedRow[]; warnings: IngestionWarning[] } {
   const warnings: IngestionWarning[] = []
   const vacuumRows: VacuumParsedRow[] = []
@@ -341,6 +342,7 @@ export function vacuumParseSimulationSheet(
     }
 
     // Determine final Area Name and Code
+    if (!areaName && globalAreaName) areaName = globalAreaName;
     if (!areaName && areaCode) areaName = areaCode;
     if (!areaCode && areaName) areaCode = areaName;
 
@@ -467,12 +469,31 @@ export async function parseSimulationStatus(
       continue
     }
 
+    // Extract global area name from first cell (A1) or title row
+    // User report: "UNDERBODY - SIMULATION" in first cell
+    let globalAreaName: string | undefined
+    if (rows.length > 0 && rows[0].length > 0) {
+      const titleCell = String(rows[0][0] || '').trim()
+      globalAreaName = extractAreaNameFromTitle(titleCell)
+      if (globalAreaName) {
+        log.debug(`[Parser] ${sheetName}: Found global area name in A1: "${globalAreaName}"`)
+      }
+    }
+
+    // Fallback: Try to derive from filename if A1 didn't work
+    if (!globalAreaName) {
+      // e.g. "FORD_V801_Underbody_Segment1..." -> "Underbody Segment1"
+      // But we have deriveProjectName doing part of this. 
+      // Let's rely on A1 for now as per user request.
+    }
+
     // Use vacuum parser
     const { rows: vacuumRows, warnings: parseWarnings } = vacuumParseSimulationSheet(
       rows,
       headerRowIndex,
       fileName,
-      sheetName
+      sheetName,
+      globalAreaName
     )
 
     warnings.push(...parseWarnings)
@@ -887,4 +908,20 @@ function extractRobotsFromVacuumRows(
   }
 
   return { robots, warnings }
+}
+
+/**
+ * Extract area name from title cell
+ * e.g., "UNDERBODY - SIMULATION" -> "UNDERBODY"
+ */
+function extractAreaNameFromTitle(titleCell: string): string | undefined {
+  if (!titleCell) return undefined
+  
+  // Try splitting by " - "
+  const parts = titleCell.split(' - ')
+  if (parts.length > 0 && parts[0].trim().length > 0) {
+    return parts[0].trim()
+  }
+  
+  return undefined
 }

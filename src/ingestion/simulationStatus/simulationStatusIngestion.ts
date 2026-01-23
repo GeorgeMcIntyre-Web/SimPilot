@@ -133,6 +133,18 @@ export async function ingestSimulationStatusFile(
     .map(row => simulationRowToEntity(row, targetSheetName, anomalies))
     .filter((e): e is NonNullable<typeof e> => e !== null)
 
+  // Log detected areas and stations
+  const uniqueAreas = Array.from(new Set(entities.map(e => e.area))).filter(Boolean)
+  const uniqueStations = Array.from(new Set(entities.map(e => e.station))).filter(Boolean).sort()
+
+  console.log('--------------------------------------------------')
+  console.log(`[Simulation Ingestion] File: ${fileName}`)
+  console.log(`[Simulation Ingestion] Document Area: ${documentAreaName || 'Unknown'}`)
+  console.log(`[Simulation Ingestion] Rows/Robots Found: ${entities.length}`)
+  console.log(`[Simulation Ingestion] Areas Found: ${uniqueAreas.join(', ')}`)
+  console.log(`[Simulation Ingestion] Stations Found: ${uniqueStations.join(', ')}`)
+  console.log('--------------------------------------------------')
+
   // Validate
   const report = validateSimulationStatusEntities(entities, dataWithHeaders.length, anomalies)
 
