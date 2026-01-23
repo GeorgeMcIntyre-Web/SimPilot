@@ -16,7 +16,6 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
   const application = cell.simulationStatus?.application ?? '-';
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
   const robotCount = cell.robots?.length ?? 0;
-  const issueCount = cell.flags?.length ?? 0;
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
 
@@ -64,18 +63,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}>
         {robotCount}
       </td>
-      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
-        <span
-          className={cn(
-            'inline-flex items-center justify-center rounded-full px-2.5 py-1 font-semibold min-w-[2.5rem]',
-            issueCount > 0
-              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200'
-              : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-          )}
-        >
-          {issueCount}
-        </span>
-      </td>
+
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {completion !== null ? (
           <div className="flex items-center gap-2">
