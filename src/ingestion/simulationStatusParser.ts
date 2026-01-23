@@ -45,7 +45,8 @@ export interface SimulationMetric {
  * A parsed row with core fields + vacuum-captured metrics.
  */
 export interface VacuumParsedRow {
-  area: string
+  areaCode: string
+  areaName: string
   assemblyLine?: string
   stationKey: string
   robotCaption?: string
@@ -58,6 +59,7 @@ export interface VacuumParsedRow {
 // Legacy type for backward compatibility
 export interface ParsedSimulationRow {
   engineer?: string
+  areaCode?: string
   areaName: string
   lineCode: string
   stationCode: string
@@ -95,7 +97,8 @@ export interface SimulationStatusResult {
 
 // Column name aliases for flexible matching
 const COLUMN_ALIASES: Record<string, string[]> = {
-  'AREA': ['AREA', 'AREA NAME'],
+  'AREA_CODE': ['AREA', 'AREA CODE', 'ZONE', 'SHORT NAME'],
+  'AREA_NAME': ['AREA NAME', 'AREA DESCRIPTION', 'FULL NAME'],
   'ASSEMBLY LINE': ['ASSEMBLY LINE', 'LINE', 'LINE CODE'],
   'STATION': ['STATION', 'STATION CODE', 'STATION KEY'],
   'ROBOT': ['ROBOT', 'ROBOT CAPTION', 'ROBOT NAME'],
@@ -258,6 +261,9 @@ export function vacuumParseSimulationSheet(
 
       const headerText = String(headerRow[i] || '').toUpperCase().trim()
 
+      // Be strict with 'AREA' partial matching to avoid capturing 'AREA NAME' falsely if strict aliases fail
+      // But aliases usually handle this.
+      
       for (const alias of aliases) {
         if (headerText.includes(alias.toUpperCase())) {
           coreIndices[coreField] = i
@@ -309,27 +315,37 @@ export function vacuumParseSimulationSheet(
     }     
 
     // Extract core fields
-    let area = coreIndices['AREA'] !== undefined ? String(row[coreIndices['AREA']] || '').trim() : ''
+    // AREA_CODE (e.g. 8X)
+    let areaCode = coreIndices['AREA_CODE'] !== undefined ? String(row[coreIndices['AREA_CODE']] || '').trim() : ''
+    // AREA_NAME (e.g. UNDERBODY)
+    let areaName = coreIndices['AREA_NAME'] !== undefined ? String(row[coreIndices['AREA_NAME']] || '').trim() : ''
+    
     const assemblyLine = coreIndices['ASSEMBLY LINE'] !== undefined ? String(row[coreIndices['ASSEMBLY LINE']] || '').trim() : undefined
     const stationKey = coreIndices['STATION'] !== undefined ? String(row[coreIndices['STATION']] || '').trim() : ''
     const robotCaption = coreIndices['ROBOT'] !== undefined ? String(row[coreIndices['ROBOT']] || '').trim() || undefined : undefined
     const application = coreIndices['APPLICATION'] !== undefined ? String(row[coreIndices['APPLICATION']] || '').trim() || undefined : undefined
     const personResponsible = coreIndices['PERSONS RESPONSIBLE'] !== undefined ? String(row[coreIndices['PERSONS RESPONSIBLE']] || '').trim() || undefined : undefined
 
-    // If AREA is missing, try to derive it from STATION
-    // e.g., "9B-100" -> "9B", "ST010" -> "ST010" (keep as is if no pattern)
-    if (!area && stationKey) {
+    // Fallback logic for Area Code / Name
+    // If only one is present, assume it fulfills both roles temporarily, or prioritize correctly
+    
+    // If AREA missing but STATION present, try to derive AREA from STATION
+    if (!areaCode && stationKey) {
       const areaMatch = stationKey.match(/^([A-Z0-9]+)[-_]/)
       if (areaMatch) {
-        area = areaMatch[1]
+        areaCode = areaMatch[1]
       } else {
         // If no delimiter, use the station as area (e.g., BMW "ST010")
-        area = stationKey
+        areaCode = stationKey
       }
     }
 
+    // Determine final Area Name and Code
+    if (!areaName && areaCode) areaName = areaCode;
+    if (!areaCode && areaName) areaCode = areaName;
+
     // Skip rows without critical data
-    if (!area || !stationKey) {
+    if (!areaCode || !stationKey) {
       // Build a short preview to help diagnose why the row was skipped
       const rowPreview = row
         .slice(0, 6)
@@ -344,7 +360,7 @@ export function vacuumParseSimulationSheet(
           fileName,
           sheetName,
           rowIndex: i + 1,
-          reason: `Missing required fields: AREA or STATION (area="${area || 'blank'}", station="${stationKey || 'blank'}", preview="${rowPreview}")`
+          reason: `Missing required fields: AREA or STATION (area="${areaCode || 'blank'}", station="${stationKey || 'blank'}", preview="${rowPreview}")`
         }))
       }
       continue
@@ -365,7 +381,8 @@ export function vacuumParseSimulationSheet(
     }
 
     vacuumRows.push({
-      area,
+      areaCode,
+      areaName,
       assemblyLine,
       stationKey,
       robotCaption,
@@ -494,7 +511,8 @@ export async function parseSimulationStatus(
 
       return {
         engineer: vr.personResponsible,
-        areaName: vr.area,
+        areaName: vr.areaName, // Use the proper area name (e.g. UNDERBODY)
+        areaCode: vr.areaCode, // Preserve area code (e.g. 8X)
         lineCode: vr.assemblyLine || '',
         stationCode: vr.stationKey,
         robotName: vr.robotCaption,
@@ -546,8 +564,8 @@ export async function parseSimulationStatus(
       area = {
         id: generateId(project.id, 'area', firstRow.areaName.replace(/\s+/g, '-')),
         projectId: project.id,
-        name: firstRow.areaName,
-        code: firstRow.lineCode
+        name: firstRow.areaName, // Human readable name (e.g., UNDERBODY)
+        code: firstRow.areaCode || firstRow.lineCode // Prefer Area Code (8X), fallback to Line Code
       }
       areaMap.set(areaKey, area)
       areas.push(area)
@@ -610,7 +628,32 @@ export async function parseSimulationStatus(
     primarySheetName
   )
   warnings.push(...robotWarnings)
+  
+  const areaNames = areas.map(a => `${a.name} (${a.code || 'No Code'})`).join(', ')
+  
+  // Console debug message for import summary
+  console.log('---------------------------------------------------------')
+  log.info(`[Parser] Simulation document imported: ${fileName}`)
+  console.log(`  - Project: ${projectName}`)
+  console.log(`  - Total Areas: ${areas.length} [${areaNames}]`)
+  console.log(`  - Total Stations: ${cells.length}`)
+  console.log(`  - Total Robots: ${robotsFromSimStatus ? robotsFromSimStatus.length : 0}`)
 
+  areas.forEach(area => {
+    const areaStations = cells
+      .filter(c => c.areaId === area.id)
+      .map(c => c.code)
+    
+    // Truncate list if too long to avoid console spam
+    const stationList = areaStations.length > 20
+      ? areaStations.slice(0, 20).join(', ') + ` ... (${areaStations.length - 20} more)`
+      : areaStations.join(', ')
+
+    console.log(`  - Area: ${area.name} (${area.code})`)
+    console.log(`    Stations (${areaStations.length}): ${stationList}`)
+  })
+  console.log('---------------------------------------------------------')
+  
   return {
     projects: [project],
     areas,
@@ -837,7 +880,7 @@ function extractRobotsFromVacuumRows(
     robots.push({
       stationKey: row.stationKey,
       robotCaption,
-      areaKey: row.area,
+      areaKey: row.areaCode, // Use areaCode as the key
       application: row.application,
       sourceRowIndex: row.sourceRowIndex
     })

@@ -62,16 +62,25 @@ export function DashboardPage() {
       grouped[key] = grouped[key] ? [...grouped[key], cell] : [cell]
     }
 
-    return Object.entries(grouped).map(([areaKey, areaCells]) => ({
-      areaKey,
-      counts: countByRisk(areaCells)
-    }))
+    return Object.entries(grouped).map(([areaKey, areaCells]) => {
+      const lineCode = areaCells.find(c => c.lineCode)?.lineCode
+      const displayTitle = lineCode ? `${lineCode} - ${areaKey}` : areaKey
+
+      return {
+        areaKey,
+        displayTitle,
+        counts: countByRisk(areaCells)
+      }
+    })
   }, [visibleCells])
 
   const filteredAreas = useMemo(() => {
     const term = areaSearch.trim().toLowerCase()
     let list = term
-      ? areaData.filter(({ areaKey }) => areaKey.toLowerCase().includes(term))
+      ? areaData.filter(({ areaKey, displayTitle }) => 
+          areaKey.toLowerCase().includes(term) || 
+          (displayTitle && displayTitle.toLowerCase().includes(term))
+        )
       : areaData
 
     if (areaFilter === 'with-risk') {

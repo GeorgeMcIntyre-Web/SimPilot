@@ -10,6 +10,7 @@ import { FixedSizeGrid as VirtualGrid } from 'react-window'
 
 interface AreaOverviewCardProps {
   areaKey: string
+  displayTitle?: string
   counts: AreaCounts
   isSelected?: boolean
   onClick?: () => void
@@ -18,6 +19,7 @@ interface AreaOverviewCardProps {
 
 export function AreaOverviewCard({
   areaKey,
+  displayTitle,
   counts,
   isSelected = false,
   onClick,
@@ -83,9 +85,9 @@ export function AreaOverviewCard({
             <div className="min-w-0">
               <h3
                 className="font-semibold text-gray-900 dark:text-white leading-tight whitespace-normal line-clamp-2"
-                title={areaKey}
+                title={displayTitle || areaKey}
               >
-                {areaKey}
+                {displayTitle || areaKey}
               </h3>
               <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
                 {ok} healthy · {atRisk} risk · {critical} critical
@@ -172,6 +174,7 @@ export function AreaOverviewCard({
 interface AreaCardsGridProps {
   areas: Array<{
     areaKey: string
+    displayTitle?: string
     counts: AreaCounts
   }>
   selectedArea: string | null
@@ -240,10 +243,11 @@ export function AreaCardsGrid({
         style={{ maxHeight: maxGridHeight }}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
-          {areas.map(({ areaKey, counts }) => (
+          {areas.map(({ areaKey, displayTitle, counts }) => (
             <AreaOverviewCard
               key={areaKey}
               areaKey={areaKey}
+              displayTitle={displayTitle}
               counts={counts}
               isSelected={selectedArea === areaKey}
               density={density}
@@ -278,7 +282,7 @@ export function AreaCardsGrid({
         {({ columnIndex, rowIndex, style }) => {
           const idx = rowIndex * columns + columnIndex
           if (idx >= areas.length) return null
-          const { areaKey, counts } = areas[idx]
+          const { areaKey, displayTitle, counts } = areas[idx]
 
           const adjustedStyle: React.CSSProperties = {
             ...style,
@@ -291,6 +295,7 @@ export function AreaCardsGrid({
             <div style={adjustedStyle}>
               <AreaOverviewCard
                 areaKey={areaKey}
+                displayTitle={displayTitle}
                 counts={counts}
                 isSelected={selectedArea === areaKey}
                 density={density}
