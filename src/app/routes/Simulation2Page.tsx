@@ -7,10 +7,28 @@ import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils'
 import { coreStore } from '../../domain/coreStore'
 
+const formatStationLabel = (cell: CellSnapshot): string => {
+  const rawStation =
+    (cell.simulationStatus?.raw as any)?.stationCode ||
+    cell.displayCode ||
+    cell.stationKey ||
+    ''
+  const trimmed = typeof rawStation === 'string' ? rawStation.trim() : ''
+  if (!trimmed) return '-'
+  return trimmed.replace(/_/g, '-')
+}
+
+const formatCompletionValue = (cell: CellSnapshot): string => {
+  const value = cell.simulationStatus?.firstStageCompletion
+  if (typeof value !== 'number') return '-'
+  return `${Math.round(value)}%`
+}
+
 function Simulation2Page() {
   const { cells, loading, hasData } = useCrossRefData()
   const tableCells = hasData ? cells : []
   const navigate = useNavigate()
+  const [selectedCell, setSelectedCell] = useState<CellSnapshot | null>(null)
 
   const handleStationNavigate = (cell: CellSnapshot) => {
     const normalizedStationKey = normalizeStationId(cell.stationKey)
@@ -23,29 +41,12 @@ function Simulation2Page() {
     }
   }
 
-  const Simulation2StationsTable = ({ cells }: { cells: CellSnapshot[] }) => {
+  const Simulation2StationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (cell: CellSnapshot) => void }) => {
     type SortKey = 'station' | 'area' | 'simulator' | 'completion'
 
     const [search, setSearch] = useState('')
     const [sortKey, setSortKey] = useState<SortKey>('station')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
-
-    const formatStationLabel = (cell: CellSnapshot): string => {
-      const rawStation =
-        (cell.simulationStatus?.raw as any)?.stationCode ||
-        cell.displayCode ||
-        cell.stationKey ||
-        ''
-      const trimmed = typeof rawStation === 'string' ? rawStation.trim() : ''
-      if (!trimmed) return '-'
-      return trimmed.replace(/_/g, '-')
-    }
-
-    const formatCompletion = (cell: CellSnapshot): string => {
-      const value = cell.simulationStatus?.firstStageCompletion
-      if (typeof value !== 'number') return '-'
-      return `${Math.round(value)}%`
-    }
 
     const filteredAndSorted = useMemo(() => {
       const term = search.trim().toLowerCase()
@@ -147,7 +148,8 @@ function Simulation2Page() {
               {filteredAndSorted.map(cell => (
                 <tr
                   key={cell.stationKey}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                  onClick={() => onSelect(cell)}
                 >
                   <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
                     <Link
@@ -179,7 +181,7 @@ function Simulation2Page() {
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                    {formatCompletion(cell)}
+                    {formatCompletionValue(cell)}
                   </td>
                 </tr>
               ))}
@@ -204,16 +206,47 @@ function Simulation2Page() {
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
             ) : (
-              <Simulation2StationsTable cells={tableCells} />
+              <Simulation2StationsTable cells={tableCells} onSelect={setSelectedCell} />
             )}
           </div>
         </section>
 
         <section className="flex-1 lg:flex-none lg:basis-[60%] lg:max-w-[60%] bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Panel B</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Right area (70%). Add primary simulation details or visualizations here.
-          </p>
+          {selectedCell ? (
+            <div className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {formatStationLabel(selectedCell)}
+                </div>
+                <div className="text-sm px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                  {selectedCell.areaKey ?? 'Unknown'}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 dark:text-gray-400">Simulator:</span>
+                  {selectedCell.simulationStatus?.engineer?.trim() ? (
+                    <Link
+                      to={`/engineers?highlightEngineer=${encodeURIComponent(selectedCell.simulationStatus.engineer.trim())}`}
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {selectedCell.simulationStatus.engineer.trim()}
+                    </Link>
+                  ) : (
+                    'UNASSIGNED'
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 dark:text-gray-400">Completion:</span>
+                  <span className="font-semibold">{formatCompletionValue(selectedCell)}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Select a station to see details here.
+            </p>
+          )}
         </section>
       </div>
     </div>
