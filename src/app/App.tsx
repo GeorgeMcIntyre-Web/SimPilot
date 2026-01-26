@@ -26,6 +26,7 @@ const WarningsPage = lazy(() => import('./routes/WarningsPage'))
 const ChangesPage = lazy(() => import('./routes/ChangesPage'))
 const ReadinessBoard = lazy(() => import('./routes/ReadinessBoard'))
 const TimelineView = lazy(() => import('./routes/TimelineView'))
+const Simulation2Page = lazy(() => import('./routes/Simulation2Page'))
 const SimulationPage = lazy(() => import('./routes/SimulationPage'))
 const DataHealthPage = lazy(() => import('./routes/DataHealthPage'))
 const ToolingBottlenecksPage = lazy(() => import('./routes/ToolingBottlenecksPage'))
@@ -61,6 +62,7 @@ function App() {
                                         <Route path="/" element={<LayoutShell />}>
                                             <Route index element={<Navigate to="/dashboard" replace />} />
                                             <Route path="dashboard" element={<DashboardPage />} />
+                                            <Route path="simulation-2" element={<Simulation2Page />} />
                                             <Route path="simulation" element={<SimulationPage />} />
                                             <Route path="tooling-bottlenecks" element={<ToolingBottlenecksPage />} />
                                             <Route path="dale-console" element={<DaleConsole />} />
