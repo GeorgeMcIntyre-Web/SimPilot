@@ -221,7 +221,7 @@ function Simulation2Page() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Simulation-2" />
+      <PageHeader title="Robot Status" />
 
       <div className="flex flex-col lg:flex-row gap-6">
         <section className="flex-1 lg:flex-none lg:basis-[40%] lg:max-w-[40%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col">

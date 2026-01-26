@@ -15,7 +15,7 @@ import { NavItem } from './types';
 
 export const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/simulation-2', label: 'Simulation-2', icon: LayoutGrid },
+    { href: '/simulation-2', label: 'Robot Status', icon: LayoutGrid },
     { href: '/simulation', label: 'Simulation', icon: LayoutGrid },
     { href: '/tooling-bottlenecks', label: 'Bottlenecks', icon: AlertTriangle },
     { href: '/projects', label: 'Projects', icon: FolderKanban },
