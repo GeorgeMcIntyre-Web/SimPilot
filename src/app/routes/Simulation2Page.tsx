@@ -31,6 +31,12 @@ const formatCompletionValue = (cell: CellSnapshot): string => {
   return `${Math.round(value)}%`
 }
 
+const getCompletionNumber = (cell: CellSnapshot): number | null => {
+  const value = cell.simulationStatus?.firstStageCompletion
+  if (typeof value !== 'number') return null
+  return Math.round(value)
+}
+
 function Simulation2Page() {
   const { cells, loading, hasData } = useCrossRefData()
   const tableCells = hasData ? cells : []
@@ -213,7 +219,6 @@ function Simulation2Page() {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <section className="flex-1 lg:flex-none lg:basis-[40%] lg:max-w-[40%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col">
-          <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Panel A</h2>
           <div className="flex-1 overflow-hidden">
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
@@ -228,18 +233,18 @@ function Simulation2Page() {
 
         <section className="flex-1 lg:flex-none lg:basis-[60%] lg:max-w-[60%] bg-white dark:bg-gray-800 rounded-xl shadow p-4">
           {selectedRow ? (
-            <div className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+            <div className="space-y-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-lg font-semibold text-gray-900 dark:text-white">
                   {selectedRow.label}
                 </div>
-                <div className="text-sm px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                <div className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
                   {selectedRow.cell.areaKey ?? 'Unknown'}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
+              <div className="flex flex-wrap gap-3 text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 dark:text-gray-400">Simulator:</span>
+                  <span className="text-gray-500 dark:text-gray-400">Simulator</span>
                   {selectedRow.cell.simulationStatus?.engineer?.trim() ? (
                     <Link
                       to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus.engineer.trim())}`}
@@ -248,13 +253,42 @@ function Simulation2Page() {
                       {selectedRow.cell.simulationStatus.engineer.trim()}
                     </Link>
                   ) : (
-                    'UNASSIGNED'
+                    <span className="text-gray-500">UNASSIGNED</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 dark:text-gray-400">Completion:</span>
-                  <span className="font-semibold">{formatCompletionValue(selectedRow.cell)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Completion</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatCompletionValue(selectedRow.cell)}</span>
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                {[
+                  'Robot Simulation',
+                  'Spot Welding',
+                  'Sealer',
+                  'Alternative Joining Applications',
+                  'Gripper',
+                  'Fixture',
+                  'MRS',
+                  'OLP',
+                  'Documentation'
+                ].map((title) => {
+                  const completion = getCompletionNumber(selectedRow.cell)
+                  return (
+                    <div key={title} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3">
+                      <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white">
+                        <span className="truncate pr-3">{title}</span>
+                        <span className="text-gray-700 dark:text-gray-200">{completion !== null ? `${completion}%` : '-'}</span>
+                      </div>
+                      <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500 transition-all"
+                          style={{ width: completion !== null ? `${completion}%` : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           ) : (
