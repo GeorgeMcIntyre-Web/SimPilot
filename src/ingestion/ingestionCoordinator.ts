@@ -29,7 +29,6 @@ import {
 import { buildCrossRef } from '../domain/crossRef/CrossRefEngine'
 import { setCrossRefData } from '../hooks/useCrossRefData'
 import type { CrossRefInput, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot } from '../domain/crossRef/CrossRefTypes'
-import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 import * as XLSX from 'xlsx'
 import { syncSimulationStore } from '../features/simulation'
 import { log } from '../lib/log'
@@ -538,7 +537,7 @@ function buildCrossRefInputFromApplyResult(
 
   // Convert Cells to SimulationStatusSnapshot (using merged cells)
   const simulationStatusRows: SimulationStatusSnapshot[] = allCells.map(cell => ({
-    stationKey: normalizeStationId(cell.code) || cell.code,
+    stationKey: cell.code,
     areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
     lineCode: cell.lineCode, // Use lineCode field
     application: cell.simulation?.application, // Propagate application from simulation status
@@ -552,7 +551,7 @@ function buildCrossRefInputFromApplyResult(
 
   // Convert Tools to ToolSnapshot (using merged tools)
   const toolingRows: ToolSnapshot[] = allTools.map(tool => ({
-    stationKey: normalizeStationId(tool.stationNumber || '') || tool.stationNumber || '',
+    stationKey: tool.stationNumber || '',
     areaKey: tool.areaName,
     toolId: tool.id,
     simLeader: undefined, // Not in Tool type
@@ -565,7 +564,7 @@ function buildCrossRefInputFromApplyResult(
 
   // Convert Robots from robot list files to RobotSnapshot (using merged robots)
   const robotSpecsRows: RobotSnapshot[] = allRobots.map(robot => ({
-    stationKey: normalizeStationId(robot.stationNumber || '') || robot.stationNumber || '',
+    stationKey: robot.stationNumber || '',
     robotKey: robot.id,
     caption: robot.name,
     eNumber: undefined, // Not in Robot type
@@ -584,8 +583,8 @@ function buildCrossRefInputFromApplyResult(
     )
 
     for (const simRobot of simulationRobots) {
-      const normalizedStation = normalizeStationId(simRobot.stationKey) || simRobot.stationKey
-      const compositeKey = `${normalizedStation.toUpperCase()}::${simRobot.robotCaption.toUpperCase()}`
+      const stationKey = simRobot.stationKey
+      const compositeKey = `${stationKey.toUpperCase()}::${simRobot.robotCaption.toUpperCase()}`
 
       // Skip if we already have this station+robot from robot specs
       if (existingCombinations.has(compositeKey)) {
@@ -593,8 +592,8 @@ function buildCrossRefInputFromApplyResult(
       }
 
       robotSpecsRows.push({
-        stationKey: normalizedStation,
-        robotKey: `simstatus-${simRobot.stationKey}-${simRobot.robotCaption}`.replace(/\s+/g, '_'),
+        stationKey: stationKey,
+        robotKey: `simstatus-${stationKey}-${simRobot.robotCaption}`.replace(/\s+/g, '_'),
         caption: simRobot.robotCaption,
         eNumber: undefined,
         hasDressPackInfo: false, // Not available from simulation status

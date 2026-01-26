@@ -38,7 +38,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
     >
       <td className={cn('whitespace-nowrap pl-4 pr-3 sm:pl-6', rowPad, textSize)}>
         <span className="font-medium text-gray-900 dark:text-white block truncate max-w-[200px]">
-          {cell.stationKey}
+          {cell.displayCode}
         </span>
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>

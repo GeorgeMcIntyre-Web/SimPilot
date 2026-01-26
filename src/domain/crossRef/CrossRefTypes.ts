@@ -136,6 +136,7 @@ export interface CrossRefFlag {
  */
 export interface CellSnapshot {
   stationKey: StationKey
+  displayCode: string
   areaKey?: AreaKey
   lineCode?: string
 
@@ -199,6 +200,7 @@ export type CellRiskLevel = 'OK' | 'AT_RISK' | 'CRITICAL'
  */
 export interface CellHealthSummary {
   stationKey: StationKey
+  displayCode: string
   areaKey?: AreaKey
 
   hasSimulationStatus: boolean

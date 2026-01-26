@@ -116,6 +116,7 @@ const getOrCreateCell = (
 
   const newCell: CellSnapshot = {
     stationKey: key,
+    displayCode: rawStation || key,
     areaKey: rawArea,
     lineCode,
     tools: [],

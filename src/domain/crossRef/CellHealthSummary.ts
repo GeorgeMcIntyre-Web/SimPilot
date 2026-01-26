@@ -105,6 +105,7 @@ export const summarizeCellHealth = (cell: CellSnapshot): CellHealthSummary => {
 
   return {
     stationKey: cell.stationKey,
+    displayCode: cell.displayCode,
     areaKey: cell.areaKey,
 
     hasSimulationStatus,

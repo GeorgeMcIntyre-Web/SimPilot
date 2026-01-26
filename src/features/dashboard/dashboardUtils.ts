@@ -189,8 +189,12 @@ export const filterBySearch = (cells: CellSnapshot[], searchTerm: string): CellS
       if (normStation && normStation.includes(normTerm)) return true;
     }
 
-    // Fallback: check if search term is in raw station key
-    return c.stationKey.toLowerCase().includes(searchLower);
+    // Fallback: check if search term is in raw station key or display code
+    const lowerTerm = searchLower;
+    return (
+      c.stationKey.toLowerCase().includes(lowerTerm) ||
+      c.displayCode.toLowerCase().includes(lowerTerm)
+    );
   })
 }
 
