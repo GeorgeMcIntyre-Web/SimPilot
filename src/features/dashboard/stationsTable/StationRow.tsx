@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { cn } from '../../../ui/lib/utils';
 import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes';
-import { getApplicationDisplay, getCompletionPercent, getStatusLabel, StatusLabel } from '../dashboardUtils';
+import { getCompletionPercent } from '../dashboardUtils';
 
 type Density = 'comfortable' | 'compact';
 
@@ -13,24 +13,10 @@ interface StationRowProps {
 
 export function StationRow({ cell, onClick, density }: StationRowProps) {
   const completion = getCompletionPercent(cell);
-  const application = getApplicationDisplay(cell);
   const stationLabel = cell.displayCode || cell.stationKey || '-';
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
-  const robotCount = cell.robots?.length ?? 0;
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
-
-  const label = getStatusLabel(completion);
-  
-  const statusClasses: Record<StatusLabel, string> = {
-    'Complete': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
-    'Nearly Complete': 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-200',
-    'On Track': 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200',
-    'In Progress': 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200',
-    'Starting': 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200',
-    'Not Started': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200',
-    'No data': 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-  };
 
   return (
     <tr
@@ -38,23 +24,20 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
     >
       <td className={cn('whitespace-nowrap pl-4 pr-3 sm:pl-6', rowPad, textSize)}>
-        <span
-          className="font-medium text-gray-900 dark:text-white block truncate max-w-[200px]"
+        <Link
+          to={`/cells/${encodeURIComponent(cell.stationKey)}`}
+          className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[200px] hover:underline"
           title={stationLabel === '-' ? undefined : stationLabel}
+          onClick={(e) => {
+            e.preventDefault();
+            onClick();
+          }}
         >
           {stationLabel}
-        </span>
+        </Link>
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {cell.areaKey ?? 'Unknown'}
-      </td>
-      <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
-        <span
-          className="inline-block max-w-[240px] truncate align-middle"
-          title={application === '-' ? undefined : application}
-        >
-          {application}
-        </span>
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)} title={simulator}>
         {simulator === 'UNASSIGNED' ? (
@@ -68,9 +51,6 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
             {simulator}
           </Link>
         )}
-      </td>
-      <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}>
-        {robotCount}
       </td>
 
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
@@ -99,11 +79,6 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         ) : (
           <span className="text-gray-400">-</span>
         )}
-      </td>
-      <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
-        <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 font-medium', statusClasses[label])}>
-          {label}
-        </span>
       </td>
     </tr>
   );
