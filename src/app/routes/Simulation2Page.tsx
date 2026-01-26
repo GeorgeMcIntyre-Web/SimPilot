@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
@@ -23,6 +24,12 @@ function Simulation2Page() {
   }
 
   const Simulation2StationsTable = ({ cells }: { cells: CellSnapshot[] }) => {
+    type SortKey = 'station' | 'area' | 'simulator' | 'completion'
+
+    const [search, setSearch] = useState('')
+    const [sortKey, setSortKey] = useState<SortKey>('station')
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
     const formatStationLabel = (cell: CellSnapshot): string => {
       const rawStation =
         (cell.simulationStatus?.raw as any)?.stationCode ||
@@ -40,6 +47,53 @@ function Simulation2Page() {
       return `${Math.round(value)}%`
     }
 
+    const filteredAndSorted = useMemo(() => {
+      const term = search.trim().toLowerCase()
+
+      const filtered = term
+        ? cells.filter(cell => {
+            const station = formatStationLabel(cell).toLowerCase()
+            const area = (cell.areaKey ?? 'unknown').toLowerCase()
+            const simulator = (cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED').toLowerCase()
+            return station.includes(term) || area.includes(term) || simulator.includes(term)
+          })
+        : cells
+
+      const sorted = [...filtered].sort((a, b) => {
+        const stationA = formatStationLabel(a)
+        const stationB = formatStationLabel(b)
+        const areaA = a.areaKey ?? 'Unknown'
+        const areaB = b.areaKey ?? 'Unknown'
+        const simA = a.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
+        const simB = b.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
+        const compA = typeof a.simulationStatus?.firstStageCompletion === 'number'
+          ? a.simulationStatus.firstStageCompletion
+          : -1
+        const compB = typeof b.simulationStatus?.firstStageCompletion === 'number'
+          ? b.simulationStatus.firstStageCompletion
+          : -1
+
+        let cmp = 0
+        if (sortKey === 'station') cmp = stationA.localeCompare(stationB)
+        if (sortKey === 'area') cmp = areaA.localeCompare(areaB)
+        if (sortKey === 'simulator') cmp = simA.localeCompare(simB)
+        if (sortKey === 'completion') cmp = compA - compB
+
+        return sortDir === 'asc' ? cmp : -cmp
+      })
+
+      return sorted
+    }, [cells, search, sortDir, sortKey])
+
+    const toggleSort = (key: SortKey) => {
+      if (sortKey === key) {
+        setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortKey(key)
+        setSortDir('asc')
+      }
+    }
+
     if (cells.length === 0) {
       return (
         <div className="text-sm text-gray-500 dark:text-gray-400 py-4">
@@ -49,18 +103,47 @@ function Simulation2Page() {
     }
 
     return (
-      <div className="h-full overflow-auto">
+      <div className="h-full overflow-auto max-h-[680px] custom-scrollbar">
+        <div className="flex items-center justify-between gap-3 pb-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search station, area, simulator..."
+            className="w-full text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
-              <th className="py-3 pl-4 pr-3 sm:pl-6">Station</th>
-              <th className="py-3 px-3">Area</th>
-              <th className="py-3 px-3">Simulator</th>
-              <th className="py-3 px-3">Completion</th>
+              <th
+                className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none"
+                onClick={() => toggleSort('station')}
+              >
+                Station
+              </th>
+              <th
+                className="py-3 px-3 cursor-pointer select-none"
+                onClick={() => toggleSort('area')}
+              >
+                Area
+              </th>
+              <th
+                className="py-3 px-3 cursor-pointer select-none"
+                onClick={() => toggleSort('simulator')}
+              >
+                Simulator
+              </th>
+              <th
+                className="py-3 px-3 cursor-pointer select-none"
+                onClick={() => toggleSort('completion')}
+              >
+                Completion
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-            {cells.map(cell => (
+            {filteredAndSorted.map(cell => (
               <tr
                 key={cell.stationKey}
                 className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
