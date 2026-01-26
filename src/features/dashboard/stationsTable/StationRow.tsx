@@ -11,9 +11,20 @@ interface StationRowProps {
   onClick: () => void;
 }
 
+const getStationLabel = (cell: CellSnapshot): string => {
+  const rawStation =
+    (cell.simulationStatus?.raw as any)?.stationCode ||
+    cell.displayCode ||
+    cell.stationKey ||
+    '';
+  const trimmed = typeof rawStation === 'string' ? rawStation.trim() : '';
+  if (!trimmed) return '-';
+  return trimmed.replace(/_/g, '-');
+};
+
 export function StationRow({ cell, onClick, density }: StationRowProps) {
   const completion = getCompletionPercent(cell);
-  const stationLabel = cell.displayCode || cell.stationKey || '-';
+  const stationLabel = getStationLabel(cell);
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
   const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
