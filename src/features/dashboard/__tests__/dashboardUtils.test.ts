@@ -11,10 +11,11 @@ import {
   filterBySeverity,
   filterByArea,
   filterBySearch,
+  getApplicationDisplay,
   sortCells,
   generateFocusItems
 } from '../dashboardUtils'
-import { CellSnapshot, CrossRefFlag, SimulationStatusSnapshot } from '../../../domain/crossRef/CrossRefTypes'
+import { CellSnapshot, CrossRefFlag, RobotSnapshot, SimulationStatusSnapshot, ToolSnapshot } from '../../../domain/crossRef/CrossRefTypes'
 
 // ============================================================================
 // TEST HELPERS
@@ -56,6 +57,28 @@ const makeErrorFlag = (type: string, stationKey: string): CrossRefFlag => ({
   stationKey,
   message: `Error: ${type}`,
   severity: 'ERROR'
+})
+
+const makeRobot = (code: string | null): RobotSnapshot => ({
+  stationKey: '010',
+  robotKey: `robot-${code ?? 'none'}`,
+  caption: 'R1',
+  eNumber: undefined,
+  hasDressPackInfo: true,
+  oemModel: undefined,
+  raw: code ? { metadata: { Code: code } } : {}
+})
+
+const makeTool = (code: string | null): ToolSnapshot => ({
+  stationKey: '010',
+  areaKey: undefined,
+  toolId: 'tool-1',
+  simLeader: undefined,
+  simEmployee: undefined,
+  teamLeader: undefined,
+  simDueDate: undefined,
+  toolType: 'OTHER',
+  raw: code ? { metadata: { applicationCode: code } } : {}
 })
 
 // ============================================================================
@@ -246,6 +269,26 @@ describe('dashboardUtils', () => {
     })
   })
 
+  describe('getApplicationDisplay', () => {
+    it('joins unique application codes from robots and tools', () => {
+      const cell = makeCell({
+        robots: [makeRobot('SPR'), makeRobot('MH')],
+        tools: [makeTool('FDS'), makeTool('SPR')]
+      })
+
+      expect(getApplicationDisplay(cell)).toBe('SPR + MH + FDS')
+    })
+
+    it('returns dash when no application codes are available', () => {
+      const cell = makeCell({
+        robots: [makeRobot(null)],
+        tools: [makeTool(null)]
+      })
+
+      expect(getApplicationDisplay(cell)).toBe('-')
+    })
+  })
+
   describe('sortCells', () => {
     const cells = [
       makeCell({ stationKey: 'C_Station', areaKey: 'Z' }),
@@ -269,6 +312,17 @@ describe('dashboardUtils', () => {
       const result = sortCells(cells, 'area', 'asc')
       expect(result[0].areaKey).toBe('X')
       expect(result[2].areaKey).toBe('Z')
+    })
+
+    it('sorts by aggregated application codes from assets', () => {
+      const withApps = [
+        makeCell({ stationKey: 'ST_200', robots: [makeRobot('MH')], tools: [] }),
+        makeCell({ stationKey: 'ST_100', robots: [makeRobot('SPR')], tools: [] }),
+        makeCell({ stationKey: 'ST_300', robots: [makeRobot('FDS')], tools: [] })
+      ]
+
+      const result = sortCells(withApps, 'application', 'asc')
+      expect(result.map(c => c.stationKey)).toEqual(['ST_300', 'ST_200', 'ST_100'])
     })
   })
 

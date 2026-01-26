@@ -81,6 +81,37 @@ const buildIndices = (input: CrossRefInput): Indices => {
   return { stations, gunForcesByGun }
 }
 
+const pickDisplayCode = (current: string | undefined, rawStation: string | undefined, key: StationKey): string => {
+  const trimmedRaw = rawStation?.trim()
+  if (!current && trimmedRaw) {
+    return trimmedRaw
+  }
+
+  if (current && trimmedRaw) {
+    const currentHasHyphen = current.includes('-')
+    const rawHasHyphen = trimmedRaw.includes('-')
+    const currentHasUnderscore = current.includes('_')
+    const rawHasUnderscore = trimmedRaw.includes('_')
+
+    // Prefer human-friendly hyphenated value when the existing one is normalized with underscores
+    if (rawHasHyphen && currentHasUnderscore) {
+      return trimmedRaw
+    }
+
+    // Prefer the raw value when it includes separators and the current one does not
+    if (rawHasHyphen && !currentHasHyphen) {
+      return trimmedRaw
+    }
+
+    // Prefer the more descriptive/longer label when available
+    if (!rawHasUnderscore && trimmedRaw.length > current.length) {
+      return trimmedRaw
+    }
+  }
+
+  return current || trimmedRaw || key
+}
+
 /**
  * Get or create a cell snapshot for a station
  * Uses immutable updates to avoid mutation bugs
@@ -95,15 +126,18 @@ const getOrCreateCell = (
   if (!key) return null
 
   const existing = stations.get(key)
+  const proposedDisplayCode = pickDisplayCode(existing?.displayCode, rawStation, key)
   if (existing) {
     // Immutable update: create new object if fields need updating
     const shouldUpdateArea = rawArea && rawArea !== existing.areaKey
     const shouldUpdateLine = lineCode && lineCode !== existing.lineCode
-    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode) || shouldUpdateArea || shouldUpdateLine
+    const shouldUpdateDisplay = proposedDisplayCode !== existing.displayCode
+    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode) || shouldUpdateArea || shouldUpdateLine || shouldUpdateDisplay
 
     if (needsUpdate) {
       const updated: CellSnapshot = {
         ...existing,
+        displayCode: shouldUpdateDisplay ? proposedDisplayCode : existing.displayCode,
         areaKey: shouldUpdateArea ? rawArea : existing.areaKey || rawArea,
         lineCode: shouldUpdateLine ? lineCode : existing.lineCode || lineCode
       }
@@ -116,7 +150,7 @@ const getOrCreateCell = (
 
   const newCell: CellSnapshot = {
     stationKey: key,
-    displayCode: rawStation || key,
+    displayCode: proposedDisplayCode,
     areaKey: rawArea,
     lineCode,
     tools: [],

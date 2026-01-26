@@ -3,6 +3,67 @@
 
 import { CellSnapshot, CellRiskLevel } from '../../domain/crossRef/CrossRefTypes'
 
+const APPLICATION_KEYS = [
+  'applicationCode',
+  'Code',
+  'function',
+  'Function',
+  'application',
+  'robotApplication',
+  'Robot Application'
+]
+
+const extractApplicationValues = (raw: unknown): string[] => {
+  const values: string[] = []
+  const source = (raw ?? {}) as Record<string, unknown>
+  const metadata = (source.metadata ?? {}) as Record<string, unknown>
+
+  for (const key of APPLICATION_KEYS) {
+    const fromMetadata = metadata[key]
+    if (fromMetadata !== undefined && fromMetadata !== null) {
+      values.push(String(fromMetadata).trim())
+      continue
+    }
+
+    const fromRoot = source[key]
+    if (fromRoot !== undefined && fromRoot !== null) {
+      values.push(String(fromRoot).trim())
+    }
+  }
+
+  return values.filter(v => v.length > 0)
+}
+
+const collectApplications = (cell: CellSnapshot): string[] => {
+  const applications: string[] = []
+  const seen = new Set<string>()
+
+  const add = (value: string) => {
+    const normalized = value.trim()
+    if (!normalized) return
+    const key = normalized.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    applications.push(normalized)
+  }
+
+  for (const robot of cell.robots || []) {
+    extractApplicationValues(robot.raw).forEach(add)
+  }
+
+  for (const tool of cell.tools || []) {
+    extractApplicationValues(tool.raw).forEach(add)
+  }
+
+  return applications
+}
+
+export const getApplicationDisplay = (cell: CellSnapshot): string => {
+  const applications = collectApplications(cell)
+  if (applications.length === 0) return '-'
+  return applications.join(' + ')
+}
+
 // ============================================================================
 // RISK CALCULATION
 // ============================================================================
@@ -226,10 +287,12 @@ export const sortCells = (
       comparison = areaA.localeCompare(areaB)
     }
 
-    if (sortKey === 'application') {
-      const appA = a.simulationStatus?.application ?? ''
-      const appB = b.simulationStatus?.application ?? ''
-      comparison = appA.localeCompare(appB)
+  if (sortKey === 'application') {
+      const appA = getApplicationDisplay(a)
+      const appB = getApplicationDisplay(b)
+      const safeA = appA === '-' ? '' : appA
+      const safeB = appB === '-' ? '' : appB
+      comparison = safeA.localeCompare(safeB)
     }
 
     if (sortKey === 'simulator') {

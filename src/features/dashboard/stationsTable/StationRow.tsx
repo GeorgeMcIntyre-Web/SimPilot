@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { cn } from '../../../ui/lib/utils';
 import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes';
-import { getCompletionPercent, getStatusLabel, StatusLabel } from '../dashboardUtils';
+import { getApplicationDisplay, getCompletionPercent, getStatusLabel, StatusLabel } from '../dashboardUtils';
 
 type Density = 'comfortable' | 'compact';
 
@@ -13,7 +13,8 @@ interface StationRowProps {
 
 export function StationRow({ cell, onClick, density }: StationRowProps) {
   const completion = getCompletionPercent(cell);
-  const application = cell.simulationStatus?.application ?? '-';
+  const application = getApplicationDisplay(cell);
+  const stationLabel = cell.displayCode || cell.stationKey || '-';
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
   const robotCount = cell.robots?.length ?? 0;
   const rowPad = density === 'compact' ? 'py-3' : 'py-4';
@@ -37,15 +38,23 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
     >
       <td className={cn('whitespace-nowrap pl-4 pr-3 sm:pl-6', rowPad, textSize)}>
-        <span className="font-medium text-gray-900 dark:text-white block truncate max-w-[200px]">
-          {cell.displayCode}
+        <span
+          className="font-medium text-gray-900 dark:text-white block truncate max-w-[200px]"
+          title={stationLabel === '-' ? undefined : stationLabel}
+        >
+          {stationLabel}
         </span>
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
         {cell.areaKey ?? 'Unknown'}
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-500 dark:text-gray-400', rowPad, textSize)}>
-        {application}
+        <span
+          className="inline-block max-w-[240px] truncate align-middle"
+          title={application === '-' ? undefined : application}
+        >
+          {application}
+        </span>
       </td>
       <td className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)} title={simulator}>
         {simulator === 'UNASSIGNED' ? (
