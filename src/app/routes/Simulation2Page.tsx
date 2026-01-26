@@ -7,15 +7,22 @@ import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils'
 import { coreStore } from '../../domain/coreStore'
 
-const formatStationLabel = (cell: CellSnapshot): string => {
-  const rawStation =
-    (cell.simulationStatus?.raw as any)?.stationCode ||
-    cell.displayCode ||
-    cell.stationKey ||
+const formatRobotLabel = (cell: CellSnapshot): string => {
+  const robotCaptions = (cell.robots || [])
+    .map(r => r.caption || r.robotKey)
+    .filter(Boolean)
+  if (robotCaptions.length > 0) {
+    return Array.from(new Set(robotCaptions)).join(', ')
+  }
+
+  const rawRobot =
+    (cell.simulationStatus?.raw as any)?.robotName ||
+    (cell.simulationStatus?.raw as any)?.ROBOT ||
     ''
-  const trimmed = typeof rawStation === 'string' ? rawStation.trim() : ''
-  if (!trimmed) return '-'
-  return trimmed.replace(/_/g, '-')
+  const trimmed = typeof rawRobot === 'string' ? rawRobot.trim() : ''
+  if (trimmed) return trimmed
+
+  return '-'
 }
 
 const formatCompletionValue = (cell: CellSnapshot): string => {
@@ -28,7 +35,7 @@ function Simulation2Page() {
   const { cells, loading, hasData } = useCrossRefData()
   const tableCells = hasData ? cells : []
   const navigate = useNavigate()
-  const [selectedCell, setSelectedCell] = useState<CellSnapshot | null>(null)
+  const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
 
   const handleStationNavigate = (cell: CellSnapshot) => {
     const normalizedStationKey = normalizeStationId(cell.stationKey)
@@ -41,41 +48,57 @@ function Simulation2Page() {
     }
   }
 
-  const Simulation2StationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (cell: CellSnapshot) => void }) => {
-    type SortKey = 'station' | 'area' | 'simulator' | 'completion'
+  const Simulation2StationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: { cell: CellSnapshot; label: string }) => void }) => {
+    type SortKey = 'robot' | 'area' | 'simulator' | 'completion'
 
     const [search, setSearch] = useState('')
-    const [sortKey, setSortKey] = useState<SortKey>('station')
+    const [sortKey, setSortKey] = useState<SortKey>('robot')
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+    const robotRows = useMemo(() => {
+      const rows: { cell: CellSnapshot; label: string }[] = []
+      for (const cell of cells) {
+        if (cell.robots && cell.robots.length > 0) {
+          for (const robot of cell.robots) {
+            const label = formatRobotLabel({ ...cell, robots: [robot] })
+            rows.push({ cell, label })
+          }
+        } else {
+          const label = formatRobotLabel(cell)
+          rows.push({ cell, label })
+        }
+      }
+      return rows
+    }, [cells])
 
     const filteredAndSorted = useMemo(() => {
       const term = search.trim().toLowerCase()
 
       const filtered = term
-        ? cells.filter(cell => {
-            const station = formatStationLabel(cell).toLowerCase()
-            const area = (cell.areaKey ?? 'unknown').toLowerCase()
-            const simulator = (cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED').toLowerCase()
-            return station.includes(term) || area.includes(term) || simulator.includes(term)
+        ? robotRows.filter(row => {
+            const robot = row.label.toLowerCase()
+            const area = (row.cell.areaKey ?? 'unknown').toLowerCase()
+            const simulator = (row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED').toLowerCase()
+            return robot.includes(term) || area.includes(term) || simulator.includes(term)
           })
-        : cells
+        : robotRows
 
       const sorted = [...filtered].sort((a, b) => {
-        const stationA = formatStationLabel(a)
-        const stationB = formatStationLabel(b)
-        const areaA = a.areaKey ?? 'Unknown'
-        const areaB = b.areaKey ?? 'Unknown'
-        const simA = a.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
-        const simB = b.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
-        const compA = typeof a.simulationStatus?.firstStageCompletion === 'number'
-          ? a.simulationStatus.firstStageCompletion
+        const robotA = a.label
+        const robotB = b.label
+        const areaA = a.cell.areaKey ?? 'Unknown'
+        const areaB = b.cell.areaKey ?? 'Unknown'
+        const simA = a.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
+        const simB = b.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
+        const compA = typeof a.cell.simulationStatus?.firstStageCompletion === 'number'
+          ? a.cell.simulationStatus.firstStageCompletion
           : -1
-        const compB = typeof b.simulationStatus?.firstStageCompletion === 'number'
-          ? b.simulationStatus.firstStageCompletion
+        const compB = typeof b.cell.simulationStatus?.firstStageCompletion === 'number'
+          ? b.cell.simulationStatus.firstStageCompletion
           : -1
 
         let cmp = 0
-        if (sortKey === 'station') cmp = stationA.localeCompare(stationB)
+        if (sortKey === 'robot') cmp = robotA.localeCompare(robotB)
         if (sortKey === 'area') cmp = areaA.localeCompare(areaB)
         if (sortKey === 'simulator') cmp = simA.localeCompare(simB)
         if (sortKey === 'completion') cmp = compA - compB
@@ -120,10 +143,10 @@ function Simulation2Page() {
               <tr className="text-left text-gray-500 dark:text-gray-400">
                 <th
                   className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none"
-                  onClick={() => toggleSort('station')}
-                >
-                  Station
-                </th>
+                onClick={() => toggleSort('robot')}
+              >
+                Robot
+              </th>
                 <th
                   className="py-3 px-3 cursor-pointer select-none"
                   onClick={() => toggleSort('area')}
@@ -145,46 +168,38 @@ function Simulation2Page() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-              {filteredAndSorted.map(cell => (
-                <tr
-                  key={cell.stationKey}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                  onClick={() => onSelect(cell)}
-                >
-                  <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+            {filteredAndSorted.map(row => (
+              <tr
+                key={`${row.cell.stationKey}-${row.label}`}
+                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                onClick={() => onSelect(row)}
+              >
+                <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+                  <span className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px]">
+                    {row.label}
+                  </span>
+                </td>
+                <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                  {row.cell.areaKey ?? 'Unknown'}
+                </td>
+                <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
+                  {row.cell.simulationStatus?.engineer?.trim() ? (
                     <Link
-                      to="#"
-                      className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[200px] hover:underline"
-                      title={formatStationLabel(cell) === '-' ? undefined : formatStationLabel(cell)}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleStationNavigate(cell)
-                      }}
+                      to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus.engineer.trim())}`}
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      title={row.cell.simulationStatus.engineer.trim()}
                     >
-                      {formatStationLabel(cell)}
+                      {row.cell.simulationStatus.engineer.trim()}
                     </Link>
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
-                    {cell.areaKey ?? 'Unknown'}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                    {cell.simulationStatus?.engineer?.trim() ? (
-                      <Link
-                        to={`/engineers?highlightEngineer=${encodeURIComponent(cell.simulationStatus.engineer.trim())}`}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                        title={cell.simulationStatus.engineer.trim()}
-                      >
-                        {cell.simulationStatus.engineer.trim()}
-                      </Link>
-                    ) : (
-                      'UNASSIGNED'
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                    {formatCompletionValue(cell)}
-                  </td>
-                </tr>
-              ))}
+                  ) : (
+                    'UNASSIGNED'
+                  )}
+                </td>
+                <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
+                  {formatCompletionValue(row.cell)}
+                </td>
+              </tr>
+            ))}
             </tbody>
           </table>
         </div>
@@ -194,10 +209,7 @@ function Simulation2Page() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Simulation-2"
-        subtitle="Side-by-side workspace"
-      />
+      <PageHeader title="Simulation-2" />
 
       <div className="flex flex-col lg:flex-row gap-6">
         <section className="flex-1 lg:flex-none lg:basis-[40%] lg:max-w-[40%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col">
@@ -206,31 +218,34 @@ function Simulation2Page() {
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
             ) : (
-              <Simulation2StationsTable cells={tableCells} onSelect={setSelectedCell} />
+              <Simulation2StationsTable
+                cells={tableCells}
+                onSelect={(row) => setSelectedRow(row)}
+              />
             )}
           </div>
         </section>
 
         <section className="flex-1 lg:flex-none lg:basis-[60%] lg:max-w-[60%] bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-          {selectedCell ? (
+          {selectedRow ? (
             <div className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {formatStationLabel(selectedCell)}
+                  {selectedRow.label}
                 </div>
                 <div className="text-sm px-3 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
-                  {selectedCell.areaKey ?? 'Unknown'}
+                  {selectedRow.cell.areaKey ?? 'Unknown'}
                 </div>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500 dark:text-gray-400">Simulator:</span>
-                  {selectedCell.simulationStatus?.engineer?.trim() ? (
+                  {selectedRow.cell.simulationStatus?.engineer?.trim() ? (
                     <Link
-                      to={`/engineers?highlightEngineer=${encodeURIComponent(selectedCell.simulationStatus.engineer.trim())}`}
+                      to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus.engineer.trim())}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
-                      {selectedCell.simulationStatus.engineer.trim()}
+                      {selectedRow.cell.simulationStatus.engineer.trim()}
                     </Link>
                   ) : (
                     'UNASSIGNED'
@@ -238,7 +253,7 @@ function Simulation2Page() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500 dark:text-gray-400">Completion:</span>
-                  <span className="font-semibold">{formatCompletionValue(selectedCell)}</span>
+                  <span className="font-semibold">{formatCompletionValue(selectedRow.cell)}</span>
                 </div>
               </div>
             </div>
