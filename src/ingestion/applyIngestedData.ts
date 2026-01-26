@@ -552,20 +552,28 @@ function findMatchingCell(
   }
 
   // Fallback: Build area candidates using normalized comparison
-  const areaCandidates = areas.filter(area => {
+  // Priority 1: Exact Area Name match
+  let areaCandidates = areas.filter(area => {
     if (areaName) {
       const normalizedSearchArea = normalizeAreaName(areaName)
       const normalizedCellArea = normalizeAreaName(area.name)
-      if (normalizedSearchArea && normalizedCellArea && 
-          normalizedSearchArea === normalizedCellArea) return true
-    }
-    if (lineCode && area.code) {
-      const normalizedLineCode = normalizeString(lineCode)
-      const normalizedAreaCode = normalizeString(area.code)
-      if (normalizedLineCode === normalizedAreaCode) return true
+      return normalizedSearchArea && normalizedCellArea &&
+             normalizedSearchArea === normalizedCellArea
     }
     return false
   })
+
+  // Priority 2: Line Code match (only if no areaName was provided and no candidates found by areaName)
+  if (areaCandidates.length === 0 && !areaName && lineCode) {
+    areaCandidates = areas.filter(area => {
+      if (area.code) {
+        const normalizedSearchLine = normalizeString(lineCode)
+        const normalizedAreaCode = normalizeString(area.code)
+        return normalizedSearchLine === normalizedAreaCode
+      }
+      return false
+    })
+  }
 
   // Find cell in candidate areas with matching station
   for (const area of areaCandidates) {
@@ -579,15 +587,9 @@ function findMatchingCell(
     if (cell) return cell
   }
 
-  // Fallback: find any cell with matching normalized station code
-  const normalizedSearchStation = normalizeStationCode(stationCode)
-  if (normalizedSearchStation) {
-    return cells.find(c => {
-      const normalizedCellCode = normalizeStationCode(c.code)
-      return normalizedCellCode === normalizedSearchStation
-    })
-  }
-
+  // No global fallback - if we found area candidates but none matched the station, 
+  // or if we couldn't find the specific area, we should remain unlinked 
+  // rather than jumping to a random area with the same station code.
   return undefined
 }
 

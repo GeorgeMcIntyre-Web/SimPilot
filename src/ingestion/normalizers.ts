@@ -156,11 +156,12 @@ function expandAreaAbbreviation(areaName: string): string {
 export function normalizeAreaName(raw: string | null | undefined): string | null {
   if (!raw) return null
 
-  const trimmed = String(raw).trim()
-  if (!trimmed) return null
+  // First truncate to remove suffixes like " - SIMULATION" or " - 8Y"
+  const truncated = truncateAreaName(raw)
+  if (!truncated) return null
 
-  // First expand abbreviations
-  const expanded = expandAreaAbbreviation(trimmed)
+  // Then expand abbreviations
+  const expanded = expandAreaAbbreviation(truncated)
 
   return expanded
     .toUpperCase()

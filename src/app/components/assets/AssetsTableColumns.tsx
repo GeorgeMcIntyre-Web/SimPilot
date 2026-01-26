@@ -103,12 +103,16 @@ export function createAssetsTableColumns(
             const stationMatches = normalizedCellCode === normalizedStation;
             if (!stationMatches) return false;
             
-            // If we have an area name for the asset, try to match it against the cell's area name
+            // If we have an area name for the asset, it MUST match the cell's area name
             if (normAssetAreaName) {
               const cellArea = coreStore.getState().areas.find(a => a.id === c.areaId);
               const normCellAreaName = normalizeAreaName(cellArea?.name || '');
               return normAssetAreaName === normCellAreaName;
             }
+
+            // If asset has NO area but cell DOES, reflect caution (don't auto-match)
+            const cellArea = coreStore.getState().areas.find(a => a.id === c.areaId);
+            if (cellArea?.name) return false;
 
             return true;
           });

@@ -184,8 +184,8 @@ export async function parseRobotList(
     const col0Value = row[0]
     if (col0Value !== null && col0Value !== undefined && String(col0Value).trim()) {
       const col0Str = String(col0Value).trim()
-      // Only treat as area group if it looks like an area name (all caps or title case, no numbers at start)
-      if (/^[A-Z][A-Za-z\s]+$/.test(col0Str) && col0Str.length > 2) {
+      // Only treat as area group if it looks like an area name (starts with letter, allows numbers/dashes)
+      if (/^[A-Z][A-Za-z0-9\s\-_]+$/i.test(col0Str) && col0Str.length > 2) {
         currentAreaGroup = col0Str
       }
     }
@@ -328,7 +328,7 @@ export async function parseRobotList(
     // Build robot entity
     // Map stationCode to stationNumber for UnifiedAsset compatibility
     const robot: Robot = {
-      id: robotId,
+      id: canonicalRobotId || robotId,
       kind: 'ROBOT',
       name: robotNumber,
       oemModel: oemModel || undefined,
