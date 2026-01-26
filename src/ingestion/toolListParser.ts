@@ -184,6 +184,9 @@ export async function parseToolListLegacy(
     'ASSEMBLY LINE',
     'STATION',
     'STATION CODE',
+    'STATION NO. NEW',
+    'STATION NO. OLD',
+    'STATION NO.',
     'CELL',
     'REUSE',
     'REUSE STATUS',
@@ -292,8 +295,10 @@ export async function parseToolListLegacy(
       || getCellString(row, columnMap, 'LINE CODE')
       || getCellString(row, columnMap, 'ASSEMBLY LINE')
 
-    const stationCode = getCellString(row, columnMap, 'STATION')
+    const stationCode = getCellString(row, columnMap, 'STATION NO. NEW')
+      || getCellString(row, columnMap, 'STATION')
       || getCellString(row, columnMap, 'STATION CODE')
+      || getCellString(row, columnMap, 'STATION NO.')
       || getCellString(row, columnMap, 'CELL')
 
     const reuseStatus = getCellString(row, columnMap, 'REUSE')

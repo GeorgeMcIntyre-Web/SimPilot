@@ -100,7 +100,7 @@ const COLUMN_ALIASES: Record<string, string[]> = {
   'AREA_CODE': ['AREA', 'AREA CODE', 'ZONE', 'SHORT NAME'],
   'AREA_NAME': ['AREA NAME', 'AREA DESCRIPTION', 'FULL NAME'],
   'ASSEMBLY LINE': ['ASSEMBLY LINE', 'LINE', 'LINE CODE'],
-  'STATION': ['STATION', 'STATION CODE', 'STATION KEY'],
+  'STATION': ['STATION NO. NEW', 'STATION', 'STATION CODE', 'STATION KEY', 'STATION NO.'],
   'ROBOT': ['ROBOT', 'ROBOT CAPTION', 'ROBOT NAME'],
   'APPLICATION': ['APPLICATION', 'APP'],
   'PERSONS RESPONSIBLE': ['PERSONS RESPONSIBLE', 'PERSON RESPONSIBLE', 'ENGINEER', 'RESPONSIBLE']
@@ -229,20 +229,15 @@ export function vacuumParseSimulationSheet(
   // This prevents "PERSONS RESPONSIBLE" from matching "AREA" due to includes() logic
   const coreIndices: Record<string, number> = {}
 
-  // First pass: exact matches only
+  // First pass: exact matches only, following alias priority
   for (const [coreField, aliases] of Object.entries(COLUMN_ALIASES)) {
-    for (let i = 0; i < headerRow.length; i++) {
-      const headerText = String(headerRow[i] || '').toUpperCase().trim()
-
-      for (const alias of aliases) {
-        if (headerText === alias.toUpperCase()) {
-          coreIndices[coreField] = i
-          break
-        }
-      }
-
-      if (coreIndices[coreField] !== undefined) {
-        break
+    for (const alias of aliases) {
+      const aliasUpper = alias.toUpperCase()
+      const index = headerRow.findIndex(h => String(h || '').toUpperCase().trim() === aliasUpper)
+      
+      if (index >= 0) {
+        coreIndices[coreField] = index
+        break // Found highest priority match for this field
       }
     }
   }

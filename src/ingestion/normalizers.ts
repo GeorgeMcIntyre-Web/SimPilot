@@ -40,15 +40,27 @@ export function truncateAreaName(raw: string | null | undefined): string | null 
   const trimmed = String(raw).trim()
   if (!trimmed) return null
 
-  // Split on "-" and take only the first part
+  // Split on "-" and check the suffix
   const dashIndex = trimmed.indexOf('-')
   if (dashIndex === -1) {
-    // No dash found, return trimmed value
-    return trimmed.trim()
+    return trimmed
   }
 
-  // Take everything before the dash and trim whitespace
-  return trimmed.substring(0, dashIndex).trim()
+  const suffix = trimmed.substring(dashIndex + 1).trim().toUpperCase()
+  
+  // List of suffixes that are considered "noise" (informational only)
+  // We only truncate these, as they don't help identify the unique area.
+  const noiseSuffixes = ['SIMULATION', 'STATUS', 'REPORT', 'DATA', 'EXPORT', 'VIEW']
+  
+  const isNoise = noiseSuffixes.some(noise => suffix.includes(noise))
+  
+  if (isNoise) {
+    return trimmed.substring(0, dashIndex).trim()
+  }
+
+  // If the suffix is meaningful (like "8X", "8Y", "ZONE A"), keep the full name
+  // to prevent collisions between different physical areas.
+  return trimmed
 }
 
 /**
@@ -186,15 +198,19 @@ export function normalizeStationCode(raw: string | null | undefined): string | n
 
   // Remove common prefixes - try STATION first (longest match)
   normalized = normalized.replace(/^STATION\s*[-_]?/i, '')
-  normalized = normalized.replace(/^OP\s*[-_]?/i, '')
   normalized = normalized.replace(/^ST\s*[-_]?/i, '')
+  normalized = normalized.replace(/^OP\s*[-_]?/i, '')
+  normalized = normalized.replace(/^CELL\s*[-_]?/i, '')
 
   // Strip leading zeros from numeric parts
-  // For codes like "CA008" → "CA8", for "010" → "10"
+  // For codes like "CA008" → "CA8", for "010" → "10", "8X-015" → "8X-15"
   normalized = normalized.replace(/(\d+)/g, (match) => {
     const num = parseInt(match, 10)
     return num.toString()
   })
+
+  // Normalize separators to underscores (bridge the gap with CrossRef/Station table)
+  normalized = normalized.replace(/[\s\-]+/g, '_')
 
   return normalized.toUpperCase()
 }

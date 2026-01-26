@@ -125,7 +125,7 @@ export function createAssetsTableColumns(
             className="text-blue-600 dark:text-blue-400 hover:underline"
             onClick={(e) => e.stopPropagation()}
           >
-            {station}
+            {(cell as any).displayCode || station}
           </Link>
         );
       },

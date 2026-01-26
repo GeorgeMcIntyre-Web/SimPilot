@@ -150,6 +150,9 @@ export async function parseRobotList(
     'STATION NUMBER',
     'CELL',
     // Additional patterns for Robotlist_ZA files
+    'STATION NO. NEW',
+    'STATION NO. OLD',
+    'STATION NO.',
     'ROBOTNUMBER',
     'ROBOTNUMBER (E-NUMBER)',
     'ROBOT CAPTION',
@@ -192,9 +195,11 @@ export async function parseRobotList(
 
     // Extract station code first - CRITICAL: Only count rows with station numbers
     // This ensures we get exactly 166 robots (rows with stations), not 172 (all rows)
-    const stationCode = getCellString(row, columnMap, 'STATION')
+    const stationCode = getCellString(row, columnMap, 'STATION NO. NEW')
+      || getCellString(row, columnMap, 'STATION')
       || getCellString(row, columnMap, 'STATION CODE')
       || getCellString(row, columnMap, 'STATION NUMBER')
+      || getCellString(row, columnMap, 'STATION NO.')
       || getCellString(row, columnMap, 'CELL')
 
     // Extract assembly line (e.g., "BN", "AL")

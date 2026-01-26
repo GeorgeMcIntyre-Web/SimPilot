@@ -272,20 +272,45 @@ export function buildColumnMap(
   expectedColumns: string[]
 ): Record<string, number | null> {
   const map: Record<string, number | null> = {}
+  const foundIndices = new Set<number>()
 
+  // Normalize header row for mapping
+  const normalizedHeaders = headerRow.map(cell => 
+    String(cell || '')
+      .toLowerCase()
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
+
+  // First pass: Exact matches only
   for (const expected of expectedColumns) {
     const expectedLower = expected.toLowerCase().trim()
-    const index = headerRow.findIndex(cell => {
-      // Normalize: lowercase, trim, and replace newlines/multiple spaces with single space
-      const cellText = String(cell || '')
-        .toLowerCase()
-        .replace(/[\r\n]+/g, ' ')  // Replace newlines with spaces
-        .replace(/\s+/g, ' ')       // Collapse multiple spaces
-        .trim()
-      return cellText === expectedLower || cellText.includes(expectedLower)
-    })
+    const index = normalizedHeaders.findIndex((header, idx) => 
+      !foundIndices.has(idx) && header === expectedLower
+    )
 
-    map[expected] = index >= 0 ? index : null
+    if (index >= 0) {
+      map[expected] = index
+      foundIndices.add(index)
+    }
+  }
+
+  // Second pass: Partial matches for remaining expected columns
+  for (const expected of expectedColumns) {
+    if (map[expected] !== undefined) continue
+
+    const expectedLower = expected.toLowerCase().trim()
+    const index = normalizedHeaders.findIndex((header, idx) => 
+      !foundIndices.has(idx) && header.includes(expectedLower)
+    )
+
+    if (index >= 0) {
+      map[expected] = index
+      foundIndices.add(index)
+    } else {
+      map[expected] = null
+    }
   }
 
   return map
