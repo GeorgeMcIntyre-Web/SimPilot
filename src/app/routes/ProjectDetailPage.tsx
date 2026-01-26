@@ -33,21 +33,35 @@ export function ProjectDetailPage() {
         ? cells
         : cells.filter((c: Cell) => c.areaId === selectedAreaId);
 
+    const getStationLabel = (c: Cell): string => {
+        if (c.code) return c.code;
+        if (c.name?.includes(' - ')) {
+            const parts = c.name.split(' - ');
+            return parts[parts.length - 1];
+        }
+        return c.name || '';
+    };
+
     const columns: Column<Cell>[] = [
         {
-            header: 'Station Name',
-            accessor: (c) => <Link to={`/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline font-medium">{c.name}</Link>,
-            sortValue: (c) => c.name
+            header: 'Station',
+            accessor: (c) => {
+                const stationLabel = getStationLabel(c);
+                return (
+                    <Link
+                        to={`/cells/${encodeURIComponent(c.id)}`}
+                        className="text-blue-600 hover:underline font-medium"
+                    >
+                        {stationLabel || '-'}
+                    </Link>
+                );
+            },
+            sortValue: (c) => getStationLabel(c)
         },
         {
             header: 'Area',
             accessor: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '-',
             sortValue: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || ''
-        },
-        {
-            header: 'Station',
-            accessor: (c) => c.code,
-            sortValue: (c) => c.code || ''
         },
         {
             header: 'Engineer',
@@ -185,7 +199,7 @@ export function ProjectDetailPage() {
                                 data={filteredCells}
                                 columns={columns}
                                 enableSorting
-                                defaultSortIndex={2}
+                                defaultSortIndex={0}
                                 emptyMessage="No cells found for this area."
                             />
                         </div>
