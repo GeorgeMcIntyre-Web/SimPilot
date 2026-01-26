@@ -103,7 +103,7 @@ function Simulation2Page() {
     }
 
     return (
-      <div className="h-full overflow-auto max-h-[680px] custom-scrollbar">
+      <div className="h-full flex flex-col">
         <div className="flex items-center justify-between gap-3 pb-3">
           <input
             type="text"
@@ -113,77 +113,79 @@ function Simulation2Page() {
             className="w-full text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
-            <tr className="text-left text-gray-500 dark:text-gray-400">
-              <th
-                className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none"
-                onClick={() => toggleSort('station')}
-              >
-                Station
-              </th>
-              <th
-                className="py-3 px-3 cursor-pointer select-none"
-                onClick={() => toggleSort('area')}
-              >
-                Area
-              </th>
-              <th
-                className="py-3 px-3 cursor-pointer select-none"
-                onClick={() => toggleSort('simulator')}
-              >
-                Simulator
-              </th>
-              <th
-                className="py-3 px-3 cursor-pointer select-none"
-                onClick={() => toggleSort('completion')}
-              >
-                Completion
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-            {filteredAndSorted.map(cell => (
-              <tr
-                key={cell.stationKey}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
-                  <Link
-                    to="#"
-                    className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[200px] hover:underline"
-                    title={formatStationLabel(cell) === '-' ? undefined : formatStationLabel(cell)}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleStationNavigate(cell)
-                    }}
-                  >
-                    {formatStationLabel(cell)}
-                  </Link>
-                </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
-                  {cell.areaKey ?? 'Unknown'}
-                </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                  {cell.simulationStatus?.engineer?.trim() ? (
-                    <Link
-                      to={`/engineers?highlightEngineer=${encodeURIComponent(cell.simulationStatus.engineer.trim())}`}
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
-                      title={cell.simulationStatus.engineer.trim()}
-                    >
-                      {cell.simulationStatus.engineer.trim()}
-                    </Link>
-                  ) : (
-                    'UNASSIGNED'
-                  )}
-                </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                  {formatCompletion(cell)}
-                </td>
+        <div className="flex-1 overflow-auto max-h-[680px] custom-scrollbar">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
+            <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
+              <tr className="text-left text-gray-500 dark:text-gray-400">
+                <th
+                  className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none"
+                  onClick={() => toggleSort('station')}
+                >
+                  Station
+                </th>
+                <th
+                  className="py-3 px-3 cursor-pointer select-none"
+                  onClick={() => toggleSort('area')}
+                >
+                  Area
+                </th>
+                <th
+                  className="py-3 px-3 cursor-pointer select-none"
+                  onClick={() => toggleSort('simulator')}
+                >
+                  Simulator
+                </th>
+                <th
+                  className="py-3 px-3 cursor-pointer select-none"
+                  onClick={() => toggleSort('completion')}
+                >
+                  Completion
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+              {filteredAndSorted.map(cell => (
+                <tr
+                  key={cell.stationKey}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+                    <Link
+                      to="#"
+                      className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[200px] hover:underline"
+                      title={formatStationLabel(cell) === '-' ? undefined : formatStationLabel(cell)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        handleStationNavigate(cell)
+                      }}
+                    >
+                      {formatStationLabel(cell)}
+                    </Link>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                    {cell.areaKey ?? 'Unknown'}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
+                    {cell.simulationStatus?.engineer?.trim() ? (
+                      <Link
+                        to={`/engineers?highlightEngineer=${encodeURIComponent(cell.simulationStatus.engineer.trim())}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                        title={cell.simulationStatus.engineer.trim()}
+                      >
+                        {cell.simulationStatus.engineer.trim()}
+                      </Link>
+                    ) : (
+                      'UNASSIGNED'
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
+                    {formatCompletion(cell)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
