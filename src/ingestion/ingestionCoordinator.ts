@@ -542,11 +542,35 @@ function buildCrossRefInputFromApplyResult(
     ? convertVacuumRowsToPanelMilestones(vacuumRows)
     : new Map()
 
+  if (panelMilestonesMap.size > 0) {
+    log.debug('[CrossRef] Panel milestones map built:', {
+      size: panelMilestonesMap.size,
+      sampleKeys: [...panelMilestonesMap.keys()].slice(0, 5)
+    })
+  }
+
   // Convert Cells to SimulationStatusSnapshot (using merged cells)
   const simulationStatusRows: SimulationStatusSnapshot[] = allCells.map(cell => {
-    // Try to find panel milestones for this cell
-    // Use station code as key since cells are grouped by station
-    const panelMilestones = panelMilestonesMap.get(cell.code) || undefined
+    // Try to find panel milestones for this cell using multiple key formats
+    // The vacuum parser uses stationKey like "8Y-020", but cells might have different formats
+    let panelMilestones = panelMilestonesMap.get(cell.code)
+
+    // If not found, try with stationId (which might have a different format)
+    if (!panelMilestones && cell.stationId) {
+      panelMilestones = panelMilestonesMap.get(cell.stationId)
+    }
+
+    // If still not found, try to find a key that contains or matches the cell code
+    if (!panelMilestones && panelMilestonesMap.size > 0) {
+      // Try case-insensitive match
+      const cellCodeUpper = cell.code.toUpperCase()
+      for (const [key, value] of panelMilestonesMap) {
+        if (key.toUpperCase() === cellCodeUpper) {
+          panelMilestones = value
+          break
+        }
+      }
+    }
 
     return {
       stationKey: cell.code,
@@ -562,6 +586,16 @@ function buildCrossRefInputFromApplyResult(
       raw: cell
     }
   })
+
+  // Log panel milestones attachment stats
+  if (panelMilestonesMap.size > 0) {
+    const withMilestones = simulationStatusRows.filter(r => r.panelMilestones !== undefined).length
+    log.debug('[CrossRef] Panel milestones attached to cells:', {
+      totalCells: simulationStatusRows.length,
+      cellsWithMilestones: withMilestones,
+      cellsWithoutMilestones: simulationStatusRows.length - withMilestones
+    })
+  }
 
   // Convert Tools to ToolSnapshot (using merged tools)
   const toolingRows: ToolSnapshot[] = allTools.map(tool => ({
