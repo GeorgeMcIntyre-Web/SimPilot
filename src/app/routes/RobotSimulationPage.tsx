@@ -3,8 +3,10 @@ import { useMemo, useState } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
-import { normalizeStationId } from '../../domain/crossRef/CrossRefUtils'
-import { coreStore } from '../../domain/coreStore'
+import {
+  PanelType,
+  PanelMilestones,
+} from '../../ingestion/simulationStatus/simulationStatusTypes'
 
 const formatRobotLabel = (cell: CellSnapshot): string => {
   const robotCaptions = (cell.robots || [])
@@ -30,23 +32,42 @@ const formatCompletionValue = (cell: CellSnapshot): string => {
   return `${Math.round(value)}%`
 }
 
-const getCompletionNumber = (cell: CellSnapshot): number | null => {
-  const value = cell.simulationStatus?.firstStageCompletion
-  if (typeof value !== 'number') return null
-  return Math.round(value)
+/**
+ * Get completion percentage for a specific panel from panelMilestones
+ */
+const getPanelCompletion = (
+  panelMilestones: PanelMilestones | undefined,
+  panelType: PanelType
+): number | null => {
+  if (!panelMilestones) return null
+  const group = panelMilestones[panelType]
+  if (!group) return null
+  return group.completion
 }
+
+/**
+ * Panel configuration for the aspect buttons
+ * Maps display title to panel type and URL slug
+ */
+const PANEL_CONFIGS: { title: string; panelType: PanelType; slug: string }[] = [
+  { title: 'Robot Simulation', panelType: 'robotSimulation', slug: 'robot-simulation' },
+  { title: 'Spot Welding', panelType: 'spotWelding', slug: 'spot-welding' },
+  { title: 'Sealer', panelType: 'sealer', slug: 'sealer' },
+  { title: 'Alternative Joining Applications', panelType: 'alternativeJoining', slug: 'alternative-joining-applications' },
+  { title: 'Gripper', panelType: 'gripper', slug: 'gripper' },
+  { title: 'Fixture', panelType: 'fixture', slug: 'fixture' },
+  { title: 'Multi Resource Simulation', panelType: 'mrs', slug: 'mrs' },
+  { title: 'OLP', panelType: 'olp', slug: 'olp' },
+  { title: 'Documentation', panelType: 'documentation', slug: 'documentation' },
+  { title: 'Layout', panelType: 'layout', slug: 'layout' },
+  { title: 'Safety', panelType: 'safety', slug: 'safety' },
+]
 
 function RobotSimulationPage() {
   const { cells, loading, hasData } = useCrossRefData()
   const tableCells = hasData ? cells : []
   const navigate = useNavigate()
   const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
-
-  const slugify = (value: string) =>
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
 
   const RobotSimulationStationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: { cell: CellSnapshot; label: string }) => void }) => {
     type SortKey = 'robot' | 'area' | 'simulator' | 'completion'
@@ -258,37 +279,37 @@ function RobotSimulationPage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 flex flex-col">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
-                  {[
-                    'Robot Simulation',
-                    'Spot Welding',
-                    'Sealer',
-                    'Alternative Joining Applications',
-                    'Gripper',
-                    'Fixture',
-                    'Multi Resource Simulation',
-                    'OLP',
-                    'Documentation',
-                    'Layout'
-                  ].map((title) => {
-                    const completion = getCompletionNumber(selectedRow.cell)
-                    const slug = title === 'Multi Resource Simulation' ? 'mrs' : slugify(title)
+                  {PANEL_CONFIGS.map(({ title, panelType, slug }) => {
+                    const panelMilestones = selectedRow.cell.simulationStatus?.panelMilestones
+                    const completion = getPanelCompletion(panelMilestones, panelType)
+                    const hasData = completion !== null
                     return (
                       <button
                         key={title}
                         type="button"
-                        onClick={() => navigate(`/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}`)}
+                        onClick={() => navigate(`/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}&station=${encodeURIComponent(selectedRow.cell.stationKey)}`)}
                         className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <div className="flex items-start justify-between text-sm font-semibold text-gray-900 dark:text-white gap-2">
                           <span className="whitespace-normal leading-tight">{title}</span>
-                          <span className="text-gray-700 dark:text-gray-200">{completion !== null ? `${completion}%` : '-'}</span>
+                          <span className={hasData ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>
+                            {hasData ? `${completion}%` : '-'}
+                          </span>
                         </div>
                         <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-blue-500 transition-all"
-                            style={{ width: completion !== null ? `${completion}%` : '0%' }}
+                            className={`h-full rounded-full transition-all ${
+                              hasData
+                                ? completion === 100
+                                  ? 'bg-green-500'
+                                  : completion > 0
+                                    ? 'bg-blue-500'
+                                    : 'bg-gray-300 dark:bg-gray-600'
+                                : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                            style={{ width: hasData ? `${completion}%` : '0%' }}
                           />
                         </div>
                       </button>
