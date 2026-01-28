@@ -1005,28 +1005,41 @@ function extractPanelGroup(
  * Convert vacuum-parsed rows to PanelMilestones structure.
  * Groups all metrics by their corresponding panel.
  *
+ * Returns a map that includes BOTH:
+ * - Robot-level keys: "stationKey::robotCaption" (e.g., "8X-010::8X-010-01")
+ * - Station-level keys: "stationKey" (e.g., "8X-010") - aggregated from all robots at that station
+ *
  * @param vacuumRows - Vacuum-parsed rows from all sheets
- * @returns Map of robotKey -> PanelMilestones
+ * @returns Map of key -> PanelMilestones (includes both robot-level and station-level entries)
  */
 export function convertVacuumRowsToPanelMilestones(
   vacuumRows: VacuumParsedRow[]
 ): Map<string, PanelMilestones> {
-  const robotPanels = new Map<string, PanelMilestones>()
+  const resultMap = new Map<string, PanelMilestones>()
 
   // Group vacuum rows by robot (using stationKey + robotCaption as key)
   const robotRowsMap = new Map<string, VacuumParsedRow[]>()
+  // Also group by station for station-level aggregation
+  const stationRowsMap = new Map<string, VacuumParsedRow[]>()
 
   for (const row of vacuumRows) {
+    // Robot-level key
     const robotKey = row.robotCaption
       ? `${row.stationKey}::${row.robotCaption}`
       : row.stationKey
 
-    const existing = robotRowsMap.get(robotKey) || []
-    existing.push(row)
-    robotRowsMap.set(robotKey, existing)
+    const existingRobot = robotRowsMap.get(robotKey) || []
+    existingRobot.push(row)
+    robotRowsMap.set(robotKey, existingRobot)
+
+    // Station-level key (always just the station)
+    const stationKey = row.stationKey
+    const existingStation = stationRowsMap.get(stationKey) || []
+    existingStation.push(row)
+    stationRowsMap.set(stationKey, existingStation)
   }
 
-  // For each robot, merge all metrics and extract panel milestones
+  // Process robot-level entries
   for (const [robotKey, rows] of robotRowsMap) {
     // Merge all metrics from all rows for this robot
     const allMetrics: SimulationMetric[] = []
@@ -1042,10 +1055,35 @@ export function convertVacuumRowsToPanelMilestones(
       panels[panelKey as PanelType] = extractPanelGroup(allMetrics, milestoneDefinitions)
     }
 
-    robotPanels.set(robotKey, panels)
+    resultMap.set(robotKey, panels)
   }
 
-  return robotPanels
+  // Process station-level entries (aggregate all robots at a station)
+  for (const [stationKey, rows] of stationRowsMap) {
+    // Skip if station key is same as a robot key (no robot caption case)
+    // In that case, the robot-level entry already serves as station-level
+    if (resultMap.has(stationKey)) {
+      continue
+    }
+
+    // Merge all metrics from all robots at this station
+    const allMetrics: SimulationMetric[] = []
+    for (const row of rows) {
+      allMetrics.push(...row.metrics)
+    }
+
+    // Create panel milestones
+    const panels = createEmptyPanelMilestones()
+
+    // Extract each panel's milestones
+    for (const [panelKey, milestoneDefinitions] of Object.entries(PANEL_TO_MILESTONES)) {
+      panels[panelKey as PanelType] = extractPanelGroup(allMetrics, milestoneDefinitions)
+    }
+
+    resultMap.set(stationKey, panels)
+  }
+
+  return resultMap
 }
 
 /**

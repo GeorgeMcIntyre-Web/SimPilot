@@ -4,7 +4,7 @@
 import { IngestionWarning, UnifiedAsset } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
 import { readWorkbook, sheetToMatrix } from './excelUtils'
-import { parseSimulationStatus, VacuumParsedRow, convertVacuumRowsToPanelMilestones, getPanelMilestonesForRobot } from './simulationStatusParser'
+import { parseSimulationStatus, VacuumParsedRow, convertVacuumRowsToPanelMilestones } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { parseAssembliesList } from './assembliesListParser'
@@ -1059,7 +1059,9 @@ async function ingestFilesInternal(
   try {
     // Pass robots from simulation status for accurate robot counts per station
     const simulationRobots = ingestedData.simulation?.robotsFromSimStatus
-    const crossRefInput = buildCrossRefInputFromApplyResult(applyResult, simulationRobots)
+    // Pass vacuum rows for panel milestone extraction
+    const vacuumRows = ingestedData.simulation?.vacuumRows
+    const crossRefInput = buildCrossRefInputFromApplyResult(applyResult, simulationRobots, vacuumRows)
     const crossRefResult = buildCrossRef(crossRefInput)
     setCrossRefData(crossRefResult)
     log.debug('[Ingestion] CrossRef data populated for dashboard:', {
