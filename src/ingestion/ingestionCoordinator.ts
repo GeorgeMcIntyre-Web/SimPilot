@@ -571,6 +571,20 @@ function buildCrossRefInputFromApplyResult(
       panelMilestones = panelMilestonesMap.get(cell.stationId)
     }
 
+    // Try normalized keys (handles hyphens/underscores/leading zeros)
+    if (!panelMilestones) {
+      const normalizedCode = normalizeStationId(cell.code)
+      if (normalizedCode) {
+        panelMilestones = panelMilestonesMap.get(normalizedCode)
+      }
+    }
+    if (!panelMilestones && cell.stationId) {
+      const normalizedStationId = normalizeStationId(cell.stationId)
+      if (normalizedStationId) {
+        panelMilestones = panelMilestonesMap.get(normalizedStationId)
+      }
+    }
+
     // If still not found, try to find a key that contains or matches the cell code
     if (!panelMilestones && panelMilestonesMap.size > 0) {
       // Try case-insensitive match

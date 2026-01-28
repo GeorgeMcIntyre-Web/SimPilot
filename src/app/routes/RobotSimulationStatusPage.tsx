@@ -22,6 +22,20 @@ export function RobotSimulationStatusPage() {
   const allEntities = useSimulationStatusEntities()
   const [expandedStations, setExpandedStations] = useState<Set<string>>(new Set())
   const [selectedRobotId, setSelectedRobotId] = useState<string | null>(null)
+  const handleRobotRowClick = (robot: SimulationStatusEntity) => {
+    setSelectedRobotId(robot.robotFullId)
+    console.info('[RobotSimulationStatus] Row click', {
+      robotId: robot.robotFullId,
+      station: robot.stationFull,
+      area: robot.area,
+      application: robot.application,
+      overallCompletion: robot.overallCompletion,
+      linkedTooling: robot.linkedToolingEntityKeys,
+      responsiblePerson: robot.responsiblePerson,
+      source: robot.source,
+      milestones: robot.milestones
+    })
+  }
 
   const toggleStation = (stationKey: string) => {
     const newExpanded = new Set(expandedStations)
@@ -179,7 +193,7 @@ export function RobotSimulationStatusPage() {
                           .map(robot => (
                             <button
                               key={robot.robotFullId}
-                              onClick={() => setSelectedRobotId(robot.robotFullId)}
+                              onClick={() => handleRobotRowClick(robot)}
                               className={`w-full text-left px-4 py-3 rounded-lg border transition-all ${
                                 selectedRobotId === robot.robotFullId
                                   ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'

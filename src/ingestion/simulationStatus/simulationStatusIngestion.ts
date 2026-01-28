@@ -10,7 +10,10 @@ import {
   normalizeSimulationStatusRows,
   simulationRowToEntity,
   validateSimulationStatusEntities,
-  linkSimulationToTooling
+  linkSimulationToTooling,
+  parseSheetForPanels,
+  mergePanelMilestonesByRobot,
+  attachPanelMilestonesToEntities,
 } from './simulationStatusParser'
 import { truncateAreaName } from '../normalizers'
 import {
@@ -132,6 +135,11 @@ export async function ingestSimulationStatusFile(
   const entities = normalized
     .map(row => simulationRowToEntity(row, targetSheetName, anomalies))
     .filter((e): e is NonNullable<typeof e> => e !== null)
+
+  // Extract and attach panel milestones from the SIMULATION sheet
+  const panelResults = parseSheetForPanels(nonDeletedRows, 'SIMULATION')
+  const robotPanelsMap = mergePanelMilestonesByRobot([panelResults])
+  attachPanelMilestonesToEntities(entities, robotPanelsMap)
 
   // Log detected areas and stations
   const uniqueAreas = Array.from(new Set(entities.map(e => e.area))).filter(Boolean)

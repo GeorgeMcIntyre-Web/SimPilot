@@ -49,6 +49,23 @@ function normalizeNumber(val: unknown): number | null {
 }
 
 /**
+ * Safely read a column value from a raw Excel row, handling stray spacing/case
+ * in header names (common in vendor spreadsheets).
+ */
+function getColumnValue(raw: Record<string, unknown>, columnName: string): unknown {
+  // Exact match first
+  if (raw[columnName] !== undefined) return raw[columnName]
+
+  const target = columnName.trim().toUpperCase()
+  for (const [rawKey, rawValue] of Object.entries(raw)) {
+    if (rawKey.trim().toUpperCase() === target) {
+      return rawValue
+    }
+  }
+  return undefined
+}
+
+/**
  * Parse station identifier like "9B-100" into area and station
  */
 function parseStationIdentifier(stationFull: string): { area: string; station: string } | null {
@@ -167,34 +184,34 @@ export function normalizeSimulationStatusRows(
  */
 function extractMilestones(raw: SimulationStatusRawRow): SimulationMilestones {
   return {
-    robotPositionStage1: normalizeNumber(raw[SIMULATION_MILESTONES.ROBOT_POSITION_STAGE_1]),
-    coreCubicSConfigured: normalizeNumber(raw[SIMULATION_MILESTONES.CORE_CUBIC_S_CONFIGURED]),
-    dressPackFryingPanStage1: normalizeNumber(raw[SIMULATION_MILESTONES.DRESS_PACK_FRYING_PAN_STAGE_1]),
-    robotFlangePcdAdaptersChecked: normalizeNumber(raw[SIMULATION_MILESTONES.ROBOT_FLANGE_PCD_ADAPTERS_CHECKED]),
-    allEoatPayloadsChecked: normalizeNumber(raw[SIMULATION_MILESTONES.ALL_EOAT_PAYLOADS_CHECKED]),
-    robotTypeConfirmed: normalizeNumber(raw[SIMULATION_MILESTONES.ROBOT_TYPE_CONFIRMED]),
-    robotRiserConfirmed: normalizeNumber(raw[SIMULATION_MILESTONES.ROBOT_RISER_CONFIRMED]),
-    trackLengthCatracConfirmed: normalizeNumber(raw[SIMULATION_MILESTONES.TRACK_LENGTH_CATRAC_CONFIRMED]),
-    collisionsCheckedStage1: normalizeNumber(raw[SIMULATION_MILESTONES.COLLISIONS_CHECKED_STAGE_1]),
-    spotWeldsDistributedProjected: normalizeNumber(raw[SIMULATION_MILESTONES.SPOT_WELDS_DISTRIBUTED_PROJECTED]),
-    referenceWeldGunSelected: normalizeNumber(raw[SIMULATION_MILESTONES.REFERENCE_WELD_GUN_SELECTED]),
-    referenceWeldGunCollisionCheck: normalizeNumber(raw[SIMULATION_MILESTONES.REFERENCE_WELD_GUN_COLLISION_CHECK]),
-    weldGunForceCheckedWis7: normalizeNumber(raw[SIMULATION_MILESTONES.WELD_GUN_FORCE_CHECKED_WIS7]),
-    weldGunProposalCreated: normalizeNumber(raw[SIMULATION_MILESTONES.WELD_GUN_PROPOSAL_CREATED]),
-    finalWeldGunCollisionCheck: normalizeNumber(raw[SIMULATION_MILESTONES.FINAL_WELD_GUN_COLLISION_CHECK]),
-    finalWeldGunApproved: normalizeNumber(raw[SIMULATION_MILESTONES.FINAL_WELD_GUN_APPROVED]),
-    weldGunEquipmentPlacedConfirmed: normalizeNumber(raw[SIMULATION_MILESTONES.WELD_GUN_EQUIPMENT_PLACED_CONFIRMED]),
-    sealingDataImportedChecked: normalizeNumber(raw[SIMULATION_MILESTONES.SEALING_DATA_IMPORTED_CHECKED]),
-    sealerProposalCreatedSent: normalizeNumber(raw[SIMULATION_MILESTONES.SEALER_PROPOSAL_CREATED_SENT]),
-    sealerGunApproved: normalizeNumber(raw[SIMULATION_MILESTONES.SEALER_GUN_APPROVED]),
-    sealerEquipmentPlacedConfirmed: normalizeNumber(raw[SIMULATION_MILESTONES.SEALER_EQUIPMENT_PLACED_CONFIRMED]),
-    gripperEquipmentPrototypeCreated: normalizeNumber(raw[SIMULATION_MILESTONES.GRIPPER_EQUIPMENT_PROTOTYPE_CREATED]),
-    finalGripperCollisionCheck: normalizeNumber(raw[SIMULATION_MILESTONES.FINAL_GRIPPER_COLLISION_CHECK]),
-    gripperDesignFinalApproval: normalizeNumber(raw[SIMULATION_MILESTONES.GRIPPER_DESIGN_FINAL_APPROVAL]),
-    toolChangeStandsPlaced: normalizeNumber(raw[SIMULATION_MILESTONES.TOOL_CHANGE_STANDS_PLACED]),
-    fixtureEquipmentPrototypeCreated: normalizeNumber(raw[SIMULATION_MILESTONES.FIXTURE_EQUIPMENT_PROTOTYPE_CREATED]),
-    finalFixtureCollisionCheck: normalizeNumber(raw[SIMULATION_MILESTONES.FINAL_FIXTURE_COLLISION_CHECK]),
-    fixtureDesignFinalApproval: normalizeNumber(raw[SIMULATION_MILESTONES.FIXTURE_DESIGN_FINAL_APPROVAL]),
+    robotPositionStage1: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.ROBOT_POSITION_STAGE_1)),
+    dcsConfigured: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.DCS_CONFIGURED)),
+    dressPackFryingPanStage1: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.DRESS_PACK_FRYING_PAN_STAGE_1)),
+    robotFlangePcdAdaptersChecked: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.ROBOT_FLANGE_PCD_ADAPTERS_CHECKED)),
+    allEoatPayloadsChecked: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.ALL_EOAT_PAYLOADS_CHECKED)),
+    robotTypeConfirmed: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.ROBOT_TYPE_CONFIRMED)),
+    robotRiserConfirmed: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.ROBOT_RISER_CONFIRMED)),
+    trackLengthCatracConfirmed: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.TRACK_LENGTH_CATRAC_CONFIRMED)),
+    collisionsCheckedStage1: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.COLLISIONS_CHECKED_STAGE_1)),
+    spotWeldsDistributedProjected: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.SPOT_WELDS_DISTRIBUTED_PROJECTED)),
+    referenceWeldGunSelected: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.REFERENCE_WELD_GUN_SELECTED)),
+    referenceWeldGunCollisionCheck: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.REFERENCE_WELD_GUN_COLLISION_CHECK)),
+    weldGunForceCheckedWis7: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.WELD_GUN_FORCE_CHECKED_WIS7)),
+    weldGunProposalCreated: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.WELD_GUN_PROPOSAL_CREATED)),
+    finalWeldGunCollisionCheck: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.FINAL_WELD_GUN_COLLISION_CHECK)),
+    finalWeldGunApproved: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.FINAL_WELD_GUN_APPROVED)),
+    weldGunEquipmentPlacedConfirmed: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.WELD_GUN_EQUIPMENT_PLACED_CONFIRMED)),
+    sealingDataImportedChecked: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.SEALING_DATA_IMPORTED_CHECKED)),
+    sealerProposalCreatedSent: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.SEALER_PROPOSAL_CREATED_SENT)),
+    sealerGunApproved: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.SEALER_GUN_APPROVED)),
+    sealerEquipmentPlacedConfirmed: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.SEALER_EQUIPMENT_PLACED_CONFIRMED)),
+    gripperEquipmentPrototypeCreated: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.GRIPPER_EQUIPMENT_PROTOTYPE_CREATED)),
+    finalGripperCollisionCheck: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.FINAL_GRIPPER_COLLISION_CHECK)),
+    gripperDesignFinalApproval: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.GRIPPER_DESIGN_FINAL_APPROVAL)),
+    toolChangeStandsPlaced: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.TOOL_CHANGE_STANDS_PLACED)),
+    fixtureEquipmentPrototypeCreated: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.FIXTURE_EQUIPMENT_PROTOTYPE_CREATED)),
+    finalFixtureCollisionCheck: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.FINAL_FIXTURE_COLLISION_CHECK)),
+    fixtureDesignFinalApproval: normalizeNumber(getColumnValue(raw, SIMULATION_MILESTONES.FIXTURE_DESIGN_FINAL_APPROVAL)),
   }
 }
 
@@ -404,20 +421,7 @@ function extractPanelMilestones(
   const milestones: Record<string, MilestoneValue> = {}
 
   for (const [_key, columnName] of Object.entries(milestoneDefinitions)) {
-    // Try exact match first
-    let value = raw[columnName]
-
-    // If not found, try case-insensitive and trimmed match
-    if (value === undefined) {
-      const normalizedColumnName = columnName.trim().toUpperCase()
-      for (const [rawKey, rawValue] of Object.entries(raw)) {
-        if (rawKey.trim().toUpperCase() === normalizedColumnName) {
-          value = rawValue
-          break
-        }
-      }
-    }
-
+    const value = getColumnValue(raw, columnName)
     milestones[columnName] = normalizeNumber(value)
   }
 
