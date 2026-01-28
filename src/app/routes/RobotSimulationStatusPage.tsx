@@ -14,14 +14,26 @@ import {
 } from '../../ingestion/simulationStatus'
 import type { SimulationStatusEntity } from '../../ingestion/simulationStatus'
 import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertCircle, ExternalLink } from 'lucide-react'
+import { useCells } from '../../ui/hooks/useDomainData'
 
 export function RobotSimulationStatusPage() {
   const stats = useSimulationStatusStats()
   const byStation = useSimulationStatusGroupedByStation()
   const allEntities = useSimulationStatusEntities()
+  const cells = useCells()
   const [expandedStations, setExpandedStations] = useState<Set<string>>(new Set())
   const [selectedRobotId, setSelectedRobotId] = useState<string | null>(null)
+  const cellByStationCode = useMemo(() => {
+    const map = new Map<string, { id: string; projectId: string }>()
+    cells.forEach(c => {
+      const code = c.code?.toUpperCase()
+      if (code) {
+        map.set(code, { id: c.id, projectId: c.projectId })
+      }
+    })
+    return map
+  }, [cells])
   const handleRobotRowClick = (robot: SimulationStatusEntity) => {
     setSelectedRobotId(robot.robotFullId)
     console.info('[RobotSimulationStatus] Row click', {
@@ -216,6 +228,21 @@ export function RobotSimulationStatusPage() {
                                     <div className="text-xs text-gray-500 dark:text-gray-400">
                                       {robot.application}
                                     </div>
+                                    {(() => {
+                                      const cell = cellByStationCode.get(robot.stationFull.toUpperCase())
+                                      if (!cell) return null
+                                      return (
+                                        <div className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-300 mt-1">
+                                          <ExternalLink className="h-3 w-3" />
+                                          <Link
+                                            to={`/projects/${cell.projectId}/cells/${encodeURIComponent(cell.id)}`}
+                                            className="hover:underline"
+                                          >
+                                            View station {robot.stationFull}
+                                          </Link>
+                                        </div>
+                                      )
+                                    })()}
                                   </div>
                                 </div>
                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
