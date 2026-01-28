@@ -281,7 +281,8 @@ function Simulation2Page() {
                     'Fixture',
                     'MRS',
                     'OLP',
-                    'Documentation'
+                    'Documentation',
+                    'Layout'
                   ].map((title) => {
                     const completion = getCompletionNumber(selectedRow.cell)
                     const slug = slugify(title)

@@ -43,6 +43,40 @@ const ASPECT_FIELDS: Record<string, AspectField[]> = {
     { label: 'FINAL GRIPPER COLLISION CHECK', percent: null },
     { label: 'GRIPPER DESIGN FINAL APPROVAL', percent: null },
     { label: 'TOOL CHANGE STANDS PLACED', percent: null }
+  ],
+  'fixture': [
+    { label: 'FIXTURE EQUIPMENT PROTOTYPE CREATED', percent: null },
+    { label: 'FINAL FIXTURE COLLISION CHECK', percent: null },
+    { label: 'FIXTURE DESIGN FINAL APPROVAL', percent: null }
+  ],
+  'mrs': [
+    { label: 'FULL ROBOT PATHS CREATED WITH AUX DATA SET', percent: null },
+    { label: 'FINAL ROBOT POSITION', percent: null },
+    { label: 'COLLISION CHECKS DONE WITH RCS MODULE', percent: null },
+    { label: 'MACHINE OPERATION CHECKED AND MATCHES SIM', percent: null },
+    { label: 'CYCLETIME CHART SEQUECNE AND COUNTS UPDATED', percent: null },
+    { label: 'RCS MULTI RESOURCE SIMULATION RUNNING IN CYCLETIME', percent: null },
+    { label: 'RCS MULTI  RESOURCE VIDEO RECORDED', percent: null }
+  ],
+  'olp': [
+    { label: 'OLP DONE TO PROGRAMMING GUIDELINE', percent: null },
+    { label: 'UTILITIES PATHS CRTEATED', percent: null }
+  ],
+  'documentation': [
+    { label: 'INTERLOCK ZONING DOCUMENTATION CREATED', percent: null },
+    { label: 'WIS7 SPOT LIST UPDATED', percent: null },
+    { label: 'DCS DOCUMENTATION CREATED', percent: null },
+    { label: 'ROBOT INSTALLATION DOCUMENTATION CREATED', percent: null },
+    { label: '1A4 SHEET CREATED + COMPLETED', percent: null }
+  ],
+  'layout': [
+    { label: 'LATEST LAYOUT IN SIMULATION', percent: null },
+    { label: '3D CABLE TRAYS CHECKED AND MATCH LAYOUT', percent: null },
+    { label: '3D FENCING CHECKED AND MATCH LAYOUT', percent: null },
+    { label: '3D DUNNAGES CHECKED AND MATCH LAYOUT', percent: null },
+    { label: '3D CABINETS CHECKED AND MATCH LAYOUT', percent: null },
+    { label: 'FINAL LAYOUT INCLUDED MATCHING LAYOUT + SIM', percent: null },
+    { label: 'ALL EQUIPMENT FOUNDATION PLATES INCLUDED IN SIM', percent: null }
   ]
 }
 
@@ -80,27 +114,33 @@ function Simulation2AspectPage() {
         <div className="text-sm text-gray-700 dark:text-gray-300">
           Robot: <span className="font-medium">{robot}</span>
         </div>
-        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {fields.map(({ label, percent }) => (
-            <div
-              key={label}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm"
-            >
-              <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white">
-                <span className="truncate pr-3">{label}</span>
-                <span className="text-gray-700 dark:text-gray-200">
-                  {typeof percent === 'number' ? `${percent}%` : '—'}
-                </span>
+        {fields.length > 0 ? (
+          <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+            {fields.map(({ label, percent }) => (
+              <div
+                key={label}
+                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm"
+              >
+                <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white">
+                  <span className="truncate pr-3">{label}</span>
+                  <span className="text-gray-700 dark:text-gray-200">
+                    {typeof percent === 'number' ? `${percent}%` : '—'}
+                  </span>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all"
+                    style={{ width: typeof percent === 'number' ? `${percent}%` : '0%' }}
+                  />
+                </div>
               </div>
-              <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-blue-500 transition-all"
-                  style={{ width: typeof percent === 'number' ? `${percent}%` : '0%' }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-sm text-gray-600 dark:text-gray-300">
+            No milestones defined for this aspect yet.
+          </div>
+        )}
         <Link
           to="/simulation-2"
           className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm"
