@@ -225,9 +225,9 @@ function RobotSimulationPage() {
           </div>
         </section>
 
-        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0">
           {selectedRow ? (
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1 min-h-0">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -258,8 +258,8 @@ function RobotSimulationPage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0">
+                <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
                     'Robot Simulation',
                     'Spot Welding',
