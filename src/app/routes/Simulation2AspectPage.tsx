@@ -2,6 +2,50 @@ import { useMemo } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
 
+type AspectField = { label: string; percent: number | null }
+
+const ASPECT_FIELDS: Record<string, AspectField[]> = {
+  'robot-simulation': [
+    { label: 'Robot Position - Stage 1', percent: null },
+    { label: 'DCS Configured', percent: null },
+    { label: 'DRESS PACK & FRYING PAN CONFIGURED - STAGE 1', percent: null },
+    { label: 'ROBOT FLANGE PCD + ADAPTERS CHECKED', percent: null },
+    { label: 'ALL EOAT PAYLOADS CHECKED', percent: null },
+    { label: 'ROBOT TYPE CONFIRMED', percent: null },
+    { label: 'ROBOT RISER CONFIRMED', percent: null },
+    { label: 'TRACK LENGTH + CATRAC CONFIRMED', percent: null },
+    { label: 'COLLISIONS CHECKED - STAGE 1', percent: null }
+  ],
+  'spot-welding': [
+    { label: 'SPOT Welds Distributed + Projected', percent: null },
+    { label: 'Reference Weld Gun Collision Check', percent: null },
+    { label: 'Reference Weld Gun Force Checked in WIS7', percent: null },
+    { label: 'Weld Gun Proposal Created', percent: null },
+    { label: 'Final Weld Gun Collision Check', percent: null },
+    { label: 'Final Weld Gun Approved', percent: null },
+    { label: 'Weld Gun Equipment placed and confirmed', percent: null }
+  ],
+  'sealer': [
+    { label: 'SEALING DATA IMPORTED AND CHECKED', percent: null },
+    { label: 'SEALER PROPOSAL CREATED AND SENT', percent: null },
+    { label: 'SEALER GUN APPROVED', percent: null },
+    { label: 'SEALER EQUIPMENT PLACED AND CONFIRMED', percent: null }
+  ],
+  'alternative-joining-applications': [
+    { label: 'JOINING DATA DISTRIBUTED', percent: null },
+    { label: 'REFERENCE EQUIPMENT SELECTED', percent: null },
+    { label: 'EQUIPMENT COLLISION CHECK', percent: null },
+    { label: 'EQUIPMENT PEDESTAL / ROBOT MOUNT ADAPTOR APPROVED', percent: null },
+    { label: 'EQUIPMENT PLACED AND CONFIRMED', percent: null }
+  ],
+  'gripper': [
+    { label: 'GRIPPER EQUIPMENT PROTOTYPE CREATED', percent: null },
+    { label: 'FINAL GRIPPER COLLISION CHECK', percent: null },
+    { label: 'GRIPPER DESIGN FINAL APPROVAL', percent: null },
+    { label: 'TOOL CHANGE STANDS PLACED', percent: null }
+  ]
+}
+
 const friendlyTitle = (aspect?: string): string => {
   if (!aspect) return 'Aspect'
   return aspect
@@ -16,18 +60,12 @@ function Simulation2AspectPage() {
   const robot = searchParams.get('robot') || 'Unknown Robot'
 
   const title = useMemo(() => friendlyTitle(aspect), [aspect])
-
-  const robotSimulationFields: { label: string; percent: number | null }[] = [
-    { label: 'Robot Position - Stage 1', percent: null },
-    { label: 'DCS Configured', percent: null },
-    { label: 'DRESS PACK & FRYING PAN CONFIGURED - STAGE 1', percent: null },
-    { label: 'ROBOT FLANGE PCD + ADAPTERS CHECKED', percent: null },
-    { label: 'ALL EOAT PAYLOADS CHECKED', percent: null },
-    { label: 'ROBOT TYPE CONFIRMED', percent: null },
-    { label: 'ROBOT RISER CONFIRMED', percent: null },
-    { label: 'TRACK LENGTH + CATRAC CONFIRMED', percent: null },
-    { label: 'COLLISIONS CHECKED - STAGE 1', percent: null }
-  ]
+  const fields = useMemo<AspectField[]>(() => {
+    if (aspect && ASPECT_FIELDS[aspect]) {
+      return ASPECT_FIELDS[aspect]
+    }
+    return ASPECT_FIELDS['robot-simulation']
+  }, [aspect])
 
   return (
     <div className="space-y-6">
@@ -43,7 +81,7 @@ function Simulation2AspectPage() {
           Robot: <span className="font-medium">{robot}</span>
         </div>
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {robotSimulationFields.map(({ label, percent }) => (
+          {fields.map(({ label, percent }) => (
             <div
               key={label}
               className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm"

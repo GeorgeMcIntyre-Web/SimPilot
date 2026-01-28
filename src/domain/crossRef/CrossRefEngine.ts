@@ -144,7 +144,6 @@ const getOrCreateCell = (
       stations.set(key, updated)
       return updated
     }
-
     return existing
   }
 
