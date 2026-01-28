@@ -212,7 +212,7 @@ function RobotSimulationPage() {
       <PageHeader title="Robot Status" />
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <section className="flex-1 lg:flex-none lg:basis-[40%] lg:max-w-[40%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col">
+        <section className="flex-1 lg:flex-none lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col">
           <div className="flex-1 overflow-hidden">
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
@@ -225,7 +225,7 @@ function RobotSimulationPage() {
           </div>
         </section>
 
-        <section className="flex-1 lg:flex-none lg:basis-[60%] lg:max-w-[60%] bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-gray-800 rounded-xl shadow p-4">
           {selectedRow ? (
             <div className="space-y-3">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
@@ -281,8 +281,8 @@ function RobotSimulationPage() {
                         onClick={() => navigate(`/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}`)}
                         className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white">
-                          <span className="truncate pr-3">{title}</span>
+                        <div className="flex items-start justify-between text-sm font-semibold text-gray-900 dark:text-white gap-2">
+                          <span className="whitespace-normal leading-tight">{title}</span>
                           <span className="text-gray-700 dark:text-gray-200">{completion !== null ? `${completion}%` : '-'}</span>
                         </div>
                         <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
