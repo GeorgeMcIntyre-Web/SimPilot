@@ -4,7 +4,7 @@
 import { IngestionWarning, UnifiedAsset } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
 import { readWorkbook, sheetToMatrix } from './excelUtils'
-import { parseSimulationStatus } from './simulationStatusParser'
+import { parseSimulationStatus, VacuumParsedRow, convertVacuumRowsToPanelMilestones, getPanelMilestonesForRobot } from './simulationStatusParser'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { parseAssembliesList } from './assembliesListParser'
@@ -483,10 +483,12 @@ function updateLastSeenForEntities(
  *
  * @param applyResult - The result from applyIngestedData
  * @param simulationRobots - Optional robots extracted from simulation status (station+robot combinations)
+ * @param vacuumRows - Optional vacuum-parsed rows for panel milestone extraction
  */
 function buildCrossRefInputFromApplyResult(
   applyResult: import('./applyIngestedData').ApplyResult,
-  simulationRobots?: import('./simulationStatusParser').SimulationRobot[]
+  simulationRobots?: import('./simulationStatusParser').SimulationRobot[],
+  vacuumRows?: VacuumParsedRow[]
 ): CrossRefInput {
   // Get existing data from the store to merge with new data
   const existingState = coreStore.getState()
@@ -535,19 +537,31 @@ function buildCrossRefInputFromApplyResult(
     areaIdToName.set(area.id, area.name)
   })
 
+  // Build panel milestones map from vacuum rows (if available)
+  const panelMilestonesMap = vacuumRows && vacuumRows.length > 0
+    ? convertVacuumRowsToPanelMilestones(vacuumRows)
+    : new Map()
+
   // Convert Cells to SimulationStatusSnapshot (using merged cells)
-  const simulationStatusRows: SimulationStatusSnapshot[] = allCells.map(cell => ({
-    stationKey: cell.code,
-    areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
-    lineCode: cell.lineCode, // Use lineCode field
-    application: cell.simulation?.application, // Propagate application from simulation status
-    hasIssues: cell.simulation?.hasIssues,
-    firstStageCompletion: cell.simulation?.percentComplete, // From simulation status
-    finalDeliverablesCompletion: cell.simulation?.percentComplete, // Use same value
-    dcsConfigured: undefined, // Not available in Cell type
-    engineer: cell.assignedEngineer, // Use assignedEngineer
-    raw: cell
-  }))
+  const simulationStatusRows: SimulationStatusSnapshot[] = allCells.map(cell => {
+    // Try to find panel milestones for this cell
+    // Use station code as key since cells are grouped by station
+    const panelMilestones = panelMilestonesMap.get(cell.code) || undefined
+
+    return {
+      stationKey: cell.code,
+      areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
+      lineCode: cell.lineCode, // Use lineCode field
+      application: cell.simulation?.application, // Propagate application from simulation status
+      hasIssues: cell.simulation?.hasIssues,
+      firstStageCompletion: cell.simulation?.percentComplete, // From simulation status
+      finalDeliverablesCompletion: cell.simulation?.percentComplete, // Use same value
+      dcsConfigured: undefined, // Not available in Cell type
+      engineer: cell.assignedEngineer, // Use assignedEngineer
+      panelMilestones, // Panel-grouped milestones from all sheets
+      raw: cell
+    }
+  })
 
   // Convert Tools to ToolSnapshot (using merged tools)
   const toolingRows: ToolSnapshot[] = allTools.map(tool => ({

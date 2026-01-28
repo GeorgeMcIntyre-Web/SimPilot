@@ -3,6 +3,7 @@
 
 import { Tool, Robot, Cell } from '../core'
 import { ParsedSimulationRow } from '../../ingestion/simulationStatusParser'
+import { PanelMilestones } from '../../ingestion/simulationStatus/simulationStatusTypes'
 
 // ============================================================================
 // KEY TYPES
@@ -30,6 +31,10 @@ export interface SimulationStatusSnapshot {
   hasIssues?: boolean
   dcsConfigured?: boolean
   engineer?: string
+  /** Robot identifier (e.g., "8Y-020-01") for panel milestone lookup */
+  robotKey?: string
+  /** Panel-grouped milestones for all 11 panels */
+  panelMilestones?: PanelMilestones
   raw: ParsedSimulationRow | Cell | Record<string, unknown>
 }
 

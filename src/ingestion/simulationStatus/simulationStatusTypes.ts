@@ -167,8 +167,11 @@ export interface SimulationStatusEntity {
   application: RobotApplicationType
   responsiblePerson: string
 
-  // Milestones
+  // Milestones (legacy flat structure for backward compatibility)
   milestones: SimulationMilestones
+
+  // Panel-grouped milestones (new structure with all 11 panels)
+  panelMilestones?: PanelMilestones
 
   // Computed metrics
   overallCompletion: number  // Average completion percentage across all milestones
@@ -206,4 +209,278 @@ export interface SimulationStatusValidationReport {
   invalidFormatCount: number
   duplicateRobotCount: number
   anomalies: SimulationStatusValidationAnomaly[]
+}
+
+// ============================================================================
+// PANEL-GROUPED MILESTONE TYPES
+// ============================================================================
+
+/**
+ * Panel type identifiers for the 11 simulation panels
+ */
+export type PanelType =
+  | 'robotSimulation'
+  | 'spotWelding'
+  | 'sealer'
+  | 'alternativeJoining'
+  | 'gripper'
+  | 'fixture'
+  | 'mrs'
+  | 'olp'
+  | 'documentation'
+  | 'layout'
+  | 'safety'
+
+/**
+ * A group of related milestones for a single panel
+ */
+export interface MilestoneGroup {
+  /** Individual milestone values keyed by milestone label */
+  milestones: Record<string, MilestoneValue>
+  /** Calculated completion percentage for this panel (0-100) */
+  completion: number
+}
+
+/**
+ * All panel milestones grouped by panel type
+ */
+export interface PanelMilestones {
+  robotSimulation: MilestoneGroup
+  spotWelding: MilestoneGroup
+  sealer: MilestoneGroup
+  alternativeJoining: MilestoneGroup
+  gripper: MilestoneGroup
+  fixture: MilestoneGroup
+  mrs: MilestoneGroup
+  olp: MilestoneGroup
+  documentation: MilestoneGroup
+  layout: MilestoneGroup
+  safety: MilestoneGroup
+}
+
+// ============================================================================
+// PANEL MILESTONE COLUMN DEFINITIONS
+// ============================================================================
+
+/**
+ * Robot Simulation panel milestones (SIMULATION sheet, columns 4-12)
+ */
+export const ROBOT_SIMULATION_MILESTONES = {
+  ROBOT_POSITION_STAGE_1: 'ROBOT POSITION - STAGE 1',
+  DCS_CONFIGURED: 'DCS CONFIGURED',
+  DRESS_PACK_FRYING_PAN_STAGE_1: 'DRESS PACK & FRYING PAN CONFIGURED - STAGE 1',
+  ROBOT_FLANGE_PCD_ADAPTERS_CHECKED: 'ROBOT FLANGE PCD + ADAPTERS CHECKED',
+  ALL_EOAT_PAYLOADS_CHECKED: 'ALL EOAT PAYLOADS CHECKED',
+  ROBOT_TYPE_CONFIRMED: 'ROBOT TYPE CONFIRMED ',
+  ROBOT_RISER_CONFIRMED: 'ROBOT RISER CONFIRMED',
+  TRACK_LENGTH_CATRAC_CONFIRMED: 'TRACK LENGTH + CATRAC CONFIRMED',
+  COLLISIONS_CHECKED_STAGE_1: 'COLLISIONS CHECKED - STAGE 1',
+} as const
+
+/**
+ * Spot Welding panel milestones (SIMULATION sheet, columns 13-20)
+ */
+export const SPOT_WELDING_MILESTONES = {
+  SPOT_WELDS_DISTRIBUTED_PROJECTED: 'SPOT WELDS DISTRIBUTED + PROJECTED',
+  REFERENCE_WELD_GUN_SELECTED: 'REFERENCE WELD GUN SELECTED',
+  REFERENCE_WELD_GUN_COLLISION_CHECK: 'REFERENCE WELD GUN COLLISION CHECK',
+  WELD_GUN_FORCE_CHECKED_WIS7: 'WELD GUN FORCE CHECKED IN WIS7',
+  WELD_GUN_PROPOSAL_CREATED: 'WELD GUN PROPOSAL CREATED',
+  FINAL_WELD_GUN_COLLISION_CHECK: 'FINAL WELD GUN COLLISION CHECK',
+  FINAL_WELD_GUN_APPROVED: 'FINAL WELD GUN APPROVED',
+  WELD_GUN_EQUIPMENT_PLACED_CONFIRMED: 'WELD GUN EQUIPMENT PLACED AND CONFIRMED',
+} as const
+
+/**
+ * Sealer panel milestones (SIMULATION sheet, columns 21-24)
+ */
+export const SEALER_MILESTONES = {
+  SEALING_DATA_IMPORTED_CHECKED: 'SEALING DATA IMPORTED AND CHECKED',
+  SEALER_PROPOSAL_CREATED_SENT: 'SEALER PROPOSAL CREATED AND SENT',
+  SEALER_GUN_APPROVED: 'SEALER GUN APPROVED',
+  SEALER_EQUIPMENT_PLACED_CONFIRMED: 'SEALER EQUIPMENT PLACED AND CONFIRMED',
+} as const
+
+/**
+ * Alternative Joining Applications panel milestones (SIMULATION sheet, columns 25-29)
+ */
+export const ALTERNATIVE_JOINING_MILESTONES = {
+  JOINING_DATA_DISTRIBUTED: 'JOINING DATA DISTRIBUTED',
+  REFERENCE_EQUIPMENT_SELECTED: 'REFERENCE EQUIPMENT SELECTED',
+  EQUIPMENT_COLLISION_CHECK: 'EQUIPMENT COLLISION CHECK',
+  EQUIPMENT_PEDESTAL_ADAPTOR_APPROVED: 'EQUIPMENT PEDESTAL / ROBOT MOUNT ADAPTOR APPROVED',
+  EQUIPMENT_PLACED_CONFIRMED: ' EQUIPMENT PLACED AND CONFIRMED',
+} as const
+
+/**
+ * Gripper panel milestones (SIMULATION sheet, columns 30-33)
+ */
+export const GRIPPER_MILESTONES = {
+  GRIPPER_EQUIPMENT_PROTOTYPE_CREATED: 'GRIPPER EQUIPMENT PROTOTYPE CREATED',
+  FINAL_GRIPPER_COLLISION_CHECK: 'FINAL GRIPPER COLLISION CHECK',
+  GRIPPER_DESIGN_FINAL_APPROVAL: 'GRIPPER DESIGN FINAL APPROVAL',
+  TOOL_CHANGE_STANDS_PLACED: 'TOOL CHANGE STANDS PLACED',
+} as const
+
+/**
+ * Fixture panel milestones (SIMULATION sheet, columns 34-36)
+ */
+export const FIXTURE_MILESTONES = {
+  FIXTURE_EQUIPMENT_PROTOTYPE_CREATED: 'FIXTURE EQUIPMENT PROTOTYPE CREATED',
+  FINAL_FIXTURE_COLLISION_CHECK: 'FINAL FIXTURE COLLISION CHECK',
+  FIXTURE_DESIGN_FINAL_APPROVAL: 'FIXTURE DESIGN FINAL APPROVAL',
+} as const
+
+/**
+ * MRS panel milestones (MRS_OLP sheet)
+ */
+export const MRS_MILESTONES = {
+  FULL_ROBOT_PATHS_CREATED: 'FULL ROBOT PATHS CREATED WITH AUX DATA SET',
+  FINAL_ROBOT_POSITION: 'FINAL ROBOT POSITION',
+  COLLISION_CHECKS_RCS: 'COLLISION CHECKS DONE WITH RCS MODULE',
+  MACHINE_OPERATION_CHECKED: 'MACHINE OPERATION CHECKED AND MATCHES SIM',
+  CYCLETIME_CHART_UPDATED: 'CYCLETIME CHART SEQUECNE AND COUNTS UPDATED',
+  RCS_MULTI_RESOURCE_RUNNING: 'RCS MULTI RESOURCE SIMULATION RUNNING IN CYCLETIME',
+  RCS_MULTI_RESOURCE_VIDEO: 'RCS MULTI  RESOURCE VIDEO RECORDED',
+} as const
+
+/**
+ * OLP panel milestones (MRS_OLP sheet)
+ */
+export const OLP_MILESTONES = {
+  UTILITIES_PATHS_CREATED: 'UTILITIES PATHS CRTEATED',
+  OLP_DONE_TO_GUIDELINE: 'OLP DONE TO PROGRAMMING GUIDELINE',
+} as const
+
+/**
+ * Documentation panel milestones (DOCUMENTATION sheet)
+ */
+export const DOCUMENTATION_MILESTONES = {
+  INTERLOCK_ZONING_CREATED: 'INTERLOCK ZONING DOCUMENTATION CREATED',
+  WIS7_SPOT_LIST_UPDATED: 'WIS7 SPOT LIST UPDATED',
+  DCS_DOCUMENTATION_CREATED: 'DCS DOCUMENTATION CREATED',
+  ROBOT_INSTALLATION_DOCS: 'ROBOT INSTALLATION DOCUMENTATION CREATED',
+  ONE_A4_SHEET_COMPLETED: '1A4 SHEET CREATED + COMPLETED',
+} as const
+
+/**
+ * Layout panel milestones (SAFETY_LAYOUT sheet)
+ */
+export const LAYOUT_MILESTONES = {
+  LATEST_LAYOUT_IN_SIM: 'LATEST LAYOUT IN SIMULATION',
+  CABLE_TRAYS_CHECKED: '3D CABLE TRAYS CHECKED AND MATCH LAYOUT',
+  FENCING_CHECKED: '3D FENCING CHECKED AND MATCH LAYOUT',
+  DUNNAGES_CHECKED: '3D DUNNAGES CHECKED AND MATCH LAYOUT',
+  CABINETS_CHECKED: '3D CABINETS CHECKED AND MATCH LAYOUT',
+  FINAL_LAYOUT_INCLUDED: 'FINAL LAYOUT INCLUDED MATCHING LAYOUT + SIM',
+  FOUNDATION_PLATES_INCLUDED: 'ALL EQUIPMENT FOUNDATION PLATES INCLUDED IN SIM ',
+} as const
+
+/**
+ * Safety panel milestones (SAFETY_LAYOUT sheet)
+ */
+export const SAFETY_MILESTONES = {
+  DCS_CONFIGURED: 'DCS CONFIGURED',
+  LIGHT_CURTAIN_VERIFIED: 'LIGHT CURTAIN CALCULATIONS VERIFIED ',
+  ROBOT_MAIN_CABLE_VERIFIED: 'ROBOT MAIN CABLE LENGTH VERIFIED',
+  TIPDRESSER_CABLE_VERIFIED: 'TIPDRESSER SERVO CABLE VERIFIED ',
+  RTU_CABLE_VERIFIED: 'RTU CABLE LENGTH VERIFIED',
+  PEDESTAL_SPOT_WELD_CABLE: 'PEDESTAL SPOT WELD CABLE VERIFIED ',
+} as const
+
+/**
+ * Mapping of panel types to their milestone constants
+ */
+export const PANEL_MILESTONE_DEFINITIONS: Record<PanelType, Record<string, string>> = {
+  robotSimulation: ROBOT_SIMULATION_MILESTONES,
+  spotWelding: SPOT_WELDING_MILESTONES,
+  sealer: SEALER_MILESTONES,
+  alternativeJoining: ALTERNATIVE_JOINING_MILESTONES,
+  gripper: GRIPPER_MILESTONES,
+  fixture: FIXTURE_MILESTONES,
+  mrs: MRS_MILESTONES,
+  olp: OLP_MILESTONES,
+  documentation: DOCUMENTATION_MILESTONES,
+  layout: LAYOUT_MILESTONES,
+  safety: SAFETY_MILESTONES,
+}
+
+/**
+ * Maps panel slug (URL-friendly) to panel type
+ */
+export const PANEL_SLUG_TO_TYPE: Record<string, PanelType> = {
+  'robot-simulation': 'robotSimulation',
+  'spot-welding': 'spotWelding',
+  'sealer': 'sealer',
+  'alternative-joining-applications': 'alternativeJoining',
+  'gripper': 'gripper',
+  'fixture': 'fixture',
+  'mrs': 'mrs',
+  'olp': 'olp',
+  'documentation': 'documentation',
+  'layout': 'layout',
+  'safety': 'safety',
+}
+
+/**
+ * Maps panel type to display name
+ */
+export const PANEL_TYPE_TO_DISPLAY: Record<PanelType, string> = {
+  robotSimulation: 'Robot Simulation',
+  spotWelding: 'Spot Welding',
+  sealer: 'Sealer',
+  alternativeJoining: 'Alternative Joining Applications',
+  gripper: 'Gripper',
+  fixture: 'Fixture',
+  mrs: 'Multi Resource Simulation',
+  olp: 'OLP',
+  documentation: 'Documentation',
+  layout: 'Layout',
+  safety: 'Safety',
+}
+
+/**
+ * Maps sheet names to the panels they contain
+ */
+export const SHEET_TO_PANELS: Record<string, PanelType[]> = {
+  'SIMULATION': ['robotSimulation', 'spotWelding', 'sealer', 'alternativeJoining', 'gripper', 'fixture'],
+  'MRS_OLP': ['mrs', 'olp'],
+  'DOCUMENTATION': ['documentation'],
+  'SAFETY_LAYOUT': ['safety', 'layout'],
+}
+
+/**
+ * Creates an empty PanelMilestones structure
+ */
+export function createEmptyPanelMilestones(): PanelMilestones {
+  const createEmptyGroup = (): MilestoneGroup => ({
+    milestones: {},
+    completion: 0,
+  })
+
+  return {
+    robotSimulation: createEmptyGroup(),
+    spotWelding: createEmptyGroup(),
+    sealer: createEmptyGroup(),
+    alternativeJoining: createEmptyGroup(),
+    gripper: createEmptyGroup(),
+    fixture: createEmptyGroup(),
+    mrs: createEmptyGroup(),
+    olp: createEmptyGroup(),
+    documentation: createEmptyGroup(),
+    layout: createEmptyGroup(),
+    safety: createEmptyGroup(),
+  }
+}
+
+/**
+ * Calculates completion percentage for a milestone group
+ * Counts milestones with value === 100 as complete
+ */
+export function calculateGroupCompletion(milestones: Record<string, MilestoneValue>): number {
+  const values = Object.values(milestones)
+  if (values.length === 0) return 0
+
+  const completedCount = values.filter(v => v === 100).length
+  return Math.round((completedCount / values.length) * 100)
 }

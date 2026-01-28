@@ -12,7 +12,24 @@ import {
   SimulationStatusValidationAnomaly,
   SimulationStatusValidationReport,
   SimulationMilestones,
-  SIMULATION_MILESTONES
+  SIMULATION_MILESTONES,
+  PanelMilestones,
+  MilestoneGroup,
+  MilestoneValue,
+  PanelType,
+  ROBOT_SIMULATION_MILESTONES,
+  SPOT_WELDING_MILESTONES,
+  SEALER_MILESTONES,
+  ALTERNATIVE_JOINING_MILESTONES,
+  GRIPPER_MILESTONES,
+  FIXTURE_MILESTONES,
+  MRS_MILESTONES,
+  OLP_MILESTONES,
+  DOCUMENTATION_MILESTONES,
+  LAYOUT_MILESTONES,
+  SAFETY_MILESTONES,
+  createEmptyPanelMilestones,
+  calculateGroupCompletion,
 } from './simulationStatusTypes'
 import { normalizeAreaName, normalizeStationCode } from '../normalizers'
 
@@ -359,7 +376,7 @@ export function linkSimulationToTooling(
       // Match by area (normalized)
       const normToolArea = normalizeAreaName(toolEntity.areaName)
       const normSimArea = normalizeAreaName(simEntity.area)
-      
+
       if (normToolArea && normSimArea && normToolArea !== normSimArea) continue
 
       // Match by station (handle ranges, normalized)
@@ -370,5 +387,208 @@ export function linkSimulationToTooling(
     }
 
     simEntity.linkedToolingEntityKeys = linkedKeys
+  }
+}
+
+// ============================================================================
+// MULTI-SHEET PANEL MILESTONE EXTRACTION
+// ============================================================================
+
+/**
+ * Extract milestone values for a specific panel from a raw row
+ */
+function extractPanelMilestones(
+  raw: Record<string, unknown>,
+  milestoneDefinitions: Record<string, string>
+): MilestoneGroup {
+  const milestones: Record<string, MilestoneValue> = {}
+
+  for (const [_key, columnName] of Object.entries(milestoneDefinitions)) {
+    // Try exact match first
+    let value = raw[columnName]
+
+    // If not found, try case-insensitive and trimmed match
+    if (value === undefined) {
+      const normalizedColumnName = columnName.trim().toUpperCase()
+      for (const [rawKey, rawValue] of Object.entries(raw)) {
+        if (rawKey.trim().toUpperCase() === normalizedColumnName) {
+          value = rawValue
+          break
+        }
+      }
+    }
+
+    milestones[columnName] = normalizeNumber(value)
+  }
+
+  return {
+    milestones,
+    completion: calculateGroupCompletion(milestones),
+  }
+}
+
+/**
+ * Extract all panel milestones from a SIMULATION sheet row
+ * Covers: Robot Simulation, Spot Welding, Sealer, Alternative Joining, Gripper, Fixture
+ */
+export function extractSimulationSheetPanels(raw: Record<string, unknown>): Partial<PanelMilestones> {
+  return {
+    robotSimulation: extractPanelMilestones(raw, ROBOT_SIMULATION_MILESTONES),
+    spotWelding: extractPanelMilestones(raw, SPOT_WELDING_MILESTONES),
+    sealer: extractPanelMilestones(raw, SEALER_MILESTONES),
+    alternativeJoining: extractPanelMilestones(raw, ALTERNATIVE_JOINING_MILESTONES),
+    gripper: extractPanelMilestones(raw, GRIPPER_MILESTONES),
+    fixture: extractPanelMilestones(raw, FIXTURE_MILESTONES),
+  }
+}
+
+/**
+ * Extract MRS and OLP panel milestones from a MRS_OLP sheet row
+ */
+export function extractMrsOlpSheetPanels(raw: Record<string, unknown>): Partial<PanelMilestones> {
+  return {
+    mrs: extractPanelMilestones(raw, MRS_MILESTONES),
+    olp: extractPanelMilestones(raw, OLP_MILESTONES),
+  }
+}
+
+/**
+ * Extract Documentation panel milestones from a DOCUMENTATION sheet row
+ */
+export function extractDocumentationSheetPanels(raw: Record<string, unknown>): Partial<PanelMilestones> {
+  return {
+    documentation: extractPanelMilestones(raw, DOCUMENTATION_MILESTONES),
+  }
+}
+
+/**
+ * Extract Safety and Layout panel milestones from a SAFETY_LAYOUT sheet row
+ */
+export function extractSafetyLayoutSheetPanels(raw: Record<string, unknown>): Partial<PanelMilestones> {
+  return {
+    safety: extractPanelMilestones(raw, SAFETY_MILESTONES),
+    layout: extractPanelMilestones(raw, LAYOUT_MILESTONES),
+  }
+}
+
+/**
+ * Result of parsing a single sheet with panel data
+ */
+export interface SheetPanelParseResult {
+  robotKey: string
+  stationKey: string
+  area: string
+  responsiblePerson: string
+  application: string
+  panels: Partial<PanelMilestones>
+}
+
+/**
+ * Parse rows from any simulation status sheet and extract panel milestones
+ */
+export function parseSheetForPanels(
+  rows: Record<string, unknown>[],
+  sheetType: 'SIMULATION' | 'MRS_OLP' | 'DOCUMENTATION' | 'SAFETY_LAYOUT'
+): SheetPanelParseResult[] {
+  const results: SheetPanelParseResult[] = []
+
+  for (const raw of rows) {
+    const robotFullId = normalizeStr(raw['ROBOT'])
+    const stationFull = normalizeStr(raw['STATION'])
+
+    // Skip header rows or empty rows
+    if (!robotFullId || !stationFull) continue
+
+    const parsedRobot = parseRobotIdentifier(robotFullId)
+    if (!parsedRobot) continue
+
+    let panels: Partial<PanelMilestones>
+    switch (sheetType) {
+      case 'SIMULATION':
+        panels = extractSimulationSheetPanels(raw)
+        break
+      case 'MRS_OLP':
+        panels = extractMrsOlpSheetPanels(raw)
+        break
+      case 'DOCUMENTATION':
+        panels = extractDocumentationSheetPanels(raw)
+        break
+      case 'SAFETY_LAYOUT':
+        panels = extractSafetyLayoutSheetPanels(raw)
+        break
+    }
+
+    results.push({
+      robotKey: robotFullId,
+      stationKey: stationFull,
+      area: parsedRobot.area,
+      responsiblePerson: normalizeStr(raw['PERS. RESPONSIBLE']),
+      application: normalizeStr(raw['APPLICATION']),
+      panels,
+    })
+  }
+
+  return results
+}
+
+/**
+ * Merge panel milestones from multiple sheets by robot key
+ * Returns a map of robotKey -> complete PanelMilestones
+ */
+export function mergePanelMilestonesByRobot(
+  sheetResults: SheetPanelParseResult[][]
+): Map<string, PanelMilestones> {
+  const robotPanels = new Map<string, PanelMilestones>()
+
+  for (const results of sheetResults) {
+    for (const result of results) {
+      let existing = robotPanels.get(result.robotKey)
+
+      if (!existing) {
+        existing = createEmptyPanelMilestones()
+        robotPanels.set(result.robotKey, existing)
+      }
+
+      // Merge panels from this sheet
+      for (const [panelKey, panelData] of Object.entries(result.panels)) {
+        if (panelData) {
+          existing[panelKey as PanelType] = panelData
+        }
+      }
+    }
+  }
+
+  return robotPanels
+}
+
+/**
+ * Calculate overall completion across all panels
+ */
+export function calculateOverallPanelCompletion(panels: PanelMilestones): number {
+  const allMilestones: MilestoneValue[] = []
+
+  for (const panel of Object.values(panels)) {
+    const milestoneValues = Object.values(panel.milestones) as MilestoneValue[]
+    allMilestones.push(...milestoneValues)
+  }
+
+  if (allMilestones.length === 0) return 0
+
+  const completedCount = allMilestones.filter(v => v === 100).length
+  return Math.round((completedCount / allMilestones.length) * 100)
+}
+
+/**
+ * Attach panel milestones to existing simulation status entities
+ */
+export function attachPanelMilestonesToEntities(
+  entities: SimulationStatusEntity[],
+  robotPanels: Map<string, PanelMilestones>
+): void {
+  for (const entity of entities) {
+    const panels = robotPanels.get(entity.robotFullId)
+    if (panels) {
+      entity.panelMilestones = panels
+    }
   }
 }

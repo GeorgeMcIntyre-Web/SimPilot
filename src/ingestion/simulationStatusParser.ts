@@ -21,6 +21,25 @@ import {
   isEffectivelyEmptyRow,
   CellValue
 } from './excelUtils'
+import {
+  PanelMilestones,
+  MilestoneGroup,
+  MilestoneValue,
+  PanelType,
+  ROBOT_SIMULATION_MILESTONES,
+  SPOT_WELDING_MILESTONES,
+  SEALER_MILESTONES,
+  ALTERNATIVE_JOINING_MILESTONES,
+  GRIPPER_MILESTONES,
+  FIXTURE_MILESTONES,
+  MRS_MILESTONES,
+  OLP_MILESTONES,
+  DOCUMENTATION_MILESTONES,
+  LAYOUT_MILESTONES,
+  SAFETY_MILESTONES,
+  createEmptyPanelMilestones,
+  calculateGroupCompletion,
+} from './simulationStatus/simulationStatusTypes'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 import { deriveCustomerFromFileName } from './customerMapping'
 import { buildStationId, normalizeStationCode } from './normalizers'
@@ -911,12 +930,146 @@ function extractRobotsFromVacuumRows(
  */
 function extractAreaNameFromTitle(titleCell: string): string | undefined {
   if (!titleCell) return undefined
-  
+
   // Try splitting by " - "
   const parts = titleCell.split(' - ')
   if (parts.length > 0 && parts[0].trim().length > 0) {
     return parts[0].trim()
   }
-  
+
   return undefined
+}
+
+// ============================================================================
+// PANEL MILESTONE CONVERSION
+// ============================================================================
+
+/**
+ * Mapping of panel types to their milestone column headers
+ */
+const PANEL_TO_MILESTONES: Record<PanelType, Record<string, string>> = {
+  robotSimulation: ROBOT_SIMULATION_MILESTONES,
+  spotWelding: SPOT_WELDING_MILESTONES,
+  sealer: SEALER_MILESTONES,
+  alternativeJoining: ALTERNATIVE_JOINING_MILESTONES,
+  gripper: GRIPPER_MILESTONES,
+  fixture: FIXTURE_MILESTONES,
+  mrs: MRS_MILESTONES,
+  olp: OLP_MILESTONES,
+  documentation: DOCUMENTATION_MILESTONES,
+  layout: LAYOUT_MILESTONES,
+  safety: SAFETY_MILESTONES,
+}
+
+/**
+ * Check if a metric label matches a milestone definition (case-insensitive, trimmed)
+ */
+function matchesMilestone(metricLabel: string, milestoneColumn: string): boolean {
+  const normMetric = metricLabel.trim().toUpperCase()
+  const normMilestone = milestoneColumn.trim().toUpperCase()
+
+  // Exact match
+  if (normMetric === normMilestone) return true
+
+  // Handle sheet prefix (e.g., "MRS_OLP: FULL ROBOT PATHS CREATED WITH AUX DATA SET")
+  if (normMetric.includes(': ')) {
+    const afterColon = normMetric.split(': ').slice(1).join(': ')
+    if (afterColon === normMilestone) return true
+  }
+
+  return false
+}
+
+/**
+ * Extract milestones for a specific panel from vacuum-parsed metrics
+ */
+function extractPanelGroup(
+  metrics: SimulationMetric[],
+  milestoneDefinitions: Record<string, string>
+): MilestoneGroup {
+  const milestones: Record<string, MilestoneValue> = {}
+
+  for (const [_key, columnName] of Object.entries(milestoneDefinitions)) {
+    // Find matching metric
+    const matchingMetric = metrics.find(m => matchesMilestone(m.label, columnName))
+    milestones[columnName] = matchingMetric?.percent ?? null
+  }
+
+  return {
+    milestones,
+    completion: calculateGroupCompletion(milestones),
+  }
+}
+
+/**
+ * Convert vacuum-parsed rows to PanelMilestones structure.
+ * Groups all metrics by their corresponding panel.
+ *
+ * @param vacuumRows - Vacuum-parsed rows from all sheets
+ * @returns Map of robotKey -> PanelMilestones
+ */
+export function convertVacuumRowsToPanelMilestones(
+  vacuumRows: VacuumParsedRow[]
+): Map<string, PanelMilestones> {
+  const robotPanels = new Map<string, PanelMilestones>()
+
+  // Group vacuum rows by robot (using stationKey + robotCaption as key)
+  const robotRowsMap = new Map<string, VacuumParsedRow[]>()
+
+  for (const row of vacuumRows) {
+    const robotKey = row.robotCaption
+      ? `${row.stationKey}::${row.robotCaption}`
+      : row.stationKey
+
+    const existing = robotRowsMap.get(robotKey) || []
+    existing.push(row)
+    robotRowsMap.set(robotKey, existing)
+  }
+
+  // For each robot, merge all metrics and extract panel milestones
+  for (const [robotKey, rows] of robotRowsMap) {
+    // Merge all metrics from all rows for this robot
+    const allMetrics: SimulationMetric[] = []
+    for (const row of rows) {
+      allMetrics.push(...row.metrics)
+    }
+
+    // Create panel milestones
+    const panels = createEmptyPanelMilestones()
+
+    // Extract each panel's milestones
+    for (const [panelKey, milestoneDefinitions] of Object.entries(PANEL_TO_MILESTONES)) {
+      panels[panelKey as PanelType] = extractPanelGroup(allMetrics, milestoneDefinitions)
+    }
+
+    robotPanels.set(robotKey, panels)
+  }
+
+  return robotPanels
+}
+
+/**
+ * Get panel milestones for a specific robot from vacuum rows.
+ * Convenience function for use in ingestion coordinator.
+ *
+ * @param robotCaption - The robot caption (e.g., "8Y-020-01")
+ * @param stationKey - The station key (e.g., "8Y-020")
+ * @param vacuumRows - All vacuum-parsed rows
+ * @returns PanelMilestones or undefined if not found
+ */
+export function getPanelMilestonesForRobot(
+  robotCaption: string,
+  stationKey: string,
+  panelMilestonesMap: Map<string, PanelMilestones>
+): PanelMilestones | undefined {
+  // Try with robot caption first
+  const robotKey = `${stationKey}::${robotCaption}`
+  let panels = panelMilestonesMap.get(robotKey)
+
+  if (!panels) {
+    // Fallback to station-only key
+    panels = panelMilestonesMap.get(stationKey)
+  }
+
+  return panels
 }
