@@ -88,7 +88,7 @@ const friendlyTitle = (aspect?: string): string => {
     .join(' ')
 }
 
-function Simulation2AspectPage() {
+function RobotSimulationAspectPage() {
   const { aspect } = useParams<{ aspect: string }>()
   const [searchParams] = useSearchParams()
   const robot = searchParams.get('robot') || 'Unknown Robot'
@@ -142,14 +142,14 @@ function Simulation2AspectPage() {
           </div>
         )}
         <Link
-          to="/simulation-2"
+          to="/robot-simulation"
           className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm"
         >
-          &larr; Back to Simulation-2
+          &larr; Back to Robot Simulation
         </Link>
       </div>
     </div>
   )
 }
 
-export default Simulation2AspectPage
+export default RobotSimulationAspectPage

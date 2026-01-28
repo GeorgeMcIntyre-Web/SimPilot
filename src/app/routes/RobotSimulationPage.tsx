@@ -1,4 +1,3 @@
-import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
@@ -37,22 +36,11 @@ const getCompletionNumber = (cell: CellSnapshot): number | null => {
   return Math.round(value)
 }
 
-function Simulation2Page() {
+function RobotSimulationPage() {
   const { cells, loading, hasData } = useCrossRefData()
   const tableCells = hasData ? cells : []
   const navigate = useNavigate()
   const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
-
-  const handleStationNavigate = (cell: CellSnapshot) => {
-    const normalizedStationKey = normalizeStationId(cell.stationKey)
-    if (!normalizedStationKey) return
-
-    const { cells: legacyCells } = coreStore.getState()
-    const matchingCell = legacyCells.find(c => normalizeStationId(c.code) === normalizedStationKey)
-    if (matchingCell) {
-      navigate(`/cells/${encodeURIComponent(matchingCell.id)}`)
-    }
-  }
 
   const slugify = (value: string) =>
     value
@@ -60,7 +48,7 @@ function Simulation2Page() {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
 
-  const Simulation2StationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: { cell: CellSnapshot; label: string }) => void }) => {
+  const RobotSimulationStationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: { cell: CellSnapshot; label: string }) => void }) => {
     type SortKey = 'robot' | 'area' | 'simulator' | 'completion'
 
     const [search, setSearch] = useState('')
@@ -229,7 +217,7 @@ function Simulation2Page() {
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
             ) : (
-              <Simulation2StationsTable
+              <RobotSimulationStationsTable
                 cells={tableCells}
                 onSelect={(row) => setSelectedRow(row)}
               />
@@ -290,7 +278,7 @@ function Simulation2Page() {
                       <button
                         key={title}
                         type="button"
-                        onClick={() => navigate(`/simulation-2/${slug}?robot=${encodeURIComponent(selectedRow.label)}`)}
+                        onClick={() => navigate(`/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}`)}
                         className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white">
@@ -320,4 +308,4 @@ function Simulation2Page() {
   )
 }
 
-export default Simulation2Page
+export default RobotSimulationPage
