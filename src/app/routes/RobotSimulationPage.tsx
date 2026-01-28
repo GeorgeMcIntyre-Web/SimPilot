@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
@@ -68,6 +68,37 @@ function RobotSimulationPage() {
   const tableCells = hasData ? cells : []
   const navigate = useNavigate()
   const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
+
+  // Debug: Log panel milestones data when selection changes
+  useEffect(() => {
+    if (selectedRow) {
+      const cell = selectedRow.cell
+      console.log('[RobotSimulationPage] Selected row:', {
+        stationKey: cell.stationKey,
+        displayCode: cell.displayCode,
+        hasSimulationStatus: !!cell.simulationStatus,
+        hasPanelMilestones: !!cell.simulationStatus?.panelMilestones,
+        panelMilestones: cell.simulationStatus?.panelMilestones,
+        robotSimulationCompletion: cell.simulationStatus?.panelMilestones?.robotSimulation?.completion,
+      })
+    }
+  }, [selectedRow])
+
+  // Debug: Log cells data on mount
+  useEffect(() => {
+    if (hasData && cells.length > 0) {
+      const cellsWithPanelMilestones = cells.filter(c => c.simulationStatus?.panelMilestones)
+      console.log('[RobotSimulationPage] Cells loaded:', {
+        totalCells: cells.length,
+        cellsWithSimulationStatus: cells.filter(c => c.simulationStatus).length,
+        cellsWithPanelMilestones: cellsWithPanelMilestones.length,
+        sampleCell: cells[0] ? {
+          stationKey: cells[0].stationKey,
+          hasPanelMilestones: !!cells[0].simulationStatus?.panelMilestones
+        } : null
+      })
+    }
+  }, [hasData, cells])
 
   const RobotSimulationStationsTable = ({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: { cell: CellSnapshot; label: string }) => void }) => {
     type SortKey = 'robot' | 'area' | 'simulator' | 'completion'
