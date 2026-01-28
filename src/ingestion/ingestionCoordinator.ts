@@ -29,6 +29,7 @@ import {
 import { buildCrossRef } from '../domain/crossRef/CrossRefEngine'
 import { setCrossRefData } from '../hooks/useCrossRefData'
 import type { CrossRefInput, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot } from '../domain/crossRef/CrossRefTypes'
+import { normalizeStationId } from '../domain/crossRef/CrossRefUtils'
 import * as XLSX from 'xlsx'
 import { syncSimulationStore } from '../features/simulation'
 import { log } from '../lib/log'
@@ -540,7 +541,17 @@ function buildCrossRefInputFromApplyResult(
   // Build panel milestones map from vacuum rows (if available)
   const panelMilestonesMap = vacuumRows && vacuumRows.length > 0
     ? convertVacuumRowsToPanelMilestones(vacuumRows)
-    : new Map()
+    : new Map<string, import('./simulationStatus/simulationStatusTypes').PanelMilestones>()
+
+  // Add normalized station keys to improve matching (handles hyphen vs underscore, leading zeros)
+  if (panelMilestonesMap.size > 0) {
+    for (const [key, value] of Array.from(panelMilestonesMap.entries())) {
+      const normalized = normalizeStationId(key)
+      if (normalized && normalized !== key && !panelMilestonesMap.has(normalized)) {
+        panelMilestonesMap.set(normalized, value)
+      }
+    }
+  }
 
   if (panelMilestonesMap.size > 0) {
     log.debug('[CrossRef] Panel milestones map built:', {
