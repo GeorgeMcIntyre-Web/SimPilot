@@ -192,18 +192,22 @@ export function EngineersPage() {
 
     // Selected Engineer Details
     const selectedEngineerCells = selectedEngineerName
-        ? allCells.filter(c => c.assignedEngineer === selectedEngineerName)
+        ? allCells.filter(c => (c.assignedEngineer?.trim() || '') === selectedEngineerName)
         : [];
     const highlightedEngineer = searchParams.get('highlightEngineer')?.trim();
+    const hasAppliedHighlight = useRef(false);
 
     useEffect(() => {
-        if (!highlightedEngineer) return;
-        const match = metrics.find(m => m.name.toLowerCase() === highlightedEngineer.toLowerCase());
-        if (match) {
-            setSelectedEngineerName(match.name);
-        } else {
-            setSelectedEngineerName(highlightedEngineer);
+        // Apply highlighted engineer only once per distinct query param to avoid overriding manual clicks
+        if (!highlightedEngineer) {
+            hasAppliedHighlight.current = false;
+            return;
         }
+        if (hasAppliedHighlight.current) return;
+        const target = highlightedEngineer.trim();
+        const match = metrics.find(m => m.name.toLowerCase() === target.toLowerCase());
+        setSelectedEngineerName(match ? match.name : target);
+        hasAppliedHighlight.current = true;
     }, [highlightedEngineer, metrics]);
 
     useEffect(() => {
@@ -382,7 +386,10 @@ export function EngineersPage() {
                     columns={columns}
                     emptyMessage="No engineers match your filter."
                     density="compact"
-                    onRowClick={(row) => setSelectedEngineerName(row.name === selectedEngineerName ? null : row.name)}
+                    onRowClick={(row) => {
+                        hasAppliedHighlight.current = true; // user took control; stop auto-highlight overriding
+                        setSelectedEngineerName(row.name === selectedEngineerName ? null : row.name);
+                    }}
                     rowClassName={(row) => row.name === selectedEngineerName
                         ? 'bg-indigo-50/80 dark:bg-indigo-900/30 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-700'
                         : undefined}

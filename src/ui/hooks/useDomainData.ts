@@ -174,11 +174,12 @@ export function useAllEngineerMetrics() {
     const engineers: Record<string, Cell[]> = {};
 
     cells.forEach(c => {
-        if (c.assignedEngineer) {
-            if (!engineers[c.assignedEngineer]) {
-                engineers[c.assignedEngineer] = [];
+        const name = c.assignedEngineer?.trim();
+        if (name) {
+            if (!engineers[name]) {
+                engineers[name] = [];
             }
-            engineers[c.assignedEngineer].push(c);
+            engineers[name].push(c);
         }
     });
 
