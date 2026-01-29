@@ -73,7 +73,7 @@ type StationRow = { cell: CellSnapshot; label: string }
  * which would reset scroll and selection.
  */
 function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: StationRow) => void }) {
-  type SortKey = 'robot' | 'area' | 'simulator' | 'completion'
+  type SortKey = 'robot' | 'area' | 'application' | 'simulator' | 'completion'
 
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('robot')
@@ -152,6 +152,8 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       const robotB = b.label
       const areaA = a.cell.areaKey ?? 'Unknown'
       const areaB = b.cell.areaKey ?? 'Unknown'
+      const appA = a.cell.simulationStatus?.application ?? 'Unknown'
+      const appB = b.cell.simulationStatus?.application ?? 'Unknown'
       const simA = a.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
       const simB = b.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
       const compA = typeof a.cell.simulationStatus?.firstStageCompletion === 'number'
@@ -164,6 +166,7 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       let cmp = 0
       if (sortKey === 'robot') cmp = robotA.localeCompare(robotB)
       if (sortKey === 'area') cmp = areaA.localeCompare(areaB)
+      if (sortKey === 'application') cmp = appA.localeCompare(appB)
       if (sortKey === 'simulator') cmp = simA.localeCompare(simB)
       if (sortKey === 'completion') cmp = compA - compB
 
@@ -197,7 +200,7 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search station, area, simulator..."
+          placeholder="Search robot, area, simulator, application..."
           className="w-full text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
@@ -253,6 +256,12 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
               </th>
               <th
                 className="py-3 px-3 cursor-pointer select-none"
+                onClick={() => toggleSort('application')}
+              >
+                Application
+              </th>
+              <th
+                className="py-3 px-3 cursor-pointer select-none"
                 onClick={() => toggleSort('simulator')}
               >
                 Simulator
@@ -279,6 +288,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
               </td>
               <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
                 {row.cell.areaKey ?? 'Unknown'}
+              </td>
+              <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                {row.cell.simulationStatus?.application ?? 'Unknown'}
               </td>
               <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
                 {row.cell.simulationStatus?.engineer?.trim() ? (
@@ -362,14 +374,29 @@ function RobotSimulationPage() {
 
         <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0 h-full overflow-hidden">
           {selectedRow ? (
-            <div className="space-y-3 flex-1 min-h-0 h-full">
+              <div className="space-y-3 flex-1 min-h-0 h-full">
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedRow.label}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {selectedRow.label}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Station {selectedRow.cell.stationKey}{' '}
+                      <span className="mx-1">•</span>
+                      Application{' '}
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">
+                        {selectedRow.cell.simulationStatus?.application ?? 'Unknown'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
-                    {selectedRow.cell.areaKey ?? 'Unknown'}
+                  <div className="flex flex-wrap gap-2">
+                    <div className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 border border-blue-100 dark:border-blue-800">
+                      {selectedRow.cell.areaKey ?? 'Unknown'}
+                    </div>
+                    <div className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200 border border-amber-100 dark:border-amber-800">
+                      {selectedRow.cell.simulationStatus?.application ?? 'Unknown'}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-3 text-sm text-gray-700 dark:text-gray-300">
