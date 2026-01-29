@@ -250,10 +250,10 @@ export const coreStore = {
   /**
    * Get a snapshot of the current state
    */
-  getSnapshot(): StoreSnapshot {
+  getSnapshot(crossRef?: ReturnType<typeof import('./crossRef/CrossRefTypes').CrossRefResult>): StoreSnapshot {
     return createSnapshotFromState(storeState, {
       sourceKind: 'unknown' // Caller should override this if known
-    })
+    }, crossRef)
   },
 
   /**

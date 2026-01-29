@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { coreStore } from '../domain/coreStore'
 import { persistenceService } from './indexedDbService'
 import { useGlobalBusy } from '../ui/GlobalBusyContext'
-import { setCrossRefData } from '../hooks/useCrossRefData'
+import { setCrossRefData, getCrossRefData } from '../hooks/useCrossRefData'
 import { buildCrossRef, SimulationStatusSnapshot, ToolSnapshot, RobotSnapshot, normalizeStationId } from '../domain/crossRef'
 import { syncSimulationStore } from '../features/simulation'
 import { syncSimPilotStoreFromLocalData } from '../domain/simPilotSnapshotBuilder'
@@ -123,15 +123,20 @@ export function PersistenceManager() {
                     // Keep the simulation store in sync with the restored core store data
                     syncSimulationStore()
 
-                    // Rebuild CrossRef data from restored coreStore
-                    log.debug('[PersistenceManager] Rebuilding CrossRef data from persisted state')
-                    const crossRefInput = buildCrossRefFromCoreStore()
-                    const crossRefResult = buildCrossRef(crossRefInput)
-                    setCrossRefData(crossRefResult)
-                    log.debug('[PersistenceManager] CrossRef data rebuilt:', {
-                        cells: crossRefResult.cells.length,
-                        areas: crossRefResult.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
-                    })
+                    // Restore CrossRef data if snapshot included it; otherwise rebuild
+                    if (result.snapshot.crossRef) {
+                        log.debug('[PersistenceManager] Restoring CrossRef data from snapshot')
+                        setCrossRefData(result.snapshot.crossRef)
+                    } else {
+                        log.debug('[PersistenceManager] Rebuilding CrossRef data from persisted state')
+                        const crossRefInput = buildCrossRefFromCoreStore()
+                        const crossRefResult = buildCrossRef(crossRefInput)
+                        setCrossRefData(crossRefResult)
+                        log.debug('[PersistenceManager] CrossRef data rebuilt:', {
+                            cells: crossRefResult.cells.length,
+                            areas: crossRefResult.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
+                        })
+                    }
 
                     // Rebuild SimPilot store (including bottleneck data) from persisted coreStore
                     syncSimPilotStoreFromLocalData()
@@ -159,7 +164,7 @@ export function PersistenceManager() {
 
             saveTimeoutRef.current = setTimeout(async () => {
                 try {
-                    const snapshot = coreStore.getSnapshot()
+                    const snapshot = coreStore.getSnapshot(undefined, getCrossRefData() || undefined)
                     await persistenceService.save(snapshot)
                     log.info('Session saved automatically')
                 } catch (err) {

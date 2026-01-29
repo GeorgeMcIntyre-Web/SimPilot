@@ -3,8 +3,9 @@ import { CoreStoreState } from './coreStore'
 import { ChangeRecord } from './changeLog'
 import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun, DiffResult } from './uidTypes'
 import { AuditEntry } from './auditLog'
+import { CrossRefResult } from './crossRef/CrossRefTypes'
 
-export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 3
+export const CURRENT_SNAPSHOT_SCHEMA_VERSION = 4
 
 export interface StoreSnapshotMeta {
     lastSavedAt: string // ISO string
@@ -38,6 +39,8 @@ export interface StoreSnapshot {
     importRuns?: ImportRun[]
     diffResults?: DiffResult[]
     auditLog?: AuditEntry[]  // Phase 1: Registry audit trail
+    /** Optional persisted cross-reference snapshot for fast restore */
+    crossRef?: CrossRefResult
 }
 
 /**
@@ -45,7 +48,8 @@ export interface StoreSnapshot {
  */
 export function createSnapshotFromState(
     state: CoreStoreState,
-    metaInput: Partial<StoreSnapshotMeta>
+    metaInput: Partial<StoreSnapshotMeta>,
+    crossRef?: CrossRefResult
 ): StoreSnapshot {
     return {
         meta: {
@@ -68,7 +72,8 @@ export function createSnapshotFromState(
         aliasRules: state.aliasRules,
         importRuns: state.importRuns,
         diffResults: state.diffResults,
-        auditLog: state.auditLog
+        auditLog: state.auditLog,
+        crossRef
     }
 }
 
