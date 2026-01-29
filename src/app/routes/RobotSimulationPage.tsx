@@ -7,6 +7,7 @@ import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import {
   PanelType,
   PanelMilestones,
+  calculateOverallCompletion,
 } from '../../ingestion/simulationStatus/simulationStatusTypes'
 
 const formatRobotLabel = (cell: CellSnapshot): string => {
@@ -27,12 +28,6 @@ const formatRobotLabel = (cell: CellSnapshot): string => {
   return '-'
 }
 
-const formatCompletionValue = (cell: CellSnapshot): string => {
-  const value = cell.simulationStatus?.firstStageCompletion
-  if (typeof value !== 'number') return '-'
-  return `${Math.round(value)}%`
-}
-
 /**
  * Get completion percentage for a specific panel from panelMilestones
  */
@@ -47,6 +42,35 @@ const getPanelCompletion = (
   const hasNumeric = values.some(v => typeof v === 'number')
   if (!hasNumeric) return null
   return group.completion
+}
+
+/**
+ * Get overall completion for a specific robot row by averaging its panel completions.
+ * Uses per-robot panel milestones when available, falls back to station-level.
+ */
+const getRowOverallCompletion = (row: StationRow): string => {
+  const perRobotPanels = row.cell.simulationStatus?.robotPanelMilestones
+  if (perRobotPanels) {
+    let robotPanels = perRobotPanels[row.label]
+    if (!robotPanels) {
+      const upperLabel = row.label.toUpperCase()
+      const matchKey = Object.keys(perRobotPanels).find(k => k.toUpperCase() === upperLabel)
+      if (matchKey) robotPanels = perRobotPanels[matchKey]
+    }
+    if (!robotPanels) return '-'
+    const result = calculateOverallCompletion(robotPanels)
+    return result !== null ? `${result}%` : '-'
+  }
+  // Fallback to station-level panel milestones
+  const panelMilestones = row.cell.simulationStatus?.panelMilestones
+  if (panelMilestones) {
+    const result = calculateOverallCompletion(panelMilestones)
+    return result !== null ? `${result}%` : '-'
+  }
+  // Final fallback to firstStageCompletion
+  const value = row.cell.simulationStatus?.firstStageCompletion
+  if (typeof value !== 'number') return '-'
+  return `${Math.round(value)}%`
 }
 
 const getRowPanelMilestones = (row: StationRow, panelType: PanelType): number | null => {
@@ -426,7 +450,7 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
                   )}
                 </td>
                 <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                  {formatCompletionValue(row.cell)}
+                  {getRowOverallCompletion(row)}
                 </td>
               </tr>
             ))
@@ -537,7 +561,7 @@ function RobotSimulationPage() {
                   </div>
                   <div>
                     <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Completion</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCompletionValue(selectedRow.cell)}</span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{getRowOverallCompletion(selectedRow as StationRow)}</span>
                   </div>
                 </div>
               </div>

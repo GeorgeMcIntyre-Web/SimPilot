@@ -5,6 +5,7 @@ import { IngestionWarning, UnifiedAsset } from '../domain/core'
 import { coreStore } from '../domain/coreStore'
 import { readWorkbook, sheetToMatrix } from './excelUtils'
 import { parseSimulationStatus, VacuumParsedRow, convertVacuumRowsToPanelMilestones } from './simulationStatusParser'
+import { calculateOverallCompletion } from './simulationStatus/simulationStatusTypes'
 import { parseRobotList } from './robotListParser'
 import { parseToolList } from './toolListParser'
 import { parseAssembliesList } from './assembliesListParser'
@@ -639,17 +640,34 @@ function buildCrossRefInputFromApplyResult(
       }
     }
 
+    // Calculate overall completion from panel milestones
+    let overallCompletion: number | undefined
+    if (robotPanelMilestones) {
+      // Average the per-robot overall completions
+      const robotCompletions: number[] = []
+      for (const panels of Object.values(robotPanelMilestones)) {
+        const c = calculateOverallCompletion(panels)
+        if (c !== null) robotCompletions.push(c)
+      }
+      overallCompletion = robotCompletions.length > 0
+        ? Math.round(robotCompletions.reduce((s, v) => s + v, 0) / robotCompletions.length)
+        : undefined
+    } else if (panelMilestones) {
+      const c = calculateOverallCompletion(panelMilestones)
+      overallCompletion = c !== null ? c : undefined
+    }
+
     return {
       stationKey: cell.code,
-      areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
-      lineCode: cell.lineCode, // Use lineCode field
-      application: cell.simulation?.application, // Propagate application from simulation status
+      areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
+      lineCode: cell.lineCode,
+      application: cell.simulation?.application,
       hasIssues: cell.simulation?.hasIssues,
-      firstStageCompletion: cell.simulation?.percentComplete, // From simulation status
-      finalDeliverablesCompletion: cell.simulation?.percentComplete, // Use same value
-      dcsConfigured: undefined, // Not available in Cell type
-      engineer: cell.assignedEngineer, // Use assignedEngineer
-      panelMilestones, // Panel-grouped milestones from all sheets
+      firstStageCompletion: overallCompletion ?? cell.simulation?.percentComplete,
+      finalDeliverablesCompletion: cell.simulation?.percentComplete,
+      dcsConfigured: undefined,
+      engineer: cell.assignedEngineer,
+      panelMilestones,
       robotPanelMilestones,
       raw: cell
     }

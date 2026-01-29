@@ -19,7 +19,7 @@ export type {
   SimulationStatusValidationReport
 } from './simulationStatusTypes'
 
-export { SIMULATION_MILESTONES } from './simulationStatusTypes'
+export { SIMULATION_MILESTONES, calculateOverallCompletion } from './simulationStatusTypes'
 
 // Parser
 export {

@@ -484,3 +484,24 @@ export function calculateGroupCompletion(milestones: Record<string, MilestoneVal
   const completedCount = values.filter(v => v === 100).length
   return Math.round((completedCount / values.length) * 100)
 }
+
+/**
+ * Calculates the overall completion across all panels by averaging
+ * the completion percentages of panels that have at least one numeric milestone.
+ * Panels with all-null milestones are excluded from the average.
+ * Returns null if no panels have data.
+ */
+export function calculateOverallCompletion(panelMilestones: PanelMilestones): number | null {
+  const completions: number[] = []
+
+  for (const group of Object.values(panelMilestones)) {
+    const values = Object.values(group.milestones)
+    const hasNumeric = values.some(v => typeof v === 'number')
+    if (hasNumeric) {
+      completions.push(group.completion)
+    }
+  }
+
+  if (completions.length === 0) return null
+  return Math.round(completions.reduce((sum, v) => sum + v, 0) / completions.length)
+}
