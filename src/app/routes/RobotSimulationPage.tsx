@@ -75,6 +75,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('robot')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [areaFilter, setAreaFilter] = useState<string>('ALL')
+  const [simulatorFilter, setSimulatorFilter] = useState<string>('ALL')
+  const [completionFilter, setCompletionFilter] = useState<'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETE'>('ALL')
 
   const robotRows = useMemo(() => {
     const rows: StationRow[] = []
@@ -92,17 +95,54 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
     return rows
   }, [cells])
 
+  // Build filter option lists
+  const areaOptions = useMemo(() => {
+    const set = new Set<string>()
+    cells.forEach(c => set.add(c.areaKey ?? 'Unknown'))
+    return ['ALL', ...Array.from(set).sort()]
+  }, [cells])
+
+  const simulatorOptions = useMemo(() => {
+    const set = new Set<string>()
+    cells.forEach(c => {
+      const sim = c.simulationStatus?.engineer?.trim()
+      set.add(sim && sim.length > 0 ? sim : 'UNASSIGNED')
+    })
+    return ['ALL', ...Array.from(set).sort()]
+  }, [cells])
+
   const filteredAndSorted = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    const filtered = term
-      ? robotRows.filter(row => {
-          const robot = row.label.toLowerCase()
-          const area = (row.cell.areaKey ?? 'unknown').toLowerCase()
-          const simulator = (row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED').toLowerCase()
-          return robot.includes(term) || area.includes(term) || simulator.includes(term)
-        })
-      : robotRows
+    const filtered = robotRows.filter(row => {
+      const robot = row.label.toLowerCase()
+      const area = (row.cell.areaKey ?? 'Unknown')
+      const simulatorRaw = row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
+      const simulator = simulatorRaw.toLowerCase()
+      const completionVal = row.cell.simulationStatus?.firstStageCompletion
+      const completion = typeof completionVal === 'number' ? completionVal : null
+
+      const matchesSearch = term
+        ? robot.includes(term) || area.toLowerCase().includes(term) || simulator.includes(term)
+        : true
+
+      const matchesArea = areaFilter === 'ALL' || area === areaFilter
+      const matchesSimulator =
+        simulatorFilter === 'ALL' ||
+        (simulatorFilter === 'UNASSIGNED' && simulatorRaw.trim() === '') ||
+        simulatorRaw === simulatorFilter
+
+      const matchesCompletion =
+        completionFilter === 'ALL'
+          ? true
+          : completionFilter === 'NOT_STARTED'
+            ? completion === null || completion === 0
+            : completionFilter === 'IN_PROGRESS'
+              ? completion !== null && completion > 0 && completion < 100
+              : completion === 100
+
+      return matchesSearch && matchesArea && matchesSimulator && matchesCompletion
+    })
 
     const sorted = [...filtered].sort((a, b) => {
       const robotA = a.label
@@ -157,6 +197,40 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
           placeholder="Search station, area, simulator..."
           className="w-full text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 pb-3">
+        <select
+          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
+          value={areaFilter}
+          onChange={e => setAreaFilter(e.target.value)}
+        >
+          {areaOptions.map(opt => (
+            <option key={opt} value={opt}>
+              {opt === 'ALL' ? 'All Areas' : opt}
+            </option>
+          ))}
+        </select>
+        <select
+          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
+          value={simulatorFilter}
+          onChange={e => setSimulatorFilter(e.target.value)}
+        >
+          {simulatorOptions.map(opt => (
+            <option key={opt} value={opt}>
+              {opt === 'ALL' ? 'All Simulators' : opt}
+            </option>
+          ))}
+        </select>
+        <select
+          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
+          value={completionFilter}
+          onChange={e => setCompletionFilter(e.target.value as any)}
+        >
+          <option value="ALL">All Completion States</option>
+          <option value="NOT_STARTED">Not Started (0% / blank)</option>
+          <option value="IN_PROGRESS">In Progress (1-99%)</option>
+          <option value="COMPLETE">Complete (100%)</option>
+        </select>
       </div>
       <div className="flex-1 overflow-auto max-h-[680px] custom-scrollbar">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
