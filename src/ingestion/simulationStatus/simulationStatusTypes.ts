@@ -103,63 +103,6 @@ export interface SimulationMilestones {
  */
 export type RobotApplicationType = 'SW' | 'MH/SW' | 'MH+AS' | 'MH+PB' | string
 
-/**
- * Panels that are always applicable regardless of application type.
- * These cover generic simulation aspects common to all robots.
- */
-const UNIVERSAL_PANELS: PanelType[] = [
-  'robotSimulation',
-  'mrs',
-  'olp',
-  'documentation',
-  'layout',
-  'safety',
-]
-
-/**
- * Maps application codes to their applicable specialist panels.
- * Universal panels are always included in addition to these.
- *
- * Application codes from the SIMULATION sheet APPLICATION column:
- * - SW   = Spot Welding
- * - SPR  = Self-Piercing Rivet (alternative joining)
- * - MH   = Material Handling (gripper + fixture)
- * - MH/SW, MH+SW = Material Handling + Spot Welding
- * - MH+AS = Material Handling + Adhesive/Sealing
- * - MH+PB = Material Handling + Process/Paint Booth
- * - SEAL, SL = Sealer
- */
-const APPLICATION_SPECIALIST_PANELS: Record<string, PanelType[]> = {
-  'SW':    ['spotWelding'],
-  'SPR':   ['alternativeJoining'],
-  'MH':    ['gripper', 'fixture'],
-  'MH/SW': ['spotWelding', 'gripper', 'fixture'],
-  'MH+SW': ['spotWelding', 'gripper', 'fixture'],
-  'MH+AS': ['sealer', 'gripper', 'fixture'],
-  'MH+PB': ['gripper', 'fixture'],
-  'SEAL':  ['sealer'],
-  'SL':    ['sealer'],
-}
-
-/**
- * Returns the set of panel types applicable to a given robot application code.
- * Falls back to all panels if the application code is unknown.
- */
-export function getApplicablePanels(application: string): Set<PanelType> {
-  const code = application.trim().toUpperCase()
-  const specialistPanels = APPLICATION_SPECIALIST_PANELS[code]
-
-  if (!specialistPanels) {
-    // Unknown application — show all panels to avoid hiding data
-    return new Set<PanelType>([
-      'robotSimulation', 'spotWelding', 'sealer', 'alternativeJoining',
-      'gripper', 'fixture', 'mrs', 'olp', 'documentation', 'layout', 'safety',
-    ])
-  }
-
-  return new Set<PanelType>([...UNIVERSAL_PANELS, ...specialistPanels])
-}
-
 // ============================================================================
 // PARSED ROW TYPES
 // ============================================================================

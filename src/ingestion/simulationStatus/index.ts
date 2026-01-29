@@ -19,7 +19,7 @@ export type {
   SimulationStatusValidationReport
 } from './simulationStatusTypes'
 
-export { SIMULATION_MILESTONES, getApplicablePanels } from './simulationStatusTypes'
+export { SIMULATION_MILESTONES } from './simulationStatusTypes'
 
 // Parser
 export {
