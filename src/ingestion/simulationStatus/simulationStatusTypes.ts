@@ -478,15 +478,9 @@ export function createEmptyPanelMilestones(): PanelMilestones {
  * Counts milestones with value === 100 as complete
  */
 export function calculateGroupCompletion(milestones: Record<string, MilestoneValue>): number {
-  const values = Object.values(milestones)
+  const values = Object.values(milestones).filter((v): v is number => typeof v === 'number')
   if (values.length === 0) return 0
 
-  // Treat missing milestones as 0% and average all milestone percentages.
-  // This keeps checklist behavior for robot-level data (100 or null) while
-  // allowing station-level aggregates to represent partial completion.
-  const total = values.reduce((sum, val) => {
-    return sum + (typeof val === 'number' ? val : 0)
-  }, 0)
-
-  return Math.round(total / values.length)
+  const completedCount = values.filter(v => v === 100).length
+  return Math.round((completedCount / values.length) * 100)
 }

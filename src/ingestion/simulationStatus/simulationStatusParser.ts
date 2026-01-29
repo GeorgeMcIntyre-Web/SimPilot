@@ -99,7 +99,7 @@ function buildSimulationCanonicalKey(area: string, station: string, robot: strin
  * - Example: 10 checked out of 28 total = 36% completion
  */
 function calculateOverallCompletion(milestones: SimulationMilestones): number {
-  const allMilestones = Object.values(milestones)
+  const allMilestones = Object.values(milestones).filter((v): v is number => typeof v === 'number')
   const totalCount = allMilestones.length
 
   if (totalCount === 0) return 0
@@ -569,10 +569,10 @@ export function mergePanelMilestonesByRobot(
  * Calculate overall completion across all panels
  */
 export function calculateOverallPanelCompletion(panels: PanelMilestones): number {
-  const allMilestones: MilestoneValue[] = []
+  const allMilestones: number[] = []
 
   for (const panel of Object.values(panels)) {
-    const milestoneValues = Object.values(panel.milestones) as MilestoneValue[]
+    const milestoneValues = Object.values(panel.milestones).filter((v): v is number => typeof v === 'number')
     allMilestones.push(...milestoneValues)
   }
 

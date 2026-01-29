@@ -1190,7 +1190,7 @@ export function convertVacuumRowsToPanelMilestones(
         }
 
         if (perRobot.size === 0) {
-          aggregatedMilestones[columnName] = 0
+          aggregatedMilestones[columnName] = null
         } else {
           const sum = Array.from(perRobot.values()).reduce((s, v) => s + v, 0)
           aggregatedMilestones[columnName] = Math.round(sum / perRobot.size)
