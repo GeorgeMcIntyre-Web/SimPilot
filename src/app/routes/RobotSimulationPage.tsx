@@ -67,7 +67,7 @@ const PANEL_CONFIGS: { title: string; panelType: PanelType; slug: string }[] = [
   { title: 'Safety', panelType: 'safety', slug: 'safety' },
 ]
 
-type StationRow = { cell: CellSnapshot; label: string; assetId?: string }
+type StationRow = { cell: CellSnapshot; label: string; application: string; assetId?: string }
 
 /**
  * Station table is defined outside the page component to avoid remounting on parent state changes,
@@ -101,12 +101,19 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
         for (const robot of cell.robots) {
           const label = formatRobotLabel({ ...cell, robots: [robot] })
           const assetId = robot.robotKey || robot.caption
-          rows.push({ cell, label, assetId })
+          const application =
+            // Prefer metadata from robot asset
+            ((robot.raw as any)?.metadata?.application ??
+              (robot.raw as any)?.metadata?.function ??
+              cell.simulationStatus?.application ??
+              'Unknown')
+          rows.push({ cell, label, assetId, application })
         }
       } else {
         const label = formatRobotLabel(cell)
         const assetId = cell.simulationStatus?.robotKey
-        rows.push({ cell, label, assetId })
+        const application = cell.simulationStatus?.application ?? 'Unknown'
+        rows.push({ cell, label, assetId, application })
       }
     }
     return rows
@@ -177,8 +184,8 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       const robotB = b.label
       const areaA = a.cell.areaKey ?? 'Unknown'
       const areaB = b.cell.areaKey ?? 'Unknown'
-      const appA = a.cell.simulationStatus?.application ?? 'Unknown'
-      const appB = b.cell.simulationStatus?.application ?? 'Unknown'
+      const appA = a.application ?? 'Unknown'
+      const appB = b.application ?? 'Unknown'
       const simA = a.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
       const simB = b.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
       const compA = typeof a.cell.simulationStatus?.firstStageCompletion === 'number'
@@ -381,9 +388,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
                 <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
                   {row.cell.areaKey ?? 'Unknown'}
                 </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
-                  {row.cell.simulationStatus?.application ?? 'Unknown'}
-                </td>
+              <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                {row.application ?? 'Unknown'}
+              </td>
                 <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
                   {row.cell.simulationStatus?.engineer?.trim() ? (
                     <Link
