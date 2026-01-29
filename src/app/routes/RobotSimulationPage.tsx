@@ -67,7 +67,7 @@ const PANEL_CONFIGS: { title: string; panelType: PanelType; slug: string }[] = [
   { title: 'Safety', panelType: 'safety', slug: 'safety' },
 ]
 
-type StationRow = { cell: CellSnapshot; label: string }
+type StationRow = { cell: CellSnapshot; label: string; assetId?: string }
 
 /**
  * Station table is defined outside the page component to avoid remounting on parent state changes,
@@ -100,11 +100,13 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       if (cell.robots && cell.robots.length > 0) {
         for (const robot of cell.robots) {
           const label = formatRobotLabel({ ...cell, robots: [robot] })
-          rows.push({ cell, label })
+          const assetId = robot.robotKey || robot.caption
+          rows.push({ cell, label, assetId })
         }
       } else {
         const label = formatRobotLabel(cell)
-        rows.push({ cell, label })
+        const assetId = cell.simulationStatus?.robotKey
+        rows.push({ cell, label, assetId })
       }
     }
     return rows
@@ -357,11 +359,25 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
                 className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                 onClick={() => onSelect(row)}
               >
-                <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
-                  <span className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px]">
+              <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+                {row.assetId ? (
+                  <Link
+                    to={`/assets/${encodeURIComponent(row.assetId)}`}
+                    className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px] hover:underline"
+                    title={`Open asset ${row.assetId}`}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {row.label}
+                  </Link>
+                ) : (
+                  <span
+                    className="font-medium text-gray-500 dark:text-gray-400 block truncate max-w-[240px]"
+                    title="No matching asset found"
+                  >
                     {row.label}
                   </span>
-                </td>
+                )}
+              </td>
                 <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
                   {row.cell.areaKey ?? 'Unknown'}
                 </td>
