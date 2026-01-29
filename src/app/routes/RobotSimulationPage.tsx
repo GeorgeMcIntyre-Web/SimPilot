@@ -7,6 +7,7 @@ import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import {
   PanelType,
   PanelMilestones,
+  getApplicablePanels,
 } from '../../ingestion/simulationStatus/simulationStatusTypes'
 
 const formatRobotLabel = (cell: CellSnapshot): string => {
@@ -523,7 +524,10 @@ function RobotSimulationPage() {
 
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
-                  {PANEL_CONFIGS.map(({ title, panelType, slug }) => {
+                  {PANEL_CONFIGS.filter(({ panelType }) => {
+                    const application = selectedRow.cell.simulationStatus?.application ?? ''
+                    return getApplicablePanels(application).has(panelType)
+                  }).map(({ title, panelType, slug }) => {
                     const panelMilestones = selectedRow.cell.simulationStatus?.panelMilestones
                     const completion = getPanelCompletion(panelMilestones, panelType)
                     const hasData = completion !== null

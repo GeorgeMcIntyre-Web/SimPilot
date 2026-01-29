@@ -30,6 +30,7 @@ import {
   SAFETY_MILESTONES,
   createEmptyPanelMilestones,
   calculateGroupCompletion,
+  getApplicablePanels,
 } from './simulationStatusTypes'
 import { normalizeAreaName, normalizeStationCode } from '../normalizers'
 
@@ -432,18 +433,20 @@ function extractPanelMilestones(
 }
 
 /**
- * Extract all panel milestones from a SIMULATION sheet row
- * Covers: Robot Simulation, Spot Welding, Sealer, Alternative Joining, Gripper, Fixture
+ * Extract panel milestones from a SIMULATION sheet row, filtered by application type.
+ * Only panels applicable to the robot's application are extracted.
  */
-export function extractSimulationSheetPanels(raw: Record<string, unknown>): Partial<PanelMilestones> {
-  return {
-    robotSimulation: extractPanelMilestones(raw, ROBOT_SIMULATION_MILESTONES),
-    spotWelding: extractPanelMilestones(raw, SPOT_WELDING_MILESTONES),
-    sealer: extractPanelMilestones(raw, SEALER_MILESTONES),
-    alternativeJoining: extractPanelMilestones(raw, ALTERNATIVE_JOINING_MILESTONES),
-    gripper: extractPanelMilestones(raw, GRIPPER_MILESTONES),
-    fixture: extractPanelMilestones(raw, FIXTURE_MILESTONES),
-  }
+export function extractSimulationSheetPanels(raw: Record<string, unknown>, application: string): Partial<PanelMilestones> {
+  const applicable = getApplicablePanels(application)
+
+  const panels: Partial<PanelMilestones> = {}
+  if (applicable.has('robotSimulation')) panels.robotSimulation = extractPanelMilestones(raw, ROBOT_SIMULATION_MILESTONES)
+  if (applicable.has('spotWelding')) panels.spotWelding = extractPanelMilestones(raw, SPOT_WELDING_MILESTONES)
+  if (applicable.has('sealer')) panels.sealer = extractPanelMilestones(raw, SEALER_MILESTONES)
+  if (applicable.has('alternativeJoining')) panels.alternativeJoining = extractPanelMilestones(raw, ALTERNATIVE_JOINING_MILESTONES)
+  if (applicable.has('gripper')) panels.gripper = extractPanelMilestones(raw, GRIPPER_MILESTONES)
+  if (applicable.has('fixture')) panels.fixture = extractPanelMilestones(raw, FIXTURE_MILESTONES)
+  return panels
 }
 
 /**
@@ -499,6 +502,7 @@ export function parseSheetForPanels(
   for (const raw of rows) {
     const robotFullId = normalizeStr(raw['ROBOT'])
     const stationFull = normalizeStr(raw['STATION'])
+    const application = normalizeStr(raw['APPLICATION'])
 
     // Skip header rows or empty rows
     if (!robotFullId || !stationFull) continue
@@ -509,7 +513,7 @@ export function parseSheetForPanels(
     let panels: Partial<PanelMilestones>
     switch (sheetType) {
       case 'SIMULATION':
-        panels = extractSimulationSheetPanels(raw)
+        panels = extractSimulationSheetPanels(raw, application)
         break
       case 'MRS_OLP':
         panels = extractMrsOlpSheetPanels(raw)
@@ -527,7 +531,7 @@ export function parseSheetForPanels(
       stationKey: stationFull,
       area: parsedRobot.area,
       responsiblePerson: normalizeStr(raw['PERS. RESPONSIBLE']),
-      application: normalizeStr(raw['APPLICATION']),
+      application,
       panels,
     })
   }
