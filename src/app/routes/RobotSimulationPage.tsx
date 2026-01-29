@@ -49,6 +49,19 @@ const getPanelCompletion = (
   return group.completion
 }
 
+const getRowPanelMilestones = (row: StationRow, panelType: PanelType): number | null => {
+  // Prefer per-robot milestones if available
+  const perRobotPanels = row.cell.simulationStatus?.robotPanelMilestones
+  if (perRobotPanels) {
+    const robotPanels = perRobotPanels[row.label]
+    if (robotPanels) {
+      return getPanelCompletion(robotPanels, panelType)
+    }
+  }
+  // Fallback to station-level
+  return getPanelCompletion(row.cell.simulationStatus?.panelMilestones, panelType)
+}
+
 /**
  * Panel configuration for the aspect buttons
  * Maps display title to panel type and URL slug
@@ -105,6 +118,8 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
             // Prefer metadata from robot asset
             ((robot.raw as any)?.metadata?.application ??
               (robot.raw as any)?.metadata?.function ??
+              // Simulation-status robots keep application at root, not metadata
+              (robot.raw as any)?.application ??
               cell.simulationStatus?.application ??
               'Unknown')
           rows.push({ cell, label, assetId, application })
@@ -524,8 +539,7 @@ function RobotSimulationPage() {
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
                   {PANEL_CONFIGS.map(({ title, panelType, slug }) => {
-                    const panelMilestones = selectedRow.cell.simulationStatus?.panelMilestones
-                    const completion = getPanelCompletion(panelMilestones, panelType)
+                    const completion = getRowPanelMilestones(selectedRow, panelType)
                     const hasData = completion !== null
                     return (
                       <button

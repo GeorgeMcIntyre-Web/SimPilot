@@ -35,6 +35,8 @@ export interface SimulationStatusSnapshot {
   robotKey?: string
   /** Panel-grouped milestones for all 11 panels */
   panelMilestones?: PanelMilestones
+  /** Optional per-robot panel milestones keyed by robot caption */
+  robotPanelMilestones?: Record<string, PanelMilestones>
   raw: ParsedSimulationRow | Cell | Record<string, unknown>
 }
 

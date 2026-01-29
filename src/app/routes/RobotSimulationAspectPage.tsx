@@ -80,15 +80,11 @@ function RobotSimulationAspectPage() {
     // Find the cell by station key
     const cell = cells.find(c => c.stationKey === stationKey)
 
-    if (!cell?.simulationStatus?.panelMilestones) {
-      // Return milestone definitions with null values
-      const definitions = PANEL_MILESTONE_DEFINITIONS[panelType]
-      result.fields = Object.values(definitions).map(label => ({ label, percent: null }))
-      result.totalCount = result.fields.length
-      return result
-    }
-
-    const panelGroup = cell.simulationStatus.panelMilestones[panelType]
+    // Try per-robot panel milestones first
+    const robotPanels = cell?.simulationStatus?.robotPanelMilestones
+      ? cell.simulationStatus.robotPanelMilestones[robot]
+      : undefined
+    const panelGroup = robotPanels?.[panelType] || cell?.simulationStatus?.panelMilestones?.[panelType]
     if (!panelGroup) {
       const definitions = PANEL_MILESTONE_DEFINITIONS[panelType]
       result.fields = Object.values(definitions).map(label => ({ label, percent: null }))

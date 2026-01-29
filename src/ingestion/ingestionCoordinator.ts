@@ -604,6 +604,21 @@ function buildCrossRefInputFromApplyResult(
       }
     }
 
+    // Build per-robot panel milestones if robots are known
+    let robotPanelMilestones: Record<string, import('./simulationStatus/simulationStatusTypes').PanelMilestones> | undefined
+    if (cell.robots && cell.robots.length > 0 && panelMilestonesMap.size > 0) {
+      robotPanelMilestones = {}
+      for (const robot of cell.robots) {
+        const robotCaption = robot.caption || robot.robotKey
+        if (!robotCaption) continue
+        const key = `${cell.code}::${robotCaption}`
+        const panels = panelMilestonesMap.get(key)
+        if (panels) {
+          robotPanelMilestones[robotCaption] = panels
+        }
+      }
+    }
+
     return {
       stationKey: cell.code,
       areaKey: areaIdToName.get(cell.areaId) || cell.areaId, // Map areaId to area name
@@ -615,6 +630,7 @@ function buildCrossRefInputFromApplyResult(
       dcsConfigured: undefined, // Not available in Cell type
       engineer: cell.assignedEngineer, // Use assignedEngineer
       panelMilestones, // Panel-grouped milestones from all sheets
+      robotPanelMilestones,
       raw: cell
     }
   })
