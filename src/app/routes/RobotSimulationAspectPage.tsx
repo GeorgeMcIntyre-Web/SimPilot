@@ -82,9 +82,21 @@ function RobotSimulationAspectPage() {
 
     // Try per-robot panel milestones first
     const robotPanels = cell?.simulationStatus?.robotPanelMilestones
-      ? cell.simulationStatus.robotPanelMilestones[robot]
+      ? (() => {
+          const direct = cell.simulationStatus.robotPanelMilestones[robot]
+          if (direct) return direct
+          const upper = robot.toUpperCase()
+          const matchKey = Object.keys(cell.simulationStatus.robotPanelMilestones).find(k => k.toUpperCase() === upper)
+          return matchKey ? cell.simulationStatus.robotPanelMilestones[matchKey] : undefined
+        })()
       : undefined
-    const panelGroup = robotPanels?.[panelType] || cell?.simulationStatus?.panelMilestones?.[panelType]
+
+    const panelGroup =
+      robotPanels && robotPanels[panelType]
+        ? robotPanels[panelType]
+        : cell?.simulationStatus?.robotPanelMilestones
+          ? null // per-robot data present, but this robot has none -> treat as N/A
+          : cell?.simulationStatus?.panelMilestones?.[panelType] // fallback only if per-robot data absent entirely
     if (!panelGroup) {
       const definitions = PANEL_MILESTONE_DEFINITIONS[panelType]
       result.fields = Object.values(definitions).map(label => ({ label, percent: null }))

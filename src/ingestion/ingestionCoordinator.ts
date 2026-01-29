@@ -606,16 +606,36 @@ function buildCrossRefInputFromApplyResult(
 
     // Build per-robot panel milestones if robots are known
     let robotPanelMilestones: Record<string, import('./simulationStatus/simulationStatusTypes').PanelMilestones> | undefined
-    if (cell.robots && cell.robots.length > 0 && panelMilestonesMap.size > 0) {
+    if (panelMilestonesMap.size > 0) {
       robotPanelMilestones = {}
-      for (const robot of cell.robots) {
-        const robotCaption = robot.caption || robot.robotKey
-        if (!robotCaption) continue
-        const key = `${cell.code}::${robotCaption}`
-        const panels = panelMilestonesMap.get(key)
-        if (panels) {
-          robotPanelMilestones[robotCaption] = panels
+
+      // First, attach for known robots
+      if (cell.robots && cell.robots.length > 0) {
+        for (const robot of cell.robots) {
+          const robotCaption = robot.caption || robot.robotKey
+          if (!robotCaption) continue
+          const key = `${cell.code}::${robotCaption}`
+          const panels = panelMilestonesMap.get(key)
+          if (panels) {
+            robotPanelMilestones[robotCaption] = panels
+          }
         }
+      }
+
+      // Also attach any robot panels that match this station even if robot not in list
+      const prefix = `${cell.code}::`.toUpperCase()
+      for (const [key, panels] of panelMilestonesMap) {
+        const upperKey = key.toUpperCase()
+        if (upperKey.startsWith(prefix)) {
+          const robotCaption = key.split('::', 2)[1]
+          if (robotCaption) {
+            robotPanelMilestones[robotCaption] = panels
+          }
+        }
+      }
+
+      if (Object.keys(robotPanelMilestones).length === 0) {
+        robotPanelMilestones = undefined
       }
     }
 

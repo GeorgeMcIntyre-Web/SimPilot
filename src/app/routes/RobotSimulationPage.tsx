@@ -53,12 +53,18 @@ const getRowPanelMilestones = (row: StationRow, panelType: PanelType): number | 
   // Prefer per-robot milestones if available
   const perRobotPanels = row.cell.simulationStatus?.robotPanelMilestones
   if (perRobotPanels) {
-    const robotPanels = perRobotPanels[row.label]
-    if (robotPanels) {
-      return getPanelCompletion(robotPanels, panelType)
+    let robotPanels = perRobotPanels[row.label]
+    if (!robotPanels) {
+      // Try case-insensitive match
+      const upperLabel = row.label.toUpperCase()
+      const matchKey = Object.keys(perRobotPanels).find(k => k.toUpperCase() === upperLabel)
+      if (matchKey) robotPanels = perRobotPanels[matchKey]
     }
+    // If robotPanelMilestones exist but this robot has none, treat as N/A
+    if (!robotPanels) return null
+    return getPanelCompletion(robotPanels, panelType)
   }
-  // Fallback to station-level
+  // Fallback only when per-robot data not provided at all
   return getPanelCompletion(row.cell.simulationStatus?.panelMilestones, panelType)
 }
 
