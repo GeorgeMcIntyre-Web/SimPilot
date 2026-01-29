@@ -42,6 +42,9 @@ const getPanelCompletion = (
   if (!panelMilestones) return null
   const group = panelMilestones[panelType]
   if (!group) return null
+  const values = Object.values(group.milestones)
+  const hasNumeric = values.some(v => typeof v === 'number')
+  if (!hasNumeric) return null
   return group.completion
 }
 
@@ -406,7 +409,7 @@ function RobotSimulationPage() {
                         <div className="flex items-start justify-between text-sm font-semibold text-gray-900 dark:text-white gap-2">
                           <span className="whitespace-normal leading-tight">{title}</span>
                           <span className={hasData ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>
-                            {hasData ? `${completion}%` : '-'}
+                            {hasData ? `${completion}%` : 'N/A'}
                           </span>
                         </div>
                         <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">

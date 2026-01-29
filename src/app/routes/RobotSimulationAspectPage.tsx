@@ -108,7 +108,8 @@ function RobotSimulationAspectPage() {
 
     result.totalCount = result.fields.length
     result.completedCount = result.fields.filter(f => f.percent === 100).length
-    result.panelCompletion = panelGroup.completion
+    const hasNumeric = result.fields.some(f => typeof f.percent === 'number')
+    result.panelCompletion = hasNumeric ? panelGroup.completion : null
 
     return result
   }, [panelType, hasData, cells, stationKey])
@@ -130,12 +131,18 @@ function RobotSimulationAspectPage() {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <div className="text-sm text-gray-500 dark:text-gray-400">Panel Completion</div>
-                <div className={`text-2xl font-bold ${panelCompletion === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
-                  {panelCompletion}%
-                </div>
+                {panelCompletion === null ? (
+                  <div className="text-2xl font-bold text-gray-400 dark:text-gray-500">N/A</div>
+                ) : (
+                  <div className={`text-2xl font-bold ${panelCompletion === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                    {panelCompletion}%
+                  </div>
+                )}
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                ({completedCount}/{totalCount} milestones)
+                {panelCompletion === null
+                  ? 'No applicable milestones'
+                  : `(${completedCount}/${totalCount} milestones)`}
               </div>
             </div>
           )}
