@@ -164,7 +164,7 @@ export function PersistenceManager() {
 
             saveTimeoutRef.current = setTimeout(async () => {
                 try {
-                    const snapshot = coreStore.getSnapshot(undefined, getCrossRefData() || undefined)
+                    const snapshot = coreStore.getSnapshot(getCrossRefData() || undefined)
                     await persistenceService.save(snapshot)
                     log.info('Session saved automatically')
                 } catch (err) {

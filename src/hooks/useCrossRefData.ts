@@ -77,6 +77,22 @@ export const setCrossRefData = (result: CrossRefResult): void => {
     cb()
   })
   log.info(`[setCrossRefData] Notified ${crossRefSubscribers.size} subscribers`)
+
+  // Persist crossRef alongside core store for fast restore (debounced)
+  try {
+    const { persistenceService } = require('../persistence/indexedDbService')
+    const { coreStore } = require('../domain/coreStore')
+    if ((setCrossRefData as any)._persistTimeout) {
+      clearTimeout((setCrossRefData as any)._persistTimeout)
+    }
+    ;(setCrossRefData as any)._persistTimeout = setTimeout(async () => {
+      const snapshot = coreStore.getSnapshot(result)
+      await persistenceService.save(snapshot)
+      log.debug('[setCrossRefData] Persisted snapshot with crossRef')
+    }, 1200)
+  } catch (err) {
+    log.error('[setCrossRefData] Failed to persist snapshot with crossRef', err)
+  }
 }
 
 /**
