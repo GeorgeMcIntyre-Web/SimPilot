@@ -449,9 +449,29 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
                     'UNASSIGNED'
                   )}
                 </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                  {getRowOverallCompletion(row)}
-                </td>
+              <td className="whitespace-nowrap px-3 py-3">
+                {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-20 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          row.cell.simulationStatus.firstStageCompletion >= 100
+                            ? 'bg-green-500'
+                            : row.cell.simulationStatus.firstStageCompletion >= 50
+                              ? 'bg-blue-500'
+                              : 'bg-amber-400'
+                        }`}
+                        style={{ width: `${Math.min(100, Math.max(0, row.cell.simulationStatus.firstStageCompletion))}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {Math.round(row.cell.simulationStatus.firstStageCompletion)}%
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-gray-400 dark:text-gray-500">N/A</span>
+                )}
+              </td>
               </tr>
             ))
           )}
