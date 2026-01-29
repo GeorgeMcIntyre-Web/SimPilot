@@ -481,6 +481,12 @@ export function calculateGroupCompletion(milestones: Record<string, MilestoneVal
   const values = Object.values(milestones)
   if (values.length === 0) return 0
 
-  const completedCount = values.filter(v => v === 100).length
-  return Math.round((completedCount / values.length) * 100)
+  // Treat missing milestones as 0% and average all milestone percentages.
+  // This keeps checklist behavior for robot-level data (100 or null) while
+  // allowing station-level aggregates to represent partial completion.
+  const total = values.reduce((sum, val) => {
+    return sum + (typeof val === 'number' ? val : 0)
+  }, 0)
+
+  return Math.round(total / values.length)
 }

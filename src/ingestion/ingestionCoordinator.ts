@@ -554,6 +554,13 @@ function buildCrossRefInputFromApplyResult(
   }
 
   if (panelMilestonesMap.size > 0) {
+    console.log('[SimStatus][SIMULATION] Step 8: Panel milestones normalized', {
+      totalKeys: panelMilestonesMap.size,
+      sampleKeys: [...panelMilestonesMap.keys()].slice(0, 5)
+    })
+  }
+
+  if (panelMilestonesMap.size > 0) {
     log.debug('[CrossRef] Panel milestones map built:', {
       size: panelMilestonesMap.size,
       sampleKeys: [...panelMilestonesMap.keys()].slice(0, 5)
@@ -616,6 +623,12 @@ function buildCrossRefInputFromApplyResult(
   if (panelMilestonesMap.size > 0) {
     const withMilestones = simulationStatusRows.filter(r => r.panelMilestones !== undefined).length
     log.debug('[CrossRef] Panel milestones attached to cells:', {
+      totalCells: simulationStatusRows.length,
+      cellsWithMilestones: withMilestones,
+      cellsWithoutMilestones: simulationStatusRows.length - withMilestones
+    })
+
+    console.log('[SimStatus][SIMULATION] Step 9: Panel milestones attached to cells', {
       totalCells: simulationStatusRows.length,
       cellsWithMilestones: withMilestones,
       cellsWithoutMilestones: simulationStatusRows.length - withMilestones

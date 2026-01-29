@@ -460,6 +460,13 @@ export async function parseSimulationStatus(
 
     // Convert to matrix
     const rows = sheetToMatrix(workbook, sheetName)
+    if (sheetName.toUpperCase() === 'SIMULATION') {
+      console.log('[SimStatus][SIMULATION] Step 1: Loaded sheet matrix', {
+        sheetName,
+        totalRows: rows.length,
+        totalCols: rows[0]?.length ?? 0
+      })
+    }
 
     if (rows.length < 5) {
       warnings.push(createParserErrorWarning({
@@ -473,6 +480,13 @@ export async function parseSimulationStatus(
     // Find header row
     const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
     log.debug(`[Parser] ${sheetName}: Header row index: ${headerRowIndex}`)
+
+    if (sheetName.toUpperCase() === 'SIMULATION') {
+      console.log('[SimStatus][SIMULATION] Step 2: Header row detected', {
+        headerRowIndex,
+        headerPreview: headerRowIndex !== null ? rows[headerRowIndex].slice(0, 12) : []
+      })
+    }
 
     if (headerRowIndex === null) {
       warnings.push(createParserErrorWarning({
@@ -514,11 +528,25 @@ export async function parseSimulationStatus(
 
     if (vacuumRows.length === 0) {
       warnings.push(createParserErrorWarning({
-        fileName,
-        sheetName,
-        error: 'No valid data rows found after parsing'
-      }))
+      fileName,
+      sheetName,
+      error: 'No valid data rows found after parsing'
+    }))
       continue
+    }
+
+    if (sheetName.toUpperCase() === 'SIMULATION') {
+      console.log('[SimStatus][SIMULATION] Step 3: Vacuum parse complete', {
+        vacuumRowCount: vacuumRows.length,
+        sampleRow: vacuumRows[0]
+          ? {
+              stationKey: vacuumRows[0].stationKey,
+              robotCaption: vacuumRows[0].robotCaption,
+              metricsCount: vacuumRows[0].metrics.length,
+              metricLabels: vacuumRows[0].metrics.slice(0, 5).map(m => m.label)
+            }
+          : null
+      })
     }
 
     // Prefix metrics with sheet name to avoid conflicts (except for SIMULATION sheet)
@@ -533,6 +561,13 @@ export async function parseSimulationStatus(
     }))
 
     allVacuumRows.push(...prefixedVacuumRows)
+
+    if (sheetName.toUpperCase() === 'SIMULATION') {
+      console.log('[SimStatus][SIMULATION] Step 4: Metrics normalized', {
+        rowCount: prefixedVacuumRows.length,
+        totalMetrics: prefixedVacuumRows.reduce((sum, r) => sum + r.metrics.length, 0)
+      })
+    }
 
     // Convert vacuum rows to legacy format for backward compatibility
     const parsedRows: ParsedSimulationRow[] = prefixedVacuumRows.map(vr => {
@@ -567,6 +602,14 @@ export async function parseSimulationStatus(
   // Use the first sheet name for backward compatibility (or SIMULATION if available)
   const primarySheetName = sheetsToParse.find(s => s.toUpperCase() === 'SIMULATION') || sheetsToParse[0]
   const parsedRows = allParsedRows
+
+  if (primarySheetName.toUpperCase() === 'SIMULATION') {
+    console.log('[SimStatus][SIMULATION] Step 5: Parsed rows ready for entity build', {
+      parsedRowCount: parsedRows.length,
+      distinctStations: new Set(parsedRows.map(r => r.stationCode)).size,
+      distinctRobots: new Set(parsedRows.map(r => `${r.stationCode}::${r.robotName || ''}`)).size
+    })
+  }
 
   // Derive project name from filename
   const projectName = deriveProjectName(fileName)
@@ -663,6 +706,13 @@ export async function parseSimulationStatus(
     primarySheetName
   )
   warnings.push(...robotWarnings)
+
+  if (primarySheetName.toUpperCase() === 'SIMULATION') {
+    console.log('[SimStatus][SIMULATION] Step 6: Robots extracted', {
+      robotsCount: robotsFromSimStatus.length,
+      duplicates: robotWarnings.length
+    })
+  }
   
   const areaNames = areas.map(a => `${a.name} (${a.code || 'No Code'})`).join(', ')
   
@@ -1066,22 +1116,47 @@ export function convertVacuumRowsToPanelMilestones(
       continue
     }
 
-    // Merge all metrics from all robots at this station
-    const allMetrics: SimulationMetric[] = []
-    for (const row of rows) {
-      allMetrics.push(...row.metrics)
-    }
+    // Build a unique robot set for averaging. If robot captions are missing,
+    // fall back to row count to avoid division by zero.
+    const uniqueRobots = new Set(
+      rows.map(r => (r.robotCaption && r.robotCaption.trim()) || `__row_${r.sourceRowIndex}`)
+    )
+    const robotCount = uniqueRobots.size || rows.length || 1
 
-    // Create panel milestones
+    // Create panel milestones with station-level aggregation
     const panels = createEmptyPanelMilestones()
 
-    // Extract each panel's milestones
     for (const [panelKey, milestoneDefinitions] of Object.entries(PANEL_TO_MILESTONES)) {
-      panels[panelKey as PanelType] = extractPanelGroup(allMetrics, milestoneDefinitions)
+      const aggregatedMilestones: Record<string, MilestoneValue> = {}
+
+      for (const [_milestoneKey, columnName] of Object.entries(milestoneDefinitions)) {
+        // Average the milestone percent across all robots at the station.
+        // Missing values count as 0% to preserve checklist semantics.
+        let total = 0
+        for (const row of rows) {
+          const metric = row.metrics.find(m => matchesMilestone(m.label, columnName))
+          total += typeof metric?.percent === 'number' ? metric.percent : 0
+        }
+
+        aggregatedMilestones[columnName] = Math.round(total / robotCount)
+      }
+
+      panels[panelKey as PanelType] = {
+        milestones: aggregatedMilestones,
+        completion: calculateGroupCompletion(aggregatedMilestones),
+      }
     }
 
     resultMap.set(stationKey, panels)
   }
+
+  // Debug summary (applies to SIMULATION-derived metrics as well)
+  console.log('[SimStatus][Panels] Step 7: Panel milestones map built', {
+    totalKeys: resultMap.size,
+    robotKeys: Array.from(resultMap.keys()).filter(k => k.includes('::')).length,
+    stationKeys: Array.from(resultMap.keys()).filter(k => !k.includes('::')).length,
+    sampleKeys: Array.from(resultMap.keys()).slice(0, 5)
+  })
 
   return resultMap
 }
