@@ -185,7 +185,7 @@ function RobotSimulationAspectPage() {
         )}
 
         <Link
-          to="/robot-simulation"
+          to={`/robot-simulation?station=${encodeURIComponent(stationKey)}&robot=${encodeURIComponent(robot)}`}
           className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm mt-4"
         >
           &larr; Back to Robot Simulation

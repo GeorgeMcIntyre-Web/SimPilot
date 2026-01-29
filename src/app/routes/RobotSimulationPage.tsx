@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMemo, useState, useEffect } from 'react'
 import { ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
@@ -486,6 +486,7 @@ function RobotSimulationPage() {
   const { cells, loading, hasData } = useCrossRefData()
   const tableCells = hasData ? cells : []
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
 
   // Debug: Log panel milestones data when selection changes
@@ -518,6 +519,34 @@ function RobotSimulationPage() {
       })
     }
   }, [hasData, cells])
+
+  // Preselect row from query params (station & robot) after data loads
+  useEffect(() => {
+    if (!hasData || selectedRow) return
+    const stationParam = searchParams.get('station')
+    const robotParam = searchParams.get('robot')
+    if (!stationParam || !robotParam) return
+
+    // Find matching cell and robot label
+    const matchCell = cells.find(c => c.stationKey === stationParam)
+    if (!matchCell) return
+
+    const candidateLabels: string[] = []
+    if (matchCell.robots && matchCell.robots.length > 0) {
+      for (const robot of matchCell.robots) {
+        candidateLabels.push(formatRobotLabel({ ...matchCell, robots: [robot] }))
+      }
+    } else {
+      candidateLabels.push(formatRobotLabel(matchCell))
+    }
+
+    const labelMatch = candidateLabels.find(l => l === robotParam)
+    if (!labelMatch) return
+
+    // Recreate StationRow minimal object
+    const row: StationRow = { cell: matchCell, label: labelMatch, application: matchCell.simulationStatus?.application ?? 'Unknown' }
+    setSelectedRow(row)
+  }, [hasData, cells, selectedRow, searchParams])
 
   return (
     <div className="space-y-6">
