@@ -1174,15 +1174,27 @@ export function convertVacuumRowsToPanelMilestones(
       const aggregatedMilestones: Record<string, MilestoneValue> = {}
 
       for (const [_milestoneKey, columnName] of Object.entries(milestoneDefinitions)) {
-        // Average the milestone percent across all robots at the station.
-        // Missing values count as 0% to preserve checklist semantics.
-        let total = 0
+        // Average milestone percent across unique robots to avoid double-counting
+        // duplicate rows for the same robot (which can otherwise yield 200%).
+        const perRobot = new Map<string, number>()
+
         for (const row of rows) {
-          const metric = row.metrics.find(m => matchesMilestone(m.label, columnName))
-          total += typeof metric?.percent === 'number' ? metric.percent : 0
+          const robotKey = row.robotCaption?.trim() || `__row_${row.sourceRowIndex}`
+          // Only take the first value seen per robot to avoid duplicates
+          if (!perRobot.has(robotKey)) {
+            const metric = row.metrics.find(m => matchesMilestone(m.label, columnName))
+            if (typeof metric?.percent === 'number') {
+              perRobot.set(robotKey, metric.percent)
+            }
+          }
         }
 
-        aggregatedMilestones[columnName] = Math.round(total / robotCount)
+        if (perRobot.size === 0) {
+          aggregatedMilestones[columnName] = 0
+        } else {
+          const sum = Array.from(perRobot.values()).reduce((s, v) => s + v, 0)
+          aggregatedMilestones[columnName] = Math.round(sum / perRobot.size)
+        }
       }
 
       panels[panelKey as PanelType] = {
