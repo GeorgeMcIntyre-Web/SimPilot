@@ -26,8 +26,9 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
   const completion = getCompletionPercent(cell);
   const stationLabel = getStationLabel(cell);
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
-  const rowPad = density === 'compact' ? 'py-3' : 'py-4';
-  const textSize = density === 'compact' ? 'text-xs' : 'text-sm';
+  // Align with Robot Status table: use text-sm and py-3 even in compact mode.
+  const rowPad = density === 'compact' ? 'py-3' : 'py-3';
+  const textSize = 'text-sm';
 
   return (
     <tr
