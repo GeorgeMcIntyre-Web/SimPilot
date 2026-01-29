@@ -437,6 +437,14 @@ export async function parseSimulationStatus(
     ? [targetSheetName]  // Single sheet specified
     : findAllSimulationSheets(workbook)  // Auto-detect all simulation sheets
 
+  // Debug: show all sheet names and which were selected
+  console.log('[SimStatus] Sheet detection', {
+    workbookSheets: workbook.SheetNames,
+    targetSheetName,
+    sheetsToParse,
+    parsedFile: fileName
+  })
+
   if (sheetsToParse.length === 0) {
     throw new Error(`No simulation sheets found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
   }
@@ -458,9 +466,11 @@ export async function parseSimulationStatus(
       continue
     }
 
+    const isSimulationSheet = sheetName.toUpperCase().includes('SIMULATION')
+
     // Convert to matrix
     const rows = sheetToMatrix(workbook, sheetName)
-    if (sheetName.toUpperCase() === 'SIMULATION') {
+    if (isSimulationSheet) {
       console.log('[SimStatus][SIMULATION] Step 1: Loaded sheet matrix', {
         sheetName,
         totalRows: rows.length,
@@ -481,7 +491,7 @@ export async function parseSimulationStatus(
     const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
     log.debug(`[Parser] ${sheetName}: Header row index: ${headerRowIndex}`)
 
-    if (sheetName.toUpperCase() === 'SIMULATION') {
+    if (isSimulationSheet) {
       console.log('[SimStatus][SIMULATION] Step 2: Header row detected', {
         headerRowIndex,
         headerPreview: headerRowIndex !== null ? rows[headerRowIndex].slice(0, 12) : []
@@ -535,7 +545,7 @@ export async function parseSimulationStatus(
       continue
     }
 
-    if (sheetName.toUpperCase() === 'SIMULATION') {
+    if (isSimulationSheet) {
       console.log('[SimStatus][SIMULATION] Step 3: Vacuum parse complete', {
         vacuumRowCount: vacuumRows.length,
         sampleRow: vacuumRows[0]
@@ -562,11 +572,45 @@ export async function parseSimulationStatus(
 
     allVacuumRows.push(...prefixedVacuumRows)
 
-    if (sheetName.toUpperCase() === 'SIMULATION') {
+    console.log('[SimStatus] Sheet processed', {
+      sheetName,
+      rowCount: prefixedVacuumRows.length,
+      metricsTotal: prefixedVacuumRows.reduce((sum, r) => sum + r.metrics.length, 0)
+    })
+
+    if (isSimulationSheet) {
       console.log('[SimStatus][SIMULATION] Step 4: Metrics normalized', {
         rowCount: prefixedVacuumRows.length,
         totalMetrics: prefixedVacuumRows.reduce((sum, r) => sum + r.metrics.length, 0)
       })
+
+      // Debug the first 3 robots with key Robot Simulation milestones
+      const milestoneHeaders = [
+        'ROBOT POSITION - STAGE 1',
+        'DCS CONFIGURED',
+        'DRESS PACK & FRYING PAN CONFIGURED - STAGE 1',
+        'ROBOT FLANGE PCD + ADAPTERS CHECKED',
+        'ALL EOAT PAYLOADS CHECKED',
+        'ROBOT TYPE CONFIRMED',
+        'ROBOT RISER CONFIRMED',
+        'TRACK LENGTH + CATRAC CONFIRMED',
+        'COLLISIONS CHECKED - STAGE 1'
+      ]
+
+      const robotPreview = prefixedVacuumRows.slice(0, 3).map(row => {
+        const metricsObj: Record<string, number | null> = {}
+        for (const header of milestoneHeaders) {
+          const match = row.metrics.find(m => matchesMilestone(m.label, header))
+          metricsObj[header] = match?.percent ?? null
+        }
+        return {
+          stationKey: row.stationKey,
+          robotCaption: row.robotCaption,
+          metrics: metricsObj
+        }
+      })
+
+      console.log('[SimStatus][SIMULATION] Step 4a: First 3 robots milestone values', robotPreview)
     }
 
     // Convert vacuum rows to legacy format for backward compatibility
@@ -603,7 +647,7 @@ export async function parseSimulationStatus(
   const primarySheetName = sheetsToParse.find(s => s.toUpperCase() === 'SIMULATION') || sheetsToParse[0]
   const parsedRows = allParsedRows
 
-  if (primarySheetName.toUpperCase() === 'SIMULATION') {
+  if (primarySheetName.toUpperCase().includes('SIMULATION')) {
     console.log('[SimStatus][SIMULATION] Step 5: Parsed rows ready for entity build', {
       parsedRowCount: parsedRows.length,
       distinctStations: new Set(parsedRows.map(r => r.stationCode)).size,
@@ -707,7 +751,7 @@ export async function parseSimulationStatus(
   )
   warnings.push(...robotWarnings)
 
-  if (primarySheetName.toUpperCase() === 'SIMULATION') {
+  if (primarySheetName.toUpperCase().includes('SIMULATION')) {
     console.log('[SimStatus][SIMULATION] Step 6: Robots extracted', {
       robotsCount: robotsFromSimStatus.length,
       duplicates: robotWarnings.length

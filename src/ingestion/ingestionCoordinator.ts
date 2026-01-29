@@ -835,7 +835,12 @@ async function ingestFilesInternal(
           }
         }
         
-        const result = await parseSimulationStatus(workbook, file.name, targetSheet)
+        // Always parse all simulation-related sheets when the SIMULATION sheet exists;
+        // this avoids missing the primary SIMULATION data if detection selected a secondary sheet.
+        const shouldParseAll = workbook.SheetNames.some(n => n.toUpperCase().includes('SIMULATION'))
+        const result = shouldParseAll
+          ? await parseSimulationStatus(workbook, file.name) // auto-detect all relevant sheets
+          : await parseSimulationStatus(workbook, file.name, targetSheet)
 
         if (!ingestedData.simulation) {
           ingestedData.simulation = result
@@ -1197,7 +1202,12 @@ export async function processWorkbook(
   const simDetection = detections.get('SIMULATION_STATUS')
   if (simDetection) {
     try {
-      const result = await parseSimulationStatus(workbook, fileName, simDetection.sheetName)
+      // If the workbook contains any SIMULATION-named sheet, parse all relevant sheets;
+      // otherwise fall back to the detected sheet only.
+      const hasSimulationSheet = workbook.SheetNames.some(n => n.toUpperCase().includes('SIMULATION'))
+      const result = hasSimulationSheet
+        ? await parseSimulationStatus(workbook, fileName) // auto-detect & parse all simulation sheets
+        : await parseSimulationStatus(workbook, fileName, simDetection.sheetName)
       ingestedData.simulation = result
       warnings.push(...result.warnings)
     } catch (error) {
