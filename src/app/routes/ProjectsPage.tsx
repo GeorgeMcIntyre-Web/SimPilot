@@ -171,7 +171,7 @@ export function ProjectsPage() {
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        <span className="typography-caption text-gray-500 dark:text-gray-400">
                             {projects.length} {projects.length === 1 ? 'project' : 'projects'}
                         </span>
                     </div>
@@ -184,7 +184,7 @@ export function ProjectsPage() {
                                 setSortKey(e.target.value as SortKey);
                                 setSortDir('asc');
                             }}
-                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 typography-caption bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                             <option value="name">Sort by Name</option>
                             <option value="cellCount">Sort by Station Count</option>
@@ -245,11 +245,11 @@ export function ProjectsPage() {
                                     <div className="flex items-start gap-2 min-w-0 flex-1">
                                         <Building2 className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                            <h3 className="typography-body-strong text-gray-900 dark:text-white truncate">
                                                 {project.name}
                                             </h3>
                                             {project.customer && (
-                                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate mt-0.5">
+                                                <p className="typography-caption text-gray-600 dark:text-gray-400 truncate mt-0.5">
                                                     {project.customer}
                                                 </p>
                                             )}
@@ -266,9 +266,9 @@ export function ProjectsPage() {
                                     <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-2">
                                         <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-1">
                                             <Users className="h-3 w-3" />
-                                            <span className="text-[10px] font-medium">Stations</span>
+                                            <span className="typography-label">Stations</span>
                                         </div>
-                                        <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                        <div className="typography-title-sm text-gray-900 dark:text-white">
                                             {project.cellCount}
                                         </div>
                                     </div>
@@ -276,9 +276,9 @@ export function ProjectsPage() {
                                     <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-2">
                                         <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-1">
                                             <TrendingUp className="h-3 w-3" />
-                                            <span className="text-[10px] font-medium">Completion</span>
+                                            <span className="typography-label">Completion</span>
                                         </div>
-                                        <div className="text-lg font-bold text-gray-900 dark:text-white">
+                                        <div className="typography-title-sm text-gray-900 dark:text-white">
                                             {project.avgCompletion}%
                                         </div>
                                         <div className="mt-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -313,7 +313,7 @@ export function ProjectsPage() {
                                     />
                                     <span
                                         className={cn(
-                                            "text-xs font-medium",
+                                            "typography-label",
                                             project.atRiskCellsCount > 0 ? "text-rose-700 dark:text-rose-400" : "text-emerald-700 dark:text-emerald-300"
                                         )}
                                     >
@@ -347,8 +347,8 @@ export function ProjectsPage() {
                             <Building2 className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
 
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            <div className="flex items-center gap-2">
+                                    <h3 className="typography-body-strong text-gray-900 dark:text-white truncate">
                                         {project.name}
                                     </h3>
                                     <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap", getStatusColor(project.status))}>
@@ -356,7 +356,7 @@ export function ProjectsPage() {
                                     </span>
                                 </div>
                                 {project.customer && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                    <p className="typography-caption text-gray-500 dark:text-gray-400 truncate mt-0.5">
                                         {project.customer}
                                     </p>
                                 )}
@@ -364,19 +364,19 @@ export function ProjectsPage() {
 
                             <div className="flex items-center gap-4 flex-shrink-0">
                                 <div className="text-right">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">Stations</div>
-                                    <div className="text-sm font-bold text-gray-900 dark:text-white">{project.cellCount}</div>
+                                    <div className="typography-caption text-gray-500 dark:text-gray-400">Stations</div>
+                                    <div className="typography-body-strong text-gray-900 dark:text-white">{project.cellCount}</div>
                                 </div>
 
                                 <div className="text-right">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">Complete</div>
-                                    <div className="text-sm font-bold text-gray-900 dark:text-white">{project.avgCompletion}%</div>
+                                    <div className="typography-caption text-gray-500 dark:text-gray-400">Complete</div>
+                                    <div className="typography-body-strong text-gray-900 dark:text-white">{project.avgCompletion}%</div>
                                 </div>
 
                                 {project.atRiskCellsCount > 0 && (
                                     <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded">
                                         <AlertTriangle className="h-3 w-3 text-rose-600 dark:text-rose-400" />
-                                        <span className="text-xs font-medium text-rose-700 dark:text-rose-400 whitespace-nowrap">
+                                        <span className="typography-label text-rose-700 dark:text-rose-400 whitespace-nowrap">
                                             {project.atRiskCellsCount} at risk
                                         </span>
                                     </div>
