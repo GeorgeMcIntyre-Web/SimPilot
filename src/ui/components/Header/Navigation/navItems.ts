@@ -1,29 +1,28 @@
 import {
     LayoutDashboard,
-    FolderKanban,
-    Wrench,
-    Upload,
+    Bot,
+    Workflow,
+    OctagonAlert,
+    Building2,
+    CalendarCheck,
     Users,
-    Calendar,
-    Box,
-    LayoutGrid,
-    Activity,
-    History,
-    AlertTriangle
+    Wrench,
+    Package,
+    FileUp,
+    Clock
 } from 'lucide-react';
 import { NavItem } from './types';
 
 export const navItems: NavItem[] = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/robot-simulation', label: 'Status', icon: LayoutGrid },
-    { href: '/simulation', label: 'Simulation', icon: LayoutGrid },
-    { href: '/tooling-bottlenecks', label: 'Bottlenecks', icon: AlertTriangle },
-    { href: '/projects', label: 'Projects', icon: FolderKanban },
-    { href: '/readiness', label: 'Readiness', icon: Calendar },
+    { href: '/robot-simulation', label: 'Status', icon: Bot },
+    { href: '/simulation', label: 'Simulation', icon: Workflow },
+    { href: '/tooling-bottlenecks', label: 'Bottlenecks', icon: OctagonAlert },
+    { href: '/projects', label: 'Projects', icon: Building2 },
+    { href: '/readiness', label: 'Readiness', icon: CalendarCheck },
     { href: '/engineers', label: 'Engineers', icon: Users },
     { href: '/tools', label: 'Tools', icon: Wrench },
-    { href: '/assets', label: 'Assets', icon: Box },
-    { href: '/data-health', label: 'Data Health', icon: Activity },
-    { href: '/data-loader', label: 'Data Loader', icon: Upload },
-    { href: '/import-history', label: 'Import History', icon: History },
+    { href: '/assets', label: 'Assets', icon: Package },
+    { href: '/data-loader', label: 'Data Loader', icon: FileUp },
+    { href: '/import-history', label: 'Import History', icon: Clock },
 ];
