@@ -2,7 +2,7 @@
 // Central store for simulation context data with selectors for hierarchy navigation
 // Follows the pattern of coreStore.ts with guard clauses, no else, max nesting 2
 
-import { useState, useEffect, useMemo } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
 import type { UnifiedAsset } from '../../domain/UnifiedModel'
 
 // ============================================================================
@@ -179,44 +179,42 @@ export const simulationStore = {
 // REACT HOOKS
 // ============================================================================
 
+const subscribe = simulationStore.subscribe
+const getState = simulationStore.getState
+
+const selectStations = (): StationContext[] => getState().stations
+const selectLoading = (): boolean => getState().isLoading
+const selectErrors = (): string[] => getState().errors
+
 /**
  * Hook to access full simulation store state
  */
 export function useSimulationStore(): SimulationStoreState {
-  const [state, setState] = useState(storeState)
-
-  useEffect(() => {
-    const unsubscribe = simulationStore.subscribe(() => {
-      setState(simulationStore.getState())
-    })
-    return unsubscribe
-  }, [])
-
-  return state
+  return useSyncExternalStore(subscribe, getState)
 }
 
 /**
  * Hook to access all stations
+ * Only re-renders when stations reference changes
  */
 export function useAllStations(): StationContext[] {
-  const state = useSimulationStore()
-  return state.stations
+  return useSyncExternalStore(subscribe, selectStations)
 }
 
 /**
  * Hook to access loading state
+ * Only re-renders when isLoading changes
  */
 export function useSimulationLoading(): boolean {
-  const state = useSimulationStore()
-  return state.isLoading
+  return useSyncExternalStore(subscribe, selectLoading)
 }
 
 /**
  * Hook to access errors
+ * Only re-renders when errors reference changes
  */
 export function useSimulationErrors(): string[] {
-  const state = useSimulationStore()
-  return state.errors
+  return useSyncExternalStore(subscribe, selectErrors)
 }
 
 // ============================================================================

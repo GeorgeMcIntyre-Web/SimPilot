@@ -26,7 +26,6 @@ interface SimulationBoardGridProps {
 }
 
 interface LineGroupProps {
-  lineKey: string
   unit: string
   line: string
   stations: StationContext[]
@@ -44,9 +43,8 @@ interface LineGroupProps {
 // ============================================================================
 
 function LineGroup({
-  lineKey: _lineKey,
   unit,
-  line: _line,
+  line,
   stations,
   robotCount,
   gunCount,
@@ -56,8 +54,6 @@ function LineGroup({
   isExpanded,
   onToggle
 }: LineGroupProps) {
-  // _lineKey and _line are for identification but not displayed directly
-
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
       {/* Line Header */}
@@ -76,6 +72,9 @@ function LineGroup({
             <ChevronRight className="h-4 w-4 text-gray-500" />
           )}
           <Layers className="h-4 w-4 text-blue-500" />
+          <span className="font-medium text-sm text-gray-900 dark:text-white">
+            {line}
+          </span>
           <span className={cn(
             'font-semibold w-12 text-right',
             avgCompletion === null ? 'text-gray-500 dark:text-gray-400' :
@@ -219,7 +218,6 @@ export function SimulationBoardGrid({
           return (
             <LineGroup
               key={lineKey}
-              lineKey={lineKey}
               unit={aggregation.unit}
               line={aggregation.line}
               stations={lineStations}
