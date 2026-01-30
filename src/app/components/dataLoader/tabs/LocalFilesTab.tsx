@@ -69,8 +69,8 @@ export function LocalFilesTab({
               <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
-              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+              <h3 className="typography-body-strong text-red-800 dark:text-red-200">Error</h3>
+              <div className="mt-2 typography-body text-red-700 dark:text-red-300">
                 <p>{error}</p>
               </div>
             </div>
@@ -84,7 +84,7 @@ export function LocalFilesTab({
           disabled={isIngesting || (simulationFiles.length === 0 && equipmentFiles.length === 0 && toolListFiles.length === 0 && assembliesFiles.length === 0)}
           data-testid="local-ingest-button"
           data-testid-ingest="ingest-files-button"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center px-4 py-2 border border-transparent typography-body-strong rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isIngesting ? 'Processing...' : 'Parse & Load Local Files'}
         </button>

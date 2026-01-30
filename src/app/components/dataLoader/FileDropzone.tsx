@@ -31,7 +31,7 @@ export function FileDropzone({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <label className="block typography-body-strong text-gray-700 dark:text-gray-300 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <div
@@ -45,12 +45,12 @@ export function FileDropzone({
       >
         <input {...getInputProps()} data-testid={testId} />
         <Upload className="mx-auto h-10 w-10 text-gray-400" />
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 typography-caption text-gray-600 dark:text-gray-400">
           {placeholder}
         </p>
       </div>
       {files.length > 0 && (
-        <ul className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <ul className="mt-2 typography-caption text-gray-500 dark:text-gray-400">
           {files.map((file, idx) => (
             <li key={idx} className="flex items-center">
               <FileUp className="w-4 h-4 mr-2" />
