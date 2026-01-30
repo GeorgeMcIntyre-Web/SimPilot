@@ -111,10 +111,10 @@ export function ProjectsPage() {
     }) => (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 h-full shadow-sm flex items-center justify-between gap-3">
             <div className="space-y-0.5">
-                <div className={cn("text-xl font-bold text-gray-900 dark:text-white", accent)}>{value}</div>
-                <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">{label}</div>
+                <div className={cn("typography-metric text-gray-900 dark:text-white", accent)}>{value}</div>
+                <div className="typography-label text-gray-700 dark:text-gray-200">{label}</div>
                 {description && (
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400">{description}</div>
+                    <div className="typography-caption text-gray-500 dark:text-gray-400">{description}</div>
                 )}
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
