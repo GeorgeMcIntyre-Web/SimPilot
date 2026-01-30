@@ -6,6 +6,7 @@
  */
 
 import { PageHeader } from '../../ui/components/PageHeader'
+import { EmptyState } from '../../ui/components/EmptyState'
 import {
   useSimulationStatusStats,
   useSimulationStatusGroupedByStation,
@@ -14,13 +15,17 @@ import {
 } from '../../ingestion/simulationStatus'
 import type { SimulationStatusEntity } from '../../ingestion/simulationStatus'
 import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertCircle, ExternalLink } from 'lucide-react'
+import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertCircle, ExternalLink, Bot } from 'lucide-react'
+import { PageHint } from '../../ui/components/PageHint'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCells } from '../../ui/hooks/useDomainData'
 
 export function RobotSimulationStatusPage() {
+  const navigate = useNavigate()
   const stats = useSimulationStatusStats()
   const byStation = useSimulationStatusGroupedByStation()
   const allEntities = useSimulationStatusEntities()
+  const hasRobots = allEntities.length > 0
   const cells = useCells()
   const [expandedStations, setExpandedStations] = useState<Set<string>>(new Set())
   const [selectedRobotId, setSelectedRobotId] = useState<string | null>(null)
@@ -71,26 +76,25 @@ export function RobotSimulationStatusPage() {
     }
   }
 
-  if (allEntities.length === 0) {
+  if (!hasRobots) {
     return (
       <div className="space-y-6">
         <PageHeader
           title="Robot Simulation Status"
-          subtitle="Track robot-by-robot simulation milestone completion."
+          subtitle={
+            <PageHint
+              standardText="Track robot-by-robot simulation milestone completion"
+              flowerText="Your robots are waiting for their milestones"
+            />
+          }
         />
-
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-6 text-center">
-          <div className="text-4xl mb-4">🤖</div>
-          <h3 className="typography-title-sm text-blue-900 dark:text-blue-100 mb-2">
-            No Robot Simulation Data Loaded
-          </h3>
-          <p className="typography-body text-blue-700 dark:text-blue-300 mb-4">
-            Upload a Simulation Status Excel file to track robot-level milestone completion.
-          </p>
-          <p className="typography-subtitle text-blue-700 dark:text-blue-300">
-            This page tracks detailed milestone data (28 milestones per robot) and links robots to tooling entities.
-          </p>
-        </div>
+        <EmptyState
+          title="No Data Loaded"
+          message="Load a Simulation Status file in the Data Loader to see robot milestones here."
+          ctaLabel="Go to Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+          icon={<Bot className="h-7 w-7" />}
+        />
       </div>
     )
   }
