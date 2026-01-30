@@ -2,12 +2,10 @@
 // Displays stations in a grid grouped by line
 // Shows hierarchy navigation and station cards
 
-import { useState } from 'react'
 import { ChevronDown, ChevronRight, Layers, Bot, Zap } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { StationCard } from './StationCard'
-import { useLineAggregations } from '../simulationSelectors'
-import { useStationsGroupedByLine } from '../simulationSelectors'
+import { useLineAggregations, getCompletionTextClass } from '../simulationSelectors'
 import type { StationContext } from '../simulationStore'
 
 // ============================================================================
@@ -20,13 +18,12 @@ interface SimulationBoardGridProps {
   stations: StationContext[]
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
-  sortBy?: SortOption
-  expandedLines?: Set<string>
-  onToggleLine?: (lineKey: string) => void
+  sortBy: SortOption
+  expandedLines: Set<string>
+  onToggleLine: (lineKey: string) => void
 }
 
 interface LineGroupProps {
-  lineKey: string
   unit: string
   line: string
   stations: StationContext[]
@@ -44,9 +41,8 @@ interface LineGroupProps {
 // ============================================================================
 
 function LineGroup({
-  lineKey: _lineKey,
   unit,
-  line: _line,
+  line,
   stations,
   robotCount,
   gunCount,
@@ -56,8 +52,6 @@ function LineGroup({
   isExpanded,
   onToggle
 }: LineGroupProps) {
-  // _lineKey and _line are for identification but not displayed directly
-
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
       {/* Line Header */}
@@ -76,13 +70,12 @@ function LineGroup({
             <ChevronRight className="h-4 w-4 text-gray-500" />
           )}
           <Layers className="h-4 w-4 text-blue-500" />
+          <span className="font-medium text-sm text-gray-900 dark:text-white">
+            {line}
+          </span>
           <span className={cn(
             'font-semibold w-12 text-right',
-            avgCompletion === null ? 'text-gray-500 dark:text-gray-400' :
-            avgCompletion >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
-            avgCompletion >= 50 ? 'text-blue-600 dark:text-blue-400' :
-            avgCompletion >= 25 ? 'text-amber-600 dark:text-amber-400' :
-            'text-red-600 dark:text-red-400'
+            getCompletionTextClass(avgCompletion)
           )}>
             {avgCompletion !== null ? `${avgCompletion}%` : '-'}
           </span>
@@ -138,61 +131,31 @@ export function SimulationBoardGrid({
   stations,
   onStationClick,
   selectedStationKey,
-  sortBy: sortByProp,
-  expandedLines: expandedLinesProp,
-  onToggleLine: onToggleLineProp
+  sortBy,
+  expandedLines,
+  onToggleLine
 }: SimulationBoardGridProps) {
-  const groupedByLine = useStationsGroupedByLine(stations)
   const lineAggregations = useLineAggregations(stations)
 
-  // Use local state as fallback if props not provided (for backwards compatibility)
-  const [localExpandedLines, setLocalExpandedLines] = useState<Set<string>>(new Set())
-  const [localSortBy, _setLocalSortBy] = useState<SortOption>('line-asc')
-
-  const expandedLines = expandedLinesProp ?? localExpandedLines
-  const sortBy = sortByProp ?? localSortBy
-
   // Sort lines based on selected option
-  const sortedLines = Array.from(groupedByLine.entries()).sort((a, b) => {
-    const [keyA, stationsA] = a
-    const [keyB, stationsB] = b
-    const aggA = lineAggregations.find(agg => agg.lineKey === keyA)
-    const aggB = lineAggregations.find(agg => agg.lineKey === keyB)
-
+  const sortedLines = [...lineAggregations].sort((a, b) => {
     switch (sortBy) {
       case 'line-asc':
-        return keyA.localeCompare(keyB)
+        return a.lineKey.localeCompare(b.lineKey)
       case 'line-desc':
-        return keyB.localeCompare(keyA)
+        return b.lineKey.localeCompare(a.lineKey)
       case 'stations-asc':
-        return stationsA.length - stationsB.length
+        return a.stationCount - b.stationCount
       case 'stations-desc':
-        return stationsB.length - stationsA.length
+        return b.stationCount - a.stationCount
       case 'robots-asc':
-        return (aggA?.assetCounts.robots ?? 0) - (aggB?.assetCounts.robots ?? 0)
+        return a.assetCounts.robots - b.assetCounts.robots
       case 'robots-desc':
-        return (aggB?.assetCounts.robots ?? 0) - (aggA?.assetCounts.robots ?? 0)
+        return b.assetCounts.robots - a.assetCounts.robots
       default:
-        return keyA.localeCompare(keyB)
+        return a.lineKey.localeCompare(b.lineKey)
     }
   })
-
-  const handleToggleLine = (lineKey: string) => {
-    if (onToggleLineProp) {
-      onToggleLineProp(lineKey)
-    } else {
-      // Fallback to local state if no prop handler provided
-      setLocalExpandedLines(prev => {
-        const next = new Set(prev)
-        if (next.has(lineKey)) {
-          next.delete(lineKey)
-        } else {
-          next.add(lineKey)
-        }
-        return next
-      })
-    }
-  }
 
   if (stations.length === 0) {
     return (
@@ -212,27 +175,21 @@ export function SimulationBoardGrid({
     <div className="space-y-4">
       {/* Line Groups - Max 10 visible with scroll */}
       <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
-        {sortedLines.map(([lineKey, lineStations]) => {
-          const aggregation = lineAggregations.find(a => a.lineKey === lineKey)
-          if (aggregation === undefined) return null
-
-          return (
-            <LineGroup
-              key={lineKey}
-              lineKey={lineKey}
-              unit={aggregation.unit}
-              line={aggregation.line}
-              stations={lineStations}
-              robotCount={aggregation.assetCounts.robots}
-              gunCount={aggregation.assetCounts.guns}
-              avgCompletion={aggregation.avgCompletion}
-              onStationClick={onStationClick}
-              selectedStationKey={selectedStationKey}
-              isExpanded={expandedLines.has(lineKey)}
-              onToggle={() => handleToggleLine(lineKey)}
-            />
-          )
-        })}
+        {sortedLines.map(aggregation => (
+          <LineGroup
+            key={aggregation.lineKey}
+            unit={aggregation.unit}
+            line={aggregation.line}
+            stations={aggregation.stations}
+            robotCount={aggregation.assetCounts.robots}
+            gunCount={aggregation.assetCounts.guns}
+            avgCompletion={aggregation.avgCompletion}
+            onStationClick={onStationClick}
+            selectedStationKey={selectedStationKey}
+            isExpanded={expandedLines.has(aggregation.lineKey)}
+            onToggle={() => onToggleLine(aggregation.lineKey)}
+          />
+        ))}
       </div>
     </div>
   )

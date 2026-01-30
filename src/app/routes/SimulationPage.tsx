@@ -2,8 +2,7 @@
 // Main simulation manager board for Dale
 // Shows hierarchy: Program → Plant → Unit → Line → Station
 
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle, LayoutGrid } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
@@ -14,16 +13,9 @@ import {
   DaleTodayPanel,
   SimulationDetailPanel,
   SimulationDetailDrawer,
-  SummaryStats,
-  useSimulationSync,
-  useSimulationLoading,
-  useSimulationErrors,
-  useSimulationBoardStations,
-  useFilteredStationsSummary,
-  type SimulationFilters,
-  type StationContext,
-  type SortOption
+  SummaryStats
 } from '../../features/simulation'
+import { useSimulationPageState } from './useSimulationPageState'
 
 // ============================================================================
 // LOADING STATE
@@ -66,8 +58,8 @@ function ErrorBanner({ errors, onDismiss }: ErrorBannerProps) {
             {errors.length === 1 ? 'Error' : `${errors.length} Errors`}
           </h4>
           <ul className="mt-1 text-sm text-red-700 dark:text-red-300 space-y-1">
-            {errors.slice(0, 3).map((error, idx) => (
-              <li key={idx}>• {error}</li>
+            {errors.slice(0, 3).map(error => (
+              <li key={error}>• {error}</li>
             ))}
             {errors.length > 3 && (
               <li className="text-red-500 dark:text-red-400">
@@ -95,140 +87,10 @@ function ErrorBanner({ errors, onDismiss }: ErrorBannerProps) {
 
 export function SimulationPage() {
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-
-  // Sync simulation store with core store
-  useSimulationSync()
-
-  // Store state
-  const isLoading = useSimulationLoading()
-  const errors = useSimulationErrors()
-
-  // Local state
-  const [filters, setFilters] = useState<SimulationFilters>({
-    program: searchParams.get('program'),
-    plant: searchParams.get('plant'),
-    unit: searchParams.get('unit'),
-    searchTerm: searchParams.get('search') ?? ''
-  })
-  const [selectedStation, setSelectedStation] = useState<StationContext | null>(null)
-  const [sortBy, setSortBy] = useState<SortOption>('line-asc')
-  const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set())
-
-  // Filtered stations
-  const stations = useSimulationBoardStations(filters)
-  const summary = useFilteredStationsSummary({
-    program: filters.program,
-    plant: filters.plant,
-    unit: filters.unit
-  })
-
-  // Keep expanded lines in sync with current station set
-  useEffect(() => {
-    const validKeys = new Set(stations.map(station => `${station.unit}|${station.line}`))
-    setExpandedLines(prev => {
-      const next = new Set<string>()
-      prev.forEach(key => {
-        if (validKeys.has(key)) next.add(key)
-      })
-      return next
-    })
-  }, [stations])
-
-  // Sync filters to URL
-  useEffect(() => {
-    const params = new URLSearchParams()
-    if (filters.program !== null) params.set('program', filters.program)
-    if (filters.plant !== null) params.set('plant', filters.plant)
-    if (filters.unit !== null) params.set('unit', filters.unit)
-    if (filters.searchTerm !== '') params.set('search', filters.searchTerm)
-    setSearchParams(params, { replace: true })
-  }, [filters, setSearchParams])
-
-  const handleStationClick = (station: StationContext) => {
-    setSelectedStation(station)
-  }
-
-  const handleToggleLine = (lineKey: string) => {
-    setExpandedLines(prev => {
-      const next = new Set(prev)
-      if (next.has(lineKey)) {
-        next.delete(lineKey)
-      } else {
-        next.add(lineKey)
-      }
-      return next
-    })
-  }
-
-  const handleExpandAll = () => {
-    // Get all line keys from the filtered stations
-    const lineKeys = new Set<string>()
-    stations.forEach(station => {
-      const lineKey = `${station.unit}|${station.line}`
-      lineKeys.add(lineKey)
-    })
-    setExpandedLines(lineKeys)
-  }
-
-  const handleCollapseAll = () => {
-    setExpandedLines(new Set())
-  }
-
-  // Calculate if all lines are expanded or collapsed
-  const totalLineCount = new Set(
-    stations.map(station => `${station.unit}|${station.line}`)
-  ).size
-  const allExpanded = expandedLines.size === totalLineCount && totalLineCount > 0
-  const allCollapsed = expandedLines.size === 0
-
-  // Auto-select station when navigated with line/station params
-  useEffect(() => {
-    if (selectedStation !== null) return
-    if (stations.length === 0) return
-
-    const targetLine = searchParams.get('line')
-    const targetStation = searchParams.get('station')
-    const targetStationId = searchParams.get('stationId')
-
-    let match: StationContext | undefined
-
-    if (targetStationId) {
-      match = stations.find(
-        s => s.contextKey === targetStationId || s.station === targetStationId
-      )
-    }
-
-    if (!match && (targetLine || targetStation)) {
-      match = stations.find(s => {
-        const stationMatch = targetStation
-          ? s.station.toLowerCase() === targetStation.toLowerCase()
-          : true
-        const lineMatch = targetLine
-          ? s.line.toLowerCase() === targetLine.toLowerCase()
-          : true
-        return stationMatch && lineMatch
-      })
-    }
-
-    if (!match && targetStation) {
-      match = stations.find(
-        s => s.station.toLowerCase() === targetStation.toLowerCase()
-      )
-    }
-
-    if (match) {
-      setSelectedStation(match)
-      setExpandedLines(prev => {
-        const next = new Set(prev)
-        next.add(`${match.unit}|${match.line}`)
-        return next
-      })
-    }
-  }, [stations, selectedStation, searchParams, setExpandedLines])
+  const state = useSimulationPageState()
 
   // Loading state
-  if (isLoading) {
+  if (state.isLoading) {
     return (
       <div className="space-y-8">
         <PageHeader
@@ -241,7 +103,7 @@ export function SimulationPage() {
   }
 
   // Empty state
-  if (summary.totalStations === 0 && filters.program === null) {
+  if (state.summary.totalStations === 0 && state.filters.program === null) {
     return (
       <div className="space-y-8">
         <PageHeader
@@ -279,23 +141,23 @@ export function SimulationPage() {
       </div>
 
       {/* Error Banner */}
-      <ErrorBanner errors={errors} />
+      <ErrorBanner errors={state.errors} />
 
       {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
       <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
         {/* Dale's Today Panel - Takes 3 columns, full height */}
         <div className="col-span-3">
-          <DaleTodayPanel onStationClick={handleStationClick} />
+          <DaleTodayPanel onStationClick={state.handleStationClick} />
         </div>
 
         {/* Summary Stats - Takes 2 columns, full height */}
         <div className="col-span-2 max-h-64 overflow-y-auto">
           <SummaryStats
-            totalStations={summary.totalStations}
-            totalRobots={summary.totalRobots}
-            totalGuns={summary.totalGuns}
-            totalReuse={summary.totalReuse}
-            avgCompletion={summary.avgCompletion}
+            totalStations={state.summary.totalStations}
+            totalRobots={state.summary.totalRobots}
+            totalGuns={state.summary.totalGuns}
+            totalReuse={state.summary.totalReuse}
+            avgCompletion={state.summary.avgCompletion}
           />
         </div>
       </div>
@@ -303,24 +165,24 @@ export function SimulationPage() {
       {/* Mobile - Stacked Layout */}
       <div className="lg:hidden space-y-6">
         <SummaryStats
-          totalStations={summary.totalStations}
-          totalRobots={summary.totalRobots}
-          totalGuns={summary.totalGuns}
-          totalReuse={summary.totalReuse}
-          avgCompletion={summary.avgCompletion}
+          totalStations={state.summary.totalStations}
+          totalRobots={state.summary.totalRobots}
+          totalGuns={state.summary.totalGuns}
+          totalReuse={state.summary.totalReuse}
+          avgCompletion={state.summary.avgCompletion}
         />
       </div>
 
       {/* Filters */}
       <SimulationFiltersBar
-        filters={filters}
-        onFiltersChange={setFilters}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-        onExpandAll={handleExpandAll}
-        onCollapseAll={handleCollapseAll}
-        allExpanded={allExpanded}
-        allCollapsed={allCollapsed}
+        filters={state.filters}
+        onFiltersChange={state.setFilters}
+        sortBy={state.sortBy}
+        onSortChange={state.setSortBy}
+        onExpandAll={state.handleExpandAll}
+        onCollapseAll={state.handleCollapseAll}
+        allExpanded={state.allExpanded}
+        allCollapsed={state.allCollapsed}
       />
 
       {/* Split View Layout - Desktop */}
@@ -328,12 +190,12 @@ export function SimulationPage() {
         {/* Left Side - Station List (Master) */}
         <div className="flex-1 lg:max-w-[60%] space-y-6">
           <SimulationBoardGrid
-            stations={stations}
-            onStationClick={handleStationClick}
-            selectedStationKey={selectedStation?.contextKey}
-            sortBy={sortBy}
-            expandedLines={expandedLines}
-            onToggleLine={handleToggleLine}
+            stations={state.stations}
+            onStationClick={state.handleStationClick}
+            selectedStationKey={state.selectedStation?.contextKey}
+            sortBy={state.sortBy}
+            expandedLines={state.expandedLines}
+            onToggleLine={state.handleToggleLine}
           />
         </div>
 
@@ -342,8 +204,8 @@ export function SimulationPage() {
           <div className="sticky top-4">
             {/* Station Detail Panel */}
             <SimulationDetailPanel
-              station={selectedStation}
-              onClose={() => setSelectedStation(null)}
+              station={state.selectedStation}
+              onClose={state.clearSelectedStation}
             />
           </div>
         </div>
@@ -352,23 +214,23 @@ export function SimulationPage() {
       {/* Mobile Layout - Drawer */}
       <div className="lg:hidden space-y-6">
         {/* Dale's Today Panel */}
-        <DaleTodayPanel onStationClick={handleStationClick} />
+        <DaleTodayPanel onStationClick={state.handleStationClick} />
 
         {/* Station List */}
         <SimulationBoardGrid
-          stations={stations}
-          onStationClick={handleStationClick}
-          selectedStationKey={selectedStation?.contextKey}
-          sortBy={sortBy}
-          expandedLines={expandedLines}
-          onToggleLine={handleToggleLine}
+          stations={state.stations}
+          onStationClick={state.handleStationClick}
+          selectedStationKey={state.selectedStation?.contextKey}
+          sortBy={state.sortBy}
+          expandedLines={state.expandedLines}
+          onToggleLine={state.handleToggleLine}
         />
 
         {/* Detail Drawer for Mobile */}
         <SimulationDetailDrawer
-          station={selectedStation}
-          isOpen={selectedStation !== null}
-          onClose={() => setSelectedStation(null)}
+          station={state.selectedStation}
+          isOpen={state.selectedStation !== null}
+          onClose={state.clearSelectedStation}
         />
       </div>
     </div>

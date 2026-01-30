@@ -12,6 +12,60 @@ import {
 } from './simulationStore'
 
 // ============================================================================
+// COMPLETION THRESHOLDS
+// ============================================================================
+
+export const COMPLETION_HIGH = 80
+export const COMPLETION_MID = 50
+export const COMPLETION_LOW = 25
+
+export type CompletionTier = 'high' | 'mid' | 'low' | 'critical' | 'none'
+
+export function getCompletionTier(percent: number | null | undefined): CompletionTier {
+  if (percent === null || percent === undefined) return 'none'
+  if (percent >= COMPLETION_HIGH) return 'high'
+  if (percent >= COMPLETION_MID) return 'mid'
+  if (percent >= COMPLETION_LOW) return 'low'
+  return 'critical'
+}
+
+const completionTextClasses: Record<CompletionTier, string> = {
+  high: 'text-emerald-600 dark:text-emerald-400',
+  mid: 'text-blue-600 dark:text-blue-400',
+  low: 'text-amber-600 dark:text-amber-400',
+  critical: 'text-red-600 dark:text-red-400',
+  none: 'text-gray-500 dark:text-gray-400'
+}
+
+const completionBadgeClasses: Record<CompletionTier, string> = {
+  high: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  mid: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  low: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  none: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+}
+
+const completionBarClasses: Record<CompletionTier, string> = {
+  high: 'bg-emerald-500',
+  mid: 'bg-blue-500',
+  low: 'bg-amber-500',
+  critical: 'bg-red-500',
+  none: 'bg-gray-400'
+}
+
+export function getCompletionTextClass(percent: number | null | undefined): string {
+  return completionTextClasses[getCompletionTier(percent)]
+}
+
+export function getCompletionBadgeClass(percent: number | null | undefined): string {
+  return completionBadgeClasses[getCompletionTier(percent)]
+}
+
+export function getCompletionBarClass(percent: number | null | undefined): string {
+  return completionBarClasses[getCompletionTier(percent)]
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -277,32 +331,13 @@ export function useSimulationBoardStations(filters: SimulationFilters): StationC
 // ============================================================================
 
 /**
- * Group stations by line for display
- */
-export function useStationsGroupedByLine(
-  stations: StationContext[]
-): Map<string, StationContext[]> {
-  return useMemo(() => {
-    const groups = new Map<string, StationContext[]>()
-    
-    for (const station of stations) {
-      const lineKey = `${station.unit}|${station.line}`
-      const existing = groups.get(lineKey) ?? []
-      existing.push(station)
-      groups.set(lineKey, existing)
-    }
-    
-    return groups
-  }, [stations])
-}
-
-/**
- * Get aggregated counts by line
+ * Aggregated counts and stations grouped by line
  */
 export interface LineAggregation {
   lineKey: string
   unit: string
   line: string
+  stations: StationContext[]
   stationCount: number
   assetCounts: AssetCounts
   sourcingCounts: SourcingCounts
@@ -351,6 +386,7 @@ export function useLineAggregations(stations: StationContext[]): LineAggregation
         lineKey,
         unit: lineStations[0].unit,
         line: lineStations[0].line,
+        stations: lineStations,
         stationCount: lineStations.length,
         assetCounts,
         sourcingCounts,
