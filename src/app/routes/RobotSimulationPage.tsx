@@ -1,7 +1,9 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMemo, useState, useEffect } from 'react'
-import { ArrowUpDown, ArrowUp, ArrowDown, X } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, X, Bot } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
+import { PageHint } from '../../ui/components/PageHint'
+import { EmptyState } from '../../ui/components/EmptyState'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
 import {
@@ -547,6 +549,29 @@ function RobotSimulationPage() {
     const row: StationRow = { cell: matchCell, label: labelMatch, application: matchCell.simulationStatus?.application ?? 'Unknown' }
     setSelectedRow(row)
   }, [hasData, cells, selectedRow, searchParams])
+
+  if (!loading && tableCells.length === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Robot Status"
+          subtitle={
+            <PageHint
+              standardText="Track robot-by-robot simulation progress"
+              flowerText="Your robots are waiting for their assignments"
+            />
+          }
+        />
+        <EmptyState
+          title="No Robot Data"
+          message="Load simulation data from the Data Loader to see robot status here."
+          ctaLabel="Go to Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+          icon={<Bot className="h-7 w-7" />}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
