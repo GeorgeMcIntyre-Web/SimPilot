@@ -70,7 +70,7 @@ export function FilterControls({
       )}
 
       {/* Result count */}
-      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex items-center typography-caption">
         Showing {resultCount} of {totalCount}
       </div>
     </div>

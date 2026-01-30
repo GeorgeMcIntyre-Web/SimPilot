@@ -34,13 +34,13 @@ export function FocusSummaryCards({ items, className }: FocusSummaryCardsProps) 
           className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm flex items-center justify-between gap-3 flex-1 min-w-[200px]"
         >
           <div className="space-y-0.5 leading-tight">
-            <div className={cn('text-2xl font-bold', severityAccent[item.severity])}>
+            <div className={cn('typography-metric', severityAccent[item.severity])}>
               {item.count}
             </div>
-            <div className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            <div className="typography-body-strong">
               {item.title}
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2">
+            <div className="typography-caption line-clamp-2">
               {item.description}
             </div>
           </div>

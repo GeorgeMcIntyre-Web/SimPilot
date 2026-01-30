@@ -84,12 +84,12 @@ export function AreaOverviewCard({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3
-                className="font-semibold text-gray-900 dark:text-white leading-tight whitespace-normal line-clamp-2"
+                className="typography-title-sm leading-tight whitespace-normal line-clamp-2"
                 title={displayTitle || areaKey}
               >
                 {displayTitle || areaKey}
               </h3>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+              <p className="typography-caption truncate">
                 {ok} healthy · {atRisk} risk · {critical} critical
               </p>
             </div>

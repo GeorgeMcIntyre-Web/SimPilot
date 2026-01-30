@@ -25,7 +25,7 @@ export function SortableHeader({
     <button
       onClick={() => onSort(sortKey)}
       className={cn(
-        'flex items-center gap-1 font-semibold hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors',
+        'flex items-center gap-1 typography-label hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors',
         isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white',
         className
       )}
