@@ -115,6 +115,8 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
   return (
     <button
       onClick={() => onClick?.(station)}
+      aria-label={`Station ${station.station} on ${station.line}${completion !== undefined ? `, ${completion}% complete` : ''}`}
+      aria-pressed={isSelected}
       className={cn(
         'w-full text-left p-4 rounded-xl border transition-all duration-200',
         'hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600',

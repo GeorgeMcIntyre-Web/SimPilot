@@ -1,7 +1,7 @@
 // useSimulationPageState
 // Encapsulates all state logic, effects, and derived data for the SimulationPage
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   useSimulationSync,
@@ -136,14 +136,18 @@ export function useSimulationPageState(): SimulationPageState {
   const allExpanded = expandedLines.size === totalLineCount && totalLineCount > 0
   const allCollapsed = expandedLines.size === 0
 
-  // Auto-select station when navigated with line/station params
+  // Auto-select station when navigated with line/station params (runs once per navigation)
+  const hasAutoSelected = useRef(false)
   useEffect(() => {
-    if (selectedStation !== null) return
+    if (hasAutoSelected.current) return
     if (stations.length === 0) return
 
     const targetLine = searchParams.get('line')
     const targetStation = searchParams.get('station')
     const targetStationId = searchParams.get('stationId')
+
+    // Only attempt auto-select if URL contains targeting params
+    if (!targetLine && !targetStation && !targetStationId) return
 
     let match: StationContext | undefined
 
@@ -172,6 +176,7 @@ export function useSimulationPageState(): SimulationPageState {
     }
 
     if (match) {
+      hasAutoSelected.current = true
       setSelectedStation(match)
       setExpandedLines(prev => {
         const next = new Set(prev)
@@ -179,7 +184,7 @@ export function useSimulationPageState(): SimulationPageState {
         return next
       })
     }
-  }, [stations, selectedStation, searchParams])
+  }, [stations, searchParams])
 
   return {
     isLoading,
