@@ -2,7 +2,6 @@
 // Displays stations in a grid grouped by line
 // Shows hierarchy navigation and station cards
 
-import { useState } from 'react'
 import { ChevronDown, ChevronRight, Layers, Bot, Zap } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import { StationCard } from './StationCard'
@@ -19,9 +18,9 @@ interface SimulationBoardGridProps {
   stations: StationContext[]
   onStationClick: (station: StationContext) => void
   selectedStationKey?: string | null
-  sortBy?: SortOption
-  expandedLines?: Set<string>
-  onToggleLine?: (lineKey: string) => void
+  sortBy: SortOption
+  expandedLines: Set<string>
+  onToggleLine: (lineKey: string) => void
 }
 
 interface LineGroupProps {
@@ -132,18 +131,11 @@ export function SimulationBoardGrid({
   stations,
   onStationClick,
   selectedStationKey,
-  sortBy: sortByProp,
-  expandedLines: expandedLinesProp,
-  onToggleLine: onToggleLineProp
+  sortBy,
+  expandedLines,
+  onToggleLine
 }: SimulationBoardGridProps) {
   const lineAggregations = useLineAggregations(stations)
-
-  // Use local state as fallback if props not provided (for backwards compatibility)
-  const [localExpandedLines, setLocalExpandedLines] = useState<Set<string>>(new Set())
-  const [localSortBy, _setLocalSortBy] = useState<SortOption>('line-asc')
-
-  const expandedLines = expandedLinesProp ?? localExpandedLines
-  const sortBy = sortByProp ?? localSortBy
 
   // Sort lines based on selected option
   const sortedLines = [...lineAggregations].sort((a, b) => {
@@ -164,23 +156,6 @@ export function SimulationBoardGrid({
         return a.lineKey.localeCompare(b.lineKey)
     }
   })
-
-  const handleToggleLine = (lineKey: string) => {
-    if (onToggleLineProp) {
-      onToggleLineProp(lineKey)
-    } else {
-      // Fallback to local state if no prop handler provided
-      setLocalExpandedLines(prev => {
-        const next = new Set(prev)
-        if (next.has(lineKey)) {
-          next.delete(lineKey)
-        } else {
-          next.add(lineKey)
-        }
-        return next
-      })
-    }
-  }
 
   if (stations.length === 0) {
     return (
@@ -212,7 +187,7 @@ export function SimulationBoardGrid({
             onStationClick={onStationClick}
             selectedStationKey={selectedStationKey}
             isExpanded={expandedLines.has(aggregation.lineKey)}
-            onToggle={() => handleToggleLine(aggregation.lineKey)}
+            onToggle={() => onToggleLine(aggregation.lineKey)}
           />
         ))}
       </div>

@@ -58,8 +58,8 @@ function ErrorBanner({ errors, onDismiss }: ErrorBannerProps) {
             {errors.length === 1 ? 'Error' : `${errors.length} Errors`}
           </h4>
           <ul className="mt-1 text-sm text-red-700 dark:text-red-300 space-y-1">
-            {errors.slice(0, 3).map((error, idx) => (
-              <li key={idx}>• {error}</li>
+            {errors.slice(0, 3).map(error => (
+              <li key={error}>• {error}</li>
             ))}
             {errors.length > 3 && (
               <li className="text-red-500 dark:text-red-400">
