@@ -70,6 +70,7 @@ function App() {
                                             <Route path="dale-console" element={<DaleConsole />} />
                                             <Route path="warnings" element={<WarningsPage />} />
                                             <Route path="projects" element={<ProjectsPage />} />
+                                            {/* Hidden: Projects by Customer (route kept for deep links, nav removed) */}
                                             <Route path="projects-by-customer" element={<ProjectsByCustomerPage />} />
                                             <Route path="projects/:projectId" element={<ProjectDetailPage />} />
                                             <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
