@@ -23,11 +23,11 @@ export function SimBridgeTab({
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+          <h3 className="typography-title-sm text-gray-900 dark:text-gray-100 flex items-center">
             <Radio className={cn("w-5 h-5 mr-2", sbStatus.isConnected ? "text-green-500" : "text-gray-400")} />
             SimBridge Connection
           </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="typography-subtitle text-gray-500 dark:text-gray-400 mt-1">
             Connect to the local SimBridge server to interact with Tecnomatix.
           </p>
         </div>
@@ -47,7 +47,7 @@ export function SimBridgeTab({
         <div className="flex justify-center py-8">
           <button
             onClick={onConnect}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent typography-body-strong rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Connect to SimBridge
           </button>
@@ -55,7 +55,7 @@ export function SimBridgeTab({
       ) : (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block typography-body-strong text-gray-700 dark:text-gray-300">
               Study Path (.psz)
             </label>
             <div className="mt-1 flex rounded-md shadow-sm">
@@ -69,7 +69,7 @@ export function SimBridgeTab({
               <button
                 onClick={onLoadStudy}
                 disabled={!sbStudyPath}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-transparent typography-body-strong rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 Load Study
               </button>
@@ -85,8 +85,8 @@ export function SimBridgeTab({
               <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" />
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
-              <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+              <h3 className="typography-body-strong text-red-800 dark:text-red-200">Error</h3>
+              <div className="mt-2 typography-body text-red-700 dark:text-red-300">
                 <p>{sbError}</p>
               </div>
             </div>

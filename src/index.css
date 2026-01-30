@@ -7,6 +7,43 @@ body {
   @apply bg-gray-50 text-gray-900;
 }
 
+/* Typography scale ------------------------------------------------------ */
+.typography-display {
+  @apply font-semibold text-3xl sm:text-4xl leading-tight tracking-tight text-gray-900 dark:text-gray-50;
+}
+
+.typography-title {
+  @apply font-semibold text-2xl sm:text-3xl leading-snug text-gray-900 dark:text-gray-50;
+}
+
+.typography-title-sm {
+  @apply font-semibold text-lg sm:text-xl leading-6 text-gray-900 dark:text-gray-50;
+}
+
+.typography-subtitle {
+  @apply text-sm sm:text-base leading-6 text-gray-600 dark:text-gray-300;
+}
+
+.typography-body {
+  @apply text-sm leading-6 text-gray-800 dark:text-gray-200;
+}
+
+.typography-body-strong {
+  @apply text-sm font-semibold leading-6 text-gray-900 dark:text-gray-100;
+}
+
+.typography-caption {
+  @apply text-[11px] leading-5 text-gray-500 dark:text-gray-400;
+}
+
+.typography-label {
+  @apply text-xs font-semibold tracking-wide uppercase text-gray-500 dark:text-gray-400;
+}
+
+.typography-metric {
+  @apply font-semibold text-2xl sm:text-3xl leading-tight tracking-tight text-gray-900 dark:text-gray-50;
+}
+
 /* Custom scrollbar styling */
 .custom-scrollbar {
   scrollbar-width: thin;

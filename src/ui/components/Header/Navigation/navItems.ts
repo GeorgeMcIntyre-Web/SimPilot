@@ -19,7 +19,6 @@ export const navItems: NavItem[] = [
     { href: '/simulation', label: 'Simulation', icon: LayoutGrid },
     { href: '/tooling-bottlenecks', label: 'Bottlenecks', icon: AlertTriangle },
     { href: '/projects', label: 'Projects', icon: FolderKanban },
-    { href: '/projects-by-customer', label: 'By Customer', icon: FolderKanban },
     { href: '/readiness', label: 'Readiness', icon: Calendar },
     { href: '/engineers', label: 'Engineers', icon: Users },
     { href: '/tools', label: 'Tools', icon: Wrench },

@@ -186,10 +186,10 @@ export function DashboardPage() {
       <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
         <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="typography-title-sm">
               Areas Overview
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="typography-caption">
               {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
             </p>
           </div>

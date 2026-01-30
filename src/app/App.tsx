@@ -12,7 +12,6 @@ import { ErrorBoundary } from '../components/ErrorBoundary'
 // Lazy load all route components for code splitting
 const DashboardPage = lazy(() => import('./routes/DashboardPage'))
 const ProjectsPage = lazy(() => import('./routes/ProjectsPage'))
-const ProjectsByCustomerPage = lazy(() => import('./routes/ProjectsByCustomerPage'))
 const ProjectDetailPage = lazy(() => import('./routes/ProjectDetailPage'))
 const CellDetailPage = lazy(() => import('./routes/CellDetailPage'))
 const ToolsPage = lazy(() => import('./routes/ToolsPage'))
@@ -70,7 +69,6 @@ function App() {
                                             <Route path="dale-console" element={<DaleConsole />} />
                                             <Route path="warnings" element={<WarningsPage />} />
                                             <Route path="projects" element={<ProjectsPage />} />
-                                            <Route path="projects-by-customer" element={<ProjectsByCustomerPage />} />
                                             <Route path="projects/:projectId" element={<ProjectDetailPage />} />
                                             <Route path="projects/:projectId/cells/:cellId" element={<CellDetailPage />} />
                                             <Route path="cells/:cellId" element={<CellDetailPage />} />

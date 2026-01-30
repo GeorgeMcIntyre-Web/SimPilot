@@ -24,31 +24,31 @@ export function DiffResultsTab({ diffResults }: DiffResultsTabProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Diff Results (live from store)</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <h3 className="typography-title-sm text-gray-900 dark:text-gray-100">Diff Results (live from store)</h3>
+        <p className="typography-subtitle text-gray-500 dark:text-gray-400">
           These rows are built directly from `coreStore.diffResults`, so they stay in sync with ambiguity resolution and reactivations.
         </p>
       </div>
 
       <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg overflow-x-auto">
         {!hasData ? (
-          <div className="p-6 text-sm text-gray-600 dark:text-gray-300">
+          <div className="p-6 typography-body text-gray-600 dark:text-gray-300">
             No diff results yet. Run an import to generate diffs.
           </div>
         ) : (
           <table className="w-full table-auto divide-y divide-gray-300 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 sm:pl-6">Import</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Filename</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Plant</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Source</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Created</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Updated</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Deleted</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Renamed</th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-100">Ambiguous</th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-100">Computed</th>
+                <th scope="col" className="py-3.5 pl-4 pr-3 text-left typography-label text-gray-900 dark:text-gray-100 sm:pl-6">Import</th>
+                <th scope="col" className="px-3 py-3.5 text-left typography-label text-gray-900 dark:text-gray-100">Filename</th>
+                <th scope="col" className="px-3 py-3.5 text-left typography-label text-gray-900 dark:text-gray-100">Plant</th>
+                <th scope="col" className="px-3 py-3.5 text-left typography-label text-gray-900 dark:text-gray-100">Source</th>
+                <th scope="col" className="px-3 py-3.5 text-center typography-label text-gray-900 dark:text-gray-100">Created</th>
+                <th scope="col" className="px-3 py-3.5 text-center typography-label text-gray-900 dark:text-gray-100">Updated</th>
+                <th scope="col" className="px-3 py-3.5 text-center typography-label text-gray-900 dark:text-gray-100">Deleted</th>
+                <th scope="col" className="px-3 py-3.5 text-center typography-label text-gray-900 dark:text-gray-100">Renamed</th>
+                <th scope="col" className="px-3 py-3.5 text-center typography-label text-gray-900 dark:text-gray-100">Ambiguous</th>
+                <th scope="col" className="px-3 py-3.5 text-left typography-label text-gray-900 dark:text-gray-100">Computed</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
@@ -58,23 +58,23 @@ export function DiffResultsTab({ diffResults }: DiffResultsTabProps) {
                 return (
                   <Fragment key={entry.importRunId}>
                     <tr className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60" onClick={() => toggleRow(entry.importRunId)}>
-                      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-100 sm:pl-6">
+                      <td className="py-4 pl-4 pr-3 typography-body-strong text-gray-900 dark:text-gray-100 sm:pl-6">
                         <div className="flex items-center gap-2">
                           {expanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
                           <div className="min-w-0">
-                            <div className="font-semibold break-words">{entry.importRunId}</div>
+                            <div className="typography-body-strong break-words">{entry.importRunId}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">{entry.sourceFile}</td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">{entry.plantKey}</td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300 break-words">{entry.sourceType}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{summary.created}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{summary.updated}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{summary.deleted}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{summary.renamed}</td>
-                      <td className="px-3 py-4 text-sm text-center text-gray-700 dark:text-gray-300">{summary.ambiguous}</td>
-                      <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300">{formatTimestamp(entry.computedAt)}</td>
+                      <td className="px-3 py-4 typography-caption text-gray-700 dark:text-gray-300 break-words">{entry.sourceFile}</td>
+                      <td className="px-3 py-4 typography-caption text-gray-700 dark:text-gray-300 break-words">{entry.plantKey}</td>
+                      <td className="px-3 py-4 typography-caption text-gray-700 dark:text-gray-300 break-words">{entry.sourceType}</td>
+                      <td className="px-3 py-4 typography-caption text-center text-gray-700 dark:text-gray-300">{summary.created}</td>
+                      <td className="px-3 py-4 typography-caption text-center text-gray-700 dark:text-gray-300">{summary.updated}</td>
+                      <td className="px-3 py-4 typography-caption text-center text-gray-700 dark:text-gray-300">{summary.deleted}</td>
+                      <td className="px-3 py-4 typography-caption text-center text-gray-700 dark:text-gray-300">{summary.renamed}</td>
+                      <td className="px-3 py-4 typography-caption text-center text-gray-700 dark:text-gray-300">{summary.ambiguous}</td>
+                      <td className="px-3 py-4 typography-caption text-gray-700 dark:text-gray-300">{formatTimestamp(entry.computedAt)}</td>
                     </tr>
 
                     {expanded && (
@@ -105,10 +105,10 @@ function DiffSection<T>({ title, items, renderItem }: { title: string; items: T[
   if (!items.length) return null
   return (
     <div>
-      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h4>
+      <h4 className="typography-label text-gray-900 dark:text-gray-100">{title}</h4>
       <div className="mt-2 space-y-2">
         {items.map((item, idx) => (
-          <div key={idx} className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 text-sm text-gray-900 dark:text-gray-100">
+          <div key={idx} className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 typography-body text-gray-900 dark:text-gray-100">
             {renderItem(item)}
           </div>
         ))}
