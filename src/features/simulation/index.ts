@@ -39,15 +39,22 @@ export {
   useFilteredStationsSummary,
   useSearchedStations,
   useSimulationBoardStations,
-  useStationsGroupedByLine,
-  useLineAggregations
+  useLineAggregations,
+  getCompletionTier,
+  getCompletionTextClass,
+  getCompletionBadgeClass,
+  getCompletionBarClass,
+  COMPLETION_HIGH,
+  COMPLETION_MID,
+  COMPLETION_LOW
 } from './simulationSelectors'
 
 export type {
   StationAttentionItem,
   StationsSummary,
   SimulationFilters,
-  LineAggregation
+  LineAggregation,
+  CompletionTier
 } from './simulationSelectors'
 
 // Adapter
