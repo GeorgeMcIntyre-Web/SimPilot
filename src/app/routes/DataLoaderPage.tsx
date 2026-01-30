@@ -12,6 +12,12 @@ import { VersionComparisonModal } from '../components/VersionComparisonModal';
 import { log } from '../../lib/log';
 import { downloadSnapshot, uploadSnapshot, clearAllData } from '../../persistence/exportImport';
 import { persistenceService } from '../../persistence/indexedDbService';
+import { SummaryStatsGrid } from './dataHealth/SummaryStatsGrid';
+import { ReuseSummarySection } from './dataHealth/ReuseSummarySection';
+import { LinkingStatsSection } from './dataHealth/LinkingStatsSection';
+import { ErrorsSection } from './dataHealth/ErrorsSection';
+import { useDataHealth } from './dataHealth/useDataHealth';
+import { Download, FileText } from 'lucide-react';
 
 // Hooks
 import { useLocalFileIngest } from '../hooks/useLocalFileIngest';
@@ -28,7 +34,7 @@ import { M365Tab } from '../components/dataLoader/tabs/M365Tab';
 import { SimBridgeTab } from '../components/dataLoader/tabs/SimBridgeTab';
 
 export function DataLoaderPage() {
-  const [activeTab, setActiveTab] = useState<'local' | 'm365' | 'simbridge'>(
+  const [activeTab, setActiveTab] = useState<'local' | 'm365' | 'simbridge' | 'health'>(
     () => getUserPreference('simpilot.dataloader.tab', 'local') as any
   );
   const [showClearDialog, setShowClearDialog] = useState(false);
@@ -203,6 +209,17 @@ export function DataLoaderPage() {
             >
               SimBridge
             </button>
+            <button
+              onClick={() => setActiveTab('health')}
+              className={cn(
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                activeTab === 'health'
+                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50/40"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-emerald-200 dark:text-gray-400 dark:hover:text-gray-300"
+              )}
+            >
+              Data Health
+            </button>
           </nav>
         </div>
 
@@ -249,6 +266,8 @@ export function DataLoaderPage() {
               onLoadStudy={simBridge.handleLoadStudy}
             />
           )}
+
+          {activeTab === 'health' && <DataHealthTab />}
         </div>
       </div>
 
@@ -271,6 +290,82 @@ export function DataLoaderPage() {
           onCancel={cancelClearData}
         />
       )}
+    </div>
+  );
+}
+
+function DataHealthTab() {
+  const { metrics, reuseSummary, groupedErrors, expandedSources, toggleSource, hasData, allErrors } =
+    useDataHealth();
+
+  const handleExportJson = () => {
+    // reuse exporter from data health page
+    import('../../utils/dataHealthExport').then(({ exportDataHealthJson }) => {
+      exportDataHealthJson({
+        totalAssets: metrics.totalAssets,
+        totalErrors: metrics.totalErrors,
+        unknownSourcingCount: metrics.unknownSourcingCount,
+        reuseSummary: metrics.reuseSummary,
+        linkingStats: metrics.linkingStats,
+        errors: allErrors,
+      });
+    });
+  };
+
+  const handleExportErrorsCsv = () => {
+    import('../../utils/dataHealthExport').then(({ exportErrorsCsv }) => {
+      exportErrorsCsv(allErrors);
+    });
+  };
+
+  if (hasData === false) {
+    return (
+      <div className="space-y-4">
+        <div className="typography-title-sm text-gray-900 dark:text-white">No Data Loaded</div>
+        <p className="typography-subtitle text-gray-600 dark:text-gray-300">
+          Load some data to see health metrics.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2 justify-between items-center">
+        <div>
+          <div className="typography-title-sm text-gray-900 dark:text-white">Data Health</div>
+          <div className="typography-subtitle text-gray-600 dark:text-gray-300">
+            Monitor ingestion quality and asset statistics.
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportJson}
+            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm typography-caption rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export JSON
+          </button>
+          {allErrors.length > 0 && (
+            <button
+              onClick={handleExportErrorsCsv}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm typography-caption rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Export Errors CSV
+            </button>
+          )}
+        </div>
+      </div>
+
+      <SummaryStatsGrid metrics={metrics} reuseSummary={reuseSummary} />
+      <ReuseSummarySection reuseSummary={reuseSummary} />
+      {metrics.linkingStats !== null && <LinkingStatsSection linkingStats={metrics.linkingStats} />}
+      <ErrorsSection
+        groupedErrors={groupedErrors}
+        expandedSources={expandedSources}
+        onToggleSource={toggleSource}
+      />
     </div>
   );
 }
