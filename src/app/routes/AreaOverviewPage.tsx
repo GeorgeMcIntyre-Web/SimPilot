@@ -70,6 +70,7 @@ export function AreaOverviewPage() {
     ]
 
     const hasData = overview !== undefined
+    const hasAreaMetrics = areaValues !== undefined
 
     const readinessMetrics = [
         { label: 'ROBOT SIMULATION', value: areaValues?.['ROBOT SIMULATION'] ?? overview?.robotSimulation },
@@ -103,13 +104,13 @@ export function AreaOverviewPage() {
                 ]}
             />
 
-            {!hasData && (
+            {!hasData && !hasAreaMetrics && (
                 <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-sm text-gray-600 dark:text-gray-300">
                     No overview metrics found. Reload your simulation file to populate the overview data.
                 </div>
             )}
 
-            {hasData && (
+            {(hasData || hasAreaMetrics) && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {sections.map(section => (
                         <div
@@ -137,7 +138,7 @@ export function AreaOverviewPage() {
                 </div>
             )}
 
-            {hasData && (
+            {(hasData || hasAreaMetrics) && (
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Readiness Measurements</h3>
