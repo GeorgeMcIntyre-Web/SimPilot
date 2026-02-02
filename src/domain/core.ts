@@ -44,6 +44,14 @@ export interface ScheduleInfo {
   status: ScheduleStatus
 }
 
+// High-level schedule summary extracted from overview sheets (calendar week based)
+export interface OverviewScheduleMetrics {
+  currentWeek?: number
+  jobStartWeek?: number
+  jobEndWeek?: number
+  completeJobDuration?: number
+}
+
 // ============================================================================
 // HIERARCHY: PROJECT → PLANT → AREA → CELL → STATION → EQUIPMENT
 // ============================================================================

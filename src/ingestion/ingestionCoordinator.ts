@@ -1182,7 +1182,8 @@ async function ingestFilesInternal(
     cells: applyResult.cells,
     robots: applyResult.robots,
     tools: applyResult.tools,
-    warnings: warningStrings
+    warnings: warningStrings,
+    overviewSchedule: applyResult.overviewSchedule
   }, input.dataSource)
   syncSimulationStore()
 

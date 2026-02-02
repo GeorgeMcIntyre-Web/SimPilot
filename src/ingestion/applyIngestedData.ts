@@ -1,7 +1,7 @@
 // Apply Ingested Data
 // Merges parsed Excel data into domain stores with intelligent linking
 
-import { Project, Area, Cell, Robot, Tool, IngestionWarning } from '../domain/core'
+import { Project, Area, Cell, Robot, Tool, IngestionWarning, OverviewScheduleMetrics } from '../domain/core'
 import { SimulationStatusResult } from './simulationStatusParser'
 import { RobotListResult } from './robotListParser'
 import { ToolListResult } from './toolListParser'
@@ -29,6 +29,7 @@ export interface ApplyResult {
   robots: Robot[]
   tools: Tool[]
   warnings: IngestionWarning[]
+  overviewSchedule?: OverviewScheduleMetrics
   linkStats?: {
     linkedCells: number
     totalCells: number
@@ -172,6 +173,9 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     tools.push(...activeTools)
     warnings.push(...data.tools.warnings)
   }
+
+  // Overview schedule metrics from simulation status file
+  const overviewSchedule = data.simulation?.overviewSchedule
 
   // Deduplicate against existing store data
   const currentState = coreStore.getState()
@@ -386,6 +390,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     robots,
     tools,
     warnings,
+    overviewSchedule,
     linkStats
   }
 }

@@ -9,6 +9,9 @@ import {
   Area,
   Cell,
   SimulationStatus,
+  SchedulePhase,
+  ScheduleStatus,
+  OverviewScheduleMetrics,
   generateId,
   deriveCellStatus,
   IngestionWarning
@@ -47,6 +50,91 @@ import { buildStationId, normalizeStationCode } from './normalizers'
 // ============================================================================
 // VACUUM PARSER TYPES
 // ============================================================================
+
+// ----------------------------------------------------------------------------
+// Overview sheet helpers (calendar-week based schedule context)
+// ----------------------------------------------------------------------------
+
+/**
+ * Extracts high-level schedule metrics from the OVERVIEW sheet.
+ * The sheet stores labels (e.g., "Current Week") with their values in the next cell.
+ */
+function parseOverviewSchedule(workbook: XLSX.WorkBook): OverviewScheduleMetrics | undefined {
+  const sheet = workbook.Sheets['OVERVIEW']
+  if (!sheet) return undefined
+
+  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: true, defval: '' })
+
+  const lookup = (label: string): number | undefined => {
+    for (const row of rows) {
+      const idx = row.findIndex(cell => typeof cell === 'string' && cell.trim() === label)
+      if (idx >= 0) {
+        const val = row[idx + 1]
+        const num = typeof val === 'number' ? val : Number(val)
+        return Number.isFinite(num) ? num : undefined
+      }
+    }
+    return undefined
+  }
+
+  const metrics: OverviewScheduleMetrics = {
+    currentWeek: lookup('Current Week'),
+    jobStartWeek: lookup('Job Start'),
+    jobEndWeek: lookup('Job End'),
+    completeJobDuration: lookup('Complete Job Duration')
+  }
+
+  // If nothing was found, return undefined to avoid misleading defaults
+  const hasValue = Object.values(metrics).some(v => v !== undefined)
+  return hasValue ? metrics : undefined
+}
+
+/**
+ * Derive schedule phase from percent complete.
+ * Simple heuristic to spread cards across the phase swimlanes.
+ */
+function derivePhase(percentComplete: number | null): SchedulePhase {
+  if (percentComplete === null || Number.isNaN(percentComplete)) return 'unspecified'
+  if (percentComplete >= 95) return 'handover'
+  if (percentComplete >= 75) return 'rampup'
+  if (percentComplete >= 50) return 'onsite'
+  if (percentComplete >= 20) return 'offline'
+  return 'presim'
+}
+
+/**
+ * Derive onTrack/atRisk/late based on how far actual progress is
+ * ahead/behind the linear expectation for the current calendar week.
+ *
+ * Tuning:
+ * - More than 15 points behind expected ⇒ late
+ * - 5–15 points behind ⇒ atRisk
+ * - Otherwise ⇒ onTrack
+ */
+function deriveScheduleStatusFromWeeks(
+  percentComplete: number | null,
+  metrics: OverviewScheduleMetrics | undefined
+): ScheduleStatus {
+  if (percentComplete === null || metrics === undefined) return 'unknown'
+
+  const { currentWeek, jobStartWeek, completeJobDuration } = metrics
+  if (
+    currentWeek === undefined ||
+    jobStartWeek === undefined ||
+    completeJobDuration === undefined ||
+    completeJobDuration <= 0
+  ) {
+    return 'unknown'
+  }
+
+  const elapsedWeeks = Math.max(0, currentWeek - jobStartWeek)
+  const expected = Math.min(100, (elapsedWeeks / completeJobDuration) * 100)
+  const delta = percentComplete - expected
+
+  if (delta <= -15) return 'late'
+  if (delta <= -5) return 'atRisk'
+  return 'onTrack'
+}
 
 /**
  * A single metric vacuumed from a non-core column.
@@ -108,6 +196,8 @@ export interface SimulationStatusResult {
   vacuumRows?: VacuumParsedRow[]
   /** Robots extracted from simulation status (one per unique station+robot combination) */
   robotsFromSimStatus?: SimulationRobot[]
+  /** High-level schedule info pulled from OVERVIEW sheet */
+  overviewSchedule?: OverviewScheduleMetrics
 }
 
 // ============================================================================
@@ -431,6 +521,7 @@ export async function parseSimulationStatus(
   targetSheetName?: string
 ): Promise<SimulationStatusResult> {
   const warnings: IngestionWarning[] = []
+  const overviewSchedule = parseOverviewSchedule(workbook)
 
   // Determine which sheets to parse
   const sheetsToParse: string[] = targetSheetName
@@ -722,6 +813,10 @@ export async function parseSimulationStatus(
       application
     }
 
+    // Derive schedule info for Readiness Board (phase + risk status)
+    const schedulePhase = derivePhase(simulation.percentComplete)
+    const scheduleStatus = deriveScheduleStatusFromWeeks(simulation.percentComplete, overviewSchedule)
+
     // Build canonical stationId
     const stationId = buildStationId(firstRow.areaName, firstRow.stationCode)
 
@@ -737,7 +832,11 @@ export async function parseSimulationStatus(
       assignedEngineer: firstRow.engineer,
       lineCode: firstRow.lineCode,
       lastUpdated: new Date().toISOString(),
-      simulation
+      simulation,
+      schedule: {
+        phase: schedulePhase,
+        status: scheduleStatus
+      }
     }
 
     cells.push(cell)
@@ -789,7 +888,8 @@ export async function parseSimulationStatus(
     cells,
     warnings,
     vacuumRows: allVacuumRows, // Include all vacuum rows from all sheets
-    robotsFromSimStatus // Include extracted robots for CrossRef consumption
+    robotsFromSimStatus, // Include extracted robots for CrossRef consumption
+    overviewSchedule
   }
 }
 

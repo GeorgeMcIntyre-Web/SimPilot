@@ -2,7 +2,7 @@
 // Simple in-memory store for new domain entities (Project, Area, Cell, Robot, Tool)
 
 import { useState, useEffect } from 'react'
-import { Project, Area, Cell, Robot, Tool, UnifiedAsset, EmployeeRecord, SupplierRecord } from './core'
+import { Project, Area, Cell, Robot, Tool, UnifiedAsset, EmployeeRecord, SupplierRecord, OverviewScheduleMetrics } from './core'
 import { clearFileTrackingHistory } from '../ingestion/fileTracker'
 import {
   getProjectMetrics,
@@ -45,6 +45,7 @@ export interface CoreStoreState {
     employees: EmployeeRecord[]
     suppliers: SupplierRecord[]
   }
+  overviewSchedule?: OverviewScheduleMetrics
   // Schema v3: UID-backed linking collections
   stationRecords: StationRecord[]
   toolRecords: ToolRecord[]
@@ -68,6 +69,7 @@ let storeState: CoreStoreState = {
     employees: [],
     suppliers: []
   },
+  overviewSchedule: undefined,
   stationRecords: [],
   toolRecords: [],
   robotRecords: [],
@@ -141,6 +143,7 @@ export const coreStore = {
     robots: Robot[]
     tools: Tool[]
     warnings: string[]
+    overviewSchedule?: OverviewScheduleMetrics
     referenceData?: {
       employees: EmployeeRecord[]
       suppliers: SupplierRecord[]
@@ -159,6 +162,7 @@ export const coreStore = {
       lastUpdated: new Date().toISOString(),
       dataSource: source || null,
       referenceData: data.referenceData || { employees: [], suppliers: [] },
+      overviewSchedule: data.overviewSchedule,
       // Preserve existing registry data when loading new Excel data
       stationRecords: storeState.stationRecords,
       toolRecords: storeState.toolRecords,
@@ -188,6 +192,7 @@ export const coreStore = {
         employees: [],
         suppliers: []
       },
+      overviewSchedule: undefined,
       stationRecords: [],
       toolRecords: [],
       robotRecords: [],
@@ -617,6 +622,14 @@ export function useWarnings(): string[] {
 export function useChangeLog(): ChangeRecord[] {
   const state = useCoreStore()
   return state.changeLog
+}
+
+/**
+ * Hook to access overview schedule metrics (calendar-week plan)
+ */
+export function useOverviewSchedule(): OverviewScheduleMetrics | undefined {
+  const state = useCoreStore()
+  return state.overviewSchedule
 }
 
 /**

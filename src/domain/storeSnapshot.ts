@@ -31,6 +31,7 @@ export interface StoreSnapshot {
         employees: { id: string; name: string; role?: string; department?: string }[]
         suppliers: { id: string; name: string; contact?: string }[]
     }
+    overviewSchedule?: import('./core').OverviewScheduleMetrics
     // Schema v3: UID-backed linking collections
     stationRecords?: StationRecord[]
     toolRecords?: ToolRecord[]
@@ -65,6 +66,7 @@ export function createSnapshotFromState(
         warnings: state.warnings,
         changeLog: state.changeLog,
         referenceData: state.referenceData,
+        overviewSchedule: state.overviewSchedule,
         // Schema v3 collections
         stationRecords: state.stationRecords,
         toolRecords: state.toolRecords,
@@ -114,6 +116,7 @@ export function applySnapshotToState(snapshot: StoreSnapshot): CoreStoreState {
         lastUpdated: snapshot.meta.lastSavedAt,
         dataSource,
         referenceData: snapshot.referenceData || { employees: [], suppliers: [] },
+        overviewSchedule: snapshot.overviewSchedule,
         stationRecords,
         toolRecords,
         robotRecords,
