@@ -67,6 +67,22 @@ export function AreaOverviewPage() {
 
     const hasData = overview !== undefined
 
+    const readinessMetrics = [
+        { label: 'ROBOT SIMULATION', value: overview?.robotSimulation },
+        { label: 'JOINING', value: overview?.joining },
+        { label: 'GRIPPER', value: overview?.gripper },
+        { label: 'FIXTURE', value: overview?.fixture },
+        { label: 'DOCUMENTATION', value: overview?.documentation },
+        { label: 'MRS', value: overview?.mrs },
+        { label: 'OLP', value: overview?.olp },
+        { label: 'SAFETY', value: overview?.safety },
+        { label: 'CABLE & HOSE LENGTH', value: overview?.cableAndHoseLength },
+        { label: 'LAYOUT', value: overview?.layout },
+        { label: '1st STAGE SIM COMPLETION', value: overview?.firstStageSimCompletion },
+        { label: 'VC READY', value: overview?.vcReady },
+        { label: 'FINAL DELIVERABLES COMPLETION', value: overview?.finalDeliverablesCompletion }
+    ]
+
     return (
         <div className="space-y-4">
             <PageHeader
@@ -114,6 +130,30 @@ export function AreaOverviewPage() {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {hasData && (
+                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Readiness Measurements</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Key completion percentages by discipline</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
+                        {readinessMetrics.map(metric => (
+                            <div key={metric.label} className="px-4 py-3 flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{metric.label}</span>
+                                <span className={cn(
+                                    "text-sm font-semibold",
+                                    metric.value === undefined || metric.value === null
+                                        ? 'text-gray-400 dark:text-gray-500'
+                                        : 'text-gray-900 dark:text-white'
+                                )}>
+                                    {formatPercent(metric.value)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
