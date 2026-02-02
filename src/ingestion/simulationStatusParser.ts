@@ -79,9 +79,22 @@ function parseOverviewSchedule(workbook: XLSX.WorkBook): OverviewScheduleMetrics
 
   const metrics: OverviewScheduleMetrics = {
     currentWeek: lookup('Current Week'),
+    currentJobDuration: lookup('Current Job Duration'),
     jobStartWeek: lookup('Job Start'),
     jobEndWeek: lookup('Job End'),
-    completeJobDuration: lookup('Complete Job Duration')
+    completeJobDuration: lookup('Complete Job Duration'),
+    firstStageSimComplete: lookup('1st Stage Sim Complete'),
+    firstStageSimDuration: lookup('1st Stage Sim Duration'),
+    firstStageSimPerWeek: lookup('% 1st Stage Sim Complete per week'),
+    firstStageSimRequired: lookup('% 1st Stage Sim Complete Required'),
+    vcStartWeek: lookup('VC Start'),
+    jobDurationToVcStart: lookup('Job Duration till VC Start'),
+    vcReadyPerWeek: lookup('% VC Ready per week'),
+    vcReadyRequired: lookup('VC Ready Required'),
+    finalDeliverablesEndWeek: lookup('Final Deliverables Complete  End'),
+    finalDeliverablesDuration: lookup('Final Deliverables Job Duration'),
+    finalDeliverablesPerWeek: lookup('% Final Deliverables Complete per week'),
+    finalDeliverablesRequired: lookup('Final Deliverables Complete Required')
   }
 
   // If nothing was found, return undefined to avoid misleading defaults

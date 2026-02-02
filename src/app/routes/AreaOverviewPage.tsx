@@ -1,10 +1,71 @@
 import { useParams, Link } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
+import { useOverviewSchedule } from '../../domain/coreStore'
+import { cn } from '../../ui/lib/utils'
 
 export function AreaOverviewPage() {
     const { areaKey } = useParams<{ areaKey: string }>()
     const title = areaKey ? decodeURIComponent(areaKey) : 'Area'
+    const overview = useOverviewSchedule()
+
+    const formatWeek = (value?: number) => {
+        if (value === undefined || value === null || Number.isNaN(value)) return '—'
+        return `CW ${value}`
+    }
+
+    const formatNumber = (value?: number, suffix = '') => {
+        if (value === undefined || value === null || Number.isNaN(value)) return '—'
+        return `${value}${suffix}`
+    }
+
+    const formatPercent = (value?: number) => {
+        if (value === undefined || value === null || Number.isNaN(value)) return '—'
+        const pct = value > 1 ? value : value * 100
+        return `${pct.toFixed(1)}%`
+    }
+
+    const sections: Array<{ title: string; items: { label: string; value: string }[] }> = [
+        {
+            title: 'Timeline',
+            items: [
+                { label: 'Current Week', value: formatWeek(overview?.currentWeek) },
+                { label: 'Current Job Duration', value: formatNumber(overview?.currentJobDuration, ' wks') },
+                { label: 'Job Start', value: formatWeek(overview?.jobStartWeek) },
+                { label: 'Job End', value: formatWeek(overview?.jobEndWeek) },
+                { label: 'Complete Job Duration', value: formatNumber(overview?.completeJobDuration, ' wks') }
+            ]
+        },
+        {
+            title: '1st Stage Simulation',
+            items: [
+                { label: 'Complete', value: formatNumber(overview?.firstStageSimComplete, ' wks') },
+                { label: 'Duration', value: formatNumber(overview?.firstStageSimDuration, ' wks') },
+                { label: '% Complete per Week', value: formatPercent(overview?.firstStageSimPerWeek) },
+                { label: '% Complete Required', value: formatPercent(overview?.firstStageSimRequired) }
+            ]
+        },
+        {
+            title: 'Virtual Commissioning',
+            items: [
+                { label: 'VC Start', value: formatWeek(overview?.vcStartWeek) },
+                { label: 'Job Duration to VC Start', value: formatNumber(overview?.jobDurationToVcStart, ' wks') },
+                { label: '% VC Ready per Week', value: formatPercent(overview?.vcReadyPerWeek) },
+                { label: 'VC Ready Required', value: formatPercent(overview?.vcReadyRequired) }
+            ]
+        },
+        {
+            title: 'Final Deliverables',
+            items: [
+                { label: 'Complete End', value: formatWeek(overview?.finalDeliverablesEndWeek) },
+                { label: 'Job Duration', value: formatNumber(overview?.finalDeliverablesDuration, ' wks') },
+                { label: '% Complete per Week', value: formatPercent(overview?.finalDeliverablesPerWeek) },
+                { label: '% Complete Required', value: formatPercent(overview?.finalDeliverablesRequired) }
+            ]
+        }
+    ]
+
+    const hasData = overview !== undefined
 
     return (
         <div className="space-y-4">
@@ -22,9 +83,39 @@ export function AreaOverviewPage() {
                 ]}
             />
 
-            <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-sm text-gray-600 dark:text-gray-300">
-                This area overview page is ready for metrics. Hook in per-area readiness and schedule details here.
-            </div>
+            {!hasData && (
+                <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-sm text-gray-600 dark:text-gray-300">
+                    No overview metrics found. Reload your simulation file to populate the overview data.
+                </div>
+            )}
+
+            {hasData && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {sections.map(section => (
+                        <div
+                            key={section.title}
+                            className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+                        >
+                            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{section.title}</h3>
+                            </div>
+                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {section.items.map(item => (
+                                    <div key={item.label} className="px-4 py-3 flex items-center justify-between">
+                                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{item.label}</span>
+                                        <span className={cn(
+                                            "text-sm font-semibold",
+                                            item.value === '—' ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'
+                                        )}>
+                                            {item.value}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             <Link
                 to="/dashboard"

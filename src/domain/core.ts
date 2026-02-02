@@ -47,9 +47,22 @@ export interface ScheduleInfo {
 // High-level schedule summary extracted from overview sheets (calendar week based)
 export interface OverviewScheduleMetrics {
   currentWeek?: number
+  currentJobDuration?: number
   jobStartWeek?: number
   jobEndWeek?: number
   completeJobDuration?: number
+  firstStageSimComplete?: number
+  firstStageSimDuration?: number
+  firstStageSimPerWeek?: number
+  firstStageSimRequired?: number
+  vcStartWeek?: number
+  jobDurationToVcStart?: number
+  vcReadyPerWeek?: number
+  vcReadyRequired?: number
+  finalDeliverablesEndWeek?: number
+  finalDeliverablesDuration?: number
+  finalDeliverablesPerWeek?: number
+  finalDeliverablesRequired?: number
 }
 
 // ============================================================================
