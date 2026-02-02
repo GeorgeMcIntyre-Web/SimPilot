@@ -1,12 +1,26 @@
-import { useParams, Link } from 'react-router-dom'
+import { ReactNode } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import {
+    ChevronRight,
+    LayoutDashboard,
+    CalendarDays,
+    CalendarClock,
+    Play,
+    Monitor,
+    PackageCheck,
+    DatabaseZap
+} from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
+import { StatCard } from '../../ui/components/StatCard'
+import { EmptyState } from '../../ui/components/EmptyState'
 import { useOverviewSchedule } from '../../domain/coreStore'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { cn } from '../../ui/lib/utils'
 
 export function AreaOverviewPage() {
     const { areaKey } = useParams<{ areaKey: string }>()
+    const navigate = useNavigate()
     const title = areaKey ? decodeURIComponent(areaKey) : 'Area'
     const overview = useOverviewSchedule()
     const { areaMetrics } = useCrossRefData()
@@ -23,13 +37,13 @@ export function AreaOverviewPage() {
         return `${value}${suffix}`
     }
 
-    const formatPercent = (value?: number) => {
+    const formatPercent = (value?: number | null) => {
         if (value === undefined || value === null || Number.isNaN(value)) return '—'
         const pct = value > 1 ? value : value * 100
         return `${pct.toFixed(1)}%`
     }
 
-    const ProgressBar = ({ value }: { value?: number }) => {
+    const ProgressBar = ({ value }: { value?: number | null }) => {
         const pct = value === undefined || value === null || Number.isNaN(value)
             ? 0
             : (value > 1 ? value : value * 100)
@@ -48,9 +62,24 @@ export function AreaOverviewPage() {
         )
     }
 
-    const sections: Array<{ title: string; items: { label: string; value: string }[] }> = [
+    const getVariant = (value?: number): 'default' | 'success' | 'warning' | 'danger' => {
+        if (value === undefined || value === null || Number.isNaN(value)) return 'default'
+        const pct = value > 1 ? value : value * 100
+        if (pct >= 90) return 'success'
+        if (pct >= 50) return 'warning'
+        return 'danger'
+    }
+
+    const sections: Array<{
+        title: string
+        icon: ReactNode
+        accent: string
+        items: { label: string; value: string }[]
+    }> = [
         {
             title: 'Timeline',
+            icon: <CalendarDays className="h-4 w-4" />,
+            accent: 'border-l-indigo-500 dark:border-l-indigo-400',
             items: [
                 { label: 'Current Week', value: formatWeek(overview?.currentWeek) },
                 { label: 'Current Job Duration', value: formatNumber(overview?.currentJobDuration, ' wks') },
@@ -61,6 +90,8 @@ export function AreaOverviewPage() {
         },
         {
             title: '1st Stage Simulation',
+            icon: <Play className="h-4 w-4" />,
+            accent: 'border-l-emerald-500 dark:border-l-emerald-400',
             items: [
                 { label: 'Complete', value: formatWeek(overview?.firstStageSimComplete) },
                 { label: 'Duration', value: formatNumber(overview?.firstStageSimDuration, ' wks') },
@@ -70,6 +101,8 @@ export function AreaOverviewPage() {
         },
         {
             title: 'Virtual Commissioning',
+            icon: <Monitor className="h-4 w-4" />,
+            accent: 'border-l-amber-500 dark:border-l-amber-400',
             items: [
                 { label: 'VC Start', value: formatWeek(overview?.vcStartWeek) },
                 { label: 'Job Duration to VC Start', value: formatNumber(overview?.jobDurationToVcStart, ' wks') },
@@ -79,6 +112,8 @@ export function AreaOverviewPage() {
         },
         {
             title: 'Final Deliverables',
+            icon: <PackageCheck className="h-4 w-4" />,
+            accent: 'border-l-blue-500 dark:border-l-blue-400',
             items: [
                 { label: 'Complete End', value: formatWeek(overview?.finalDeliverablesEndWeek) },
                 { label: 'Job Duration', value: formatNumber(overview?.finalDeliverablesDuration, ' wks') },
@@ -92,71 +127,158 @@ export function AreaOverviewPage() {
     const hasAreaMetrics = areaValues !== undefined
 
     const readinessMetrics = [
-        { label: 'ROBOT SIMULATION', value: areaValues?.['ROBOT SIMULATION'] ?? overview?.robotSimulation },
-        { label: 'JOINING', value: areaValues?.['JOINING'] ?? overview?.joining },
-        { label: 'GRIPPER', value: areaValues?.['GRIPPER'] ?? overview?.gripper },
-        { label: 'FIXTURE', value: areaValues?.['FIXTURE'] ?? overview?.fixture },
-        { label: 'DOCUMENTATION', value: areaValues?.['DOCUMENTATION'] ?? overview?.documentation },
-        { label: 'MRS', value: areaValues?.['MRS'] ?? overview?.mrs },
-        { label: 'OLP', value: areaValues?.['OLP'] ?? overview?.olp },
-        { label: 'SAFETY', value: areaValues?.['SAFETY'] ?? overview?.safety },
-        { label: 'CABLE & HOSE LENGTH', value: areaValues?.['CABLE & HOSE LENGTH'] ?? overview?.cableAndHoseLength },
-        { label: 'LAYOUT', value: areaValues?.['LAYOUT'] ?? overview?.layout },
-        { label: '1st STAGE SIM COMPLETION', value: areaValues?.['1st STAGE SIM COMPLETION'] ?? overview?.firstStageSimCompletion },
-        { label: 'VC READY', value: areaValues?.['VC READY'] ?? overview?.vcReady },
-        { label: 'FINAL DELIVERABLES COMPLETION', value: areaValues?.['FINAL DELIVERABLES COMPLETION'] ?? overview?.finalDeliverablesCompletion }
+        { label: 'ROBOT SIMULATION', value: areaValues?.['ROBOT SIMULATION'] },
+        { label: 'JOINING', value: areaValues?.['JOINING'] },
+        { label: 'GRIPPER', value: areaValues?.['GRIPPER'] },
+        { label: 'FIXTURE', value: areaValues?.['FIXTURE'] },
+        { label: 'DOCUMENTATION', value: areaValues?.['DOCUMENTATION'] },
+        { label: 'MRS', value: areaValues?.['MRS'] },
+        { label: 'OLP', value: areaValues?.['OLP'] },
+        { label: 'SAFETY', value: areaValues?.['SAFETY'] },
+        { label: 'CABLE & HOSE LENGTH', value: areaValues?.['CABLE & HOSE LENGTH'] },
+        { label: 'LAYOUT', value: areaValues?.['LAYOUT'] },
+        { label: '1st STAGE SIM COMPLETION', value: areaValues?.['1st STAGE SIM COMPLETION'] },
+        { label: 'VC READY', value: areaValues?.['VC READY'] },
+        { label: 'FINAL DELIVERABLES COMPLETION', value: areaValues?.['FINAL DELIVERABLES COMPLETION'] }
     ]
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
+            {/* Breadcrumb Navigation */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm">
+                <Link
+                    to="/dashboard"
+                    className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span>Dashboard</span>
+                </Link>
+                <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
+                <span className="font-medium text-gray-900 dark:text-white">{title}</span>
+            </nav>
+
             <PageHeader
                 title={`Area Overview — ${title}`}
                 subtitle={
                     <PageHint
-                        standardText="Area-level overview"
-                        flowerText="Timeline and readiness context per area."
+                        standardText="Timeline, simulation milestones, and discipline readiness for this area."
+                        flowerText="Context at a glance."
                     />
                 }
-                breadcrumbs={[
-                    { label: 'Dashboard', href: '/dashboard' },
-                    { label: title, href: '#' }
-                ]}
             />
 
+            {/* Empty State */}
             {!hasData && !hasAreaMetrics && (
-                <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-sm text-gray-600 dark:text-gray-300">
-                    No overview metrics found. Reload your simulation file to populate the overview data.
-                </div>
+                <EmptyState
+                    title="No Overview Data"
+                    message="No metrics found for this area. Load or reload your simulation file in the Data Loader to populate overview data."
+                    icon={<DatabaseZap className="h-7 w-7" />}
+                    ctaLabel="Go to Data Loader"
+                    onCtaClick={() => navigate('/data-loader')}
+                />
             )}
 
+            {/* Hero Summary Strip */}
             {(hasData || hasAreaMetrics) && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {sections.map(section => (
-                        <div
-                            key={section.title}
-                            className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
-                        >
-                            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{section.title}</h3>
-                            </div>
-                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {section.items.map(item => (
-                                    <div key={item.label} className="px-4 py-3 flex items-center justify-between">
-                                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{item.label}</span>
-                                        <span className={cn(
-                                            "text-sm font-semibold",
-                                            item.value === '—' ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'
-                                        )}>
-                                            {item.value}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <StatCard
+                        title="Current Week"
+                        value={formatWeek(overview?.currentWeek)}
+                        subtitle={`Job: ${formatWeek(overview?.jobStartWeek)} → ${formatWeek(overview?.jobEndWeek)}`}
+                        icon={<CalendarClock className="h-5 w-5" />}
+                    />
+                    <StatCard
+                        title="1st Stage Sim"
+                        value={formatPercent(overview?.firstStageSimRequired)}
+                        subtitle={`Complete by ${formatWeek(overview?.firstStageSimComplete)}`}
+                        icon={<Play className="h-5 w-5" />}
+                        variant={getVariant(overview?.firstStageSimRequired)}
+                    />
+                    <StatCard
+                        title="VC Readiness"
+                        value={formatPercent(overview?.vcReadyRequired)}
+                        subtitle={`Start ${formatWeek(overview?.vcStartWeek)}`}
+                        icon={<Monitor className="h-5 w-5" />}
+                        variant={getVariant(overview?.vcReadyRequired)}
+                    />
+                    <StatCard
+                        title="Final Deliverables"
+                        value={formatPercent(overview?.finalDeliverablesRequired)}
+                        subtitle={`End ${formatWeek(overview?.finalDeliverablesEndWeek)}`}
+                        icon={<PackageCheck className="h-5 w-5" />}
+                        variant={getVariant(overview?.finalDeliverablesRequired)}
+                    />
                 </div>
             )}
 
+            {/* Schedule Details Section */}
+            {(hasData || hasAreaMetrics) && (
+                <>
+                    <div className="flex items-center gap-2 pt-2">
+                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
+                            Schedule Details
+                        </h2>
+                        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {sections.map(section => (
+                            <div
+                                key={section.title}
+                                className={cn(
+                                    'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm',
+                                    'border-l-4',
+                                    section.accent
+                                )}
+                            >
+                                <div className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2.5">
+                                    <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400">
+                                        {section.icon}
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {section.title}
+                                    </h3>
+                                </div>
+                                <div className="px-5 py-2">
+                                    {section.items.map((item, idx) => (
+                                        <div
+                                            key={item.label}
+                                            className={cn(
+                                                'flex items-center justify-between py-2.5',
+                                                idx < section.items.length - 1 && 'border-b border-gray-100 dark:border-gray-700/30'
+                                            )}
+                                        >
+                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                {item.label}
+                                            </span>
+                                            <span className={cn(
+                                                'text-sm font-semibold tabular-nums',
+                                                item.value === '—'
+                                                    ? 'text-gray-300 dark:text-gray-600'
+                                                    : 'text-gray-900 dark:text-white'
+                                            )}>
+                                                {item.value}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* Readiness Measurements Section Heading */}
+            {(hasData || hasAreaMetrics) && (
+                <div className="flex items-center gap-2 pt-2">
+                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
+                        Readiness Measurements
+                    </h2>
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                </div>
+            )}
+
+            {/* Readiness Measurements — UNTOUCHED */}
             {(hasData || hasAreaMetrics) && (
                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -183,13 +305,6 @@ export function AreaOverviewPage() {
                     </div>
                 </div>
             )}
-
-            <Link
-                to="/dashboard"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
-            >
-                ← Back to Dashboard
-            </Link>
         </div>
     )
 }
