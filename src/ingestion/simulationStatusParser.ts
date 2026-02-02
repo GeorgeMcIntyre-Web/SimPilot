@@ -16,6 +16,7 @@ import {
   deriveCellStatus,
   IngestionWarning
 } from '../domain/core'
+import { getWeek } from 'date-fns'
 import {
   sheetToMatrix,
   findHeaderRow,
@@ -95,6 +96,14 @@ function parseOverviewSchedule(workbook: XLSX.WorkBook): OverviewScheduleMetrics
     finalDeliverablesDuration: lookup('Final Deliverables Job Duration'),
     finalDeliverablesPerWeek: lookup('% Final Deliverables Complete per week'),
     finalDeliverablesRequired: lookup('Final Deliverables Complete Required')
+  }
+
+  // Recalculate dynamic fields that depend on current date to avoid stale cached Excel values
+  const computedCurrentWeek = getWeek(new Date(), { weekStartsOn: 0 })
+  metrics.currentWeek = computedCurrentWeek
+
+  if (metrics.jobStartWeek !== undefined && metrics.currentWeek !== undefined) {
+    metrics.currentJobDuration = metrics.currentWeek - metrics.jobStartWeek
   }
 
   // If nothing was found, return undefined to avoid misleading defaults

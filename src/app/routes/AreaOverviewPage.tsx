@@ -39,7 +39,7 @@ export function AreaOverviewPage() {
         {
             title: '1st Stage Simulation',
             items: [
-                { label: 'Complete', value: formatNumber(overview?.firstStageSimComplete, ' wks') },
+                { label: 'Complete', value: formatWeek(overview?.firstStageSimComplete) },
                 { label: 'Duration', value: formatNumber(overview?.firstStageSimDuration, ' wks') },
                 { label: '% Complete per Week', value: formatPercent(overview?.firstStageSimPerWeek) },
                 { label: '% Complete Required', value: formatPercent(overview?.firstStageSimRequired) }
