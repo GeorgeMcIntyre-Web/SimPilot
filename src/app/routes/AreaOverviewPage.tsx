@@ -8,7 +8,8 @@ import {
     Play,
     Monitor,
     PackageCheck,
-    DatabaseZap
+    DatabaseZap,
+    ClipboardCheck
 } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
@@ -278,22 +279,34 @@ export function AreaOverviewPage() {
                 </div>
             )}
 
-            {/* Readiness Measurements — UNTOUCHED */}
+            {/* Readiness Measurements */}
             {(hasData || hasAreaMetrics) && (
-                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
-                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <div className={cn(
+                    'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm',
+                    'border-l-4 border-l-emerald-500 dark:border-l-emerald-400'
+                )}>
+                    <div className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2.5">
+                        <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400">
+                            <ClipboardCheck className="h-4 w-4" />
+                        </div>
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Readiness Measurements</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Key completion percentages by discipline</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
-                        {readinessMetrics.map(metric => (
-                            <div key={metric.label} className="px-4 py-3 space-y-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+                        {readinessMetrics.map((metric, idx) => (
+                            <div
+                                key={metric.label}
+                                className={cn(
+                                    'px-5 py-3 space-y-2',
+                                    idx < readinessMetrics.length - 2 && 'border-b border-gray-100 dark:border-gray-700/30',
+                                    idx % 2 === 0 && 'md:border-r md:border-r-gray-100 md:dark:border-r-gray-700/30'
+                                )}
+                            >
                                 <div className="flex items-center justify-between gap-3">
                                     <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">{metric.label}</span>
                                     <span className={cn(
-                                        "text-sm font-semibold",
+                                        "text-sm font-semibold tabular-nums",
                                         metric.value === undefined || metric.value === null
-                                            ? 'text-gray-400 dark:text-gray-500'
+                                            ? 'text-gray-300 dark:text-gray-600'
                                             : 'text-gray-900 dark:text-white'
                                     )}>
                                         {formatPercent(metric.value)}
