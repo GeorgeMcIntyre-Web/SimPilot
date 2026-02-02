@@ -2,12 +2,16 @@ import { useParams, Link } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { useOverviewSchedule } from '../../domain/coreStore'
+import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { cn } from '../../ui/lib/utils'
 
 export function AreaOverviewPage() {
     const { areaKey } = useParams<{ areaKey: string }>()
     const title = areaKey ? decodeURIComponent(areaKey) : 'Area'
     const overview = useOverviewSchedule()
+    const { areaMetrics } = useCrossRefData()
+    const areaKeyDecoded = areaKey ? decodeURIComponent(areaKey) : ''
+    const areaValues = areaKeyDecoded ? areaMetrics[areaKeyDecoded] : undefined
 
     const formatWeek = (value?: number) => {
         if (value === undefined || value === null || Number.isNaN(value)) return '—'
@@ -68,19 +72,19 @@ export function AreaOverviewPage() {
     const hasData = overview !== undefined
 
     const readinessMetrics = [
-        { label: 'ROBOT SIMULATION', value: overview?.robotSimulation },
-        { label: 'JOINING', value: overview?.joining },
-        { label: 'GRIPPER', value: overview?.gripper },
-        { label: 'FIXTURE', value: overview?.fixture },
-        { label: 'DOCUMENTATION', value: overview?.documentation },
-        { label: 'MRS', value: overview?.mrs },
-        { label: 'OLP', value: overview?.olp },
-        { label: 'SAFETY', value: overview?.safety },
-        { label: 'CABLE & HOSE LENGTH', value: overview?.cableAndHoseLength },
-        { label: 'LAYOUT', value: overview?.layout },
-        { label: '1st STAGE SIM COMPLETION', value: overview?.firstStageSimCompletion },
-        { label: 'VC READY', value: overview?.vcReady },
-        { label: 'FINAL DELIVERABLES COMPLETION', value: overview?.finalDeliverablesCompletion }
+        { label: 'ROBOT SIMULATION', value: areaValues?.['ROBOT SIMULATION'] ?? overview?.robotSimulation },
+        { label: 'JOINING', value: areaValues?.['JOINING'] ?? overview?.joining },
+        { label: 'GRIPPER', value: areaValues?.['GRIPPER'] ?? overview?.gripper },
+        { label: 'FIXTURE', value: areaValues?.['FIXTURE'] ?? overview?.fixture },
+        { label: 'DOCUMENTATION', value: areaValues?.['DOCUMENTATION'] ?? overview?.documentation },
+        { label: 'MRS', value: areaValues?.['MRS'] ?? overview?.mrs },
+        { label: 'OLP', value: areaValues?.['OLP'] ?? overview?.olp },
+        { label: 'SAFETY', value: areaValues?.['SAFETY'] ?? overview?.safety },
+        { label: 'CABLE & HOSE LENGTH', value: areaValues?.['CABLE & HOSE LENGTH'] ?? overview?.cableAndHoseLength },
+        { label: 'LAYOUT', value: areaValues?.['LAYOUT'] ?? overview?.layout },
+        { label: '1st STAGE SIM COMPLETION', value: areaValues?.['1st STAGE SIM COMPLETION'] ?? overview?.firstStageSimCompletion },
+        { label: 'VC READY', value: areaValues?.['VC READY'] ?? overview?.vcReady },
+        { label: 'FINAL DELIVERABLES COMPLETION', value: areaValues?.['FINAL DELIVERABLES COMPLETION'] ?? overview?.finalDeliverablesCompletion }
     ]
 
     return (

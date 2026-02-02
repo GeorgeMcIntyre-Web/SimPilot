@@ -662,6 +662,7 @@ function buildCrossRefInputFromApplyResult(
       areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
       lineCode: cell.lineCode,
       application: cell.simulation?.application,
+      metrics: cell.simulation?.metrics,
       hasIssues: cell.simulation?.hasIssues,
       firstStageCompletion: overallCompletion ?? cell.simulation?.percentComplete,
       finalDeliverablesCompletion: cell.simulation?.percentComplete,

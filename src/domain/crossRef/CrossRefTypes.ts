@@ -31,6 +31,8 @@ export interface SimulationStatusSnapshot {
   hasIssues?: boolean
   dcsConfigured?: boolean
   engineer?: string
+  /** Raw per-discipline metrics (percentage values) from simulation status */
+  metrics?: Record<string, number | null | undefined>
   /** Robot identifier (e.g., "8Y-020-01") for panel milestone lookup */
   robotKey?: string
   /** Panel-grouped milestones for all 11 panels */
@@ -191,6 +193,8 @@ export interface CrossRefResult {
   }
   /** Ready-made summaries for UI consumption */
   cellHealthSummaries: CellHealthSummary[]
+  /** Per-area aggregated readiness metrics (percentages) */
+  areaMetrics?: Record<AreaKey, Record<string, number | null>>
 }
 
 // ============================================================================

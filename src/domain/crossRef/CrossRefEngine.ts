@@ -19,6 +19,22 @@ import {
 import { normalizeStationId, normalizeGunKey } from './CrossRefUtils'
 import { buildCellHealthSummaries } from './CellHealthSummary'
 
+const READINESS_KEYS = [
+  'ROBOT SIMULATION',
+  'JOINING',
+  'GRIPPER',
+  'FIXTURE',
+  'DOCUMENTATION',
+  'MRS',
+  'OLP',
+  'SAFETY',
+  'CABLE & HOSE LENGTH',
+  'LAYOUT',
+  '1st STAGE SIM COMPLETION',
+  'VC READY',
+  'FINAL DELIVERABLES COMPLETION'
+]
+
 // ============================================================================
 // INTERNAL TYPES
 // ============================================================================
@@ -53,8 +69,9 @@ export const buildCrossRef = (input: CrossRefInput): CrossRefResult => {
 
   const stats = calculateStats(cells, globalFlags)
   const cellHealthSummaries = buildCellHealthSummaries(cells)
+  const areaMetrics = aggregateAreaMetrics(cells)
 
-  return { cells, globalFlags, stats, cellHealthSummaries }
+  return { cells, globalFlags, stats, cellHealthSummaries, areaMetrics }
 }
 
 // ============================================================================
@@ -398,6 +415,46 @@ const attachRisers = (
 
     cell.risers.push(row)
   }
+}
+
+// ============================================================================
+// PHASE 3: AGGREGATION
+// ============================================================================
+
+const aggregateAreaMetrics = (cells: CellSnapshot[]): Record<StationKey, Record<string, number | null>> => {
+  const accum: Record<string, Record<string, { sum: number; count: number }>> = {}
+  const result: Record<string, Record<string, number | null>> = {}
+
+  for (const cell of cells) {
+    const areaKey = cell.areaKey || 'Unknown'
+    const metrics = cell.simulationStatus?.metrics
+    if (!metrics) continue
+
+    if (!accum[areaKey]) accum[areaKey] = {}
+
+    for (const key of READINESS_KEYS) {
+      const raw = metrics[key] ?? metrics[key.toUpperCase()] ?? metrics[key.toLowerCase()]
+      const num = typeof raw === 'number' ? raw : Number(raw)
+      if (!Number.isFinite(num)) continue
+      if (!accum[areaKey][key]) accum[areaKey][key] = { sum: 0, count: 0 }
+      accum[areaKey][key].sum += num
+      accum[areaKey][key].count += 1
+    }
+  }
+
+  for (const [areaKey, metricMap] of Object.entries(accum)) {
+    result[areaKey] = {}
+    for (const key of READINESS_KEYS) {
+      const entry = metricMap[key]
+      if (!entry || entry.count === 0) {
+        result[areaKey][key] = null
+        continue
+      }
+      result[areaKey][key] = Math.round((entry.sum / entry.count) * 10) / 10
+    }
+  }
+
+  return result
 }
 
 // ============================================================================

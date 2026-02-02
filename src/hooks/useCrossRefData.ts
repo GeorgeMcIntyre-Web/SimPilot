@@ -41,6 +41,7 @@ export interface CrossRefDataResult {
   stats: CrossRefStats
   globalFlags: CrossRefFlag[]
   healthSummaries: CellHealthSummary[]
+  areaMetrics: Record<string, Record<string, number | null>>
 
   // Derived aggregates
   areas: string[]
@@ -279,6 +280,7 @@ export function useCrossRefData(): CrossRefDataResult {
         stats: emptyStats(),
         globalFlags: [],
         healthSummaries: [],
+        areaMetrics: {},
         areas: [],
         byArea: {},
         areaSummaries: [],
@@ -299,6 +301,7 @@ export function useCrossRefData(): CrossRefDataResult {
       stats: data.stats,
       globalFlags: data.globalFlags,
       healthSummaries,
+       areaMetrics: data.areaMetrics ?? {},
       areas,
       byArea,
       areaSummaries,
