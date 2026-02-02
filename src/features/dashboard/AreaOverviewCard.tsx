@@ -14,6 +14,7 @@ interface AreaOverviewCardProps {
   counts: AreaCounts
   isSelected?: boolean
   onClick?: () => void
+  onOverviewClick?: (areaKey: string) => void
   density?: 'comfortable' | 'compact'
 }
 
@@ -23,6 +24,7 @@ export function AreaOverviewCard({
   counts,
   isSelected = false,
   onClick,
+  onOverviewClick,
   density = 'comfortable'
 }: AreaOverviewCardProps) {
   const { total, critical, atRisk, ok } = counts
@@ -97,6 +99,20 @@ export function AreaOverviewCard({
               {total} total
             </span>
           </div>
+          {onOverviewClick && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOverviewClick(areaKey)
+                }}
+                className="mt-1 inline-flex items-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:text-gray-200 hover:border-indigo-300 hover:text-indigo-700 dark:hover:border-indigo-500"
+              >
+                Overview
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold', healthState.badge)}>
               <AlertTriangle className={cn('h-3.5 w-3.5', healthState.iconClass)} />
@@ -179,6 +195,7 @@ interface AreaCardsGridProps {
   }>
   selectedArea: string | null
   onSelectArea: (areaKey: string | null) => void
+  onViewOverview?: (areaKey: string) => void
   density?: 'comfortable' | 'compact'
 }
 
@@ -186,6 +203,7 @@ export function AreaCardsGrid({
   areas,
   selectedArea,
   onSelectArea,
+  onViewOverview,
   density = 'comfortable'
 }: AreaCardsGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -252,6 +270,7 @@ export function AreaCardsGrid({
               isSelected={selectedArea === areaKey}
               density={density}
               onClick={() => handleCardClick(areaKey)}
+              onOverviewClick={onViewOverview}
             />
           ))}
         </div>

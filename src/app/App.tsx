@@ -35,6 +35,7 @@ const AmbiguityBundleImportPage = lazy(() => import('./routes/AmbiguityBundleImp
 const RegistryPage = lazy(() => import('./routes/RegistryPage'))
 const AuditTrailPage = lazy(() => import('./routes/AuditTrailPage'))
 const VersionHistoryPage = lazy(() => import('./routes/VersionHistoryPage'))
+const AreaOverviewPage = lazy(() => import('./routes/AreaOverviewPage'))
 
 // Loading fallback component
 function RouteLoader() {
@@ -88,6 +89,7 @@ function App() {
                                             <Route path="registry" element={<RegistryPage />} />
                                             <Route path="audit-trail" element={<AuditTrailPage />} />
                                             <Route path="version-history" element={<VersionHistoryPage />} />
+                                            <Route path="areas/:areaKey/overview" element={<AreaOverviewPage />} />
                                         </Route>
                                     </Routes>
                                 </Suspense>

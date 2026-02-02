@@ -132,6 +132,10 @@ export function DashboardPage() {
     }
   }
 
+  const handleViewAreaOverview = (areaKey: string) => {
+    navigate(`/areas/${encodeURIComponent(areaKey)}/overview`)
+  }
+
   const handleClearAreaFilter = () => {
     setSelectedArea(null)
   }
@@ -250,6 +254,7 @@ export function DashboardPage() {
             areas={filteredAreas}
             selectedArea={selectedArea}
             onSelectArea={setSelectedArea}
+            onViewOverview={handleViewAreaOverview}
             density="comfortable"
           />
         </div>
