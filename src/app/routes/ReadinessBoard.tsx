@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
-import { useCells, useProjects, useOverviewSchedule } from '../../domain/coreStore'
+import { useCells, useProjects } from '../../domain/coreStore'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { SchedulePhase, Cell } from '../../domain/core'
 import { Filter, Calendar, User, Clock, Search, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -54,7 +54,6 @@ export function ReadinessBoard() {
     const cells = useCells()
     const projects = useProjects()
     const cellRisks = getAllCellScheduleRisks()
-    const overview = useOverviewSchedule()
     const navigate = useNavigate()
 
     const [filterPhase, setFilterPhase] = useState<SchedulePhase | 'all'>('all')
@@ -144,16 +143,6 @@ export function ReadinessBoard() {
                     />
                 }
             />
-
-            {/* Overview schedule metrics (calendar week based) */}
-            {overview && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <MetricChip label="Current Week" value={formatWeek(overview.currentWeek)} />
-                    <MetricChip label="Job Start" value={formatWeek(overview.jobStartWeek)} />
-                    <MetricChip label="Job End" value={formatWeek(overview.jobEndWeek)} />
-                    <MetricChip label="Job Duration" value={overview.completeJobDuration ? `${overview.completeJobDuration} wks` : '—'} />
-                </div>
-            )}
 
             {/* Statistics Cards */}
             {cellRisks.length > 0 && (
@@ -367,20 +356,6 @@ export function ReadinessBoard() {
 interface CellCardProps {
     cell: Cell
     risk: ReturnType<typeof getAllCellScheduleRisks>[0]
-}
-
-function formatWeek(value?: number) {
-    if (value === undefined || value === null || Number.isNaN(value)) return '—'
-    return `CW ${value}`
-}
-
-function MetricChip({ label, value }: { label: string, value: string }) {
-    return (
-        <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 shadow-sm">
-            <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</div>
-            <div className="text-sm font-bold text-gray-900 dark:text-white">{value}</div>
-        </div>
-    )
 }
 
 function CellCard({ cell, risk }: CellCardProps) {
