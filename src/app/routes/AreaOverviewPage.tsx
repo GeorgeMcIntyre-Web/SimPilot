@@ -29,6 +29,25 @@ export function AreaOverviewPage() {
         return `${pct.toFixed(1)}%`
     }
 
+    const ProgressBar = ({ value }: { value?: number }) => {
+        const pct = value === undefined || value === null || Number.isNaN(value)
+            ? 0
+            : (value > 1 ? value : value * 100)
+        const clamped = Math.max(0, Math.min(100, pct))
+        const empty = value === undefined || value === null || Number.isNaN(value)
+
+        return (
+            <div className="w-full h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                {!empty && (
+                    <div
+                        className="h-full rounded-full bg-indigo-500 transition-all"
+                        style={{ width: `${clamped}%` }}
+                    />
+                )}
+            </div>
+        )
+    }
+
     const sections: Array<{ title: string; items: { label: string; value: string }[] }> = [
         {
             title: 'Timeline',
@@ -146,16 +165,19 @@ export function AreaOverviewPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-0 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-700">
                         {readinessMetrics.map(metric => (
-                            <div key={metric.label} className="px-4 py-3 flex items-center justify-between">
-                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{metric.label}</span>
-                                <span className={cn(
-                                    "text-sm font-semibold",
-                                    metric.value === undefined || metric.value === null
-                                        ? 'text-gray-400 dark:text-gray-500'
-                                        : 'text-gray-900 dark:text-white'
-                                )}>
-                                    {formatPercent(metric.value)}
-                                </span>
+                            <div key={metric.label} className="px-4 py-3 space-y-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">{metric.label}</span>
+                                    <span className={cn(
+                                        "text-sm font-semibold",
+                                        metric.value === undefined || metric.value === null
+                                            ? 'text-gray-400 dark:text-gray-500'
+                                            : 'text-gray-900 dark:text-white'
+                                    )}>
+                                        {formatPercent(metric.value)}
+                                    </span>
+                                </div>
+                                <ProgressBar value={metric.value} />
                             </div>
                         ))}
                     </div>

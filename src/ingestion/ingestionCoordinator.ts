@@ -657,12 +657,36 @@ function buildCrossRefInputFromApplyResult(
       overallCompletion = c !== null ? c : undefined
     }
 
+    // Build readiness metrics per cell from panel milestones (for area rollups)
+    const readinessMetrics: Record<string, number | undefined> = {}
+    const pm = panelMilestones
+    const pct = (group?: { completion: number }) => (group ? group.completion : undefined)
+    readinessMetrics['ROBOT SIMULATION'] = pct(pm?.robotSimulation)
+    readinessMetrics['JOINING'] = pct(pm?.spotWelding) ?? pct(pm?.alternativeJoining)
+    readinessMetrics['GRIPPER'] = pct(pm?.gripper)
+    readinessMetrics['FIXTURE'] = pct(pm?.fixture)
+    readinessMetrics['DOCUMENTATION'] = pct(pm?.documentation)
+    readinessMetrics['MRS'] = pct(pm?.mrs)
+    readinessMetrics['OLP'] = pct(pm?.olp)
+    readinessMetrics['SAFETY'] = pct(pm?.safety)
+    readinessMetrics['CABLE & HOSE LENGTH'] = undefined // not available in milestones
+    readinessMetrics['LAYOUT'] = pct(pm?.layout)
+    readinessMetrics['1st STAGE SIM COMPLETION'] = overallCompletion ?? cell.simulation?.percentComplete
+    readinessMetrics['VC READY'] = overallCompletion ?? cell.simulation?.percentComplete
+    readinessMetrics['FINAL DELIVERABLES COMPLETION'] = cell.simulation?.percentComplete
+
+    // Merge with raw simulation metrics
+    const mergedMetrics = {
+      ...(cell.simulation?.metrics ?? {}),
+      ...readinessMetrics
+    }
+
     return {
       stationKey: cell.code,
       areaKey: areaIdToName.get(cell.areaId) || cell.areaId,
       lineCode: cell.lineCode,
       application: cell.simulation?.application,
-      metrics: cell.simulation?.metrics,
+      metrics: mergedMetrics,
       hasIssues: cell.simulation?.hasIssues,
       firstStageCompletion: overallCompletion ?? cell.simulation?.percentComplete,
       finalDeliverablesCompletion: cell.simulation?.percentComplete,
