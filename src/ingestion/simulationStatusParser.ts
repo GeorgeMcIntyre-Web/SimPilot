@@ -106,6 +106,20 @@ function parseOverviewSchedule(workbook: XLSX.WorkBook): OverviewScheduleMetrics
     metrics.currentJobDuration = metrics.currentWeek - metrics.jobStartWeek
   }
 
+  // Recompute required percentages based on refreshed currentJobDuration
+  const d = metrics.currentJobDuration
+  if (d !== undefined && d > 0) {
+    if (metrics.firstStageSimDuration && metrics.firstStageSimDuration > 0) {
+      metrics.firstStageSimRequired = d / metrics.firstStageSimDuration
+    }
+    if (metrics.jobDurationToVcStart && metrics.jobDurationToVcStart > 0) {
+      metrics.vcReadyRequired = d / metrics.jobDurationToVcStart
+    }
+    if (metrics.finalDeliverablesDuration && metrics.finalDeliverablesDuration > 0) {
+      metrics.finalDeliverablesRequired = d / metrics.finalDeliverablesDuration
+    }
+  }
+
   // If nothing was found, return undefined to avoid misleading defaults
   const hasValue = Object.values(metrics).some(v => v !== undefined)
   return hasValue ? metrics : undefined
