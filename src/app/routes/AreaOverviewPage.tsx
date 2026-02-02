@@ -40,7 +40,7 @@ export function AreaOverviewPage() {
             <div className="w-full h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
                 {!empty && (
                     <div
-                        className="h-full rounded-full bg-indigo-500 transition-all"
+                        className="h-full rounded-full bg-emerald-500 transition-all"
                         style={{ width: `${clamped}%` }}
                     />
                 )}
