@@ -95,9 +95,6 @@ export function AreaOverviewCard({
                 {ok} healthy · {atRisk} risk · {critical} critical
               </p>
             </div>
-            <span className="inline-flex items-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200 px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-indigo-100 dark:border-indigo-700">
-              {total} total
-            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold', healthState.badge)}>
