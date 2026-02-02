@@ -102,13 +102,24 @@ function parseOverviewSchedule(workbook: XLSX.WorkBook): OverviewScheduleMetrics
   const computedCurrentWeek = getWeek(new Date(), { weekStartsOn: 0 })
   metrics.currentWeek = computedCurrentWeek
 
+  // Preserve raw duration before recomputing so we can clamp sensibly
+  const rawCurrentJobDuration = metrics.currentJobDuration
+
   if (metrics.jobStartWeek !== undefined && metrics.currentWeek !== undefined) {
     metrics.currentJobDuration = metrics.currentWeek - metrics.jobStartWeek
   }
 
-  // Recompute required percentages based on refreshed currentJobDuration
-  const d = metrics.currentJobDuration
-  if (d !== undefined && d > 0) {
+  // Choose a non-negative duration: prefer recomputed, otherwise raw, clamped at 0
+  const effectiveDuration = Math.max(
+    metrics.currentJobDuration ?? Number.NEGATIVE_INFINITY,
+    rawCurrentJobDuration ?? Number.NEGATIVE_INFINITY,
+    0
+  )
+  metrics.currentJobDuration = effectiveDuration
+
+  // Recompute required percentages based on the effective duration (allows 0 → 0%)
+  const d = effectiveDuration
+  if (d >= 0) {
     if (metrics.firstStageSimDuration && metrics.firstStageSimDuration > 0) {
       metrics.firstStageSimRequired = d / metrics.firstStageSimDuration
     }
