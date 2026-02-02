@@ -660,9 +660,16 @@ function buildCrossRefInputFromApplyResult(
     // Build readiness metrics per cell from panel milestones (for area rollups)
     const readinessMetrics: Record<string, number | undefined> = {}
     const pm = panelMilestones
-    const pct = (group?: { completion: number }) => (group ? group.completion : undefined)
+    const pct = (group?: { completion: number; milestones?: Record<string, any> }) => {
+      if (!group) return undefined
+      if (typeof group.completion === 'number') return group.completion
+      const values = group.milestones ? Object.values(group.milestones).filter(v => typeof v === 'number') as number[] : []
+      if (values.length === 0) return undefined
+      const completed = values.filter(v => v === 100).length
+      return Math.round((completed / values.length) * 100)
+    }
     readinessMetrics['ROBOT SIMULATION'] = pct(pm?.robotSimulation)
-    readinessMetrics['JOINING'] = pct(pm?.spotWelding) ?? pct(pm?.alternativeJoining)
+    readinessMetrics['JOINING'] = pct(pm?.alternativeJoining) ?? pct(pm?.spotWelding)
     readinessMetrics['GRIPPER'] = pct(pm?.gripper)
     readinessMetrics['FIXTURE'] = pct(pm?.fixture)
     readinessMetrics['DOCUMENTATION'] = pct(pm?.documentation)
