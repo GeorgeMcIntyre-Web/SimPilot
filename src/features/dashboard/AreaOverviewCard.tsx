@@ -2,7 +2,7 @@
 // Card showing station health breakdown for an area
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Layers, AlertTriangle } from 'lucide-react'
+import { Layers, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { cn } from '../../ui/lib/utils'
 import { AreaCounts } from './dashboardUtils'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -99,20 +99,6 @@ export function AreaOverviewCard({
               {total} total
             </span>
           </div>
-          {onOverviewClick && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOverviewClick(areaKey)
-                }}
-                className="mt-1 inline-flex items-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:text-gray-200 hover:border-indigo-300 hover:text-indigo-700 dark:hover:border-indigo-500"
-              >
-                Overview
-              </button>
-            </div>
-          )}
           <div className="flex items-center gap-2">
             <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold', healthState.badge)}>
               <AlertTriangle className={cn('h-3.5 w-3.5', healthState.iconClass)} />
@@ -177,6 +163,23 @@ export function AreaOverviewCard({
             <span className="h-2 w-2 rounded-full bg-rose-500" />
             <span className="font-semibold text-gray-700 dark:text-gray-200">{critical}</span>
           </div>
+        </div>
+      )}
+
+      {onOverviewClick && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOverviewClick(areaKey)
+            }}
+            className="inline-flex w-full items-center justify-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-3 py-2 text-[11px] font-semibold text-gray-700 dark:text-gray-100 hover:border-indigo-300 hover:text-indigo-700 dark:hover:border-indigo-400 shadow-sm transition-colors"
+            title="Open area overview"
+          >
+            Overview
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>
