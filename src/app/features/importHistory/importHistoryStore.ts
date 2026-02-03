@@ -56,7 +56,11 @@ export function buildImportHistoryEntry(
   sourceType: ImportHistoryEntry['sourceType']
 ): ImportHistoryEntry {
   const timestamp = new Date().toISOString();
-  const filename = input.simulationFiles.map(f => f.name).join(', ') || input.equipmentFiles[0]?.name || 'Import';
+  const filenameParts = [
+    ...input.simulationFiles.map(f => f.name),
+    ...((input.equipmentFiles || []).map(f => f.name))
+  ];
+  const filename = filenameParts.length ? filenameParts.join(', ') : 'Import';
 
   const versionComparison = result.versionComparison;
   const diffResult = result.diffResult;

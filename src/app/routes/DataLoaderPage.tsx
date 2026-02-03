@@ -36,6 +36,7 @@ import { ImportHistoryTab } from '../components/dataLoader/tabs/ImportHistoryTab
 import { DiffResultsTab } from '../components/dataLoader/tabs/DiffResultsTab';
 import { useImportHistory } from '../hooks/useImportHistory';
 import { useCoreStore } from '../../domain/coreStore';
+import type { ImportHistoryEntry } from '../components/dataLoader/tabs/ImportHistoryTab';
 
 type DataLoaderTab = 'local' | 'm365' | 'simbridge' | 'health' | 'history';
 
@@ -161,6 +162,11 @@ export function DataLoaderPage() {
     localIngest.toolListFiles.length + localIngest.assembliesFiles.length;
   const m365FilesCount = m365Ingest.selectedSimIds.length + m365Ingest.selectedEqIds.length;
   const historyCount = entries.length;
+  const latestImport = entries[0];
+  const latestImportFiles = latestImport?.filename
+    ? latestImport.filename.split(',').map(f => f.trim()).filter(Boolean)
+    : [];
+  const latestImportTime = latestImport ? new Date(latestImport.timestamp).toLocaleString() : '';
 
   return (
     <div className="space-y-6" data-testid="data-loader-root">
@@ -196,6 +202,45 @@ export function DataLoaderPage() {
         onExportSnapshot={handleExportSnapshot}
         onImportSnapshot={handleImportSnapshot}
       />
+
+      {/* Section 3.5: Last Import Summary (persists across navigation) */}
+      {latestImport && (
+        <div
+          className="bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3"
+          data-testid="last-import-summary"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <History className="w-4 h-4 text-gray-600 dark:text-gray-200" />
+              <div>
+                <div className="typography-title-sm text-gray-900 dark:text-gray-50">Last import</div>
+                <div className="typography-caption text-gray-600 dark:text-gray-300">
+                  {latestImport.sourceType} • {latestImportTime} • {latestImport.status === 'clean' ? 'Clean' : 'Needs resolution'}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+              <Activity className="w-4 h-4" />
+              <span>{latestImportFiles.length} file{latestImportFiles.length === 1 ? '' : 's'}</span>
+            </div>
+          </div>
+
+          {latestImportFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {latestImportFiles.map((file) => (
+                <span
+                  key={file}
+                  className="inline-flex items-center gap-1 rounded-full bg-white text-gray-800 dark:bg-gray-700 dark:text-gray-100 border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs"
+                  title={file}
+                >
+                  <FileText className="w-3 h-3" />
+                  <span className="truncate max-w-[200px] sm:max-w-[260px] md:max-w-[320px]">{file}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Section 4: Main Tabbed Content Area */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
