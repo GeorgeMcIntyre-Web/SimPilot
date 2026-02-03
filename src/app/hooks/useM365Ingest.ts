@@ -94,7 +94,7 @@ export function useM365Ingest(hasData: boolean) {
         equipmentFiles: eqBlobsAsFiles,
         fileSources,
         dataSource: 'MS365',
-        previewOnly: hasData
+        previewOnly: hasData && simBlobsAsFiles.length > 0
       };
 
       const res = await ingestFiles(input);

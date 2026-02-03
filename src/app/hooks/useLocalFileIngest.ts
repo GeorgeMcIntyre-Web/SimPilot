@@ -72,7 +72,7 @@ export function useLocalFileIngest(hasData: boolean) {
         equipmentFiles: allEquipmentFiles,
         fileSources: {},
         dataSource: 'Local',
-        previewOnly: hasData
+        previewOnly: hasData && simulationFiles.length > 0
       };
 
       simulationFiles.forEach(f => { if (input.fileSources) input.fileSources[f.name] = 'local' });
