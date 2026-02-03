@@ -19,6 +19,7 @@ import { LinkingStatsSection } from './dataHealth/LinkingStatsSection';
 import { ErrorsSection } from './dataHealth/ErrorsSection';
 import { useDataHealth } from './dataHealth/useDataHealth';
 import { Download, FileText, FolderOpen, Cloud, Link, History, Activity } from 'lucide-react';
+import { useToast } from '../../ui/components/Toast';
 
 // Hooks
 import { useLocalFileIngest } from '../hooks/useLocalFileIngest';
@@ -60,6 +61,7 @@ export function DataLoaderPage() {
 
   const hasData = useHasSimulationData();
   const { enabled: msEnabled, isSignedIn, login } = useMsAccount();
+  const toast = useToast();
 
   // Custom hooks 
   const localIngest = useLocalFileIngest(hasData);
@@ -142,6 +144,9 @@ export function DataLoaderPage() {
     const result = await clearAllData();
     if (!result.success) {
       log.error('Failed to clear persisted data:', result.errorMessage);
+      toast.error('Failed to clear data', result.errorMessage || 'An error occurred while clearing persisted data.');
+    } else {
+      toast.success('Data cleared', 'All simulation data has been removed.');
     }
 
     setShowClearDialog(false);
@@ -156,8 +161,10 @@ export function DataLoaderPage() {
     const result = await downloadSnapshot();
     if (result.success) {
       log.info('✅ Snapshot exported successfully');
+      toast.success('Export complete', 'Snapshot has been downloaded to your device.');
     } else {
       log.error('Failed to export snapshot:', result.errorMessage);
+      toast.error('Export failed', result.errorMessage || 'Unable to export snapshot.');
     }
   };
 
@@ -170,9 +177,11 @@ export function DataLoaderPage() {
       if (loadResult.success && loadResult.snapshot) {
         coreStore.loadSnapshot(loadResult.snapshot);
         syncSimulationStore();
+        toast.success('Import complete', 'Snapshot data has been loaded successfully.');
       }
     } else if (!result.success && result.errorMessage !== 'File selection cancelled') {
       log.error('Failed to import snapshot:', result.errorMessage);
+      toast.error('Import failed', result.errorMessage || 'Unable to import snapshot file.');
     }
   };
 
@@ -181,10 +190,13 @@ export function DataLoaderPage() {
       (res) => {
         localIngest.setResult(res);
         m365Ingest.setResult(res);
+        const totalEntities = res.projectsCount + res.areasCount + res.cellsCount + res.robotsCount + res.toolsCount;
+        toast.success('Demo loaded', `${totalEntities} entities loaded from demo data.`);
       },
       (err) => {
         localIngest.setError(err);
         m365Ingest.setM365Error(err);
+        toast.error('Demo load failed', err || undefined);
       }
     );
   };

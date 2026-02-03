@@ -8,6 +8,7 @@ import { PersistenceManager } from '../persistence/PersistenceManager'
 import { AuthGate } from '../auth'
 import { ThemeProvider } from '../ui/ThemeContext'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+import { ToastProvider } from '../ui/components/Toast'
 
 // Lazy load all route components for code splitting
 const DashboardPage = lazy(() => import('./routes/DashboardPage'))
@@ -55,8 +56,9 @@ function App() {
             <MsAuthProvider>
                 <GlobalBusyProvider>
                     <ThemeProvider>
-                        <PersistenceManager />
-                        <BrowserRouter>
+                        <ToastProvider>
+                            <PersistenceManager />
+                            <BrowserRouter>
                             <ErrorBoundary>
                                 <Suspense fallback={<RouteLoader />}>
                                     <Routes>
@@ -93,8 +95,9 @@ function App() {
                                     </Routes>
                                 </Suspense>
                             </ErrorBoundary>
-                            <DevDiagnostics />
-                        </BrowserRouter>
+                                <DevDiagnostics />
+                            </BrowserRouter>
+                        </ToastProvider>
                     </ThemeProvider>
                 </GlobalBusyProvider>
             </MsAuthProvider>

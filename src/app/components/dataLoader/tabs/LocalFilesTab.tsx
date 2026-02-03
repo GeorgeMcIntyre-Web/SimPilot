@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronRight, FileSpreadsheet, X, Upload, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileSpreadsheet, X, Upload, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
 import { FileDropzone } from '../FileDropzone';
 import { cn } from '../../../../ui/lib/utils';
 import { detectFileType, getFileTypeColor, getFileTypeLabel } from '../utils/fileTypeDetection';
+import { ErrorDisplay } from '../ErrorDisplay';
+import { IngestionProgress } from '../IngestionProgress';
 
 interface LocalFilesTabProps {
   simulationFiles: File[];
@@ -281,35 +283,34 @@ export function LocalFilesTab({
         ))}
       </div>
 
-      {/* Error display */}
-      {error && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/30 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-red-400" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <h3 className="typography-body-strong text-red-800 dark:text-red-200">Error</h3>
-              <div className="mt-2 typography-body text-red-700 dark:text-red-300">
-                <p>{error}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Ingestion Progress */}
+      {isIngesting && (
+        <IngestionProgress isIngesting={isIngesting} fileCount={totalFiles} />
+      )}
+
+      {/* Error display with actionable suggestions */}
+      {error && !isIngesting && (
+        <ErrorDisplay
+          error={error}
+          onRetry={hasFiles ? onIngest : undefined}
+        />
       )}
 
       {/* Action button */}
-      <div className="flex justify-end pt-2">
-        <button
-          onClick={onIngest}
-          disabled={isIngesting || !hasFiles}
-          data-testid="local-ingest-button"
-          data-testid-ingest="ingest-files-button"
-          className="inline-flex items-center px-4 py-2 border border-transparent typography-body-strong rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isIngesting ? 'Processing...' : 'Parse & Load Local Files'}
-        </button>
-      </div>
+      {!isIngesting && (
+        <div className="flex justify-end pt-2">
+          <button
+            onClick={onIngest}
+            disabled={isIngesting || !hasFiles}
+            data-testid="local-ingest-button"
+            data-testid-ingest="ingest-files-button"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-transparent typography-body-strong rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Upload className="w-4 h-4" />
+            Parse & Load Local Files
+          </button>
+        </div>
+      )}
     </div>
   );
 }
