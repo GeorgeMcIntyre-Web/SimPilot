@@ -17,7 +17,7 @@ import { ReuseSummarySection } from './dataHealth/ReuseSummarySection';
 import { LinkingStatsSection } from './dataHealth/LinkingStatsSection';
 import { ErrorsSection } from './dataHealth/ErrorsSection';
 import { useDataHealth } from './dataHealth/useDataHealth';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, FolderOpen, Cloud, Link, History, Activity } from 'lucide-react';
 
 // Hooks
 import { useLocalFileIngest } from '../hooks/useLocalFileIngest';
@@ -26,7 +26,7 @@ import { useSimBridge } from '../hooks/useSimBridge';
 import { useDemoScenario } from '../hooks/useDemoScenario';
 
 // Components
-import { DemoScenarioSection } from '../components/dataLoader/sections/DemoScenarioSection';
+import { QuickActionsBar } from '../components/dataLoader/sections/QuickActionsBar';
 import { IngestionResults } from '../components/dataLoader/sections/IngestionResults';
 import { ClearDataDialog } from '../components/dataLoader/dialogs/ClearDataDialog';
 import { LocalFilesTab } from '../components/dataLoader/tabs/LocalFilesTab';
@@ -156,15 +156,23 @@ export function DataLoaderPage() {
     );
   };
 
+  // Count files for badge display
+  const localFilesCount = localIngest.simulationFiles.length + localIngest.equipmentFiles.length +
+    localIngest.toolListFiles.length + localIngest.assembliesFiles.length;
+  const m365FilesCount = m365Ingest.selectedSimIds.length + m365Ingest.selectedEqIds.length;
+  const historyCount = entries.length;
+
   return (
     <div className="space-y-6" data-testid="data-loader-root">
+      {/* Section 1: Header */}
       <PageHeader
         title="Data Loader"
         subtitle="Import simulation status and equipment lists from Excel files."
       />
 
+      {/* Section 2: Quick Start Banner (only when no data) */}
       {!hasData && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
           <div className="flex-shrink-0">
             <span className="text-xl">💡</span>
           </div>
@@ -178,7 +186,8 @@ export function DataLoaderPage() {
         </div>
       )}
 
-      <DemoScenarioSection
+      {/* Section 3: Quick Actions (Demo, Clear, Export/Import) */}
+      <QuickActionsBar
         selectedDemoId={demoScenario.selectedDemoId}
         demoScenarios={demoScenario.demoScenarios}
         onDemoIdChange={demoScenario.setSelectedDemoId}
@@ -188,68 +197,98 @@ export function DataLoaderPage() {
         onImportSnapshot={handleImportSnapshot}
       />
 
-      {/* Ingestion Section */}
+      {/* Section 4: Main Tabbed Content Area */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        {/* Tab Navigation */}
         <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="-mb-px flex" aria-label="Tabs">
+            {/* Local Files Tab */}
             <button
               onClick={() => setActiveTab('local')}
               data-testid="tab-local-files"
               className={cn(
-                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'local'
-                  ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30"
+                  ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-900/10"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-rose-200 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
-              Local Files
+              <FolderOpen className="w-4 h-4" />
+              <span>Local Files</span>
+              {localFilesCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
+                  {localFilesCount}
+                </span>
+              )}
             </button>
+
+            {/* Microsoft 365 Tab */}
             {msEnabled && (
               <button
                 onClick={() => setActiveTab('m365')}
                 className={cn(
-                  "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                  "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                   activeTab === 'm365'
-                    ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30"
+                    ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-900/10"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-rose-200 dark:text-gray-400 dark:hover:text-gray-300"
                 )}
               >
-                Microsoft 365
+                <Cloud className="w-4 h-4" />
+                <span>Microsoft 365</span>
+                {m365FilesCount > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
+                    {m365FilesCount}
+                  </span>
+                )}
               </button>
             )}
+
+            {/* SimBridge Tab */}
             <button
               onClick={() => setActiveTab('simbridge')}
               className={cn(
-                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'simbridge'
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/10"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
-              SimBridge
+              <Link className="w-4 h-4" />
+              <span>SimBridge</span>
             </button>
+
+            {/* Import History Tab */}
             <button
               onClick={() => setActiveTab('history')}
               data-testid="tab-import-history"
               className={cn(
-                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'history'
-                  ? "border-amber-500 text-amber-700 dark:text-amber-300 bg-amber-50/40"
+                  ? "border-amber-500 text-amber-700 dark:text-amber-300 bg-amber-50/40 dark:bg-amber-900/10"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-amber-200 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
-              Import History
+              <History className="w-4 h-4" />
+              <span>Import History</span>
+              {historyCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                  {historyCount}
+                </span>
+              )}
             </button>
+
+            {/* Data Health Tab */}
             <button
               onClick={() => setActiveTab('health')}
               className={cn(
-                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'health'
-                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50/40"
+                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50/40 dark:bg-emerald-900/10"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-emerald-200 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
-              Data Health
+              <Activity className="w-4 h-4" />
+              <span>Data Health</span>
             </button>
           </nav>
         </div>
@@ -335,7 +374,7 @@ export function DataLoaderPage() {
         </div>
       </div>
 
-      {/* Results Section */}
+      {/* Section 5: Ingestion Results (conditionally displayed) */}
       {result && <IngestionResults result={result} />}
 
       {/* Version Comparison Modal */}
