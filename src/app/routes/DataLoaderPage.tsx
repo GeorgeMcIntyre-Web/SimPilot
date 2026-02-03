@@ -35,6 +35,7 @@ import { M365Tab } from '../components/dataLoader/tabs/M365Tab';
 import { SimBridgeTab } from '../components/dataLoader/tabs/SimBridgeTab';
 import { ImportHistoryTab } from '../components/dataLoader/tabs/ImportHistoryTab';
 import { DiffResultsTab } from '../components/dataLoader/tabs/DiffResultsTab';
+import { GuidedWorkflow } from '../components/dataLoader/GuidedWorkflow';
 import { useImportHistory } from '../hooks/useImportHistory';
 import { useCoreStore } from '../../domain/coreStore';
 import type { ImportHistoryEntry } from '../components/dataLoader/tabs/ImportHistoryTab';
@@ -202,21 +203,17 @@ export function DataLoaderPage() {
         subtitle="Import simulation status and equipment lists from Excel files."
       />
 
-      {/* Section 2: Quick Start Banner (only when no data) */}
-      {!hasData && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <span className="text-xl">💡</span>
-          </div>
-          <div>
-            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">New here? Try the Fast Path</h4>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              To see SimPilot in action immediately, use the <strong>Load Demo Scenario</strong> button below (select <em>STLA_SAMPLE</em>).
-              For real projects, upload your Excel status files in the "Local Files" tab.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Section 2: Guided Workflow (for new users without data) */}
+      <GuidedWorkflow
+        hasFiles={localFilesCount > 0}
+        hasData={hasData}
+        isIngesting={localIngest.isIngesting}
+        onStartUpload={() => {
+          handleTabChange('local');
+          // Focus on local files tab - the collapsible sections will guide the user
+        }}
+        onLoadDemo={handleLoadDemo}
+      />
 
       {/* Section 3: Quick Actions (Demo, Clear, Export/Import) */}
       <QuickActionsBar
