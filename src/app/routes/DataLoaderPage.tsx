@@ -48,9 +48,10 @@ export function DataLoaderPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const storedTab = getUserPreference('simpilot.dataloader.tab', 'local') as DataLoaderTab;
   const paramTab = searchParams.get('tab') as DataLoaderTab | null;
-  const initialTab: DataLoaderTab = paramTab && allowedTabs.includes(paramTab)
-    ? paramTab
-    : (allowedTabs.includes(storedTab) ? storedTab : 'local');
+  const initialTab: DataLoaderTab =
+    (paramTab && allowedTabs.includes(paramTab))
+      ? paramTab
+      : (allowedTabs.includes(storedTab) ? storedTab : 'local');
 
   const [activeTab, setActiveTab] = useState<DataLoaderTab>(initialTab);
   const [historyView, setHistoryView] = useState<'history' | 'diff'>('history');
@@ -75,22 +76,20 @@ export function DataLoaderPage() {
   const latestLocalFiles = filesFromEntry(latestLocalImport);
   const latestM365Files = filesFromEntry(latestM365Import);
 
-  // Sync URL ?tab param -> state
+  const handleTabChange = (tab: DataLoaderTab) => {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', tab);
+    setSearchParams(params, { replace: true });
+  };
+
+  // Respond to external tab param changes (e.g., direct links)
+  const tabParam = searchParams.get('tab') as DataLoaderTab | null;
   useEffect(() => {
-    const tabParam = searchParams.get('tab') as DataLoaderTab | null;
     if (tabParam && allowedTabs.includes(tabParam) && tabParam !== activeTab) {
       setActiveTab(tabParam);
     }
-  }, [searchParams, activeTab]);
-
-  // Keep URL in sync with current tab (preserve other params)
-  useEffect(() => {
-    const current = searchParams.get('tab');
-    if (current === activeTab) return;
-    const params = new URLSearchParams(searchParams);
-    params.set('tab', activeTab);
-    setSearchParams(params, { replace: true });
-  }, [activeTab, searchParams, setSearchParams]);
+  }, [tabParam, activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setUserPreference('simpilot.dataloader.tab', activeTab);
@@ -237,7 +236,7 @@ export function DataLoaderPage() {
           <nav className="-mb-px flex" aria-label="Tabs">
             {/* Local Files Tab */}
             <button
-              onClick={() => setActiveTab('local')}
+              onClick={() => handleTabChange('local')}
               data-testid="tab-local-files"
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
@@ -258,7 +257,7 @@ export function DataLoaderPage() {
             {/* Microsoft 365 Tab */}
             {msEnabled && (
               <button
-                onClick={() => setActiveTab('m365')}
+                onClick={() => handleTabChange('m365')}
                 className={cn(
                   "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                   activeTab === 'm365'
@@ -278,7 +277,7 @@ export function DataLoaderPage() {
 
             {/* SimBridge Tab */}
             <button
-              onClick={() => setActiveTab('simbridge')}
+              onClick={() => handleTabChange('simbridge')}
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'simbridge'
@@ -292,7 +291,7 @@ export function DataLoaderPage() {
 
             {/* Import History Tab */}
             <button
-              onClick={() => setActiveTab('history')}
+              onClick={() => handleTabChange('history')}
               data-testid="tab-import-history"
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
@@ -312,7 +311,7 @@ export function DataLoaderPage() {
 
             {/* Data Health Tab */}
             <button
-              onClick={() => setActiveTab('health')}
+              onClick={() => handleTabChange('health')}
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'health'
