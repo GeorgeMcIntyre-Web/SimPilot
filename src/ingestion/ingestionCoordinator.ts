@@ -1149,7 +1149,9 @@ async function ingestFilesInternal(
   const sourceFileName = input.simulationFiles[0]?.name || input.equipmentFiles[0]?.name || 'unknown'
   const importSourceType: ImportSourceType = input.simulationFiles.length > 0 ? 'simulationStatus' :
     input.equipmentFiles.length > 0 ? 'toolList' : 'toolList'
-  const importRunId = crypto.randomUUID()
+  const importRunId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `${Math.random().toString(16).slice(2)}-${Date.now()}`
   const modelKey = inferModelKeyFromFilename(sourceFileName)
   const diffResult: DiffResult = buildDiffResultFromVersionComparison(
     importRunId,
