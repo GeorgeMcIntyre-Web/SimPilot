@@ -10,6 +10,7 @@ interface FileDropzoneProps {
   placeholder?: string;
   testId?: string;
   required?: boolean;
+  compact?: boolean;
 }
 
 export function FileDropzone({
@@ -18,7 +19,8 @@ export function FileDropzone({
   onFilesAdded,
   placeholder = "Drag & drop files here, or click to select",
   testId,
-  required = false
+  required = false,
+  compact = false
 }: FileDropzoneProps) {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     onFilesAdded(acceptedFiles);
@@ -31,25 +33,28 @@ export function FileDropzone({
 
   return (
     <div>
-      <label className="block typography-body-strong text-gray-700 dark:text-gray-300 mb-2">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
+      {label && (
+        <label className="block typography-body-strong text-gray-700 dark:text-gray-300 mb-2">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
       <div
         {...getRootProps()}
         className={cn(
-          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+          "border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
+          compact ? "p-4" : "p-6",
           isDragActive
             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
             : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
         )}
       >
         <input {...getInputProps()} data-testid={testId} />
-        <Upload className="mx-auto h-10 w-10 text-gray-400" />
-        <p className="mt-2 typography-caption text-gray-600 dark:text-gray-400">
+        <Upload className={cn("mx-auto text-gray-400", compact ? "h-8 w-8" : "h-10 w-10")} />
+        <p className={cn("mt-2 text-gray-600 dark:text-gray-400", compact ? "text-xs" : "typography-caption")}>
           {placeholder}
         </p>
       </div>
-      {files.length > 0 && (
+      {files.length > 0 && !compact && (
         <ul className="mt-2 typography-caption text-gray-500 dark:text-gray-400">
           {files.map((file, idx) => (
             <li key={idx} className="flex items-center">
