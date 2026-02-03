@@ -217,7 +217,14 @@ export function EngineersPage() {
     }, [selectedEngineerName]);
 
     const cellColumns: Column<Cell>[] = [
-        { header: 'Cell Name', accessor: (c) => <Link to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`} className="text-blue-600 hover:underline">{c.name}</Link> },
+        { header: 'Cell Name', accessor: (c) => (
+            <Link
+                to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`}
+                className="font-medium text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-700 dark:hover:text-blue-300"
+            >
+                {c.name}
+            </Link>
+        ) },
         { header: 'Station', accessor: (c) => c.code || '-' },
         { header: 'Line', accessor: (c) => c.lineCode || '-' },
         { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },

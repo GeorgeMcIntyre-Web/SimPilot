@@ -50,7 +50,7 @@ export function ProjectDetailPage() {
                 return (
                     <Link
                         to={`/cells/${encodeURIComponent(c.id)}`}
-                        className="text-blue-600 hover:underline font-medium"
+                        className="font-medium text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-700 dark:hover:text-blue-300"
                     >
                         {stationLabel || '-'}
                     </Link>
@@ -73,7 +73,7 @@ export function ProjectDetailPage() {
                 return (
                     <Link
                         to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
-                        className="text-blue-600 hover:underline font-medium"
+                        className="font-medium text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-700 dark:hover:text-blue-300"
                     >
                         {engineer}
                     </Link>
