@@ -8,6 +8,7 @@ interface LocalFilesTabProps {
   equipmentFiles: File[];
   toolListFiles: File[];
   assembliesFiles: File[];
+  importedFiles?: string[];
   onSimulationFilesAdded: (files: File[]) => void;
   onEquipmentFilesAdded: (files: File[]) => void;
   onToolListFilesAdded: (files: File[]) => void;
@@ -132,6 +133,7 @@ export function LocalFilesTab({
   equipmentFiles,
   toolListFiles,
   assembliesFiles,
+  importedFiles = [],
   onSimulationFilesAdded,
   onEquipmentFilesAdded,
   onToolListFilesAdded,
@@ -226,6 +228,24 @@ export function LocalFilesTab({
           All file types are optional
         </span>
       </div>
+
+      {/* Last imported files (persisted) */}
+      {importedFiles.length > 0 && (
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3">
+          <div className="typography-caption text-gray-600 dark:text-gray-300 mb-2">Last imported files</div>
+          <div className="flex flex-wrap gap-2">
+            {importedFiles.map((file) => (
+              <span
+                key={file}
+                className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs text-gray-800 dark:text-gray-100"
+                title={file}
+              >
+                {file}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Collapsible file sections */}
       <div className="space-y-2">

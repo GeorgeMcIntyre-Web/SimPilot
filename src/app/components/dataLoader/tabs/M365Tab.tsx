@@ -7,6 +7,7 @@ interface M365TabProps {
   m365Items: MsExcelFileItem[];
   selectedSimIds: string[];
   selectedEqIds: string[];
+  importedFiles?: string[];
   isLoadingM365: boolean;
   isIngesting: boolean;
   m365Error: string | null;
@@ -21,6 +22,7 @@ export function M365Tab({
   m365Items,
   selectedSimIds,
   selectedEqIds,
+  importedFiles = [],
   isLoadingM365,
   isIngesting,
   m365Error,
@@ -52,6 +54,23 @@ export function M365Tab({
 
   return (
     <div className="space-y-6">
+      {importedFiles.length > 0 && (
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/60 p-3">
+          <div className="typography-caption text-gray-600 dark:text-gray-300 mb-2">Last imported files</div>
+          <div className="flex flex-wrap gap-2">
+            {importedFiles.map((file) => (
+              <span
+                key={file}
+                className="inline-flex items-center gap-1 rounded-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 px-2 py-1 text-xs text-gray-800 dark:text-gray-100"
+                title={file}
+              >
+                {file}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <p className="typography-subtitle text-gray-500 dark:text-gray-400">
           Select files from your configured SharePoint folder.
