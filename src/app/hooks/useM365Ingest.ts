@@ -82,8 +82,11 @@ export function useM365Ingest(hasData: boolean) {
         }
       }
 
-      if (simBlobsAsFiles.length === 0) {
-        throw new Error("Failed to download any simulation files.");
+      if (!hasData && simBlobsAsFiles.length === 0) {
+        throw new Error("At least one Simulation Status file is required for the first load.");
+      }
+      if (simBlobsAsFiles.length === 0 && eqBlobsAsFiles.length === 0) {
+        throw new Error("No files could be downloaded.");
       }
 
       const input: IngestFilesInput = {

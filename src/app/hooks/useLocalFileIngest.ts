@@ -48,8 +48,16 @@ export function useLocalFileIngest(hasData: boolean) {
   }, []);
 
   const handleIngest = async () => {
-    if (simulationFiles.length === 0) {
-      setError("At least one Simulation Status file is required.");
+    const allEquipmentFiles = [...equipmentFiles, ...toolListFiles, ...assembliesFiles];
+    const totalFiles = simulationFiles.length + allEquipmentFiles.length;
+
+    if (totalFiles === 0) {
+      setError("Select at least one file to load.");
+      return;
+    }
+
+    if (!hasData && simulationFiles.length === 0) {
+      setError("At least one Simulation Status file is required for the first load.");
       return;
     }
 
@@ -59,8 +67,6 @@ export function useLocalFileIngest(hasData: boolean) {
     setResult(null);
 
     try {
-      const allEquipmentFiles = [...equipmentFiles, ...toolListFiles, ...assembliesFiles];
-
       const input: IngestFilesInput = {
         simulationFiles,
         equipmentFiles: allEquipmentFiles,
