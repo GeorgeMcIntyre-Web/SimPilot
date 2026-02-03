@@ -26,6 +26,7 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
   const completion = getCompletionPercent(cell);
   const stationLabel = getStationLabel(cell);
   const simulator = cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED';
+  const robotCount = cell.robots?.length ?? 0;
   // Align with Robot Status table: use text-sm and py-3 even in compact mode.
   const rowPad = density === 'compact' ? 'py-3' : 'py-3';
   const textSize = 'text-sm';
@@ -63,6 +64,12 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
             {simulator}
           </Link>
         )}
+      </td>
+
+      <td className={cn('whitespace-nowrap px-3', rowPad)}>
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-white text-gray-700 border border-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700">
+          <span className="leading-none">{robotCount}</span>
+        </span>
       </td>
 
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
