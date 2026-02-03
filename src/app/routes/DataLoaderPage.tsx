@@ -32,11 +32,21 @@ import { ClearDataDialog } from '../components/dataLoader/dialogs/ClearDataDialo
 import { LocalFilesTab } from '../components/dataLoader/tabs/LocalFilesTab';
 import { M365Tab } from '../components/dataLoader/tabs/M365Tab';
 import { SimBridgeTab } from '../components/dataLoader/tabs/SimBridgeTab';
+import { ImportHistoryTab } from '../components/dataLoader/tabs/ImportHistoryTab';
+import { DiffResultsTab } from '../components/dataLoader/tabs/DiffResultsTab';
+import { useImportHistory } from '../hooks/useImportHistory';
+import { useCoreStore } from '../../domain/coreStore';
+
+type DataLoaderTab = 'local' | 'm365' | 'simbridge' | 'health' | 'history';
+
+const allowedTabs: DataLoaderTab[] = ['local', 'm365', 'simbridge', 'health', 'history'];
 
 export function DataLoaderPage() {
-  const [activeTab, setActiveTab] = useState<'local' | 'm365' | 'simbridge' | 'health'>(
-    () => getUserPreference('simpilot.dataloader.tab', 'local') as any
-  );
+  const storedTab = getUserPreference('simpilot.dataloader.tab', 'local') as DataLoaderTab;
+  const initialTab: DataLoaderTab = allowedTabs.includes(storedTab) ? storedTab : 'local';
+
+  const [activeTab, setActiveTab] = useState<DataLoaderTab>(initialTab);
+  const [historyView, setHistoryView] = useState<'history' | 'diff'>('history');
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   const hasData = useHasSimulationData();
@@ -47,10 +57,19 @@ export function DataLoaderPage() {
   const m365Ingest = useM365Ingest(hasData);
   const simBridge = useSimBridge(activeTab === 'simbridge');
   const demoScenario = useDemoScenario();
+  const { entries } = useImportHistory();
+  const { diffResults } = useCoreStore();
 
   useEffect(() => {
     setUserPreference('simpilot.dataloader.tab', activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    // If user had m365 selected but feature is disabled, fall back to local
+    if (!msEnabled && activeTab === 'm365') {
+      setActiveTab('local');
+    }
+  }, [msEnabled, activeTab]);
 
   // Unified result display (from either local or M365 ingestion)
   const result = localIngest.result || m365Ingest.result;
@@ -210,6 +229,18 @@ export function DataLoaderPage() {
               SimBridge
             </button>
             <button
+              onClick={() => setActiveTab('history')}
+              data-testid="tab-import-history"
+              className={cn(
+                "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
+                activeTab === 'history'
+                  ? "border-amber-500 text-amber-700 dark:text-amber-300 bg-amber-50/40"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-amber-200 dark:text-gray-400 dark:hover:text-gray-300"
+              )}
+            >
+              Import History
+            </button>
+            <button
               onClick={() => setActiveTab('health')}
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors",
@@ -265,6 +296,39 @@ export function DataLoaderPage() {
               onStudyPathChange={simBridge.setSbStudyPath}
               onLoadStudy={simBridge.handleLoadStudy}
             />
+          )}
+
+          {activeTab === 'history' && (
+            <div className="space-y-4" data-testid="import-history-panel">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="typography-title-sm text-gray-900 dark:text-white">Import History</div>
+                  <div className="typography-subtitle text-gray-600 dark:text-gray-300">
+                    Review recent imports, warnings, and diffs without leaving Data Loader.
+                  </div>
+                </div>
+                <div className="inline-flex items-center rounded-md border border-gray-300 bg-white px-1 py-1 text-sm font-medium text-gray-700 shadow-sm dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600">
+                  <button
+                    onClick={() => setHistoryView('history')}
+                    className={`px-3 py-1 rounded-md ${historyView === 'history' ? 'bg-gray-200 dark:bg-gray-600 font-semibold' : ''}`}
+                  >
+                    History
+                  </button>
+                  <button
+                    onClick={() => setHistoryView('diff')}
+                    className={`px-3 py-1 rounded-md ${historyView === 'diff' ? 'bg-gray-200 dark:bg-gray-600 font-semibold' : ''}`}
+                  >
+                    Diff Results
+                  </button>
+                </div>
+              </div>
+
+              {historyView === 'history' ? (
+                <ImportHistoryTab entries={entries} />
+              ) : (
+                <DiffResultsTab diffResults={diffResults} />
+              )}
+            </div>
           )}
 
           {activeTab === 'health' && <DataHealthTab />}
