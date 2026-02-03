@@ -37,6 +37,7 @@ import { DiffResultsTab } from '../components/dataLoader/tabs/DiffResultsTab';
 import { useImportHistory } from '../hooks/useImportHistory';
 import { useCoreStore } from '../../domain/coreStore';
 import type { ImportHistoryEntry } from '../components/dataLoader/tabs/ImportHistoryTab';
+import { clearImportHistory } from '../features/importHistory/importHistoryStore';
 
 type DataLoaderTab = 'local' | 'm365' | 'simbridge' | 'health' | 'history';
 
@@ -105,6 +106,7 @@ export function DataLoaderPage() {
     localIngest.setError(null);
     m365Ingest.setResult(null);
     m365Ingest.setM365Error(null);
+    clearImportHistory();
 
     // Clear persisted data in IndexedDB
     const result = await clearAllData();
