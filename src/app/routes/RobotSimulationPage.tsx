@@ -40,10 +40,23 @@ const getPanelCompletion = (
   if (!panelMilestones) return null
   const group = panelMilestones[panelType]
   if (!group) return null
+
+  // Prefer explicit completion if present
+  if (typeof group.completion === 'number' && Number.isFinite(group.completion)) {
+    return group.completion
+  }
+  const coerced = Number(group.completion)
+  if (Number.isFinite(coerced)) return coerced
+
+  // Fallback: derive from milestone values (allow numeric strings)
   const values = Object.values(group.milestones)
-  const hasNumeric = values.some(v => typeof v === 'number')
-  if (!hasNumeric) return null
-  return group.completion
+  const numericValues = values
+    .map(v => (typeof v === 'number' ? v : Number(v)))
+    .filter(v => Number.isFinite(v))
+
+  if (numericValues.length === 0) return null
+  const avg = numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length
+  return Math.round(avg)
 }
 
 /**
