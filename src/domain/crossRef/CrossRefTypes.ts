@@ -148,15 +148,12 @@ export interface CellSnapshot {
   displayCode: string
   areaKey?: AreaKey
   lineCode?: string
-
   simulationStatus?: SimulationStatusSnapshot
-
   tools: ToolSnapshot[]
   robots: RobotSnapshot[]
   weldGuns: WeldGunSnapshot[]
   gunForces: GunForceSnapshot[]
   risers: RiserSnapshot[]
-
   flags: CrossRefFlag[]
 }
 
