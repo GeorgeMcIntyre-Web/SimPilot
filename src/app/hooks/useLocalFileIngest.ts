@@ -80,7 +80,12 @@ export function useLocalFileIngest(hasData: boolean) {
 
       const res = await ingestFiles(input);
 
-      if (hasData && res.versionComparison) {
+      // Only show version comparison modal when importing simulation files with existing data.
+      // Equipment-only imports (robot lists, tool lists, assemblies) should be applied directly
+      // without requiring user confirmation, since they're additive and don't replace simulation data.
+      const shouldShowVersionComparison = hasData && simulationFiles.length > 0 && res.versionComparison;
+
+      if (shouldShowVersionComparison && res.versionComparison) {
         setVersionComparison(res.versionComparison);
         setPendingIngestInput(input);
         setShowVersionComparison(true);

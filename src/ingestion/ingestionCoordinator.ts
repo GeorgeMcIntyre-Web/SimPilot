@@ -801,13 +801,38 @@ function buildCrossRefInputFromApplyResult(
 export async function ingestFiles(
   input: IngestFilesInput
 ): Promise<IngestFilesResult> {
-  // Validate input - require at least one simulation file
-  if (input.simulationFiles.length === 0) {
+  // Check if we have existing data in the store (allows equipment-only imports after initial load)
+  const currentState = coreStore.getState()
+  const hasExistingData = currentState.projects.length > 0 && currentState.cells.length > 0
+
+  // Validate input - require at least one simulation file for initial load,
+  // but allow equipment-only imports if simulation data already exists
+  if (input.simulationFiles.length === 0 && !hasExistingData) {
     const warning: IngestionWarning = {
       id: 'no-simulation-files',
       kind: 'PARSER_ERROR',
       fileName: '',
-      message: 'At least one Simulation Status file is required. Please upload a file containing project and cell data.',
+      message: 'At least one Simulation Status file is required for the first load. Please upload a file containing project and cell data.',
+      createdAt: new Date().toISOString()
+    }
+
+    return {
+      projectsCount: 0,
+      areasCount: 0,
+      cellsCount: 0,
+      robotsCount: 0,
+      toolsCount: 0,
+      warnings: [warning]
+    }
+  }
+
+  // Validate that we have at least one file to process
+  if (input.simulationFiles.length === 0 && input.equipmentFiles.length === 0) {
+    const warning: IngestionWarning = {
+      id: 'no-files',
+      kind: 'PARSER_ERROR',
+      fileName: '',
+      message: 'No files provided. Please select at least one file to import.',
       createdAt: new Date().toISOString()
     }
 
