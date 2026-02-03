@@ -32,7 +32,7 @@ export function QuickActionsBar({
             value={selectedDemoId}
             onChange={(e) => onDemoIdChange(e.target.value as DemoScenarioId)}
             data-testid="demo-scenario-select"
-            className="block pl-3 pr-8 py-1.5 text-sm border-gray-300 focus:outline-none focus:ring-rose-500 focus:border-rose-500 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className="block pl-3 pr-8 py-1.5 text-sm border-gray-300 focus:outline-none focus:ring-gray-500 focus:border-gray-500 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
             {demoScenarios.map(scenario => (
               <option key={scenario.id} value={scenario.id}>
@@ -43,7 +43,7 @@ export function QuickActionsBar({
           <button
             onClick={onLoadDemo}
             data-testid="demo-load-button"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-800 dark:bg-gray-200 dark:text-gray-900 hover:bg-gray-900 dark:hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
           >
             <Play className="w-3.5 h-3.5" />
             Load

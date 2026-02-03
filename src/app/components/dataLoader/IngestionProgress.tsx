@@ -65,11 +65,11 @@ export function IngestionProgress({ isIngesting, fileCount }: IngestionProgressP
   if (!isIngesting) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-lg p-4 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="relative">
-          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+          <Loader2 className="w-6 h-6 text-gray-600 dark:text-gray-400 animate-spin" />
         </div>
         <div>
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -89,7 +89,7 @@ export function IngestionProgress({ isIngesting, fileCount }: IngestionProgressP
         </div>
         <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-gray-600 to-gray-700 dark:from-gray-400 dark:to-gray-500 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -106,9 +106,9 @@ export function IngestionProgress({ isIngesting, fileCount }: IngestionProgressP
               <div className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center transition-all",
                 isCompleted
-                  ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400"
+                  ? "bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900"
                   : isCurrent
-                    ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800"
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ring-2 ring-gray-500 dark:ring-gray-400 ring-offset-2 dark:ring-offset-gray-800"
                     : "bg-gray-100 dark:bg-gray-700 text-gray-400"
               )}>
                 {isCompleted ? (
@@ -122,9 +122,9 @@ export function IngestionProgress({ isIngesting, fileCount }: IngestionProgressP
               <span className={cn(
                 "mt-1 text-xs whitespace-nowrap",
                 isCurrent
-                  ? "text-blue-600 dark:text-blue-400 font-medium"
+                  ? "text-gray-700 dark:text-gray-300 font-medium"
                   : isCompleted
-                    ? "text-emerald-600 dark:text-emerald-400"
+                    ? "text-gray-600 dark:text-gray-400"
                     : "text-gray-400"
               )}>
                 {stage.label.split(' ')[0]}
@@ -140,7 +140,7 @@ export function IngestionProgress({ isIngesting, fileCount }: IngestionProgressP
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce"
+              className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-gray-400 animate-bounce"
               style={{ animationDelay: `${i * 150}ms` }}
             />
           ))}

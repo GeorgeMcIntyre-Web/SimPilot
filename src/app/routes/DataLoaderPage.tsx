@@ -250,14 +250,14 @@ export function DataLoaderPage() {
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'local'
-                  ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-900/10"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-rose-200 dark:text-gray-400 dark:hover:text-gray-300"
+                  ? "border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-100/50 dark:bg-gray-700/30"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
               <FolderOpen className="w-4 h-4" />
               <span>Local Files</span>
               {localFilesCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200">
                   {localFilesCount}
                 </span>
               )}
@@ -270,14 +270,14 @@ export function DataLoaderPage() {
                 className={cn(
                   "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                   activeTab === 'm365'
-                    ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50/30 dark:bg-rose-900/10"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-rose-200 dark:text-gray-400 dark:hover:text-gray-300"
+                    ? "border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-100/50 dark:bg-gray-700/30"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
                 )}
               >
                 <Cloud className="w-4 h-4" />
                 <span>Microsoft 365</span>
                 {m365FilesCount > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300">
+                  <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200">
                     {m365FilesCount}
                   </span>
                 )}
@@ -290,7 +290,7 @@ export function DataLoaderPage() {
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'simbridge'
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/30 dark:bg-blue-900/10"
+                  ? "border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-100/50 dark:bg-gray-700/30"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
@@ -305,14 +305,14 @@ export function DataLoaderPage() {
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'history'
-                  ? "border-amber-500 text-amber-700 dark:text-amber-300 bg-amber-50/40 dark:bg-amber-900/10"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-amber-200 dark:text-gray-400 dark:hover:text-gray-300"
+                  ? "border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-100/50 dark:bg-gray-700/30"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
               <History className="w-4 h-4" />
               <span>Import History</span>
               {historyCount > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-200">
                   {historyCount}
                 </span>
               )}
@@ -324,8 +324,8 @@ export function DataLoaderPage() {
               className={cn(
                 "flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm transition-colors flex items-center justify-center gap-2",
                 activeTab === 'health'
-                  ? "border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50/40 dark:bg-emerald-900/10"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-emerald-200 dark:text-gray-400 dark:hover:text-gray-300"
+                  ? "border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100 bg-gray-100/50 dark:bg-gray-700/30"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
               )}
             >
               <Activity className="w-4 h-4" />
