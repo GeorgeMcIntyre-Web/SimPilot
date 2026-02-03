@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronRight, FileSpreadsheet, X, Upload } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronRight, FileSpreadsheet, X, Upload, CheckCircle, AlertCircle, HelpCircle } from 'lucide-react';
 import { FileDropzone } from '../FileDropzone';
 import { cn } from '../../../../ui/lib/utils';
+import { detectFileType, getFileTypeColor, getFileTypeLabel } from '../utils/fileTypeDetection';
 
 interface LocalFilesTabProps {
   simulationFiles: File[];
@@ -108,19 +109,40 @@ function CollapsibleFileSection({
         </div>
       )}
 
-      {/* Collapsed file list preview */}
+      {/* Collapsed file list preview with type detection */}
       {!isExpanded && hasFiles && (
         <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 bg-gray-50/50 dark:bg-gray-800/30">
           <div className="flex flex-wrap gap-2">
-            {category.files.map((file, idx) => (
-              <span
-                key={idx}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300"
-              >
-                <FileSpreadsheet className="w-3 h-3" />
-                <span className="truncate max-w-[150px]">{file.name}</span>
-              </span>
-            ))}
+            {category.files.map((file, idx) => {
+              const detection = detectFileType(file.name);
+              const colors = getFileTypeColor(detection.type);
+              const isCorrectCategory = detection.suggestedCategory === category.id;
+
+              return (
+                <span
+                  key={idx}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded border",
+                    isCorrectCategory
+                      ? `${colors.bg} ${colors.text} ${colors.border}`
+                      : "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                  )}
+                  title={isCorrectCategory ? detection.description : `Warning: This looks like a ${getFileTypeLabel(detection.type)} file`}
+                >
+                  <FileSpreadsheet className="w-3 h-3" />
+                  <span className="truncate max-w-[120px]">{file.name}</span>
+                  {detection.confidence === 'high' && isCorrectCategory && (
+                    <CheckCircle className="w-3 h-3 text-emerald-500" />
+                  )}
+                  {!isCorrectCategory && detection.type !== 'Unknown' && (
+                    <AlertCircle className="w-3 h-3" />
+                  )}
+                  {detection.type === 'Unknown' && (
+                    <HelpCircle className="w-3 h-3" />
+                  )}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
