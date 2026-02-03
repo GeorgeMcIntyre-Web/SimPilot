@@ -17,7 +17,7 @@ const CellDetailPage = lazy(() => import('./routes/CellDetailPage'))
 const ToolsPage = lazy(() => import('./routes/ToolsPage'))
 const AssetsPage = lazy(() => import('./routes/AssetsPage'))
 const DataLoaderPage = lazy(() => import('./routes/DataLoaderPage'))
-const ImportHistoryPage = lazy(() => import('./routes/ImportHistoryPage'))
+// Import History now lives inside Data Loader (tab). Standalone route removed.
 const EngineersPage = lazy(() => import('./routes/EngineersPage'))
 const AssetDetailPage = lazy(() => import('./routes/AssetDetailPage'))
 const DaleConsole = lazy(() => import('./routes/DaleConsole'))
@@ -78,12 +78,11 @@ function App() {
                                             <Route path="tools" element={<ToolsPage />} />
                                             <Route path="assets" element={<AssetsPage />} />
                                             <Route path="data-loader" element={<DataLoaderPage />} />
-                                            <Route path="import-history" element={<ImportHistoryPage />} />
+                                            <Route path="import-history" element={<Navigate to="/data-loader?tab=history" replace />} />
                                             <Route path="changes" element={<ChangesPage />} />
                                             <Route path="readiness" element={<ReadinessBoard />} />
                                             <Route path="timeline/:projectId" element={<TimelineView />} />
                                             <Route path="data-health" element={<DataHealthPage />} />
-                                            <Route path="import-history" element={<ImportHistoryPage />} />
                                             <Route path="import-review/:importRunId" element={<ImportReviewPage />} />
                                             <Route path="ambiguity-bundle-import" element={<AmbiguityBundleImportPage />} />
                                             <Route path="registry" element={<RegistryPage />} />

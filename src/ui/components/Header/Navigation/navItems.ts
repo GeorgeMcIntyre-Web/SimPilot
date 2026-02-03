@@ -8,8 +8,7 @@ import {
     Users,
     Wrench,
     Package,
-    FileUp,
-    Clock
+    FileUp
 } from 'lucide-react';
 import { NavItem } from './types';
 
@@ -24,5 +23,4 @@ export const navItems: NavItem[] = [
     { href: '/tools', label: 'Tools', icon: Wrench },
     { href: '/assets', label: 'Assets', icon: Package },
     { href: '/data-loader', label: 'Data Loader', icon: FileUp },
-    { href: '/import-history', label: 'Import History', icon: Clock },
 ];

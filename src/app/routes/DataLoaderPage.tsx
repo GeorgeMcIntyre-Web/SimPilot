@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PageHeader } from '../../ui/components/PageHeader';
 import { cn } from '../../ui/lib/utils';
 import { useMsAccount } from '../../integrations/ms/useMsAccount';
@@ -44,8 +45,12 @@ type DataLoaderTab = 'local' | 'm365' | 'simbridge' | 'health' | 'history';
 const allowedTabs: DataLoaderTab[] = ['local', 'm365', 'simbridge', 'health', 'history'];
 
 export function DataLoaderPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const storedTab = getUserPreference('simpilot.dataloader.tab', 'local') as DataLoaderTab;
-  const initialTab: DataLoaderTab = allowedTabs.includes(storedTab) ? storedTab : 'local';
+  const paramTab = searchParams.get('tab') as DataLoaderTab | null;
+  const initialTab: DataLoaderTab = paramTab && allowedTabs.includes(paramTab)
+    ? paramTab
+    : (allowedTabs.includes(storedTab) ? storedTab : 'local');
 
   const [activeTab, setActiveTab] = useState<DataLoaderTab>(initialTab);
   const [historyView, setHistoryView] = useState<'history' | 'diff'>('history');
@@ -69,6 +74,23 @@ export function DataLoaderPage() {
       : [];
   const latestLocalFiles = filesFromEntry(latestLocalImport);
   const latestM365Files = filesFromEntry(latestM365Import);
+
+  // Sync URL ?tab param -> state
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as DataLoaderTab | null;
+    if (tabParam && allowedTabs.includes(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams, activeTab]);
+
+  // Keep URL in sync with current tab (preserve other params)
+  useEffect(() => {
+    const current = searchParams.get('tab');
+    if (current === activeTab) return;
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', activeTab);
+    setSearchParams(params, { replace: true });
+  }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
     setUserPreference('simpilot.dataloader.tab', activeTab);

@@ -135,7 +135,7 @@ export default function AmbiguityBundleImportPage() {
         </div>
 
         <button
-          onClick={() => navigate('/import-history')}
+          onClick={() => navigate('/data-loader?tab=history')}
           className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
         >
           Back to Import History
@@ -253,7 +253,7 @@ export default function AmbiguityBundleImportPage() {
           Load Different Bundle
         </button>
         <button
-          onClick={() => navigate('/import-history')}
+          onClick={() => navigate('/data-loader?tab=history')}
           className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
         >
           Back to Import History

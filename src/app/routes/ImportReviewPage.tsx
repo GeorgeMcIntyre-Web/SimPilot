@@ -118,11 +118,11 @@ export default function ImportReviewPage() {
       ambiguous: [],
       summary: { ...diffResult.summary, ambiguous: 0 }
     })
-    navigate('/import-history')
+    navigate('/data-loader?tab=history')
   }
 
   const handleRejectImport = () => {
-    navigate('/import-history')
+    navigate('/data-loader?tab=history')
   }
 
   return (
@@ -198,7 +198,7 @@ export default function ImportReviewPage() {
             ✓ All ambiguous items resolved!
           </p>
           <button
-            onClick={() => navigate('/import-history')}
+            onClick={() => navigate('/data-loader?tab=history')}
             className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Back to Import History
