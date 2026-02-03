@@ -374,12 +374,6 @@ export function DataLoaderPage() {
           {activeTab === 'history' && (
             <div className="space-y-4" data-testid="import-history-panel">
               <div className="flex justify-between items-center">
-                <div>
-                  <div className="typography-title-sm text-gray-900 dark:text-white">Import History</div>
-                  <div className="typography-subtitle text-gray-600 dark:text-gray-300">
-                    Review recent imports, warnings, and diffs without leaving Data Loader.
-                  </div>
-                </div>
                 <div className="inline-flex items-center rounded-md border border-gray-300 bg-white px-1 py-1 text-sm font-medium text-gray-700 shadow-sm dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600">
                   <button
                     onClick={() => setHistoryView('history')}
@@ -467,18 +461,18 @@ function DataHealthTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-2 justify-between items-center">
+    <div className="space-y-5">
+      <div className="flex flex-wrap gap-3 justify-between items-start">
         <div>
-          <div className="typography-title-sm text-gray-900 dark:text-white">Data Health</div>
-          <div className="typography-subtitle text-gray-600 dark:text-gray-300">
+          <div className="text-base font-semibold text-gray-900 dark:text-white">Data Health</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300">
             Monitor ingestion quality and asset statistics.
           </div>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleExportJson}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm typography-caption rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+            className="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <Download className="h-4 w-4 mr-2" />
             Export JSON
@@ -486,7 +480,7 @@ function DataHealthTab() {
           {allErrors.length > 0 && (
             <button
               onClick={handleExportErrorsCsv}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm typography-caption rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-md text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <FileText className="h-4 w-4 mr-2" />
               Export Errors CSV
@@ -495,14 +489,35 @@ function DataHealthTab() {
         </div>
       </div>
 
-      <SummaryStatsGrid metrics={metrics} reuseSummary={reuseSummary} />
-      <ReuseSummarySection reuseSummary={reuseSummary} />
-      {metrics.linkingStats !== null && <LinkingStatsSection linkingStats={metrics.linkingStats} />}
-      <ErrorsSection
-        groupedErrors={groupedErrors}
-        expandedSources={expandedSources}
-        onToggleSource={toggleSource}
-      />
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="space-y-4 xl:col-span-2">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">Summary</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Ingestion completeness & reuse overview.</div>
+            </div>
+            <div className="p-4 space-y-4">
+              <SummaryStatsGrid metrics={metrics} reuseSummary={reuseSummary} />
+              <ReuseSummarySection reuseSummary={reuseSummary} />
+              {metrics.linkingStats !== null && <LinkingStatsSection linkingStats={metrics.linkingStats} />}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm xl:max-h-[620px] xl:overflow-y-auto">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">Errors by Source</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Grouped warnings and errors from your latest import.</div>
+          </div>
+          <div className="p-4">
+            <ErrorsSection
+              groupedErrors={groupedErrors}
+              expandedSources={expandedSources}
+              onToggleSource={toggleSource}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
