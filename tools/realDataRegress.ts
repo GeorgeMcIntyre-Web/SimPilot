@@ -7,19 +7,12 @@
 
 import { log } from './nodeLog'
 import { DATASETS } from './realDataRegress.config'
-import { categorizeByFilename, categorizeFiles, walkDirectory } from './realDataRegress.categorize'
 import { saveArtifacts } from './realDataRegress.reporting'
 import { runDataset } from './realDataRegress.ingestion'
-import type {
-  CategorizedFile,
-  DatasetResult,
-  FileIngestionResult,
-  RegressionReport,
-  IngestionOptions
-} from './realDataRegress.types'
+import type { RegressionReport, IngestionOptions } from './realDataRegress.types'
 
-export type { CategorizedFile, DatasetResult, FileIngestionResult, RegressionReport, IngestionOptions }
-export { categorizeByFilename, categorizeFiles, walkDirectory }
+export type { DatasetResult, FileIngestionResult, RegressionReport, IngestionOptions } from './realDataRegress.types'
+export { categorizeByFilename, categorizeFiles, walkDirectory } from './realDataRegress.categorize'
 
 async function main(options: IngestionOptions = {}): Promise<RegressionReport> {
   log.info('=== Real Data Regression Harness ===')
