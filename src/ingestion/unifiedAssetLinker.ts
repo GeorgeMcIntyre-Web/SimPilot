@@ -76,6 +76,47 @@ export interface LinkingResult {
   warnings: IngestionWarning[]
 }
 
+type EntityKind = 'ROBOT' | 'TOOL'
+
+const append = <T>(map: Map<string, T[]>, key: string, value: T): void => {
+  const items = map.get(key) ?? []
+  items.push(value)
+  map.set(key, items)
+}
+
+const pushMissingTarget = (
+  warnings: IngestionWarning[],
+  kind: EntityKind,
+  entity: Robot | Tool,
+  matchKey: string,
+  reason: string
+): void => {
+  warnings.push(createLinkingMissingTargetWarning({
+    entityType: kind,
+    entityId: entity.id,
+    entityName: entity.name,
+    fileName: entity.sourceFile ?? '',
+    matchKey,
+    reason
+  }))
+}
+
+const pushAmbiguous = (
+  warnings: IngestionWarning[],
+  kind: EntityKind,
+  entity: Robot | Tool,
+  candidateCount: number,
+  matchKey: string
+): void => {
+  warnings.push(createLinkingAmbiguousWarning({
+    entityType: kind,
+    entityId: entity.id,
+    fileName: entity.sourceFile ?? '',
+    candidatesCount: candidateCount,
+    matchKey
+  }))
+}
+
 // ============================================================================
 // NORMALIZATION HELPERS
 // ============================================================================
@@ -215,25 +256,24 @@ export function linkAssets(
     const matchResult = findCellForAsset(robot, cellIndex)
 
     if (matchResult.match === null) {
-      warnings.push(createLinkingMissingTargetWarning({
-        entityType: 'ROBOT',
-        entityId: robot.id,
-        entityName: robot.name,
-        fileName: robot.sourceFile ?? '',
-        matchKey: buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode),
-        reason: 'No matching cell found'
-      }))
+      pushMissingTarget(
+        warnings,
+        'ROBOT',
+        robot,
+        buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode),
+        'No matching cell found'
+      )
       continue
     }
 
     if (matchResult.ambiguous) {
-      warnings.push(createLinkingAmbiguousWarning({
-        entityType: 'ROBOT',
-        entityId: robot.id,
-        fileName: robot.sourceFile ?? '',
-        candidatesCount: matchResult.candidateCount,
-        matchKey: buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode)
-      }))
+      pushAmbiguous(
+        warnings,
+        'ROBOT',
+        robot,
+        matchResult.candidateCount,
+        buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode)
+      )
       ambiguousCount += 1
     }
 
@@ -304,25 +344,24 @@ export function linkAssets(
       }
 
       // No cell or robot match
-      warnings.push(createLinkingMissingTargetWarning({
-        entityType: 'TOOL',
-        entityId: tool.id,
-        entityName: tool.name,
-        fileName: tool.sourceFile ?? '',
-        matchKey: buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode),
-        reason: 'No matching cell or robot found'
-      }))
+      pushMissingTarget(
+        warnings,
+        'TOOL',
+        tool,
+        buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode),
+        'No matching cell or robot found'
+      )
       continue
     }
 
     if (matchResult.ambiguous) {
-      warnings.push(createLinkingAmbiguousWarning({
-        entityType: 'TOOL',
-        entityId: tool.id,
-        fileName: tool.sourceFile ?? '',
-        candidatesCount: matchResult.candidateCount,
-        matchKey: buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode)
-      }))
+      pushAmbiguous(
+        warnings,
+        'TOOL',
+        tool,
+        matchResult.candidateCount,
+        buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode)
+      )
       ambiguousCount += 1
     }
 
@@ -356,15 +395,8 @@ export function linkAssets(
   const byTarget = new Map<string, AssetLink[]>()
 
   for (const link of links) {
-    // Index by source
-    const sourceLinks = bySource.get(link.sourceId) ?? []
-    sourceLinks.push(link)
-    bySource.set(link.sourceId, sourceLinks)
-
-    // Index by target
-    const targetLinks = byTarget.get(link.targetId) ?? []
-    targetLinks.push(link)
-    byTarget.set(link.targetId, targetLinks)
+    append(bySource, link.sourceId, link)
+    append(byTarget, link.targetId, link)
   }
 
   const stats: LinkStats = {
@@ -489,6 +521,24 @@ interface MatchResult<T> {
   candidateCount: number
 }
 
+function buildMatchResult<T>(options: {
+  match: T | null
+  confidence: LinkConfidence
+  method: string
+  key: string
+  ambiguous?: boolean
+  candidateCount?: number
+}): MatchResult<T> {
+  return {
+    match: options.match,
+    confidence: options.confidence,
+    method: options.method,
+    key: options.key,
+    ambiguous: options.ambiguous ?? false,
+    candidateCount: options.candidateCount ?? 0
+  }
+}
+
 interface AssetLike {
   stationCode?: string
   areaName?: string
@@ -504,14 +554,7 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
 
   // No station code = no match
   if (normalizedStation === '') {
-    return {
-      match: null,
-      confidence: 'LOW',
-      method: 'none',
-      key: '',
-      ambiguous: false,
-      candidateCount: 0
-    }
+    return buildMatchResult({ match: null, confidence: 'LOW', method: 'none', key: '' })
   }
 
   // Try area + station first (most specific)
@@ -520,25 +563,24 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
     const areaMatches = index.byAreaAndStation.get(areaKey) ?? []
 
     if (areaMatches.length === 1) {
-      return {
+      return buildMatchResult({
         match: areaMatches[0],
         confidence: 'HIGH',
         method: 'area+station',
         key: areaKey,
-        ambiguous: false,
         candidateCount: 1
-      }
+      })
     }
 
     if (areaMatches.length > 1) {
-      return {
+      return buildMatchResult({
         match: areaMatches[0],
         confidence: 'MEDIUM',
         method: 'area+station',
         key: areaKey,
         ambiguous: true,
         candidateCount: areaMatches.length
-      }
+      })
     }
   }
 
@@ -548,25 +590,24 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
     const lineMatches = index.byLineAndStation.get(lineKey) ?? []
 
     if (lineMatches.length === 1) {
-      return {
+      return buildMatchResult({
         match: lineMatches[0],
         confidence: 'HIGH',
         method: 'line+station',
         key: lineKey,
-        ambiguous: false,
         candidateCount: 1
-      }
+      })
     }
 
     if (lineMatches.length > 1) {
-      return {
+      return buildMatchResult({
         match: lineMatches[0],
         confidence: 'MEDIUM',
         method: 'line+station',
         key: lineKey,
         ambiguous: true,
         candidateCount: lineMatches.length
-      }
+      })
     }
   }
 
@@ -574,35 +615,27 @@ function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResult<Cell>
   const stationMatches = index.byStation.get(normalizedStation) ?? []
 
   if (stationMatches.length === 1) {
-    return {
+    return buildMatchResult({
       match: stationMatches[0],
       confidence: 'MEDIUM',
       method: 'station',
       key: normalizedStation,
-      ambiguous: false,
       candidateCount: 1
-    }
+    })
   }
 
   if (stationMatches.length > 1) {
-    return {
+    return buildMatchResult({
       match: stationMatches[0],
       confidence: 'LOW',
       method: 'station',
       key: normalizedStation,
       ambiguous: true,
       candidateCount: stationMatches.length
-    }
+    })
   }
 
-  return {
-    match: null,
-    confidence: 'LOW',
-    method: 'none',
-    key: normalizedStation,
-    ambiguous: false,
-    candidateCount: 0
-  }
+  return buildMatchResult({ match: null, confidence: 'LOW', method: 'none', key: normalizedStation })
 }
 
 /**
@@ -616,39 +649,31 @@ function findRobotForTool(tool: Tool, index: RobotIndex): MatchResult<Robot> {
     const stationRobots = index.byStation.get(normalizedStation) ?? []
 
     if (stationRobots.length === 1) {
-      return {
+      return buildMatchResult({
         match: stationRobots[0],
         confidence: 'MEDIUM',
         method: 'station',
         key: normalizedStation,
-        ambiguous: false,
         candidateCount: 1
-      }
+      })
     }
 
     if (stationRobots.length > 1) {
       // Ambiguous - multiple robots at same station
-      return {
+      return buildMatchResult({
         match: stationRobots[0],
         confidence: 'LOW',
         method: 'station',
         key: normalizedStation,
         ambiguous: true,
         candidateCount: stationRobots.length
-      }
+      })
     }
   }
 
   // TODO: Could also try matching by robot name hints in tool metadata
 
-  return {
-    match: null,
-    confidence: 'LOW',
-    method: 'none',
-    key: '',
-    ambiguous: false,
-    candidateCount: 0
-  }
+  return buildMatchResult({ match: null, confidence: 'LOW', method: 'none', key: '' })
 }
 
 /**
@@ -659,17 +684,11 @@ function buildMatchKeyString(
   areaName?: string,
   lineCode?: string
 ): string {
-  const parts: string[] = []
-
-  if (stationCode) {
-    parts.push(`station:${stationCode}`)
-  }
-  if (areaName) {
-    parts.push(`area:${areaName}`)
-  }
-  if (lineCode) {
-    parts.push(`line:${lineCode}`)
-  }
+  const parts: string[] = [
+    stationCode ? `station:${stationCode}` : undefined,
+    areaName ? `area:${areaName}` : undefined,
+    lineCode ? `line:${lineCode}` : undefined
+  ].filter(Boolean) as string[]
 
   return parts.length > 0 ? parts.join(', ') : 'no matching criteria'
 }
