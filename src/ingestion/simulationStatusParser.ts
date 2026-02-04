@@ -4,549 +4,62 @@
 
 import * as XLSX from 'xlsx'
 import { log } from '../lib/log'
-import {
-  Project,
-  Area,
-  Cell,
-  SimulationStatus,
-  SchedulePhase,
-  ScheduleStatus,
-  OverviewScheduleMetrics,
-  generateId,
-  deriveCellStatus,
-  IngestionWarning
-} from '../domain/core'
-import { getWeek } from 'date-fns'
-import {
-  sheetToMatrix,
-  findHeaderRow,
-  isEmptyRow,
-  isTotalRow,
-  isEffectivelyEmptyRow,
-  CellValue
-} from './excelUtils'
-import {
-  PanelMilestones,
-  MilestoneGroup,
-  MilestoneValue,
-  PanelType,
-  ROBOT_SIMULATION_MILESTONES,
-  SPOT_WELDING_MILESTONES,
-  SEALER_MILESTONES,
-  ALTERNATIVE_JOINING_MILESTONES,
-  GRIPPER_MILESTONES,
-  FIXTURE_MILESTONES,
-  MRS_MILESTONES,
-  OLP_MILESTONES,
-  DOCUMENTATION_MILESTONES,
-  LAYOUT_MILESTONES,
-  SAFETY_MILESTONES,
-  createEmptyPanelMilestones,
-  calculateGroupCompletion,
-} from './simulationStatus/simulationStatusTypes'
+import type { Cell, IngestionWarning } from '../domain/core'
+import { sheetToMatrix, findHeaderRow } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
-import { deriveCustomerFromFileName } from './customerMapping'
-import { buildStationId, normalizeStationCode } from './normalizers'
+import { parseOverviewSchedule } from './simulationStatus/overviewSchedule'
+import { findAllSimulationSheets, extractAreaNameFromTitle } from './simulationStatus/sheetDiscovery'
+import { deriveProjectName, deriveCustomer } from './simulationStatus/projectNaming'
+import { COLUMN_ALIASES, REQUIRED_HEADERS } from './simulationStatus/headerMapping'
+import { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
+import { convertVacuumRowsToPanelMilestones, getPanelMilestonesForRobot } from './simulationStatus/panelMilestones'
+import { extractRobotsFromVacuumRows } from './simulationStatus/robotExtraction'
+import { buildEntities } from './simulationStatus/entityBuilder'
+import {
+  SimulationMetric,
+  VacuumParsedRow,
+  ParsedSimulationRow,
+  SimulationRobot,
+  SimulationStatusResult
+} from './simulationStatus/types'
+
+// Re-export selected helpers for external consumers
+export { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
+export { convertVacuumRowsToPanelMilestones, getPanelMilestonesForRobot } from './simulationStatus/panelMilestones'
+export type {
+  SimulationMetric,
+  VacuumParsedRow,
+  ParsedSimulationRow,
+  SimulationRobot,
+  SimulationStatusResult
+} from './simulationStatus/types'
 
 // ============================================================================
-// VACUUM PARSER TYPES
+// LEGACY ROW TRANSFORM
 // ============================================================================
 
-// ----------------------------------------------------------------------------
-// Overview sheet helpers (calendar-week based schedule context)
-// ----------------------------------------------------------------------------
+function toParsedRows(vacuumRows: VacuumParsedRow[]): ParsedSimulationRow[] {
+  return vacuumRows.map(vr => {
+    const stageMetrics: Record<string, number> = {}
 
-/**
- * Extracts high-level schedule metrics from the OVERVIEW sheet.
- * The sheet stores labels (e.g., "Current Week") with their values in the next cell.
- */
-function parseOverviewSchedule(workbook: XLSX.WorkBook): OverviewScheduleMetrics | undefined {
-  const sheet = workbook.Sheets['OVERVIEW']
-  if (!sheet) return undefined
-
-  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: true, defval: '' })
-
-  const lookup = (label: string): number | undefined => {
-    for (const row of rows) {
-      const idx = row.findIndex(cell => typeof cell === 'string' && cell.trim() === label)
-      if (idx >= 0) {
-        const val = row[idx + 1]
-        const num = typeof val === 'number' ? val : Number(val)
-        return Number.isFinite(num) ? num : undefined
-      }
-    }
-    return undefined
-  }
-
-  const metrics: OverviewScheduleMetrics = {
-    currentWeek: lookup('Current Week'),
-    currentJobDuration: lookup('Current Job Duration'),
-    jobStartWeek: lookup('Job Start'),
-    jobEndWeek: lookup('Job End'),
-    completeJobDuration: lookup('Complete Job Duration'),
-    firstStageSimComplete: lookup('1st Stage Sim Complete'),
-    firstStageSimDuration: lookup('1st Stage Sim Duration'),
-    firstStageSimPerWeek: lookup('% 1st Stage Sim Complete per week'),
-    firstStageSimRequired: lookup('% 1st Stage Sim Complete Required'),
-    vcStartWeek: lookup('VC Start'),
-    jobDurationToVcStart: lookup('Job Duration till VC Start'),
-    vcReadyPerWeek: lookup('% VC Ready per week'),
-    vcReadyRequired: lookup('VC Ready Required'),
-    finalDeliverablesEndWeek: lookup('Final Deliverables Complete  End'),
-    finalDeliverablesDuration: lookup('Final Deliverables Job Duration'),
-    finalDeliverablesPerWeek: lookup('% Final Deliverables Complete per week'),
-    finalDeliverablesRequired: lookup('Final Deliverables Complete Required')
-  }
-
-  // Recalculate dynamic fields that depend on current date to avoid stale cached Excel values
-  const computedCurrentWeek = getWeek(new Date(), { weekStartsOn: 0 })
-  metrics.currentWeek = computedCurrentWeek
-
-  // Preserve raw duration before recomputing so we can clamp sensibly
-  const rawCurrentJobDuration = metrics.currentJobDuration
-
-  if (metrics.jobStartWeek !== undefined && metrics.currentWeek !== undefined) {
-    metrics.currentJobDuration = metrics.currentWeek - metrics.jobStartWeek
-  }
-
-  // Choose a non-negative duration: prefer recomputed, otherwise raw, clamped at 0
-  const effectiveDuration = Math.max(
-    metrics.currentJobDuration ?? Number.NEGATIVE_INFINITY,
-    rawCurrentJobDuration ?? Number.NEGATIVE_INFINITY,
-    0
-  )
-  metrics.currentJobDuration = effectiveDuration
-
-  // Recompute required percentages based on the effective duration (allows 0 → 0%)
-  const d = effectiveDuration
-  if (d >= 0) {
-    if (metrics.firstStageSimDuration && metrics.firstStageSimDuration > 0) {
-      metrics.firstStageSimRequired = d / metrics.firstStageSimDuration
-    }
-    if (metrics.jobDurationToVcStart && metrics.jobDurationToVcStart > 0) {
-      metrics.vcReadyRequired = d / metrics.jobDurationToVcStart
-    }
-    if (metrics.finalDeliverablesDuration && metrics.finalDeliverablesDuration > 0) {
-      metrics.finalDeliverablesRequired = d / metrics.finalDeliverablesDuration
-    }
-  }
-
-  // If nothing was found, return undefined to avoid misleading defaults
-  const hasValue = Object.values(metrics).some(v => v !== undefined)
-  return hasValue ? metrics : undefined
-}
-
-/**
- * Derive schedule phase from percent complete.
- * Simple heuristic to spread cards across the phase swimlanes.
- */
-function derivePhase(percentComplete: number | null): SchedulePhase {
-  if (percentComplete === null || Number.isNaN(percentComplete)) return 'unspecified'
-  if (percentComplete >= 95) return 'handover'
-  if (percentComplete >= 75) return 'rampup'
-  if (percentComplete >= 50) return 'onsite'
-  if (percentComplete >= 20) return 'offline'
-  return 'presim'
-}
-
-/**
- * Derive onTrack/atRisk/late based on how far actual progress is
- * ahead/behind the linear expectation for the current calendar week.
- *
- * Tuning:
- * - More than 15 points behind expected ⇒ late
- * - 5–15 points behind ⇒ atRisk
- * - Otherwise ⇒ onTrack
- */
-function deriveScheduleStatusFromWeeks(
-  percentComplete: number | null,
-  metrics: OverviewScheduleMetrics | undefined
-): ScheduleStatus {
-  if (percentComplete === null || metrics === undefined) return 'unknown'
-
-  const { currentWeek, jobStartWeek, completeJobDuration } = metrics
-  if (
-    currentWeek === undefined ||
-    jobStartWeek === undefined ||
-    completeJobDuration === undefined ||
-    completeJobDuration <= 0
-  ) {
-    return 'unknown'
-  }
-
-  const elapsedWeeks = Math.max(0, currentWeek - jobStartWeek)
-  const expected = Math.min(100, (elapsedWeeks / completeJobDuration) * 100)
-  const delta = percentComplete - expected
-
-  if (delta <= -15) return 'late'
-  if (delta <= -5) return 'atRisk'
-  return 'onTrack'
-}
-
-/**
- * A single metric vacuumed from a non-core column.
- */
-export interface SimulationMetric {
-  /** Exact header text (preserving typos) */
-  label: string
-  /** 0-100 if parsed successfully, null otherwise */
-  percent: number | null
-  /** Original cell value before normalization */
-  rawValue: string | number | boolean | null
-}
-
-/**
- * A parsed row with core fields + vacuum-captured metrics.
- */
-export interface VacuumParsedRow {
-  areaCode: string
-  areaName: string
-  assemblyLine?: string
-  stationKey: string
-  robotCaption?: string
-  application?: string
-  personResponsible?: string
-  metrics: SimulationMetric[]
-  sourceRowIndex: number
-}
-
-// Legacy type for backward compatibility
-export interface ParsedSimulationRow {
-  engineer?: string
-  areaCode?: string
-  areaName: string
-  lineCode: string
-  stationCode: string
-  robotName?: string
-  application?: string
-  stageMetrics: Record<string, number>
-  sourceRowIndex: number
-}
-
-/**
- * Robot extracted from simulation status (station + robot combination)
- */
-export interface SimulationRobot {
-  stationKey: string
-  robotCaption: string
-  areaKey?: string
-  application?: string
-  sourceRowIndex: number
-}
-
-export interface SimulationStatusResult {
-  projects: Project[]
-  areas: Area[]
-  cells: Cell[]
-  warnings: IngestionWarning[]
-  /** Vacuum-parsed rows for advanced consumers */
-  vacuumRows?: VacuumParsedRow[]
-  /** Robots extracted from simulation status (one per unique station+robot combination) */
-  robotsFromSimStatus?: SimulationRobot[]
-  /** High-level schedule info pulled from OVERVIEW sheet */
-  overviewSchedule?: OverviewScheduleMetrics
-}
-
-// ============================================================================
-// CORE FIELDS (Known Columns)
-// ============================================================================
-
-// Column name aliases for flexible matching
-const COLUMN_ALIASES: Record<string, string[]> = {
-  'AREA_CODE': ['AREA', 'AREA CODE', 'ZONE', 'SHORT NAME'],
-  'AREA_NAME': ['AREA NAME', 'AREA DESCRIPTION', 'FULL NAME'],
-  'ASSEMBLY LINE': ['ASSEMBLY LINE', 'LINE', 'LINE CODE'],
-  'STATION': ['STATION NO. NEW', 'STATION', 'STATION CODE', 'STATION KEY', 'STATION NO.'],
-  'ROBOT': ['ROBOT', 'ROBOT CAPTION', 'ROBOT NAME'],
-  'APPLICATION': ['APPLICATION', 'APP'],
-  'PERSONS RESPONSIBLE': ['PERSONS RESPONSIBLE', 'PERSON RESPONSIBLE', 'ENGINEER', 'RESPONSIBLE']
-}
-
-// Required headers for finding the header row
-// AREA and ASSEMBLY LINE are optional - can be derived or missing
-const REQUIRED_HEADERS = [
-  'STATION',
-  'ROBOT'
-]
-
-// ============================================================================
-// METRIC NORMALIZATION
-// ============================================================================
-
-/**
- * Parse a cell value into a percentage.
- * - Number 0-100 → percent = value
- * - String like "95%" → strip % and parse
- * - Otherwise → null
- */
-function parsePercent(value: CellValue): number | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-
-  // Already a number
-  if (typeof value === 'number') {
-    // Assume values > 1 are percentages already
-    if (value >= 0 && value <= 100) {
-      return value
-    }
-
-    // If value is decimal like 0.95, convert to 95
-    if (value >= 0 && value <= 1) {
-      return Math.round(value * 100)
-    }
-
-    return null
-  }
-
-  // String parsing
-  if (typeof value === 'string') {
-    const trimmed = value.trim()
-
-    if (trimmed === '') {
-      return null
-    }
-
-    // Handle percentage strings like "95%" or "95 %"
-    const percentMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*%?$/)
-
-    if (percentMatch) {
-      const num = parseFloat(percentMatch[1])
-
-      if (!isNaN(num) && num >= 0 && num <= 100) {
-        return Math.round(num)
+    for (const metric of vr.metrics) {
+      if (metric.percent !== null) {
+        stageMetrics[metric.label] = metric.percent
       }
     }
 
-    // Handle decimal strings like "0.95"
-    const decimalMatch = trimmed.match(/^0\.(\d+)$/)
-
-    if (decimalMatch) {
-      const num = parseFloat(trimmed)
-
-      if (!isNaN(num) && num >= 0 && num <= 1) {
-        return Math.round(num * 100)
-      }
+    return {
+      engineer: vr.personResponsible,
+      areaName: vr.areaName, // Use the proper area name (e.g. UNDERBODY)
+      areaCode: vr.areaCode, // Preserve area code (e.g. 8X)
+      lineCode: vr.assemblyLine || '',
+      stationCode: vr.stationKey,
+      robotName: vr.robotCaption,
+      application: vr.application,
+      stageMetrics,
+      sourceRowIndex: vr.sourceRowIndex
     }
-  }
-
-  return null
-}
-
-/**
- * Create a SimulationMetric from a header and cell value.
- */
-function createMetric(label: string, rawValue: CellValue): SimulationMetric {
-  const percent = parsePercent(rawValue)
-
-  // Normalize rawValue to string | number | null (handle boolean case)
-  let normalizedRawValue: string | number | null
-  if (typeof rawValue === 'boolean') {
-    normalizedRawValue = rawValue ? 'true' : 'false'
-  } else {
-    normalizedRawValue = rawValue
-  }
-
-  return {
-    label,
-    percent,
-    rawValue: normalizedRawValue
-  }
-}
-
-// ============================================================================
-// VACUUM PARSER
-// ============================================================================
-
-/**
- * Vacuum-parse a simulation status sheet.
- * 
- * Core fields are mapped to row properties.
- * All other columns are captured as metrics[].
- */
-export function vacuumParseSimulationSheet(
-  rows: CellValue[][],
-  headerRowIndex: number,
-  fileName: string,
-  sheetName: string,
-  globalAreaName?: string
-): { rows: VacuumParsedRow[]; warnings: IngestionWarning[] } {
-  const warnings: IngestionWarning[] = []
-  const vacuumRows: VacuumParsedRow[] = []
-
-  const headerRow = rows[headerRowIndex]
-
-  if (!headerRow || headerRow.length === 0) {
-    return { rows: [], warnings }
-  }
-
-  // Build column index map for core fields
-  // Strategy: First pass looks for exact matches, second pass allows partial matches
-  // This prevents "PERSONS RESPONSIBLE" from matching "AREA" due to includes() logic
-  const coreIndices: Record<string, number> = {}
-
-  // First pass: exact matches only, following alias priority
-  for (const [coreField, aliases] of Object.entries(COLUMN_ALIASES)) {
-    for (const alias of aliases) {
-      const aliasUpper = alias.toUpperCase()
-      const index = headerRow.findIndex(h => String(h || '').toUpperCase().trim() === aliasUpper)
-      
-      if (index >= 0) {
-        coreIndices[coreField] = index
-        break // Found highest priority match for this field
-      }
-    }
-  }
-
-  // Second pass: partial matches for fields not yet found
-  for (const [coreField, aliases] of Object.entries(COLUMN_ALIASES)) {
-    // Skip if already found via exact match
-    if (coreIndices[coreField] !== undefined) {
-      continue
-    }
-
-    for (let i = 0; i < headerRow.length; i++) {
-      // Skip columns already assigned to other core fields
-      if (Object.values(coreIndices).includes(i)) {
-        continue
-      }
-
-      const headerText = String(headerRow[i] || '').toUpperCase().trim()
-
-      // Be strict with 'AREA' partial matching to avoid capturing 'AREA NAME' falsely if strict aliases fail
-      // But aliases usually handle this.
-      
-      for (const alias of aliases) {
-        if (headerText.includes(alias.toUpperCase())) {
-          coreIndices[coreField] = i
-          break
-        }
-      }
-
-      if (coreIndices[coreField] !== undefined) {
-        break
-      }
-    }
-  }
-
-  // Find metric columns (everything not mapped to core)
-  const metricIndices: number[] = []
-  const metricLabels: string[] = []
-  const coreIndexSet = new Set(Object.values(coreIndices))
-
-  for (let i = 0; i < headerRow.length; i++) {
-    if (coreIndexSet.has(i)) {
-      continue
-    }
-
-    const headerText = String(headerRow[i] || '').trim()
-
-    // Skip empty headers
-    if (headerText === '') {
-      continue
-    }
-
-    metricIndices.push(i)
-    metricLabels.push(headerText) // Preserve exact header text including typos
-  }
-
-  // Parse data rows (starting after header)
-  const dataStartIndex = headerRowIndex + 1
-
-  for (let i = dataStartIndex; i < rows.length; i++) {
-    const row = rows[i]
-
-    // Stop at total row
-    if (isTotalRow(row)) {
-      break
-    }
-
-    // Skip empty rows
-    if (isEmptyRow(row)) {
-      continue
-    }     
-
-    // Extract core fields
-    // AREA_CODE (e.g. 8X)
-    let areaCode = coreIndices['AREA_CODE'] !== undefined ? String(row[coreIndices['AREA_CODE']] || '').trim() : ''
-    // AREA_NAME (e.g. UNDERBODY)
-    let areaName = coreIndices['AREA_NAME'] !== undefined ? String(row[coreIndices['AREA_NAME']] || '').trim() : ''
-    
-    const assemblyLine = coreIndices['ASSEMBLY LINE'] !== undefined ? String(row[coreIndices['ASSEMBLY LINE']] || '').trim() : undefined
-    const stationKey = coreIndices['STATION'] !== undefined ? String(row[coreIndices['STATION']] || '').trim() : ''
-    const robotCaption = coreIndices['ROBOT'] !== undefined ? String(row[coreIndices['ROBOT']] || '').trim() || undefined : undefined
-    const application = coreIndices['APPLICATION'] !== undefined ? String(row[coreIndices['APPLICATION']] || '').trim() || undefined : undefined
-    const personResponsible = coreIndices['PERSONS RESPONSIBLE'] !== undefined ? String(row[coreIndices['PERSONS RESPONSIBLE']] || '').trim() || undefined : undefined
-
-    // Fallback logic for Area Code / Name
-    // If only one is present, assume it fulfills both roles temporarily, or prioritize correctly
-    
-    // If AREA missing but STATION present, try to derive AREA from STATION
-    if (!areaCode && stationKey) {
-      const areaMatch = stationKey.match(/^([A-Z0-9]+)[-_]/)
-      if (areaMatch) {
-        areaCode = areaMatch[1]
-      } else {
-        // If no delimiter, use the station as area (e.g., BMW "ST010")
-        areaCode = stationKey
-      }
-    }
-
-    // Determine final Area Name and Code
-    if (!areaName && globalAreaName) areaName = globalAreaName;
-    if (!areaName && areaCode) areaName = areaCode;
-    if (!areaCode && areaName) areaCode = areaName;
-
-    // Skip rows without critical data
-    if (!areaCode || !stationKey) {
-      // Build a short preview to help diagnose why the row was skipped
-      const rowPreview = row
-        .slice(0, 6)
-        .map(cell => String(cell ?? '').trim())
-        .filter(cell => cell.length > 0)
-        .join(' | ') || 'empty row'
-
-      // Only warn if row looks like it might have been intended as data
-      // Skip warnings for effectively empty rows (reduces noise)
-      if (!isEffectivelyEmptyRow(row, 2)) {
-        warnings.push(createRowSkippedWarning({
-          fileName,
-          sheetName,
-          rowIndex: i + 1,
-          reason: `Missing required fields: AREA or STATION (area="${areaCode || 'blank'}", station="${stationKey || 'blank'}", preview="${rowPreview}")`
-        }))
-      }
-      continue
-    }
-
-    // Vacuum up all metrics
-    const metrics: SimulationMetric[] = []
-
-    for (let j = 0; j < metricIndices.length; j++) {
-      const colIndex = metricIndices[j]
-      const label = metricLabels[j]
-      const rawValue = row[colIndex] ?? null
-
-      // Only include if there's a value
-      if (rawValue !== null && rawValue !== '') {
-        metrics.push(createMetric(label, rawValue))
-      }
-    }
-
-    vacuumRows.push({
-      areaCode,
-      areaName,
-      assemblyLine,
-      stationKey,
-      robotCaption,
-      application,
-      personResponsible,
-      metrics,
-      sourceRowIndex: i
-    })
-  }
-
-  return { rows: vacuumRows, warnings }
+  })
 }
 
 // ============================================================================
@@ -557,10 +70,6 @@ export function vacuumParseSimulationSheet(
  * Parse a Simulation Status Excel file into domain entities.
  * Uses vacuum parsing internally but maintains backward-compatible output.
  * Now supports multiple sheets: SIMULATION, MRS_OLP, DOCUMENTATION, SAFETY_LAYOUT
- * 
- * @param workbook - The Excel workbook to parse
- * @param fileName - Name of the file (for warnings and metadata)
- * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
  */
 export async function parseSimulationStatus(
   workbook: XLSX.WorkBook,
@@ -572,11 +81,10 @@ export async function parseSimulationStatus(
 
   // Determine which sheets to parse
   const sheetsToParse: string[] = targetSheetName
-    ? [targetSheetName]  // Single sheet specified
-    : findAllSimulationSheets(workbook)  // Auto-detect all simulation sheets
+    ? [targetSheetName]
+    : findAllSimulationSheets(workbook)
 
-  // Debug: show all sheet names and which were selected
-  console.log('[SimStatus] Sheet detection', {
+  log.debug('[SimStatus] Sheet detection', {
     workbookSheets: workbook.SheetNames,
     targetSheetName,
     sheetsToParse,
@@ -589,12 +97,10 @@ export async function parseSimulationStatus(
 
   log.info(`[Parser] Parsing ${sheetsToParse.length} sheet(s): ${sheetsToParse.join(', ')}`)
 
-  // Parse each sheet and collect all vacuum rows
   const allVacuumRows: VacuumParsedRow[] = []
   const allParsedRows: ParsedSimulationRow[] = []
 
   for (const sheetName of sheetsToParse) {
-    // Validate that the sheet exists
     if (workbook.SheetNames.includes(sheetName) === false) {
       warnings.push(createParserErrorWarning({
         fileName,
@@ -606,15 +112,7 @@ export async function parseSimulationStatus(
 
     const isSimulationSheet = sheetName.toUpperCase().includes('SIMULATION')
 
-    // Convert to matrix
     const rows = sheetToMatrix(workbook, sheetName)
-    if (isSimulationSheet) {
-      console.log('[SimStatus][SIMULATION] Step 1: Loaded sheet matrix', {
-        sheetName,
-        totalRows: rows.length,
-        totalCols: rows[0]?.length ?? 0
-      })
-    }
 
     if (rows.length < 5) {
       warnings.push(createParserErrorWarning({
@@ -629,13 +127,6 @@ export async function parseSimulationStatus(
     const headerRowIndex = findHeaderRow(rows, REQUIRED_HEADERS)
     log.debug(`[Parser] ${sheetName}: Header row index: ${headerRowIndex}`)
 
-    if (isSimulationSheet) {
-      console.log('[SimStatus][SIMULATION] Step 2: Header row detected', {
-        headerRowIndex,
-        headerPreview: headerRowIndex !== null ? rows[headerRowIndex].slice(0, 12) : []
-      })
-    }
-
     if (headerRowIndex === null) {
       warnings.push(createParserErrorWarning({
         fileName,
@@ -646,7 +137,6 @@ export async function parseSimulationStatus(
     }
 
     // Extract global area name from first cell (A1) or title row
-    // User report: "UNDERBODY - SIMULATION" in first cell
     let globalAreaName: string | undefined
     if (rows.length > 0 && rows[0].length > 0) {
       const titleCell = String(rows[0][0] || '').trim()
@@ -656,14 +146,6 @@ export async function parseSimulationStatus(
       }
     }
 
-    // Fallback: Try to derive from filename if A1 didn't work
-    if (!globalAreaName) {
-      // e.g. "FORD_V801_Underbody_Segment1..." -> "Underbody Segment1"
-      // But we have deriveProjectName doing part of this. 
-      // Let's rely on A1 for now as per user request.
-    }
-
-    // Use vacuum parser
     const { rows: vacuumRows, warnings: parseWarnings } = vacuumParseSimulationSheet(
       rows,
       headerRowIndex,
@@ -676,25 +158,11 @@ export async function parseSimulationStatus(
 
     if (vacuumRows.length === 0) {
       warnings.push(createParserErrorWarning({
-      fileName,
-      sheetName,
-      error: 'No valid data rows found after parsing'
-    }))
+        fileName,
+        sheetName,
+        error: 'No valid data rows found after parsing'
+      }))
       continue
-    }
-
-    if (isSimulationSheet) {
-      console.log('[SimStatus][SIMULATION] Step 3: Vacuum parse complete', {
-        vacuumRowCount: vacuumRows.length,
-        sampleRow: vacuumRows[0]
-          ? {
-              stationKey: vacuumRows[0].stationKey,
-              robotCaption: vacuumRows[0].robotCaption,
-              metricsCount: vacuumRows[0].metrics.length,
-              metricLabels: vacuumRows[0].metrics.slice(0, 5).map(m => m.label)
-            }
-          : null
-      })
     }
 
     // Prefix metrics with sheet name to avoid conflicts (except for SIMULATION sheet)
@@ -702,78 +170,15 @@ export async function parseSimulationStatus(
       ...vr,
       metrics: vr.metrics.map(m => ({
         ...m,
-        label: sheetName === 'SIMULATION' 
-          ? m.label  // Keep original label for SIMULATION sheet
-          : `${sheetName}: ${m.label}`  // Prefix with sheet name for others
+        label: sheetName === 'SIMULATION'
+          ? m.label
+          : `${sheetName}: ${m.label}`
       }))
     }))
 
     allVacuumRows.push(...prefixedVacuumRows)
 
-    console.log('[SimStatus] Sheet processed', {
-      sheetName,
-      rowCount: prefixedVacuumRows.length,
-      metricsTotal: prefixedVacuumRows.reduce((sum, r) => sum + r.metrics.length, 0)
-    })
-
-    if (isSimulationSheet) {
-      console.log('[SimStatus][SIMULATION] Step 4: Metrics normalized', {
-        rowCount: prefixedVacuumRows.length,
-        totalMetrics: prefixedVacuumRows.reduce((sum, r) => sum + r.metrics.length, 0)
-      })
-
-      // Debug the first 3 robots with key Robot Simulation milestones
-      const milestoneHeaders = [
-        'ROBOT POSITION - STAGE 1',
-        'DCS CONFIGURED',
-        'DRESS PACK & FRYING PAN CONFIGURED - STAGE 1',
-        'ROBOT FLANGE PCD + ADAPTERS CHECKED',
-        'ALL EOAT PAYLOADS CHECKED',
-        'ROBOT TYPE CONFIRMED',
-        'ROBOT RISER CONFIRMED',
-        'TRACK LENGTH + CATRAC CONFIRMED',
-        'COLLISIONS CHECKED - STAGE 1'
-      ]
-
-      const robotPreview = prefixedVacuumRows.slice(0, 3).map(row => {
-        const metricsObj: Record<string, number | null> = {}
-        for (const header of milestoneHeaders) {
-          const match = row.metrics.find(m => matchesMilestone(m.label, header))
-          metricsObj[header] = match?.percent ?? null
-        }
-        return {
-          stationKey: row.stationKey,
-          robotCaption: row.robotCaption,
-          metrics: metricsObj
-        }
-      })
-
-      console.log('[SimStatus][SIMULATION] Step 4a: First 3 robots milestone values', robotPreview)
-    }
-
-    // Convert vacuum rows to legacy format for backward compatibility
-    const parsedRows: ParsedSimulationRow[] = prefixedVacuumRows.map(vr => {
-      const stageMetrics: Record<string, number> = {}
-
-      for (const metric of vr.metrics) {
-        if (metric.percent !== null) {
-          stageMetrics[metric.label] = metric.percent
-        }
-      }
-
-      return {
-        engineer: vr.personResponsible,
-        areaName: vr.areaName, // Use the proper area name (e.g. UNDERBODY)
-        areaCode: vr.areaCode, // Preserve area code (e.g. 8X)
-        lineCode: vr.assemblyLine || '',
-        stationCode: vr.stationKey,
-        robotName: vr.robotCaption,
-        application: vr.application,
-        stageMetrics,
-        sourceRowIndex: vr.sourceRowIndex
-      }
-    })
-
+    const parsedRows = toParsedRows(prefixedVacuumRows)
     allParsedRows.push(...parsedRows)
   }
 
@@ -783,111 +188,19 @@ export async function parseSimulationStatus(
 
   // Use the first sheet name for backward compatibility (or SIMULATION if available)
   const primarySheetName = sheetsToParse.find(s => s.toUpperCase() === 'SIMULATION') || sheetsToParse[0]
-  const parsedRows = allParsedRows
 
-  if (primarySheetName.toUpperCase().includes('SIMULATION')) {
-    console.log('[SimStatus][SIMULATION] Step 5: Parsed rows ready for entity build', {
-      parsedRowCount: parsedRows.length,
-      distinctStations: new Set(parsedRows.map(r => r.stationCode)).size,
-      distinctRobots: new Set(parsedRows.map(r => `${r.stationCode}::${r.robotName || ''}`)).size
-    })
-  }
-
-  // Derive project name from filename
   const projectName = deriveProjectName(fileName)
   const customer = deriveCustomer(fileName)
 
-  // Group rows by cell (area + line + station)
-  const cellGroups = groupByCell(parsedRows)
-
-  // Build domain entities
-  const project: Project = {
-    id: generateId('proj', customer, projectName.replace(/\s+/g, '-')),
-    name: projectName,
+  // Build entities
+  const { project, areas, cells } = buildEntities(
+    allParsedRows,
+    projectName,
     customer,
-    status: 'Running',
-    manager: 'Dale'
-  }
-
-  const areas: Area[] = []
-  const cells: Cell[] = []
-  const areaMap = new Map<string, Area>()
-
-  for (const [, cellRows] of cellGroups) {
-    const firstRow = cellRows[0]
-
-    // Get or create area
-    const areaKey = `${project.id}:${firstRow.areaName}`
-    let area = areaMap.get(areaKey)
-
-    if (!area) {
-      area = {
-        id: generateId(project.id, 'area', firstRow.areaName.replace(/\s+/g, '-')),
-        projectId: project.id,
-        name: firstRow.areaName, // Human readable name (e.g., UNDERBODY)
-        code: firstRow.areaCode || firstRow.lineCode // Prefer Area Code (8X), fallback to Line Code
-      }
-      areaMap.set(areaKey, area)
-      areas.push(area)
-    }
-
-    // Calculate average completion
-    const allMetrics = cellRows.flatMap(r => Object.values(r.stageMetrics))
-    const avgComplete = allMetrics.length > 0
-      ? allMetrics.reduce((sum, val) => sum + val, 0) / allMetrics.length
-      : 0
-
-    // Pick the first non-empty application value for the station (usually consistent)
-    const application = cellRows.find(r => r.application)?.application
-
-    // Detect issues (e.g., some stages lagging significantly)
-    const hasIssues = detectIssues(cellRows)
-
-    // Merge metrics from all rows (multiple sheets may contribute to same cell)
-    const mergedMetrics: Record<string, number> = {}
-    for (const row of cellRows) {
-      Object.assign(mergedMetrics, row.stageMetrics)
-    }
-
-    // Build simulation status with all merged metrics from all sheets
-    const simulation: SimulationStatus = {
-      percentComplete: Math.round(avgComplete),
-      hasIssues,
-      metrics: mergedMetrics,  // Contains metrics from all sheets (prefixed with sheet name)
-      sourceFile: fileName,
-      sheetName: primarySheetName,  // Primary sheet name for backward compatibility
-      rowIndex: firstRow.sourceRowIndex,
-      application
-    }
-
-    // Derive schedule info for Readiness Board (phase + risk status)
-    const schedulePhase = derivePhase(simulation.percentComplete)
-    const scheduleStatus = deriveScheduleStatusFromWeeks(simulation.percentComplete, overviewSchedule)
-
-    // Build canonical stationId
-    const stationId = buildStationId(firstRow.areaName, firstRow.stationCode)
-
-    // Build cell
-    const cell: Cell = {
-      id: generateId(area.id, 'cell', normalizeStationCode(firstRow.stationCode) || firstRow.stationCode),
-      projectId: project.id,
-      areaId: area.id,
-      name: `${firstRow.areaName} - ${firstRow.stationCode}`,
-      code: firstRow.stationCode,
-      stationId,
-      status: deriveCellStatus(simulation.percentComplete, hasIssues),
-      assignedEngineer: firstRow.engineer,
-      lineCode: firstRow.lineCode,
-      lastUpdated: new Date().toISOString(),
-      simulation,
-      schedule: {
-        phase: schedulePhase,
-        status: scheduleStatus
-      }
-    }
-
-    cells.push(cell)
-  }
+    fileName,
+    primarySheetName,
+    overviewSchedule
+  )
 
   // Extract robots from vacuum rows and detect duplicate station+robot combinations
   const { robots: robotsFromSimStatus, warnings: robotWarnings } = extractRobotsFromVacuumRows(
@@ -897,495 +210,35 @@ export async function parseSimulationStatus(
   )
   warnings.push(...robotWarnings)
 
-  if (primarySheetName.toUpperCase().includes('SIMULATION')) {
-    console.log('[SimStatus][SIMULATION] Step 6: Robots extracted', {
-      robotsCount: robotsFromSimStatus.length,
-      duplicates: robotWarnings.length
-    })
-  }
-  
   const areaNames = areas.map(a => `${a.name} (${a.code || 'No Code'})`).join(', ')
-  
+
   // Console debug message for import summary
-  console.log('---------------------------------------------------------')
   log.info(`[Parser] Simulation document imported: ${fileName}`)
-  console.log(`  - Project: ${projectName}`)
-  console.log(`  - Total Areas: ${areas.length} [${areaNames}]`)
-  console.log(`  - Total Stations: ${cells.length}`)
-  console.log(`  - Total Robots: ${robotsFromSimStatus ? robotsFromSimStatus.length : 0}`)
+  log.info(`  - Project: ${projectName}`)
+  log.info(`  - Total Areas: ${areas.length} [${areaNames}]`)
+  log.info(`  - Total Stations: ${cells.length}`)
+  log.info(`  - Total Robots: ${robotsFromSimStatus ? robotsFromSimStatus.length : 0}`)
 
-  areas.forEach(area => {
-    const areaStations = cells
-      .filter(c => c.areaId === area.id)
-      .map(c => c.code)
-    
-    // Truncate list if too long to avoid console spam
-    const stationList = areaStations.length > 20
-      ? areaStations.slice(0, 20).join(', ') + ` ... (${areaStations.length - 20} more)`
-      : areaStations.join(', ')
-
-    console.log(`  - Area: ${area.name} (${area.code})`)
-    console.log(`    Stations (${areaStations.length}): ${stationList}`)
-  })
-  console.log('---------------------------------------------------------')
-  
   return {
     projects: [project],
     areas,
     cells,
     warnings,
-    vacuumRows: allVacuumRows, // Include all vacuum rows from all sheets
-    robotsFromSimStatus, // Include extracted robots for CrossRef consumption
+    vacuumRows: allVacuumRows,
+    robotsFromSimStatus,
     overviewSchedule
   }
 }
 
 // ============================================================================
-// HELPER FUNCTIONS
+// Support functions that remained local
 // ============================================================================
 
-/**
- * Find all simulation-related sheets in the workbook.
- * Returns sheets in priority order: SIMULATION, MRS_OLP, DOCUMENTATION, SAFETY_LAYOUT
- */
-function findAllSimulationSheets(workbook: XLSX.WorkBook): string[] {
-  const sheetNames = workbook.SheetNames
-  const found: string[] = []
-  const priorityOrder = ['SIMULATION', 'MRS_OLP', 'DOCUMENTATION', 'SAFETY_LAYOUT']
+// Retain createRowSkippedWarning export for downstream callers
+export { createRowSkippedWarning }
 
-  // Find sheets in priority order
-  for (const priorityName of priorityOrder) {
-    // Exact match
-    if (sheetNames.includes(priorityName)) {
-      found.push(priorityName)
-      continue
-    }
+// Re-export mapping/constants for consumers/tests
+export { COLUMN_ALIASES, REQUIRED_HEADERS }
 
-    // Case-insensitive match
-    const match = sheetNames.find(name => name.toUpperCase() === priorityName.toUpperCase())
-    if (match && !found.includes(match)) {
-      found.push(match)
-      continue
-    }
-
-    // Partial match for MRS_OLP (could be "MRS_OLP", "MRS OLP", etc.)
-    if (priorityName === 'MRS_OLP') {
-      const mrsMatch = sheetNames.find(name => {
-        const upper = name.toUpperCase()
-        return (upper.includes('MRS') && upper.includes('OLP')) || upper.includes('MULTI RESOURCE')
-      })
-      if (mrsMatch && !found.includes(mrsMatch)) {
-        found.push(mrsMatch)
-        continue
-      }
-    }
-
-    // Partial match for SAFETY_LAYOUT
-    if (priorityName === 'SAFETY_LAYOUT') {
-      const safetyMatch = sheetNames.find(name => {
-        const upper = name.toUpperCase()
-        return (upper.includes('SAFETY') && upper.includes('LAYOUT')) || 
-               (upper.includes('SAFETY') && upper.includes('&'))
-      })
-      if (safetyMatch && !found.includes(safetyMatch)) {
-        found.push(safetyMatch)
-        continue
-      }
-    }
-  }
-
-  // Fallback: look for any sheet with "SIMULATION" or "STATUS" in the name
-  if (found.length === 0) {
-    // Try "SIMULATION" first
-    let partial = sheetNames.find(name => name.toUpperCase().includes('SIMULATION'))
-    if (partial) {
-      found.push(partial)
-    }
-
-    // Try "STATUS" for BMW-style sheets (e.g., "Status_Side_Frame_XXX")
-    if (found.length === 0) {
-      partial = sheetNames.find(name => {
-        const upper = name.toUpperCase()
-        return upper.includes('STATUS') && !upper.includes('OVERVIEW') && !upper.includes('DEF')
-      })
-      if (partial) {
-        found.push(partial)
-      }
-    }
-  }
-
-  return found
-}
-
-// Removed findSimulationSheet - use findAllSimulationSheets instead
-
-/**
- * Derive project name from filename
- * e.g., "STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx" -> "STLA-S"
- *
- * Note: The unit parts (FRONT UNIT, REAR UNIT, UNDERBODY) are NOT part of the project name.
- * They represent Areas within the project, which are already captured in the row data.
- */
-function deriveProjectName(fileName: string): string {
-  const base = fileName.replace(/\.(xlsx|xlsm|xls)$/i, '')
-  const parts = base.split('_')
-
-  // Return just the customer/platform name (first part)
-  // e.g., "STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx" -> "STLA-S"
-  return parts[0].replace(/-/g, ' ').trim()
-}
-
-/**
- * Derive customer from filename
- * Uses customer mapping for consistent assignment
- */
-function deriveCustomer(fileName: string): string {
-  return deriveCustomerFromFileName(fileName)
-}
-
-/**
- * Group parsed rows by cell (area + line + station)
- */
-function groupByCell(rows: ParsedSimulationRow[]): Map<string, ParsedSimulationRow[]> {
-  const groups = new Map<string, ParsedSimulationRow[]>()
-  for (const row of rows) {
-    const cellKey = `${row.areaName}:${row.lineCode}:${row.stationCode}`
-    const group = groups.get(cellKey)
-
-    if (group) {
-      group.push(row)
-    } else {
-      groups.set(cellKey, [row])
-    }
-  }
-  return groups
-}
-
-/**
- * Detect if a cell has issues based on stage metrics
- */
-function detectIssues(rows: ParsedSimulationRow[]): boolean {
-  if (rows.length === 0) {
-    return false
-  }
-
-  // Collect all metric values
-  const allValues: number[] = []
-
-  for (const row of rows) {
-    allValues.push(...Object.values(row.stageMetrics))
-  }
-
-  if (allValues.length === 0) {
-    return false
-  }
-
-  // Calculate average and min
-  const avg = allValues.reduce((sum, val) => sum + val, 0) / allValues.length
-  const min = Math.min(...allValues)
-
-  // Flag as issue if:
-  // 1. Average is low (< 50%)
-  // 2. Or there's high variance (min is < 50% of average and average > 30)
-  if (avg < 50) {
-    return true
-  }
-
-  if (min < avg * 0.5 && avg > 30) {
-    return true
-  }
-
-  return false
-}
-
-/**
- * Extract unique robots from vacuum-parsed rows and detect duplicate station+robot combinations.
- *
- * Key insight: One station can have multiple robots, so duplicate station entries are expected.
- * Only if BOTH station AND robot are identical should we flag it as an error.
- *
- * @returns Object containing unique robots and any duplicate warnings
- */
-function extractRobotsFromVacuumRows(
-  vacuumRows: VacuumParsedRow[],
-  fileName: string,
-  sheetName: string
-): { robots: SimulationRobot[]; warnings: IngestionWarning[] } {
-  const warnings: IngestionWarning[] = []
-  const robots: SimulationRobot[] = []
-
-  // Track seen station+robot combinations to detect true duplicates
-  const seenCombinations = new Map<string, { rowIndex: number; robotCaption: string }>()
-
-  for (const row of vacuumRows) {
-    const robotCaption = row.robotCaption?.trim()
-
-    // Skip rows without robot information
-    if (!robotCaption) {
-      continue
-    }
-
-    // Build composite key: station + robot (normalized)
-    const stationKey = row.stationKey.toUpperCase().trim()
-    const robotKey = robotCaption.toUpperCase().trim()
-    const compositeKey = `${stationKey}::${robotKey}`
-
-    const existingEntry = seenCombinations.get(compositeKey)
-
-    if (existingEntry) {
-      // TRUE DUPLICATE: Same station AND same robot - this is an error
-      warnings.push({
-        id: `dup-station-robot-${row.sourceRowIndex}`,
-        kind: 'DUPLICATE_ENTRY',
-        fileName,
-        sheetName,
-        rowIndex: row.sourceRowIndex + 1,
-        message: `Duplicate entry: Station "${row.stationKey}" with Robot "${robotCaption}" already exists (first seen at row ${existingEntry.rowIndex + 1}). Each station+robot combination should be unique.`,
-        createdAt: new Date().toISOString()
-      })
-      continue
-    }
-
-    // Record this combination
-    seenCombinations.set(compositeKey, {
-      rowIndex: row.sourceRowIndex,
-      robotCaption
-    })
-
-    // Add to robots list
-    robots.push({
-      stationKey: row.stationKey,
-      robotCaption,
-      areaKey: row.areaCode, // Use areaCode as the key
-      application: row.application,
-      sourceRowIndex: row.sourceRowIndex
-    })
-  }
-
-  return { robots, warnings }
-}
-
-/**
- * Extract area name from title cell
- * e.g., "UNDERBODY - SIMULATION" -> "UNDERBODY"
- */
-function extractAreaNameFromTitle(titleCell: string): string | undefined {
-  if (!titleCell) return undefined
-
-  // Try splitting by " - "
-  const parts = titleCell.split(' - ')
-  if (parts.length > 0 && parts[0].trim().length > 0) {
-    return parts[0].trim()
-  }
-
-  return undefined
-}
-
-// ============================================================================
-// PANEL MILESTONE CONVERSION
-// ============================================================================
-
-/**
- * Mapping of panel types to their milestone column headers
- */
-const PANEL_TO_MILESTONES: Record<PanelType, Record<string, string>> = {
-  robotSimulation: ROBOT_SIMULATION_MILESTONES,
-  spotWelding: SPOT_WELDING_MILESTONES,
-  sealer: SEALER_MILESTONES,
-  alternativeJoining: ALTERNATIVE_JOINING_MILESTONES,
-  gripper: GRIPPER_MILESTONES,
-  fixture: FIXTURE_MILESTONES,
-  mrs: MRS_MILESTONES,
-  olp: OLP_MILESTONES,
-  documentation: DOCUMENTATION_MILESTONES,
-  layout: LAYOUT_MILESTONES,
-  safety: SAFETY_MILESTONES,
-}
-
-/**
- * Check if a metric label matches a milestone definition (case-insensitive, trimmed)
- */
-function matchesMilestone(metricLabel: string, milestoneColumn: string): boolean {
-  const normMetric = metricLabel.trim().toUpperCase()
-  const normMilestone = milestoneColumn.trim().toUpperCase()
-
-  // Exact match
-  if (normMetric === normMilestone) return true
-
-  // Handle sheet prefix (e.g., "MRS_OLP: FULL ROBOT PATHS CREATED WITH AUX DATA SET")
-  if (normMetric.includes(': ')) {
-    const afterColon = normMetric.split(': ').slice(1).join(': ')
-    if (afterColon === normMilestone) return true
-  }
-
-  return false
-}
-
-/**
- * Extract milestones for a specific panel from vacuum-parsed metrics
- */
-function extractPanelGroup(
-  metrics: SimulationMetric[],
-  milestoneDefinitions: Record<string, string>
-): MilestoneGroup {
-  const milestones: Record<string, MilestoneValue> = {}
-
-  for (const [_key, columnName] of Object.entries(milestoneDefinitions)) {
-    // Find matching metric
-    const matchingMetric = metrics.find(m => matchesMilestone(m.label, columnName))
-    milestones[columnName] = matchingMetric?.percent ?? null
-  }
-
-  return {
-    milestones,
-    completion: calculateGroupCompletion(milestones),
-  }
-}
-
-/**
- * Convert vacuum-parsed rows to PanelMilestones structure.
- * Groups all metrics by their corresponding panel.
- *
- * Returns a map that includes BOTH:
- * - Robot-level keys: "stationKey::robotCaption" (e.g., "8X-010::8X-010-01")
- * - Station-level keys: "stationKey" (e.g., "8X-010") - aggregated from all robots at that station
- *
- * @param vacuumRows - Vacuum-parsed rows from all sheets
- * @returns Map of key -> PanelMilestones (includes both robot-level and station-level entries)
- */
-export function convertVacuumRowsToPanelMilestones(
-  vacuumRows: VacuumParsedRow[]
-): Map<string, PanelMilestones> {
-  const resultMap = new Map<string, PanelMilestones>()
-
-  // Group vacuum rows by robot (using stationKey + robotCaption as key)
-  const robotRowsMap = new Map<string, VacuumParsedRow[]>()
-  // Also group by station for station-level aggregation
-  const stationRowsMap = new Map<string, VacuumParsedRow[]>()
-
-  for (const row of vacuumRows) {
-    // Robot-level key
-    const robotKey = row.robotCaption
-      ? `${row.stationKey}::${row.robotCaption}`
-      : row.stationKey
-
-    const existingRobot = robotRowsMap.get(robotKey) || []
-    existingRobot.push(row)
-    robotRowsMap.set(robotKey, existingRobot)
-
-    // Station-level key (always just the station)
-    const stationKey = row.stationKey
-    const existingStation = stationRowsMap.get(stationKey) || []
-    existingStation.push(row)
-    stationRowsMap.set(stationKey, existingStation)
-  }
-
-  // Process robot-level entries
-  for (const [robotKey, rows] of robotRowsMap) {
-    // Merge all metrics from all rows for this robot
-    const allMetrics: SimulationMetric[] = []
-    for (const row of rows) {
-      allMetrics.push(...row.metrics)
-    }
-
-    // Create panel milestones
-    const panels = createEmptyPanelMilestones()
-
-    // Extract each panel's milestones
-    for (const [panelKey, milestoneDefinitions] of Object.entries(PANEL_TO_MILESTONES)) {
-      panels[panelKey as PanelType] = extractPanelGroup(allMetrics, milestoneDefinitions)
-    }
-
-    resultMap.set(robotKey, panels)
-  }
-
-  // Process station-level entries (aggregate all robots at a station)
-  for (const [stationKey, rows] of stationRowsMap) {
-    // Skip if station key is same as a robot key (no robot caption case)
-    // In that case, the robot-level entry already serves as station-level
-    if (resultMap.has(stationKey)) {
-      continue
-    }
-
-    // Build a unique robot set for averaging. If robot captions are missing,
-    // fall back to row count to avoid division by zero.
-    const uniqueRobots = new Set(
-      rows.map(r => (r.robotCaption && r.robotCaption.trim()) || `__row_${r.sourceRowIndex}`)
-    )
-    const robotCount = uniqueRobots.size || rows.length || 1
-
-    // Create panel milestones with station-level aggregation
-    const panels = createEmptyPanelMilestones()
-
-    for (const [panelKey, milestoneDefinitions] of Object.entries(PANEL_TO_MILESTONES)) {
-      const aggregatedMilestones: Record<string, MilestoneValue> = {}
-
-      for (const [_milestoneKey, columnName] of Object.entries(milestoneDefinitions)) {
-        // Average milestone percent across unique robots to avoid double-counting
-        // duplicate rows for the same robot (which can otherwise yield 200%).
-        const perRobot = new Map<string, number>()
-
-        for (const row of rows) {
-          const robotKey = row.robotCaption?.trim() || `__row_${row.sourceRowIndex}`
-          // Only take the first value seen per robot to avoid duplicates
-          if (!perRobot.has(robotKey)) {
-            const metric = row.metrics.find(m => matchesMilestone(m.label, columnName))
-            if (typeof metric?.percent === 'number') {
-              perRobot.set(robotKey, metric.percent)
-            }
-          }
-        }
-
-        if (perRobot.size === 0) {
-          aggregatedMilestones[columnName] = null
-        } else {
-          const sum = Array.from(perRobot.values()).reduce((s, v) => s + v, 0)
-          aggregatedMilestones[columnName] = Math.round(sum / perRobot.size)
-        }
-      }
-
-      panels[panelKey as PanelType] = {
-        milestones: aggregatedMilestones,
-        completion: calculateGroupCompletion(aggregatedMilestones),
-      }
-    }
-
-    resultMap.set(stationKey, panels)
-  }
-
-  // Debug summary (applies to SIMULATION-derived metrics as well)
-  console.log('[SimStatus][Panels] Step 7: Panel milestones map built', {
-    totalKeys: resultMap.size,
-    robotKeys: Array.from(resultMap.keys()).filter(k => k.includes('::')).length,
-    stationKeys: Array.from(resultMap.keys()).filter(k => !k.includes('::')).length,
-    sampleKeys: Array.from(resultMap.keys()).slice(0, 5)
-  })
-
-  return resultMap
-}
-
-/**
- * Get panel milestones for a specific robot from vacuum rows.
- * Convenience function for use in ingestion coordinator.
- *
- * @param robotCaption - The robot caption (e.g., "8Y-020-01")
- * @param stationKey - The station key (e.g., "8Y-020")
- * @param vacuumRows - All vacuum-parsed rows
- * @returns PanelMilestones or undefined if not found
- */
-export function getPanelMilestonesForRobot(
-  robotCaption: string,
-  stationKey: string,
-  panelMilestonesMap: Map<string, PanelMilestones>
-): PanelMilestones | undefined {
-  // Try with robot caption first
-  const robotKey = `${stationKey}::${robotCaption}`
-  let panels = panelMilestonesMap.get(robotKey)
-
-  if (!panels) {
-    // Fallback to station-only key
-    panels = panelMilestonesMap.get(stationKey)
-  }
-
-  return panels
-}
+// Build entities helper (exposed for tests/dev tools)
+export { buildEntities }
