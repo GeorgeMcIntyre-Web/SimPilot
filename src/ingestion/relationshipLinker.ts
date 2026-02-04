@@ -68,9 +68,31 @@ export const defaultDisambiguationStrategy: DisambiguationStrategy = (candidates
     }
 }
 
+/**
+ * Logger interface for dependency injection.
+ * Allows custom logging implementations for testing and flexibility.
+ */
+export interface Logger {
+    debug: (message: string) => void
+    warn: (message: string) => void
+}
+
+/**
+ * ID generator function type for creating unique warning IDs.
+ * Injectable for deterministic testing.
+ */
+export type IdGenerator = () => string
+
+/**
+ * Default ID generator using timestamp.
+ */
+export const defaultIdGenerator: IdGenerator = () => Date.now().toString()
+
 export interface LinkingOptions {
     maxAmbiguousWarnings?: number
     disambiguationStrategy?: DisambiguationStrategy
+    logger?: Logger
+    idGenerator?: IdGenerator
 }
 
 
@@ -90,9 +112,13 @@ class WarningCollector {
     private warnings: IngestionWarning[] = []
     private ambiguousCount = 0
     private readonly maxWarnings: number
+    private readonly logger: Logger
+    private readonly idGenerator: IdGenerator
 
-    constructor(maxWarnings = 10) {
+    constructor(maxWarnings = 10, logger: Logger = log, idGenerator: IdGenerator = defaultIdGenerator) {
         this.maxWarnings = maxWarnings
+        this.logger = logger
+        this.idGenerator = idGenerator
     }
 
     addAmbiguousMatch(info: AmbiguousMatchInfo): void {
@@ -100,7 +126,7 @@ class WarningCollector {
 
         if (this.warnings.length < this.maxWarnings) {
             this.warnings.push({
-                id: `ambiguous-link-${info.cellId}-${Date.now()}`,
+                id: `ambiguous-link-${info.cellId}-${this.idGenerator()}`,
                 kind: 'LINKING_AMBIGUOUS',
                 fileName: info.sourceFile,
                 message: `Station ${info.stationId} has ${info.candidateCount} candidate assets - using "${info.selectedAssetName}"`,
@@ -118,7 +144,7 @@ class WarningCollector {
     finalize(): { warnings: IngestionWarning[]; ambiguousCount: number } {
         if (this.ambiguousCount > this.maxWarnings) {
             this.warnings.push({
-                id: `ambiguous-summary-${Date.now()}`,
+                id: `ambiguous-summary-${this.idGenerator()}`,
                 kind: 'LINKING_AMBIGUOUS',
                 fileName: '',
                 message: `... and ${this.ambiguousCount - this.maxWarnings} more stations have ambiguous asset matches`,
@@ -127,7 +153,7 @@ class WarningCollector {
         }
 
         if (this.ambiguousCount > 0) {
-            log.warn(`[Relational Linker] ${this.ambiguousCount} stations have ambiguous asset matches (multiple assets at same station)`)
+            this.logger.warn(`[Relational Linker] ${this.ambiguousCount} stations have ambiguous asset matches (multiple assets at same station)`)
         }
 
         return {
@@ -263,7 +289,9 @@ function mergeAssetIntoCell(cell: Cell, asset: Asset): Cell {
 
 const DEFAULT_LINKING_OPTIONS: Required<LinkingOptions> = {
     maxAmbiguousWarnings: 10,
-    disambiguationStrategy: defaultDisambiguationStrategy
+    disambiguationStrategy: defaultDisambiguationStrategy,
+    logger: log,
+    idGenerator: defaultIdGenerator
 }
 
 /**
@@ -283,7 +311,7 @@ export function linkAssetsToSimulation(
 
     // Build station index
     const index = buildStationIndex(assets)
-    const warningCollector = new WarningCollector(opts.maxAmbiguousWarnings)
+    const warningCollector = new WarningCollector(opts.maxAmbiguousWarnings, opts.logger, opts.idGenerator)
 
     // Link each cell to matching asset
     let linkCount = 0
@@ -305,7 +333,7 @@ export function linkAssetsToSimulation(
                 sourceFile: result.asset.sourceFile
             })
 
-            log.debug(`[Relational Linker] Ambiguous match at ${cell.stationId}: ${result.candidateCount} candidates, selected ${result.asset.name}`)
+            opts.logger.debug(`[Relational Linker] Ambiguous match at ${cell.stationId}: ${result.candidateCount} candidates, selected ${result.asset.name}`)
         }
 
         linkCount++
