@@ -97,7 +97,7 @@ export function buildDiffResultFromVersionComparison(
           key,
           plantKey,
           entityType,
-          lastSeen: (change.entity as Record<string, unknown>).lastUpdated as string || change.entity.metadata?.lastUpdated as string || new Date().toISOString()
+          lastSeen: (change.entity.metadata?.lastUpdated as string) || new Date().toISOString()
         })
       }
     }
@@ -161,21 +161,18 @@ export function buildVersionComparison(
       sourcing: r.sourcing,
       metadata: {
         ...(r.metadata || {}),
-        function: (r as Record<string, unknown>).application as string | undefined,
-        application: (r as Record<string, unknown>).application as string | undefined,
-        applicationCode: (r as Record<string, unknown>).applicationCode as string | undefined,
-        robotType: (r as Record<string, unknown>).robotType as string || r.metadata?.robotType || r.metadata?.['Robot Type'],
+        function: r.metadata?.application,
+        application: r.metadata?.application,
+        applicationCode: r.metadata?.applicationCode,
+        robotType: r.metadata?.robotType || r.metadata?.['Robot Type'],
         installStatus:
-          (r as Record<string, unknown>).installStatus as string ||
           r.metadata?.installStatus ||
           r.metadata?.['Install status'] ||
           r.metadata?.['Install Status'],
         applicationConcern:
-          (r as Record<string, unknown>).applicationConcern as string ||
           r.metadata?.applicationConcern ||
           r.metadata?.['Robot application concern'],
         comment:
-          (r as Record<string, unknown>).comment as string ||
           r.metadata?.comment ||
           r.metadata?.esowComment ||
           r.metadata?.['ESOW Comment'],
