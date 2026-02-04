@@ -37,6 +37,105 @@ export interface LinkingResult {
     warnings: IngestionWarning[]
 }
 
+/**
+ * Disambiguation strategy for selecting an asset when multiple candidates exist.
+ * Returns the selected asset and whether the selection is ambiguous.
+ */
+export type DisambiguationStrategy = (candidates: Asset[]) => {
+    selected: Asset
+    isAmbiguous: boolean
+}
+
+/**
+ * Default disambiguation strategy: prefer robots over tools.
+ * If multiple robots exist, selects the first one and marks as ambiguous.
+ */
+export const defaultDisambiguationStrategy: DisambiguationStrategy = (candidates) => {
+    const robots = candidates.filter(asset => (asset as Robot).kind === 'ROBOT')
+
+    if (robots.length === 1) {
+        return { selected: robots[0], isAmbiguous: false }
+    }
+
+    if (robots.length > 1) {
+        return { selected: robots[0], isAmbiguous: true }
+    }
+
+    // No robots: return first tool (ambiguous if multiple tools)
+    return {
+        selected: candidates[0],
+        isAmbiguous: candidates.length > 1
+    }
+}
+
+export interface LinkingOptions {
+    maxAmbiguousWarnings?: number
+    disambiguationStrategy?: DisambiguationStrategy
+}
+
+
+// ============================================================================
+// WARNING COLLECTOR (Single Responsibility)
+// ============================================================================
+
+interface AmbiguousMatchInfo {
+    cellId: string
+    stationId: string
+    candidateCount: number
+    selectedAssetName: string
+    sourceFile: string
+}
+
+class WarningCollector {
+    private warnings: IngestionWarning[] = []
+    private ambiguousCount = 0
+    private readonly maxWarnings: number
+
+    constructor(maxWarnings = 10) {
+        this.maxWarnings = maxWarnings
+    }
+
+    addAmbiguousMatch(info: AmbiguousMatchInfo): void {
+        this.ambiguousCount++
+
+        if (this.warnings.length < this.maxWarnings) {
+            this.warnings.push({
+                id: `ambiguous-link-${info.cellId}-${Date.now()}`,
+                kind: 'LINKING_AMBIGUOUS',
+                fileName: info.sourceFile,
+                message: `Station ${info.stationId} has ${info.candidateCount} candidate assets - using "${info.selectedAssetName}"`,
+                details: {
+                    cellId: info.cellId,
+                    stationId: info.stationId,
+                    candidateCount: info.candidateCount,
+                    selectedAsset: info.selectedAssetName
+                },
+                createdAt: new Date().toISOString()
+            })
+        }
+    }
+
+    finalize(): { warnings: IngestionWarning[]; ambiguousCount: number } {
+        if (this.ambiguousCount > this.maxWarnings) {
+            this.warnings.push({
+                id: `ambiguous-summary-${Date.now()}`,
+                kind: 'LINKING_AMBIGUOUS',
+                fileName: '',
+                message: `... and ${this.ambiguousCount - this.maxWarnings} more stations have ambiguous asset matches`,
+                createdAt: new Date().toISOString()
+            })
+        }
+
+        if (this.ambiguousCount > 0) {
+            log.warn(`[Relational Linker] ${this.ambiguousCount} stations have ambiguous asset matches (multiple assets at same station)`)
+        }
+
+        return {
+            warnings: this.warnings,
+            ambiguousCount: this.ambiguousCount
+        }
+    }
+}
 
 // ============================================================================
 // INDEXING (V2 - Canonical StationId)
@@ -85,10 +184,13 @@ interface PickResult {
 }
 
 /**
- * Pick best asset for cell using disambiguation rules
+ * Pick best asset for cell using disambiguation strategy
  * Simplified since stationId already handles area+station normalization
  */
-function pickBestAssetForCell(ctx: MatchContext): PickResult {
+function pickBestAssetForCell(
+    ctx: MatchContext,
+    disambiguate: DisambiguationStrategy
+): PickResult {
     // Guard: no candidates
     if (ctx.candidates.length === 0) {
         return { asset: null, isAmbiguous: false, candidateCount: 0 }
@@ -99,24 +201,12 @@ function pickBestAssetForCell(ctx: MatchContext): PickResult {
         return { asset: ctx.candidates[0], isAmbiguous: false, candidateCount: 1 }
     }
 
-    // Multiple candidates: prefer robots over tools (common case for simulation cells)
-    const robots = ctx.candidates.filter(asset =>
-        (asset as Robot).kind === 'ROBOT'
-    )
+    // Multiple candidates: use disambiguation strategy
+    const { selected, isAmbiguous } = disambiguate(ctx.candidates)
 
-    if (robots.length === 1) {
-        return { asset: robots[0], isAmbiguous: false, candidateCount: ctx.candidates.length }
-    }
-
-    if (robots.length > 1) {
-        // Multiple robots at same station - ambiguous
-        return { asset: robots[0], isAmbiguous: true, candidateCount: ctx.candidates.length }
-    }
-
-    // No robots: return first tool (ambiguous if multiple tools)
     return {
-        asset: ctx.candidates[0],
-        isAmbiguous: ctx.candidates.length > 1,
+        asset: selected,
+        isAmbiguous,
         candidateCount: ctx.candidates.length
     }
 }
@@ -126,8 +216,8 @@ function pickBestAssetForCell(ctx: MatchContext): PickResult {
  */
 function findMatchingAsset(
     cell: Cell,
-    _areas: Map<string, string>,  // No longer needed with stationId
-    index: StationIndex
+    index: StationIndex,
+    disambiguate: DisambiguationStrategy
 ): PickResult {
     // Guard: no stationId on cell
     if (!cell.stationId) {
@@ -146,7 +236,7 @@ function findMatchingAsset(
         candidates
     }
 
-    return pickBestAssetForCell(ctx)
+    return pickBestAssetForCell(ctx, disambiguate)
 }
 
 /**
@@ -171,31 +261,35 @@ function mergeAssetIntoCell(cell: Cell, asset: Asset): Cell {
 // MAIN LINKING FUNCTION
 // ============================================================================
 
+const DEFAULT_LINKING_OPTIONS: Required<LinkingOptions> = {
+    maxAmbiguousWarnings: 10,
+    disambiguationStrategy: defaultDisambiguationStrategy
+}
+
 /**
  * Link assets to simulation cells using station-first matching
  *
  * @param cells - Simulation cells from SimulationStatus files
  * @param assets - Tools and robots from asset files
- * @param areas - Area lookup for resolving cell area names
+ * @param options - Optional configuration for linking behavior
  * @returns Enriched cells with merged asset data and statistics
  */
 export function linkAssetsToSimulation(
     cells: Cell[],
     assets: Asset[],
-    areas: Map<string, string>
+    options: LinkingOptions = {}
 ): LinkingResult {
+    const opts = { ...DEFAULT_LINKING_OPTIONS, ...options }
+
     // Build station index
     const index = buildStationIndex(assets)
-    const warnings: IngestionWarning[] = []
+    const warningCollector = new WarningCollector(opts.maxAmbiguousWarnings)
 
     // Link each cell to matching asset
     let linkCount = 0
-    let ambiguousCount = 0
-    const maxAmbiguousWarnings = 10
-    let ambiguousWarningsLogged = 0
 
     const linkedCells = cells.map(cell => {
-        const result = findMatchingAsset(cell, areas, index)
+        const result = findMatchingAsset(cell, index, opts.disambiguationStrategy)
 
         if (!result.asset) {
             return cell
@@ -203,25 +297,13 @@ export function linkAssetsToSimulation(
 
         // Track ambiguous matches
         if (result.isAmbiguous) {
-            ambiguousCount++
-
-            // Log warning for ambiguous matches (limit to avoid flooding)
-            if (ambiguousWarningsLogged < maxAmbiguousWarnings) {
-                warnings.push({
-                    id: `ambiguous-link-${cell.id}-${Date.now()}`,
-                    kind: 'LINKING_AMBIGUOUS',
-                    fileName: result.asset.sourceFile,
-                    message: `Station ${cell.stationId ?? cell.code} has ${result.candidateCount} candidate assets - using "${result.asset.name}"`,
-                    details: {
-                        cellId: cell.id,
-                        stationId: cell.stationId ?? '',
-                        candidateCount: result.candidateCount,
-                        selectedAsset: result.asset.name
-                    },
-                    createdAt: new Date().toISOString()
-                })
-                ambiguousWarningsLogged++
-            }
+            warningCollector.addAmbiguousMatch({
+                cellId: cell.id,
+                stationId: cell.stationId ?? cell.code,
+                candidateCount: result.candidateCount,
+                selectedAssetName: result.asset.name,
+                sourceFile: result.asset.sourceFile
+            })
 
             log.debug(`[Relational Linker] Ambiguous match at ${cell.stationId}: ${result.candidateCount} candidates, selected ${result.asset.name}`)
         }
@@ -230,20 +312,7 @@ export function linkAssetsToSimulation(
         return mergeAssetIntoCell(cell, result.asset)
     })
 
-    // Summary warning if more ambiguous matches than we logged
-    if (ambiguousCount > maxAmbiguousWarnings) {
-        warnings.push({
-            id: `ambiguous-summary-${Date.now()}`,
-            kind: 'LINKING_AMBIGUOUS',
-            fileName: '',
-            message: `... and ${ambiguousCount - maxAmbiguousWarnings} more stations have ambiguous asset matches`,
-            createdAt: new Date().toISOString()
-        })
-    }
-
-    if (ambiguousCount > 0) {
-        log.warn(`[Relational Linker] ${ambiguousCount} stations have ambiguous asset matches (multiple assets at same station)`)
-    }
+    const { warnings, ambiguousCount } = warningCollector.finalize()
 
     return {
         linkedCells,

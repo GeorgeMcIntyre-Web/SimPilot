@@ -319,7 +319,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
       areaLookup.set(area.id, area.name)
     }
 
-    const linkResult = linkAssetsToSimulation(cells, allAssets, areaLookup)
+    const linkResult = linkAssetsToSimulation(cells, allAssets)
 
     // Replace cells with enriched versions
     cells.length = 0
