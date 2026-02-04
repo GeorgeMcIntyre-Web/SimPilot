@@ -1,0 +1,79 @@
+import { FieldDescriptor } from './fieldRegistry.types'
+
+export const toolingFieldDescriptors: FieldDescriptor[] = [
+  {
+    id: 'tool_id',
+    canonicalName: 'Tool ID',
+    synonyms: ['tool id', 'tool-id', 'tool name', 'tool number', 'tool no', 'equipment id'],
+    description: 'Tool or equipment identifier',
+    expectedType: 'string',
+    headerRegexes: [/tool[\s\-]*(id|name|number|no|#)/i, /equipment\s*id/i],
+    importance: 'high'
+  },
+  {
+    id: 'gun_id',
+    canonicalName: 'Gun ID',
+    synonyms: ['gun id', 'wg id', 'welding gun id'],
+    description: 'Weld gun identifier',
+    expectedType: 'string',
+    headerRegexes: [/gun\s*id/i, /wg\s*id/i],
+    importance: 'high'
+  },
+  {
+    id: 'gun_number',
+    canonicalName: 'Gun Number',
+    synonyms: ['gun number', 'gun no', 'gun #', 'wg number', 'zangennummer'],
+    description: 'Weld gun number',
+    expectedType: 'string',
+    headerRegexes: [/gun\s*(number|no|#)/i, /wg\s*(number|no|#)/i, /zangennummer/i],
+    importance: 'high'
+  },
+  {
+    id: 'device_name',
+    canonicalName: 'Device Name',
+    synonyms: ['device name', 'device', 'asset description', 'equipment name'],
+    description: 'Device or equipment name',
+    expectedType: 'string',
+    headerRegexes: [/device\s*(name)?/i, /asset\s*description/i, /equipment\s*name/i],
+    importance: 'high'
+  },
+  {
+    id: 'serial_number',
+    canonicalName: 'Serial Number',
+    synonyms: ['serial number', 'serial no', 's/n', 'body serial number'],
+    description: 'Equipment serial number',
+    expectedType: 'string',
+    headerRegexes: [/serial\s*(number|no|#)?/i, /s\/n/i, /body\s*serial/i],
+    importance: 'medium'
+  },
+  {
+    id: 'gun_force_kn',
+    canonicalName: 'Gun Force (kN)',
+    synonyms: ['gun force', 'force kn', 'weld force'],
+    description: 'Weld gun force in kN',
+    expectedType: 'number',
+    expectedUnit: 'kN',
+    headerRegexes: [/gun\s*force/i, /force.*kn/i, /weld\s*force/i],
+    importance: 'high'
+  },
+  {
+    id: 'gun_force_n',
+    canonicalName: 'Gun Force (N)',
+    synonyms: ['force [n]', 'force n', 'required force'],
+    description: 'Weld gun force in Newtons',
+    expectedType: 'number',
+    expectedUnit: 'N',
+    headerRegexes: [/force\s*\[?n\]?/i, /required\s*force/i],
+    importance: 'high'
+  },
+  {
+    id: 'transformer_kva',
+    canonicalName: 'Transformer (kVA)',
+    synonyms: ['transformer', 'transformer kva', 'trafo'],
+    description: 'Transformer capacity in kVA',
+    expectedType: 'number',
+    expectedUnit: 'kVA',
+    headerRegexes: [/transformer/i, /trafo/i],
+    importance: 'low'
+  }
+]
