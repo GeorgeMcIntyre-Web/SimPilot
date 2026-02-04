@@ -1,4 +1,4 @@
-import { FieldDescriptor } from './fieldRegistry.types'
+import type { FieldDescriptor } from './fieldRegistry.types'
 
 export const simulationFieldDescriptors: FieldDescriptor[] = [
   {
