@@ -4,7 +4,7 @@
 
 import * as XLSX from 'xlsx'
 import { log } from '../lib/log'
-import type { Cell, IngestionWarning } from '../domain/core'
+import type { IngestionWarning } from '../domain/core'
 import { sheetToMatrix, findHeaderRow } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 import { parseOverviewSchedule } from './simulationStatus/overviewSchedule'
@@ -12,14 +12,11 @@ import { findAllSimulationSheets, extractAreaNameFromTitle } from './simulationS
 import { deriveProjectName, deriveCustomer } from './simulationStatus/projectNaming'
 import { COLUMN_ALIASES, REQUIRED_HEADERS } from './simulationStatus/headerMapping'
 import { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
-import { convertVacuumRowsToPanelMilestones, getPanelMilestonesForRobot } from './simulationStatus/panelMilestones'
 import { extractRobotsFromVacuumRows } from './simulationStatus/robotExtraction'
 import { buildEntities } from './simulationStatus/entityBuilder'
-import {
-  SimulationMetric,
+import type {
   VacuumParsedRow,
   ParsedSimulationRow,
-  SimulationRobot,
   SimulationStatusResult
 } from './simulationStatus/types'
 
@@ -109,8 +106,6 @@ export async function parseSimulationStatus(
       }))
       continue
     }
-
-    const isSimulationSheet = sheetName.toUpperCase().includes('SIMULATION')
 
     const rows = sheetToMatrix(workbook, sheetName)
 
