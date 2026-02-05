@@ -1,20 +1,20 @@
 // Stations Table
 // Filterable, sortable table of all stations
 
-import { cn } from '../../ui/lib/utils';
-import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes';
-import { EmptyState } from '../../ui/components/EmptyState';
-import { FilterControls } from './stationsTable/FilterControls';
-import { SortableHeader } from './stationsTable/SortableHeader';
-import { StationRow } from './stationsTable/StationRow';
-import { useStationsFiltering } from './stationsTable/useStationsFiltering';
+import { cn } from '../../ui/lib/utils'
+import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
+import { EmptyState } from '../../ui/components/EmptyState'
+import { FilterControls } from './stationsTable/FilterControls'
+import { SortableHeader } from './stationsTable/SortableHeader'
+import { StationRow } from './stationsTable/StationRow'
+import { useStationsFiltering } from './stationsTable/useStationsFiltering'
 
 interface StationsTableProps {
-  cells: CellSnapshot[];
-  selectedArea: string | null;
-  onSelectStation: (cell: CellSnapshot) => void;
-  onClearAreaFilter?: () => void;
-  variant?: 'card' | 'plain';
+  cells: CellSnapshot[]
+  selectedArea: string | null
+  onSelectStation: (cell: CellSnapshot) => void
+  onClearAreaFilter?: () => void
+  variant?: 'card' | 'plain'
 }
 
 export function StationsTable({
@@ -26,14 +26,14 @@ export function StationsTable({
 }: StationsTableProps) {
   const {
     searchTerm,
-    severityFilter,
+    statusFilter,
     sortKey,
     sortDirection,
     setSearchTerm,
-    setSeverityFilter,
+    setStatusFilter,
     handleSort,
     filteredCells,
-  } = useStationsFiltering(cells, selectedArea);
+  } = useStationsFiltering(cells, selectedArea)
 
   // Empty state
   if (cells.length === 0) {
@@ -42,7 +42,7 @@ export function StationsTable({
         title="No station data available"
         message="Load data in the Data Loader to see stations and risks."
       />
-    );
+    )
   }
 
   return (
@@ -50,8 +50,8 @@ export function StationsTable({
       <FilterControls
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        severityFilter={severityFilter}
-        onSeverityChange={setSeverityFilter}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
         selectedArea={selectedArea}
         onClearAreaFilter={onClearAreaFilter}
         resultCount={filteredCells.length}
@@ -61,7 +61,7 @@ export function StationsTable({
       <div
         className={cn(
           variant === 'card' &&
-            'overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+            'overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
         )}
       >
         <div className="overflow-x-auto max-h-[640px] overflow-y-auto custom-scrollbar">
@@ -137,5 +137,5 @@ export function StationsTable({
         </div>
       </div>
     </div>
-  );
+  )
 }

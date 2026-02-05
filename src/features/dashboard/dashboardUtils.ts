@@ -2,6 +2,7 @@
 // Pure functions for deriving dashboard metrics and status
 
 import { CellSnapshot, CellRiskLevel } from '../../domain/crossRef/CrossRefTypes'
+import { normalizeStationCode } from '../../ingestion/normalizers'
 
 const APPLICATION_KEYS = [
   'applicationCode',
@@ -10,7 +11,7 @@ const APPLICATION_KEYS = [
   'Function',
   'application',
   'robotApplication',
-  'Robot Application'
+  'Robot Application',
 ]
 
 const extractApplicationValues = (raw: unknown): string[] => {
@@ -31,7 +32,7 @@ const extractApplicationValues = (raw: unknown): string[] => {
     }
   }
 
-  return values.filter(v => v.length > 0)
+  return values.filter((v) => v.length > 0)
 }
 
 const collectApplications = (cell: CellSnapshot): string[] => {
@@ -77,7 +78,7 @@ export const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
   const completion = getCompletionPercent(cell)
   const isComplete = completion === 100
 
-  const hasError = flags.some(f => f.severity === 'ERROR')
+  const hasError = flags.some((f) => f.severity === 'ERROR')
   if (hasError) return 'CRITICAL'
 
   // Completed stations are OK - warnings are informational only
@@ -88,7 +89,7 @@ export const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
     return 'AT_RISK'
   }
 
-  const hasWarning = flags.some(f => f.severity === 'WARNING')
+  const hasWarning = flags.some((f) => f.severity === 'WARNING')
   if (hasWarning) return 'AT_RISK'
 
   // Very low completion without other signals is still At Risk
@@ -181,7 +182,7 @@ export const countByRisk = (cells: CellSnapshot[]): AreaCounts => {
     total: cells.length,
     critical,
     atRisk,
-    ok
+    ok,
   }
 }
 
@@ -189,7 +190,14 @@ export const countByRisk = (cells: CellSnapshot[]): AreaCounts => {
 // STATUS LABELS
 // ============================================================================
 
-export type StatusLabel = 'Complete' | 'Nearly Complete' | 'On Track' | 'In Progress' | 'Starting' | 'Not Started' | 'No data'
+export type StatusLabel =
+  | 'Complete'
+  | 'Nearly Complete'
+  | 'On Track'
+  | 'In Progress'
+  | 'Starting'
+  | 'Not Started'
+  | 'No data'
 
 /**
  * Derives status label from completion percentage
@@ -208,16 +216,16 @@ export const getStatusLabel = (completion: number | null): StatusLabel => {
 // FILTER TYPES
 // ============================================================================
 
-export type SeverityFilter = 'all' | StatusLabel
+export type StatusFilter = 'all' | StatusLabel
 
 /**
  * Filter cells by progress status label
  */
-export const filterBySeverity = (cells: CellSnapshot[], filter: SeverityFilter): CellSnapshot[] => {
+export const filterByStatus = (cells: CellSnapshot[], filter: StatusFilter): CellSnapshot[] => {
   if (filter === 'all') return cells
 
   // Handle status label filtering
-  return cells.filter(c => {
+  return cells.filter((c) => {
     const completion = getCompletionPercent(c)
     return getStatusLabel(completion) === filter
   })
@@ -229,10 +237,8 @@ export const filterBySeverity = (cells: CellSnapshot[], filter: SeverityFilter):
 export const filterByArea = (cells: CellSnapshot[], areaKey: string | null): CellSnapshot[] => {
   if (areaKey === null) return cells
 
-  return cells.filter(c => (c.areaKey ?? 'Unknown') === areaKey)
+  return cells.filter((c) => (c.areaKey ?? 'Unknown') === areaKey)
 }
-
-import { normalizeStationCode } from '../../ingestion/normalizers'
 
 /**
  * Filter cells by search term (matches station key)
@@ -240,22 +246,22 @@ import { normalizeStationCode } from '../../ingestion/normalizers'
 export const filterBySearch = (cells: CellSnapshot[], searchTerm: string): CellSnapshot[] => {
   if (searchTerm.trim() === '') return cells
 
-  const normTerm = normalizeStationCode(searchTerm);
-  const searchLower = searchTerm.toLowerCase();
+  const normTerm = normalizeStationCode(searchTerm)
+  const searchLower = searchTerm.toLowerCase()
 
-  return cells.filter(c => {
+  return cells.filter((c) => {
     // Try matching by normalized station code first (e.g., "010" matches "10")
     if (normTerm) {
-      const normStation = normalizeStationCode(c.stationKey);
-      if (normStation && normStation.includes(normTerm)) return true;
+      const normStation = normalizeStationCode(c.stationKey)
+      if (normStation && normStation.includes(normTerm)) return true
     }
 
     // Fallback: check if search term is in raw station key or display code
-    const lowerTerm = searchLower;
+    const lowerTerm = searchLower
     return (
       c.stationKey.toLowerCase().includes(lowerTerm) ||
       c.displayCode.toLowerCase().includes(lowerTerm)
-    );
+    )
   })
 }
 
@@ -263,7 +269,14 @@ export const filterBySearch = (cells: CellSnapshot[], searchTerm: string): CellS
 // SORTING
 // ============================================================================
 
-export type SortKey = 'station' | 'area' | 'application' | 'simulator' | 'robots' | 'completion' | 'risk'
+export type SortKey =
+  | 'station'
+  | 'area'
+  | 'application'
+  | 'simulator'
+  | 'robots'
+  | 'completion'
+  | 'risk'
 export type SortDirection = 'asc' | 'desc'
 
 /**
@@ -272,7 +285,7 @@ export type SortDirection = 'asc' | 'desc'
 export const sortCells = (
   cells: CellSnapshot[],
   sortKey: SortKey,
-  direction: SortDirection
+  direction: SortDirection,
 ): CellSnapshot[] => {
   const sorted = [...cells].sort((a, b) => {
     let comparison = 0
@@ -287,7 +300,7 @@ export const sortCells = (
       comparison = areaA.localeCompare(areaB)
     }
 
-  if (sortKey === 'application') {
+    if (sortKey === 'application') {
       const appA = getApplicationDisplay(a)
       const appB = getApplicationDisplay(b)
       const safeA = appA === '-' ? '' : appA
@@ -312,8 +325,6 @@ export const sortCells = (
       const compB = getCompletionPercent(b) ?? -1
       comparison = compA - compB
     }
-
-
 
     if (sortKey === 'risk') {
       const riskOrder = { OK: 0, AT_RISK: 1, CRITICAL: 2 }
@@ -351,20 +362,20 @@ export const generateFocusItems = (cells: CellSnapshot[]): FocusItem[] => {
   const items: FocusItem[] = []
 
   // Count stations without simulation status
-  const missingSimStatus = cells.filter(c => c.simulationStatus === undefined)
+  const missingSimStatus = cells.filter((c) => c.simulationStatus === undefined)
   if (missingSimStatus.length > 0) {
     items.push({
       id: 'missing-sim-status',
       title: 'Missing Sim Status',
       count: missingSimStatus.length,
       severity: 'warning',
-      description: 'Stations found in asset lists but not in Simulation Status sheet'
+      description: 'Stations found in asset lists but not in Simulation Status sheet',
     })
   }
 
   // Count guns without force data
-  const gunsWithoutForce = cells.filter(c =>
-    c.flags.some(f => f.type === 'MISSING_GUN_FORCE_FOR_WELD_GUN')
+  const gunsWithoutForce = cells.filter((c) =>
+    c.flags.some((f) => f.type === 'MISSING_GUN_FORCE_FOR_WELD_GUN'),
   )
   if (gunsWithoutForce.length > 0) {
     items.push({
@@ -372,13 +383,13 @@ export const generateFocusItems = (cells: CellSnapshot[]): FocusItem[] => {
       title: 'Guns Without Force',
       count: gunsWithoutForce.length,
       severity: 'warning',
-      description: 'Weld guns without corresponding force data in Zangenpool'
+      description: 'Weld guns without corresponding force data in Zangenpool',
     })
   }
 
   // Count robots missing dress pack info
-  const robotsMissingDressPack = cells.filter(c =>
-    c.flags.some(f => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO')
+  const robotsMissingDressPack = cells.filter((c) =>
+    c.flags.some((f) => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO'),
   )
   if (robotsMissingDressPack.length > 0) {
     items.push({
@@ -386,13 +397,13 @@ export const generateFocusItems = (cells: CellSnapshot[]): FocusItem[] => {
       title: 'Robots Missing Dress Pack',
       count: robotsMissingDressPack.length,
       severity: 'info',
-      description: 'Robots without Dress Pack or Order Code information'
+      description: 'Robots without Dress Pack or Order Code information',
     })
   }
 
   // Count tools without owner
-  const toolsWithoutOwner = cells.filter(c =>
-    c.flags.some(f => f.type === 'TOOL_WITHOUT_OWNER')
+  const toolsWithoutOwner = cells.filter((c) =>
+    c.flags.some((f) => f.type === 'TOOL_WITHOUT_OWNER'),
   )
   if (toolsWithoutOwner.length > 0) {
     items.push({
@@ -400,19 +411,19 @@ export const generateFocusItems = (cells: CellSnapshot[]): FocusItem[] => {
       title: 'Unassigned Tools',
       count: toolsWithoutOwner.length,
       severity: 'info',
-      description: 'Tools without Sim Leader or Team Leader assigned'
+      description: 'Tools without Sim Leader or Team Leader assigned',
     })
   }
 
   // Count critical stations
-  const criticalStations = cells.filter(c => getRiskLevel(c) === 'CRITICAL')
+  const criticalStations = cells.filter((c) => getRiskLevel(c) === 'CRITICAL')
   if (criticalStations.length > 0) {
     items.push({
       id: 'critical-stations',
       title: 'Critical Stations',
       count: criticalStations.length,
       severity: 'danger',
-      description: 'Stations with blocking issues that need immediate attention'
+      description: 'Stations with blocking issues that need immediate attention',
     })
   }
 

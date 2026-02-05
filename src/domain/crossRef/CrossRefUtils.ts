@@ -25,7 +25,7 @@ const normalizeBasic = (value: unknown): string => {
 
 /**
  * Normalize station ID for consistent matching
- * 
+ *
  * Examples:
  * - "STATION 010" → "010"
  * - "St. 020" → "020"
@@ -39,7 +39,7 @@ export const normalizeStationId = (value: unknown): StationKey => {
   // Remove common prefixes
   let processed = base.replace(/^STATION\s+/i, '')
   processed = processed.replace(/^ST\.\s*/i, '')
-  processed = processed.replace(/^OP[\-\s]*/i, '')
+  processed = processed.replace(/^OP[-\s]*/i, '')
 
   // Strip leading zeros from numeric parts (e.g., "010" -> "10")
   // This ensures consistency between different source files
@@ -49,12 +49,12 @@ export const normalizeStationId = (value: unknown): StationKey => {
   })
 
   // Normalize separators to underscores
-  return processed.replace(/[\s\-]+/g, '_')
+  return processed.replace(/[\s-]+/g, '_')
 }
 
 /**
  * Normalize robot key for consistent matching
- * 
+ *
  * Examples:
  * - "E-12345" → "12345"
  * - "R-001" → "R_001"
@@ -64,15 +64,15 @@ export const normalizeRobotKey = (value: unknown): RobotKey => {
   if (!base) return ''
 
   // Remove E-number prefix (common in robot specs)
-  let processed = base.replace(/^E[\-\s]?/i, '')
+  const processed = base.replace(/^E[-\s]?/i, '')
 
   // Normalize separators
-  return processed.replace(/[\s]+/g, '_')
+  return processed.replace(/\s+/g, '_')
 }
 
 /**
  * Normalize gun key for consistent matching
- * 
+ *
  * Examples:
  * - "G-100" → "G_100"
  * - "WG 200" → "WG_200"
@@ -82,12 +82,12 @@ export const normalizeGunKey = (value: unknown): GunKey => {
   if (!base) return ''
 
   // Normalize separators
-  return base.replace(/[\s\-]+/g, '_')
+  return base.replace(/[\s-]+/g, '_')
 }
 
 /**
  * Normalize area key for consistent matching
- * 
+ *
  * Examples:
  * - "Underbody" → "UNDERBODY"
  * - " P1Mx " → "P1MX"

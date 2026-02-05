@@ -1,7 +1,15 @@
 // Apply Ingested Data
 // Merges parsed Excel data into domain stores with intelligent linking
 
-import { Project, Area, Cell, Robot, Tool, IngestionWarning, OverviewScheduleMetrics } from '../domain/core'
+import {
+  Project,
+  Area,
+  Cell,
+  Robot,
+  Tool,
+  IngestionWarning,
+  OverviewScheduleMetrics,
+} from '../domain/core'
 import { SimulationStatusResult } from './simulationStatusParser'
 import { RobotListResult } from './robotListParser'
 import { ToolListResult } from './toolListParser'
@@ -9,7 +17,12 @@ import { createLinkingMissingTargetWarning, createParserErrorWarning } from './w
 import { linkAssetsToSimulation } from './relationshipLinker'
 import { buildStationId, normalizeAreaName, normalizeStationCode } from './normalizers'
 import { log } from '../lib/log'
-import { deduplicateAll, logDeduplicationStats, type DeduplicationResult, type DuplicateDetection } from './entityDeduplicator'
+import {
+  deduplicateAll,
+  logDeduplicationStats,
+  type DeduplicationResult,
+  type DuplicateDetection,
+} from './entityDeduplicator'
 import { coreStore } from '../domain/coreStore'
 
 // ============================================================================
@@ -69,14 +82,14 @@ function buildCollisionSummary(results: DedupResults): {
     areas: results.areas.stats.idCollisions,
     cells: results.cells.stats.idCollisions,
     robots: results.robots.stats.idCollisions,
-    tools: results.tools.stats.idCollisions
+    tools: results.tools.stats.idCollisions,
   }
   const replacements = {
     projects: results.projects.stats.replacements ?? 0,
     areas: results.areas.stats.replacements ?? 0,
     cells: results.cells.stats.replacements ?? 0,
     robots: results.robots.stats.replacements ?? 0,
-    tools: results.tools.stats.replacements ?? 0
+    tools: results.tools.stats.replacements ?? 0,
   }
 
   const breakdownParts = Object.entries(breakdown)
@@ -129,8 +142,8 @@ function buildCollisionSummary(results: DedupResults): {
       cellsReplaced: replacements.cells,
       robotsReplaced: replacements.robots,
       toolsReplaced: replacements.tools,
-      examples: examples.join(' | ') || 'n/a'
-    }
+      examples: examples.join(' | ') || 'n/a',
+    },
   }
 }
 
@@ -169,7 +182,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
   if (data.tools) {
     // Only add active tools (isActive !== false)
     // Inactive tools are cancelled/historical (strikethrough in Excel with "REMOVED FROM BOM" or "SIM TO SPEC")
-    const activeTools = data.tools.tools.filter(tool => tool.isActive !== false)
+    const activeTools = data.tools.tools.filter((tool) => tool.isActive !== false)
     tools.push(...activeTools)
     warnings.push(...data.tools.warnings)
   }
@@ -179,21 +192,25 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
   // Deduplicate against existing store data
   const currentState = coreStore.getState()
+  const shouldReplaceSimulationEntities = data.simulation !== undefined
+  const baseProjects = shouldReplaceSimulationEntities ? [] : currentState.projects
+  const baseAreas = shouldReplaceSimulationEntities ? [] : currentState.areas
+  const baseCells = shouldReplaceSimulationEntities ? [] : currentState.cells
   const deduplicationResults = deduplicateAll(
     {
-      projects: currentState.projects,
-      areas: currentState.areas,
-      cells: currentState.cells,
-      robots: currentState.assets.filter(a => a.kind === 'ROBOT') as Robot[],
-      tools: currentState.assets.filter(a => a.kind !== 'ROBOT') as Tool[]
+      projects: baseProjects,
+      areas: baseAreas,
+      cells: baseCells,
+      robots: currentState.assets.filter((a) => a.kind === 'ROBOT') as Robot[],
+      tools: currentState.assets.filter((a) => a.kind !== 'ROBOT') as Tool[],
     },
     {
       projects,
       areas,
       cells,
       robots,
-      tools
-    }
+      tools,
+    },
   )
 
   // Log deduplication statistics
@@ -216,7 +233,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
       fileName: '',
       message: `Detected ${totalCollisions} ID collisions (same ID, different data). Replaced existing records with the latest upload so the dashboard reflects current data.${collisionSummary.messageSuffix}`,
       details: collisionSummary.details,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     })
   }
 
@@ -237,15 +254,17 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
   // includes NEW entities, but existing equipment in the store may now have matching
   // cells that didn't exist before.
   const hasNewCells = data.simulation && data.simulation.cells.length > 0
-  const existingRobots = currentState.assets.filter(a => a.kind === 'ROBOT') as Robot[]
-  const existingTools = currentState.assets.filter(a => a.kind !== 'ROBOT') as Tool[]
+  const existingRobots = currentState.assets.filter((a) => a.kind === 'ROBOT') as Robot[]
+  const existingTools = currentState.assets.filter((a) => a.kind !== 'ROBOT') as Tool[]
 
   if (hasNewCells && (existingRobots.length > 0 || existingTools.length > 0)) {
-    log.info(`[ApplyIngestedData] New cells detected - re-linking ${existingRobots.length} existing robots and ${existingTools.length} existing tools`)
+    log.info(
+      `[ApplyIngestedData] New cells detected - re-linking ${existingRobots.length} existing robots and ${existingTools.length} existing tools`,
+    )
 
     // Include existing equipment that wasn't in the current ingestion (not already in robots/tools arrays)
-    const currentRobotIds = new Set(robots.map(r => r.id))
-    const currentToolIds = new Set(tools.map(t => t.id))
+    const currentRobotIds = new Set(robots.map((r) => r.id))
+    const currentToolIds = new Set(tools.map((t) => t.id))
 
     let addedRobots = 0
     let addedTools = 0
@@ -266,16 +285,23 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
       }
     }
 
-    log.info(`[ApplyIngestedData] Added ${addedRobots} existing robots and ${addedTools} existing tools for re-linking`)
-    log.debug(`[ApplyIngestedData] After merging: ${robots.length} robots, ${tools.length} tools, ${cells.length} cells`)
+    log.info(
+      `[ApplyIngestedData] Added ${addedRobots} existing robots and ${addedTools} existing tools for re-linking`,
+    )
+    log.debug(
+      `[ApplyIngestedData] After merging: ${robots.length} robots, ${tools.length} tools, ${cells.length} cells`,
+    )
   }
 
   // Also handle the reverse case: when equipment is loaded and cells already exist in the store
-  const hasNewEquipment = (data.robots && data.robots.robots.length > 0) || (data.tools && data.tools.tools.length > 0)
+  const hasNewEquipment =
+    (data.robots && data.robots.robots.length > 0) || (data.tools && data.tools.tools.length > 0)
   const existingCells = currentState.cells
 
   if (hasNewEquipment && existingCells.length > 0 && cells.length === 0) {
-    log.info(`[ApplyIngestedData] New equipment detected with ${existingCells.length} existing cells - including cells for linking`)
+    log.info(
+      `[ApplyIngestedData] New equipment detected with ${existingCells.length} existing cells - including cells for linking`,
+    )
 
     // Include existing cells that weren't in the current ingestion
     for (const cell of existingCells) {
@@ -284,26 +310,30 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
 
     // Also include existing areas and projects for proper linking
     for (const area of currentState.areas) {
-      if (!areas.find(a => a.id === area.id)) {
+      if (!areas.find((a) => a.id === area.id)) {
         areas.push({ ...area })
       }
     }
 
     for (const project of currentState.projects) {
-      if (!projects.find(p => p.id === project.id)) {
+      if (!projects.find((p) => p.id === project.id)) {
         projects.push({ ...project })
       }
     }
 
-    log.debug(`[ApplyIngestedData] After including existing data: ${cells.length} cells, ${areas.length} areas, ${projects.length} projects`)
+    log.debug(
+      `[ApplyIngestedData] After including existing data: ${cells.length} cells, ${areas.length} areas, ${projects.length} projects`,
+    )
   }
 
   // Validate we have simulation data
   if (projects.length === 0) {
-    warnings.push(createParserErrorWarning({
-      fileName: '',
-      error: 'No projects found. Please load Simulation Status files first.'
-    }))
+    warnings.push(
+      createParserErrorWarning({
+        fileName: '',
+        error: 'No projects found. Please load Simulation Status files first.',
+      }),
+    )
     return { projects, areas, cells, robots, tools, warnings }
   }
 
@@ -328,16 +358,18 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     // Add warnings from linker (ambiguous matches, etc.)
     warnings.push(...linkResult.warnings)
 
-    log.info(`[Relational Linker] Linked ${linkResult.linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed, ${linkResult.ambiguousCount} ambiguous)`)
+    log.info(
+      `[Relational Linker] Linked ${linkResult.linkCount}/${linkResult.totalCells} cells to assets (${linkResult.stationCount} stations indexed, ${linkResult.ambiguousCount} ambiguous)`,
+    )
 
     // Track orphaned assets (those without cellId after linking)
-    const orphanedAssets = allAssets.filter(a => !a.cellId)
+    const orphanedAssets = allAssets.filter((a) => !a.cellId)
 
     // Build linkStats for user feedback
     linkStats = {
       linkedCells: linkResult.linkCount,
       totalCells: linkResult.totalCells,
-      orphanedAssets: orphanedAssets.length
+      orphanedAssets: orphanedAssets.length,
     }
 
     if (orphanedAssets.length > 0) {
@@ -345,14 +377,17 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
       const orphanedToReport = orphanedAssets.slice(0, maxWarnings)
 
       for (const asset of orphanedToReport) {
-        warnings.push(createLinkingMissingTargetWarning({
-          entityType: asset.kind === 'ROBOT' ? 'ROBOT' : 'TOOL',
-          entityId: asset.id,
-          entityName: asset.name,
-          fileName: asset.sourceFile,
-          matchKey: asset.stationId ?? asset.stationNumber ?? 'unknown',
-          reason: 'No matching cell found - asset will appear in global assets but not in station views'
-        }))
+        warnings.push(
+          createLinkingMissingTargetWarning({
+            entityType: asset.kind === 'ROBOT' ? 'ROBOT' : 'TOOL',
+            entityId: asset.id,
+            entityName: asset.name,
+            fileName: asset.sourceFile,
+            matchKey: asset.stationId ?? asset.stationNumber ?? 'unknown',
+            reason:
+              'No matching cell found - asset will appear in global assets but not in station views',
+          }),
+        )
       }
 
       if (orphanedAssets.length > maxWarnings) {
@@ -361,11 +396,13 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
           kind: 'LINKING_MISSING_TARGET',
           fileName: '',
           message: `... and ${orphanedAssets.length - maxWarnings} more orphaned assets could not be linked to cells`,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         })
       }
 
-      log.warn(`[Relational Linker] ${orphanedAssets.length} assets could not be linked to any cell`)
+      log.warn(
+        `[Relational Linker] ${orphanedAssets.length} assets could not be linked to any cell`,
+      )
     }
   }
 
@@ -376,9 +413,11 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
   linkToolsToCells(tools, cells, areas, projects, warnings)
 
   // Log linking results for debugging
-  const linkedRobots = robots.filter(r => r.cellId)
-  const linkedTools = tools.filter(t => t.cellId)
-  log.info(`[ApplyIngestedData] Linking complete: ${linkedRobots.length}/${robots.length} robots linked, ${linkedTools.length}/${tools.length} tools linked`)
+  const linkedRobots = robots.filter((r) => r.cellId)
+  const linkedTools = tools.filter((t) => t.cellId)
+  log.info(
+    `[ApplyIngestedData] Linking complete: ${linkedRobots.length}/${robots.length} robots linked, ${linkedTools.length}/${tools.length} tools linked`,
+  )
 
   // Update cell robot/tool counts
   updateCellEquipmentLinks(cells, robots, tools)
@@ -391,7 +430,7 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
     tools,
     warnings,
     overviewSchedule,
-    linkStats
+    linkStats,
   }
 }
 
@@ -407,13 +446,13 @@ function linkRobotsToCells(
   cells: Cell[],
   areas: Area[],
   _projects: Project[],
-  warnings: IngestionWarning[]
+  warnings: IngestionWarning[],
 ): void {
   for (const robot of robots) {
     // First try to match using stationId (most reliable)
     let matchingCell: Cell | undefined
     if (robot.stationId) {
-      matchingCell = cells.find(c => c.stationId === robot.stationId)
+      matchingCell = cells.find((c) => c.stationId === robot.stationId)
     }
 
     // Fallback to matching by station code and area
@@ -423,7 +462,7 @@ function linkRobotsToCells(
         areas,
         robot.lineCode,
         robot.stationCode,
-        robot.areaName
+        robot.areaName,
       )
     }
 
@@ -439,14 +478,16 @@ function linkRobotsToCells(
         robot.projectId = matchingArea.projectId
       } else {
         const matchKey = buildMatchKey(robot.lineCode, robot.stationCode, robot.areaName)
-        warnings.push(createLinkingMissingTargetWarning({
-          entityType: 'ROBOT',
-          entityId: robot.id,
-          entityName: robot.name,
-          fileName: robot.sourceFile,
-          matchKey,
-          reason: 'No matching cell or area found based on lineCode, stationCode, and areaName'
-        }))
+        warnings.push(
+          createLinkingMissingTargetWarning({
+            entityType: 'ROBOT',
+            entityId: robot.id,
+            entityName: robot.name,
+            fileName: robot.sourceFile,
+            matchKey,
+            reason: 'No matching cell or area found based on lineCode, stationCode, and areaName',
+          }),
+        )
       }
     }
   }
@@ -460,24 +501,18 @@ function linkToolsToCells(
   cells: Cell[],
   areas: Area[],
   _projects: Project[],
-  warnings: IngestionWarning[]
+  warnings: IngestionWarning[],
 ): void {
   for (const tool of tools) {
     // First try to match using stationId (most reliable)
     let matchingCell: Cell | undefined
     if (tool.stationId) {
-      matchingCell = cells.find(c => c.stationId === tool.stationId)
+      matchingCell = cells.find((c) => c.stationId === tool.stationId)
     }
 
     // Fallback to matching by station code and area
     if (!matchingCell) {
-      matchingCell = findMatchingCell(
-        cells,
-        areas,
-        tool.lineCode,
-        tool.stationCode,
-        tool.areaName
-      )
+      matchingCell = findMatchingCell(cells, areas, tool.lineCode, tool.stationCode, tool.areaName)
     }
 
     if (matchingCell) {
@@ -492,14 +527,16 @@ function linkToolsToCells(
         tool.projectId = matchingArea.projectId
       } else {
         const matchKey = buildMatchKey(tool.lineCode, tool.stationCode, tool.areaName)
-        warnings.push(createLinkingMissingTargetWarning({
-          entityType: 'TOOL',
-          entityId: tool.id,
-          entityName: tool.name,
-          fileName: tool.sourceFile,
-          matchKey,
-          reason: 'No matching cell or area found based on lineCode, stationCode, and areaName'
-        }))
+        warnings.push(
+          createLinkingMissingTargetWarning({
+            entityType: 'TOOL',
+            entityId: tool.id,
+            entityName: tool.name,
+            fileName: tool.sourceFile,
+            matchKey,
+            reason: 'No matching cell or area found based on lineCode, stationCode, and areaName',
+          }),
+        )
       }
     }
   }
@@ -508,22 +545,18 @@ function linkToolsToCells(
 /**
  * Update cells with robot and tool IDs
  */
-function updateCellEquipmentLinks(
-  cells: Cell[],
-  robots: Robot[],
-  tools: Tool[]
-): void {
+function updateCellEquipmentLinks(cells: Cell[], robots: Robot[], tools: Tool[]): void {
   for (const cell of cells) {
     // Find robots linked to this cell
-    const cellRobots = robots.filter(r => r.cellId === cell.id)
+    const cellRobots = robots.filter((r) => r.cellId === cell.id)
 
     // Find tools linked to this cell
-    const cellTools = tools.filter(t => t.cellId === cell.id)
+    const cellTools = tools.filter((t) => t.cellId === cell.id)
 
     // Update robot tool IDs with linked tools
     for (const robot of cellRobots) {
-      const robotTools = cellTools.filter(t => t.robotId === robot.id)
-      robot.toolIds = robotTools.map(t => t.id)
+      const robotTools = cellTools.filter((t) => t.robotId === robot.id)
+      robot.toolIds = robotTools.map((t) => t.id)
     }
   }
 }
@@ -541,7 +574,7 @@ function findMatchingCell(
   areas: Area[],
   lineCode?: string,
   stationCode?: string,
-  areaName?: string
+  areaName?: string,
 ): Cell | undefined {
   if (!stationCode) return undefined
 
@@ -552,25 +585,26 @@ function findMatchingCell(
 
   // First try to match by stationId if we can build one
   if (candidateStationId) {
-    const cell = cells.find(c => c.stationId === candidateStationId)
+    const cell = cells.find((c) => c.stationId === candidateStationId)
     if (cell) return cell
   }
 
   // Fallback: Build area candidates using normalized comparison
   // Priority 1: Exact Area Name match
-  let areaCandidates = areas.filter(area => {
+  let areaCandidates = areas.filter((area) => {
     if (areaName) {
       const normalizedSearchArea = normalizeAreaName(areaName)
       const normalizedCellArea = normalizeAreaName(area.name)
-      return normalizedSearchArea && normalizedCellArea &&
-             normalizedSearchArea === normalizedCellArea
+      return (
+        normalizedSearchArea && normalizedCellArea && normalizedSearchArea === normalizedCellArea
+      )
     }
     return false
   })
 
   // Priority 2: Line Code match (only if no areaName was provided and no candidates found by areaName)
   if (areaCandidates.length === 0 && !areaName && lineCode) {
-    areaCandidates = areas.filter(area => {
+    areaCandidates = areas.filter((area) => {
       if (area.code) {
         const normalizedSearchLine = normalizeString(lineCode)
         const normalizedAreaCode = normalizeString(area.code)
@@ -583,17 +617,18 @@ function findMatchingCell(
   // Find cell in candidate areas with matching station
   for (const area of areaCandidates) {
     const normalizedCellStation = normalizeStationCode(stationCode)
-    const cell = cells.find(c => {
+    const cell = cells.find((c) => {
       if (c.areaId !== area.id) return false
       const normalizedCellCode = normalizeStationCode(c.code)
-      return normalizedCellStation && normalizedCellCode && 
-             normalizedCellStation === normalizedCellCode
+      return (
+        normalizedCellStation && normalizedCellCode && normalizedCellStation === normalizedCellCode
+      )
     })
     if (cell) return cell
   }
 
-  // No global fallback - if we found area candidates but none matched the station, 
-  // or if we couldn't find the specific area, we should remain unlinked 
+  // No global fallback - if we found area candidates but none matched the station,
+  // or if we couldn't find the specific area, we should remain unlinked
   // rather than jumping to a random area with the same station code.
   return undefined
 }
@@ -602,19 +637,15 @@ function findMatchingCell(
  * Find an area matching the given criteria
  * Uses normalized area names for consistent matching
  */
-function findMatchingArea(
-  areas: Area[],
-  areaName?: string,
-  lineCode?: string
-): Area | undefined {
+function findMatchingArea(areas: Area[], areaName?: string, lineCode?: string): Area | undefined {
   if (!areaName && !lineCode) return undefined
 
-  return areas.find(area => {
+  return areas.find((area) => {
     if (areaName) {
       const normalizedSearchArea = normalizeAreaName(areaName)
       const normalizedCellArea = normalizeAreaName(area.name)
-      if (normalizedSearchArea && normalizedCellArea && 
-          normalizedSearchArea === normalizedCellArea) return true
+      if (normalizedSearchArea && normalizedCellArea && normalizedSearchArea === normalizedCellArea)
+        return true
     }
     if (lineCode && area.code) {
       const normalizedSearchLine = normalizeString(lineCode)

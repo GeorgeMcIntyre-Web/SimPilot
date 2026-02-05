@@ -2,32 +2,32 @@
  * Integration tests for excelIngestionOrchestrator
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   ingestAllExcelData,
   validateIngestionResult,
   formatIngestionSummary,
-  type FullIngestionResult
-} from '../excelIngestionOrchestrator';
+  type FullIngestionResult,
+} from '../excelIngestionOrchestrator'
 
 // Mock the coordinator and linker
 vi.mock('../parsers/reuseListCoordinator', () => ({
   loadAllReuseLists: vi.fn(),
-  summarizeReuseRecords: vi.fn()
-}));
+  summarizeReuseRecords: vi.fn(),
+}))
 
 vi.mock('../parsers/reuseLinker', () => ({
   attachReuseToAssets: vi.fn(),
-  calculateLinkingStats: vi.fn()
-}));
+  calculateLinkingStats: vi.fn(),
+}))
 
-import { loadAllReuseLists, summarizeReuseRecords } from '../parsers/reuseListCoordinator';
-import { attachReuseToAssets, calculateLinkingStats } from '../parsers/reuseLinker';
+import { loadAllReuseLists, summarizeReuseRecords } from '../parsers/reuseListCoordinator'
+import { attachReuseToAssets, calculateLinkingStats } from '../parsers/reuseLinker'
 
 describe('excelIngestionOrchestrator', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe('ingestAllExcelData', () => {
     it('should orchestrate full ingestion pipeline', async () => {
@@ -48,82 +48,82 @@ describe('excelIngestionOrchestrator', () => {
             sheetName: 'Sheet1',
             rowIndex: 1,
             source: 'INTERNAL',
-            tags: []
-          }
+            tags: [],
+          },
         ],
-        errors: []
-      });
+        errors: [],
+      })
 
       // Mock summarize
       vi.mocked(summarizeReuseRecords).mockReturnValue({
         total: 1,
         byType: { Riser: 1 },
-        byStatus: { AVAILABLE: 1, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 }
-      });
+        byStatus: { AVAILABLE: 1, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
+      })
 
       // Mock linking
       vi.mocked(attachReuseToAssets).mockReturnValue({
         updatedAssets: [],
-        unmatchedReuseRecords: []
-      });
+        unmatchedReuseRecords: [],
+      })
 
       vi.mocked(calculateLinkingStats).mockReturnValue({
         totalAssets: 0,
         assetsWithReuseInfo: 0,
         matchedReuseRecords: 0,
         unmatchedReuseRecords: 0,
-        totalReuseRecords: 1
-      });
+        totalReuseRecords: 1,
+      })
 
       const result = await ingestAllExcelData({
-        dataRoot: '/test/data'
-      });
+        dataRoot: '/test/data',
+      })
 
-      expect(result.reuseSummary.total).toBe(1);
-      expect(result.reuseSummary.byType.Riser).toBe(1);
-      expect(result.errors).toEqual([]);
-    });
+      expect(result.reuseSummary.total).toBe(1)
+      expect(result.reuseSummary.byType.Riser).toBe(1)
+      expect(result.errors).toEqual([])
+    })
 
     it('should handle errors from reuse list loading', async () => {
       vi.mocked(loadAllReuseLists).mockResolvedValue({
         records: [],
-        errors: ['Failed to parse RISERS.xlsx']
-      });
+        errors: ['Failed to parse RISERS.xlsx'],
+      })
 
       vi.mocked(summarizeReuseRecords).mockReturnValue({
         total: 0,
         byType: {},
-        byStatus: { AVAILABLE: 0, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 }
-      });
+        byStatus: { AVAILABLE: 0, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
+      })
 
       vi.mocked(attachReuseToAssets).mockReturnValue({
         updatedAssets: [],
-        unmatchedReuseRecords: []
-      });
+        unmatchedReuseRecords: [],
+      })
 
       vi.mocked(calculateLinkingStats).mockReturnValue({
         totalAssets: 0,
         assetsWithReuseInfo: 0,
         matchedReuseRecords: 0,
         unmatchedReuseRecords: 0,
-        totalReuseRecords: 0
-      });
+        totalReuseRecords: 0,
+      })
 
-      const result = await ingestAllExcelData({
-        dataRoot: '/test/data'
-      });
-
-      expect(result.errors).toContain('Failed to parse RISERS.xlsx');
-    });
-
-    it('should skip reuse lists when loadReuseLists is false', async () => {
       const result = await ingestAllExcelData({
         dataRoot: '/test/data',
-        loadReuseLists: false
-      });
+      })
 
-      expect(loadAllReuseLists).not.toHaveBeenCalled();
-    });
+      expect(result.errors).toContain('Failed to parse RISERS.xlsx')
+    })
+
+    it('should skip reuse lists when loadReuseLists is false', async () => {
+      await ingestAllExcelData({
+        dataRoot: '/test/data',
+        loadReuseLists: false,
+      })
+
+      expect(loadAllReuseLists).not.toHaveBeenCalled()
+    })
 
     it('should skip linking when attachReuseInfo is false', async () => {
       vi.mocked(loadAllReuseLists).mockResolvedValue({
@@ -142,188 +142,196 @@ describe('excelIngestionOrchestrator', () => {
             sheetName: 'Sheet1',
             rowIndex: 1,
             source: 'INTERNAL',
-            tags: []
-          }
+            tags: [],
+          },
         ],
-        errors: []
-      });
+        errors: [],
+      })
 
       vi.mocked(summarizeReuseRecords).mockReturnValue({
         total: 1,
         byType: { Riser: 1 },
-        byStatus: { AVAILABLE: 1, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 }
-      });
+        byStatus: { AVAILABLE: 1, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
+      })
 
       vi.mocked(calculateLinkingStats).mockReturnValue({
         totalAssets: 0,
         assetsWithReuseInfo: 0,
         matchedReuseRecords: 0,
         unmatchedReuseRecords: 1,
-        totalReuseRecords: 1
-      });
+        totalReuseRecords: 1,
+      })
 
       const result = await ingestAllExcelData({
         dataRoot: '/test/data',
-        attachReuseInfo: false
-      });
+        attachReuseInfo: false,
+      })
 
-      expect(attachReuseToAssets).not.toHaveBeenCalled();
-      expect(result.linkingStats.unmatchedReuseRecords).toBe(1);
-    });
-  });
+      expect(attachReuseToAssets).not.toHaveBeenCalled()
+      expect(result.linkingStats.unmatchedReuseRecords).toBe(1)
+    })
+  })
 
   describe('validateIngestionResult', () => {
     it('should pass validation for healthy result', () => {
       const result: FullIngestionResult = {
         assets: [],
+        toolingItems: [],
         reuseSummary: {
           total: 100,
           byType: { Riser: 100 },
           byStatus: { AVAILABLE: 80, ALLOCATED: 20, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
-          unmatchedReuseCount: 10
+          unmatchedReuseCount: 10,
         },
         linkingStats: {
           totalAssets: 100,
           assetsWithReuseInfo: 90,
           matchedReuseRecords: 90,
-          unmatchedReuseRecords: 10
+          unmatchedReuseRecords: 10,
         },
-        errors: []
-      };
+        errors: [],
+      }
 
-      const validation = validateIngestionResult(result);
+      const validation = validateIngestionResult(result)
 
-      expect(validation.isValid).toBe(true);
-      expect(validation.warnings).toHaveLength(0);
-    });
+      expect(validation.isValid).toBe(true)
+      expect(validation.warnings).toHaveLength(0)
+    })
 
     it('should warn on high unmatched reuse count', () => {
       const result: FullIngestionResult = {
         assets: [],
+        toolingItems: [],
         reuseSummary: {
           total: 100,
           byType: { Riser: 100 },
           byStatus: { AVAILABLE: 100, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
-          unmatchedReuseCount: 60
+          unmatchedReuseCount: 60,
         },
         linkingStats: {
           totalAssets: 100,
           assetsWithReuseInfo: 40,
           matchedReuseRecords: 40,
-          unmatchedReuseRecords: 60
+          unmatchedReuseRecords: 60,
         },
-        errors: []
-      };
+        errors: [],
+      }
 
-      const validation = validateIngestionResult(result);
+      const validation = validateIngestionResult(result)
 
-      expect(validation.isValid).toBe(false);
-      expect(validation.warnings.some(w => w.includes('High unmatched reuse count'))).toBe(true);
-    });
+      expect(validation.isValid).toBe(false)
+      expect(validation.warnings.some((w) => w.includes('High unmatched reuse count'))).toBe(true)
+    })
 
     it('should warn on high UNKNOWN allocation status', () => {
       const result: FullIngestionResult = {
         assets: [],
+        toolingItems: [],
         reuseSummary: {
           total: 100,
           byType: { Riser: 100 },
           byStatus: { AVAILABLE: 0, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 50 },
-          unmatchedReuseCount: 0
+          unmatchedReuseCount: 0,
         },
         linkingStats: {
           totalAssets: 100,
           assetsWithReuseInfo: 100,
           matchedReuseRecords: 100,
-          unmatchedReuseRecords: 0
+          unmatchedReuseRecords: 0,
         },
-        errors: []
-      };
+        errors: [],
+      }
 
-      const validation = validateIngestionResult(result);
+      const validation = validateIngestionResult(result)
 
-      expect(validation.isValid).toBe(false);
-      expect(validation.warnings.some(w => w.includes('High UNKNOWN allocation status'))).toBe(true);
-    });
+      expect(validation.isValid).toBe(false)
+      expect(validation.warnings.some((w) => w.includes('High UNKNOWN allocation status'))).toBe(
+        true,
+      )
+    })
 
     it('should warn when most assets lack reuse info', () => {
       const result: FullIngestionResult = {
         assets: [],
+        toolingItems: [],
         reuseSummary: {
           total: 100,
           byType: { Riser: 100 },
           byStatus: { AVAILABLE: 100, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
-          unmatchedReuseCount: 0
+          unmatchedReuseCount: 0,
         },
         linkingStats: {
           totalAssets: 100,
           assetsWithReuseInfo: 10, // Only 10% have reuse info
           matchedReuseRecords: 10,
-          unmatchedReuseRecords: 0
+          unmatchedReuseRecords: 0,
         },
-        errors: []
-      };
+        errors: [],
+      }
 
-      const validation = validateIngestionResult(result);
+      const validation = validateIngestionResult(result)
 
-      expect(validation.isValid).toBe(false);
-      expect(validation.warnings.some(w => w.includes('Most assets lack reuse info'))).toBe(true);
-    });
-  });
+      expect(validation.isValid).toBe(false)
+      expect(validation.warnings.some((w) => w.includes('Most assets lack reuse info'))).toBe(true)
+    })
+  })
 
   describe('formatIngestionSummary', () => {
     it('should format result as readable text', () => {
       const result: FullIngestionResult = {
         assets: [],
+        toolingItems: [],
         reuseSummary: {
           total: 150,
           byType: { Riser: 50, TipDresser: 60, TMSGun: 40 },
           byStatus: { AVAILABLE: 80, ALLOCATED: 50, IN_USE: 20, RESERVED: 0, UNKNOWN: 0 },
-          unmatchedReuseCount: 10
+          unmatchedReuseCount: 10,
         },
         linkingStats: {
           totalAssets: 200,
           assetsWithReuseInfo: 140,
           matchedReuseRecords: 140,
-          unmatchedReuseRecords: 10
+          unmatchedReuseRecords: 10,
         },
-        errors: ['Warning: some data missing']
-      };
+        errors: ['Warning: some data missing'],
+      }
 
-      const summary = formatIngestionSummary(result);
+      const summary = formatIngestionSummary(result)
 
-      expect(summary).toContain('Total Assets: 200');
-      expect(summary).toContain('Total Reuse Records: 150');
-      expect(summary).toContain('Riser: 50');
-      expect(summary).toContain('TipDresser: 60');
-      expect(summary).toContain('TMSGun: 40');
-      expect(summary).toContain('AVAILABLE: 80');
-      expect(summary).toContain('Matched: 140');
-      expect(summary).toContain('Unmatched: 10');
-      expect(summary).toContain('Warning: some data missing');
-    });
+      expect(summary).toContain('Total Assets: 200')
+      expect(summary).toContain('Total Reuse Records: 150')
+      expect(summary).toContain('Riser: 50')
+      expect(summary).toContain('TipDresser: 60')
+      expect(summary).toContain('TMSGun: 40')
+      expect(summary).toContain('AVAILABLE: 80')
+      expect(summary).toContain('Matched: 140')
+      expect(summary).toContain('Unmatched: 10')
+      expect(summary).toContain('Warning: some data missing')
+    })
 
     it('should handle empty result', () => {
       const result: FullIngestionResult = {
         assets: [],
+        toolingItems: [],
         reuseSummary: {
           total: 0,
           byType: {},
           byStatus: { AVAILABLE: 0, ALLOCATED: 0, IN_USE: 0, RESERVED: 0, UNKNOWN: 0 },
-          unmatchedReuseCount: 0
+          unmatchedReuseCount: 0,
         },
         linkingStats: {
           totalAssets: 0,
           assetsWithReuseInfo: 0,
           matchedReuseRecords: 0,
-          unmatchedReuseRecords: 0
+          unmatchedReuseRecords: 0,
         },
-        errors: []
-      };
+        errors: [],
+      }
 
-      const summary = formatIngestionSummary(result);
+      const summary = formatIngestionSummary(result)
 
-      expect(summary).toContain('Total Assets: 0');
-      expect(summary).toContain('Total Reuse Records: 0');
-    });
-  });
-});
+      expect(summary).toContain('Total Assets: 0')
+      expect(summary).toContain('Total Reuse Records: 0')
+    })
+  })
+})

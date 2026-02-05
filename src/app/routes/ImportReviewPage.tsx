@@ -11,10 +11,29 @@ export default function ImportReviewPage() {
   const navigate = useNavigate()
   const { diffResults, importRuns } = useCoreStore()
   const [resolving, setResolving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'>('ambiguous')
+  const [activeTab, setActiveTab] = useState<
+    'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'
+  >('ambiguous')
 
-  const diffResult = diffResults.find(d => d.importRunId === importRunId)
-  const importRun = importRuns.find(r => r.id === importRunId)
+  const diffResult = diffResults.find((d) => d.importRunId === importRunId)
+  const importRun = importRuns.find((r) => r.id === importRunId)
+
+  const ambiguousItems = diffResult?.ambiguous ?? []
+  const creates = diffResult?.creates ?? []
+  const updates = diffResult?.updates ?? []
+  const deletes = diffResult?.deletes ?? []
+  const renames = diffResult?.renamesOrMoves ?? []
+
+  const summaryItems = useMemo(
+    () => [
+      { label: 'Created', value: creates.length },
+      { label: 'Updated', value: updates.length },
+      { label: 'Deleted', value: deletes.length },
+      { label: 'Renamed', value: renames.length },
+      { label: 'Ambiguous', value: ambiguousItems.length },
+    ],
+    [creates.length, updates.length, deletes.length, renames.length, ambiguousItems.length],
+  )
 
   if (!diffResult || !importRun) {
     return (
@@ -23,23 +42,6 @@ export default function ImportReviewPage() {
       </div>
     )
   }
-
-  const ambiguousItems = diffResult.ambiguous
-  const creates = diffResult.creates
-  const updates = diffResult.updates
-  const deletes = diffResult.deletes
-  const renames = diffResult.renamesOrMoves
-
-  const summaryItems = useMemo(
-    () => [
-      { label: 'Created', value: creates.length },
-      { label: 'Updated', value: updates.length },
-      { label: 'Deleted', value: deletes.length },
-      { label: 'Renamed', value: renames.length },
-      { label: 'Ambiguous', value: ambiguousItems.length }
-    ],
-    [creates.length, updates.length, deletes.length, renames.length, ambiguousItems.length]
-  )
 
   const handleReactivate = (item: DiffDelete) => {
     setResolving(true)
@@ -53,7 +55,11 @@ export default function ImportReviewPage() {
     setResolving(false)
   }
 
-  const handleLinkToCandidate = (ambiguousKey: string, candidateUid: string, entityType: string) => {
+  const handleLinkToCandidate = (
+    ambiguousKey: string,
+    candidateUid: string,
+    entityType: string,
+  ) => {
     setResolving(true)
 
     const rule = createAliasRule(
@@ -61,19 +67,19 @@ export default function ImportReviewPage() {
       candidateUid,
       entityType as any,
       `User linked ${ambiguousKey} to ${candidateUid} via Import Review`,
-      'local-user'
+      'local-user',
     )
 
     coreStore.createAliasRule(rule)
 
     // Remove this ambiguous item from the diff
-    const updatedAmbiguous = ambiguousItems.filter(a => a.newKey !== ambiguousKey)
+    const updatedAmbiguous = ambiguousItems.filter((a) => a.newKey !== ambiguousKey)
     coreStore.updateDiffResult(importRunId!, {
       ambiguous: updatedAmbiguous,
       summary: {
         ...diffResult.summary,
-        ambiguous: updatedAmbiguous.length
-      }
+        ambiguous: updatedAmbiguous.length,
+      },
     })
 
     setResolving(false)
@@ -83,13 +89,13 @@ export default function ImportReviewPage() {
     setResolving(true)
 
     // Simply remove from ambiguous list - will be created as new entity
-    const updatedAmbiguous = ambiguousItems.filter(a => a.newKey !== ambiguousKey)
+    const updatedAmbiguous = ambiguousItems.filter((a) => a.newKey !== ambiguousKey)
     coreStore.updateDiffResult(importRunId!, {
       ambiguous: updatedAmbiguous,
       summary: {
         ...diffResult.summary,
-        ambiguous: updatedAmbiguous.length
-      }
+        ambiguous: updatedAmbiguous.length,
+      },
     })
 
     setResolving(false)
@@ -98,14 +104,14 @@ export default function ImportReviewPage() {
   const handleApproveHighConfidenceRenames = () => {
     setResolving(true)
     const threshold = 90
-    const toApprove = renames.filter(r => (r.confidence ?? 0) >= threshold && r.oldKey && r.uid)
-    toApprove.forEach(r => {
+    const toApprove = renames.filter((r) => (r.confidence ?? 0) >= threshold && r.oldKey && r.uid)
+    toApprove.forEach((r) => {
       const rule = createAliasRule(
         r.oldKey!,
         r.uid as string,
         r.entityType as any,
         `Auto-approved rename (${r.confidence}%)`,
-        'local-user'
+        'local-user',
       )
       coreStore.createAliasRule(rule)
     })
@@ -116,7 +122,7 @@ export default function ImportReviewPage() {
     // For now, consider approval as all ambiguities resolved/ignored.
     coreStore.updateDiffResult(importRunId!, {
       ambiguous: [],
-      summary: { ...diffResult.summary, ambiguous: 0 }
+      summary: { ...diffResult.summary, ambiguous: 0 },
     })
     navigate('/data-loader?tab=history')
   }
@@ -169,17 +175,25 @@ export default function ImportReviewPage() {
 
       <TabBar activeTab={activeTab} onSelect={setActiveTab} />
 
-      {activeTab === 'creates' && <DiffSection title="Created" items={creates} renderItem={renderCreate} />}
-      {activeTab === 'updates' && <DiffSection title="Updated" items={updates} renderItem={renderUpdateDetailed} />}
-      {activeTab === 'renames' && <DiffSection title="Renamed / Moved" items={renames} renderItem={renderRename} />}
-      {activeTab === 'deletes' && <DeleteSection items={deletes} onReactivate={handleReactivate} resolving={resolving} />}
+      {activeTab === 'creates' && (
+        <DiffSection title="Created" items={creates} renderItem={renderCreate} />
+      )}
+      {activeTab === 'updates' && (
+        <DiffSection title="Updated" items={updates} renderItem={renderUpdateDetailed} />
+      )}
+      {activeTab === 'renames' && (
+        <DiffSection title="Renamed / Moved" items={renames} renderItem={renderRename} />
+      )}
+      {activeTab === 'deletes' && (
+        <DeleteSection items={deletes} onReactivate={handleReactivate} resolving={resolving} />
+      )}
       {activeTab === 'ambiguous' && (
         <>
           {ambiguousItems.length > 0 && (
             <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <p className="text-sm text-yellow-800 dark:text-yellow-400">
-                <strong>No silent guessing:</strong> The following items have multiple possible matches.
-                You must decide whether to link to an existing entity or create a new one.
+                <strong>No silent guessing:</strong> The following items have multiple possible
+                matches. You must decide whether to link to an existing entity or create a new one.
               </p>
             </div>
           )}
@@ -212,9 +226,14 @@ export default function ImportReviewPage() {
 function SummaryGrid({ items }: { items: Array<{ label: string; value: number }> }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-      {items.map(item => (
-        <div key={item.label} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3">
-          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{item.label}</div>
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3"
+        >
+          <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            {item.label}
+          </div>
           <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">{item.value}</div>
         </div>
       ))}
@@ -222,14 +241,25 @@ function SummaryGrid({ items }: { items: Array<{ label: string; value: number }>
   )
 }
 
-function DiffSection<T>({ title, items, renderItem }: { title: string; items: T[]; renderItem: (item: T) => ReactNode }) {
+function DiffSection<T>({
+  title,
+  items,
+  renderItem,
+}: {
+  title: string
+  items: T[]
+  renderItem: (item: T) => ReactNode
+}) {
   if (!items.length) return null
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3 border border-gray-200 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
       <div className="space-y-2">
         {items.map((item, idx) => (
-          <div key={idx} className="p-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+          <div
+            key={idx}
+            className="p-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40"
+          >
             {renderItem(item)}
           </div>
         ))}
@@ -242,19 +272,11 @@ function renderCreate(item: DiffCreate) {
   return (
     <div className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
       <span className="font-medium">{item.key}</span>
-      <span className="text-gray-600 dark:text-gray-400">Type: {item.entityType} • Plant: {item.plantKey}</span>
-      {item.suggestedName && <span className="text-gray-500 dark:text-gray-400">Suggested: {item.suggestedName}</span>}
-    </div>
-  )
-}
-
-function renderUpdate(item: DiffUpdate) {
-  return (
-    <div className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-      <span className="font-medium">{item.key}</span>
-      <span className="text-gray-600 dark:text-gray-400">Type: {item.entityType} • Plant: {item.plantKey}</span>
-      {item.changedFields.length > 0 && (
-        <span className="text-gray-500 dark:text-gray-400">Changed fields: {item.changedFields.join(', ')}</span>
+      <span className="text-gray-600 dark:text-gray-400">
+        Type: {item.entityType} • Plant: {item.plantKey}
+      </span>
+      {item.suggestedName && (
+        <span className="text-gray-500 dark:text-gray-400">Suggested: {item.suggestedName}</span>
       )}
     </div>
   )
@@ -265,10 +287,12 @@ function renderUpdateDetailed(item: DiffUpdate) {
   return (
     <div className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
       <span className="font-medium">{item.key}</span>
-      <span className="text-gray-600 dark:text-gray-400">Type: {item.entityType} • Plant: {item.plantKey}</span>
+      <span className="text-gray-600 dark:text-gray-400">
+        Type: {item.entityType} • Plant: {item.plantKey}
+      </span>
       {keys.length > 0 && (
         <div className="mt-1 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-          {keys.map(field => (
+          {keys.map((field) => (
             <div key={field} className="flex flex-col">
               <span className="font-semibold text-gray-800 dark:text-gray-200">{field}</span>
               <span>Old: {String(item.oldAttributes[field]) || '—'}</span>
@@ -284,28 +308,45 @@ function renderUpdateDetailed(item: DiffUpdate) {
 function renderRename(item: DiffRenameOrMove) {
   return (
     <div className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-      <span className="font-medium">{item.oldKey || 'Unknown'} → {item.newKey}</span>
+      <span className="font-medium">
+        {item.oldKey || 'Unknown'} → {item.newKey}
+      </span>
       <span className="text-gray-600 dark:text-gray-400">
         Type: {item.entityType} • Plant: {item.plantKey} • Confidence: {item.confidence}%
       </span>
       {item.matchReasons.length > 0 && (
-        <span className="text-gray-500 dark:text-gray-400">Reasons: {item.matchReasons.join(', ')}</span>
+        <span className="text-gray-500 dark:text-gray-400">
+          Reasons: {item.matchReasons.join(', ')}
+        </span>
       )}
     </div>
   )
 }
 
-function DeleteSection({ items, onReactivate, resolving }: { items: DiffDelete[]; onReactivate: (item: DiffDelete) => void; resolving: boolean }) {
+function DeleteSection({
+  items,
+  onReactivate,
+  resolving,
+}: {
+  items: DiffDelete[]
+  onReactivate: (item: DiffDelete) => void
+  resolving: boolean
+}) {
   if (!items.length) return null
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-3 border border-gray-200 dark:border-gray-700">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Deleted</h3>
       <div className="space-y-2">
         {items.map((item, idx) => (
-          <div key={idx} className="flex items-center justify-between p-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+          <div
+            key={idx}
+            className="flex items-center justify-between p-3 rounded border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40"
+          >
             <div className="flex flex-col text-sm text-gray-900 dark:text-gray-100">
               <span className="font-medium">{item.key}</span>
-              <span className="text-gray-600 dark:text-gray-400">Type: {item.entityType} • Plant: {item.plantKey}</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                Type: {item.entityType} • Plant: {item.plantKey}
+              </span>
               <span className="text-gray-500 dark:text-gray-400">Last seen: {item.lastSeen}</span>
             </div>
             <button
@@ -322,17 +363,26 @@ function DeleteSection({ items, onReactivate, resolving }: { items: DiffDelete[]
   )
 }
 
-function TabBar({ activeTab, onSelect }: { activeTab: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'; onSelect: (tab: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous') => void }) {
-  const tabs: Array<{ key: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'; label: string }> = [
+function TabBar({
+  activeTab,
+  onSelect,
+}: {
+  activeTab: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'
+  onSelect: (tab: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous') => void
+}) {
+  const tabs: Array<{
+    key: 'creates' | 'updates' | 'renames' | 'deletes' | 'ambiguous'
+    label: string
+  }> = [
     { key: 'creates', label: 'Creates' },
     { key: 'updates', label: 'Updates' },
     { key: 'renames', label: 'Renames' },
     { key: 'deletes', label: 'Deletes' },
-    { key: 'ambiguous', label: 'Ambiguous' }
+    { key: 'ambiguous', label: 'Ambiguous' },
   ]
   return (
     <div className="flex flex-wrap gap-2">
-      {tabs.map(tab => (
+      {tabs.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onSelect(tab.key)}
@@ -349,7 +399,7 @@ function AmbiguousList({
   items,
   onLink,
   onCreateNew,
-  resolving
+  resolving,
 }: {
   items: any[]
   onLink: (ambiguousKey: string, candidateUid: string, entityType: string) => void
@@ -361,9 +411,7 @@ function AmbiguousList({
       {items.map((item, idx) => (
         <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-              {item.newKey}
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{item.newKey}</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {item.entityType} • Plant: {item.plantKey}
             </p>

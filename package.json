@@ -11,10 +11,20 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "typecheck:test": "tsc -p tsconfig.test.json",
+    "typecheck:all": "npm run typecheck && npm run typecheck:test",
+    "format": "prettier . --check",
+    "format:fix": "prettier . --write",
     "test": "vitest",
+    "test:unit": "vitest run --dir src",
+    "test:integration": "vitest run --dir tests/integration",
+    "test:ci": "npm run lint && npm run typecheck:all && vitest run --coverage && npm run build",
     "test:e2e": "playwright test",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint src --ext ts,tsx --fix",
+    "lint-staged": "lint-staged",
+    "prepare": "husky",
     "ingest:stla-s": "node scripts/ingest_stla_s.cjs",
     "real-data-regress": "npx tsx tools/realDataRegress.ts",
     "dev:inspect-tool-lists": "npx tsx tools/dev/inspectToolLists.ts",
@@ -26,6 +36,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jsdom": "^27.0.0",
     "@types/react-window": "^1.8.8",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
@@ -37,14 +48,26 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
+    "eslint-config-prettier": "^10.1.8",
     "globals": "^17.0.0",
+    "husky": "^9.1.7",
     "jsdom": "^27.2.0",
+    "lint-staged": "^16.1.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
     "tailwindcss": "^3.4.18",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
     "vitest": "^4.0.14"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@azure/msal-browser": "^4.26.2",

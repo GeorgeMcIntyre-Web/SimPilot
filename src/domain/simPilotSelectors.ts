@@ -7,23 +7,23 @@ import type {
   WorkflowBottleneckStatus,
   WorkflowStage as GenericWorkflowStage,
   WorkflowBottleneckReason,
-  WorkflowItemKind
+  WorkflowItemKind,
 } from './workflowTypes'
 import {
   getWorstBottlenecks as getWorstWorkflowBottlenecks,
   getBottlenecksByContextKey,
-  getBottleneckStats as getWorkflowBottleneckStats
+  getBottleneckStats as getWorkflowBottleneckStats,
 } from './workflowBottleneckLinker'
 
 const SEVERITY_PRIORITY: Record<ToolingWorkflowStatus['severity'], number> = {
   HIGH: 3,
   MEDIUM: 2,
-  LOW: 1
+  LOW: 1,
 }
 
 export function selectWorstBottlenecks(
   state: SimPilotStoreState,
-  limit = 5
+  limit = 5,
 ): ToolingWorkflowStatus[] {
   const statuses = state.snapshot?.bottleneckSnapshot.workflowStatuses
   if (statuses === undefined || statuses.length === 0) {
@@ -41,7 +41,7 @@ export function selectWorstBottlenecks(
 
 export function selectBottlenecksByStationKey(
   state: SimPilotStoreState,
-  stationKey: string
+  stationKey: string,
 ): ToolingWorkflowStatus[] {
   const trimmed = stationKey.trim()
   if (trimmed.length === 0) {
@@ -53,12 +53,12 @@ export function selectBottlenecksByStationKey(
     return []
   }
 
-  return statuses.filter(status => status.stationKey === trimmed)
+  return statuses.filter((status) => status.stationKey === trimmed)
 }
 
 export function selectBottlenecksForToolingNumber(
   state: SimPilotStoreState,
-  toolingNumber: string
+  toolingNumber: string,
 ): ToolingWorkflowStatus[] {
   const trimmed = toolingNumber.trim()
   if (trimmed.length === 0) {
@@ -70,19 +70,19 @@ export function selectBottlenecksForToolingNumber(
     return []
   }
 
-  return statuses.filter(status => status.toolingNumber === trimmed)
+  return statuses.filter((status) => status.toolingNumber === trimmed)
 }
 
 export function selectBottlenecksByStage(
   state: SimPilotStoreState,
-  stage: WorkflowStage
+  stage: WorkflowStage,
 ): ToolingWorkflowStatus[] {
   const statuses = state.snapshot?.bottleneckSnapshot.workflowStatuses
   if (statuses === undefined || statuses.length === 0) {
     return []
   }
 
-  return statuses.filter(status => status.dominantStage === stage)
+  return statuses.filter((status) => status.dominantStage === stage)
 }
 
 // ======================================================================
@@ -91,7 +91,7 @@ export function selectBottlenecksByStage(
 
 export function selectWorstWorkflowBottlenecks(
   state: SimPilotStoreState,
-  limit = 5
+  limit = 5,
 ): WorkflowBottleneckStatus[] {
   const bottlenecks = state.snapshot?.workflowBottleneckSnapshot.bottlenecks
   if (bottlenecks === undefined || bottlenecks.length === 0) {
@@ -102,7 +102,7 @@ export function selectWorstWorkflowBottlenecks(
 
 export function selectWorkflowBottlenecksByContextKey(
   state: SimPilotStoreState,
-  contextKey: string
+  contextKey: string,
 ): WorkflowBottleneckStatus[] {
   const trimmed = contextKey.trim()
   if (trimmed.length === 0) {
@@ -119,38 +119,38 @@ export function selectWorkflowBottlenecksByContextKey(
 
 export function selectWorkflowBottlenecksByKind(
   state: SimPilotStoreState,
-  kind: WorkflowItemKind
+  kind: WorkflowItemKind,
 ): WorkflowBottleneckStatus[] {
   const bottlenecks = state.snapshot?.workflowBottleneckSnapshot.bottlenecks
   if (bottlenecks === undefined || bottlenecks.length === 0) {
     return []
   }
 
-  return bottlenecks.filter(b => b.kind === kind)
+  return bottlenecks.filter((b) => b.kind === kind)
 }
 
 export function selectWorkflowBottlenecksByStage(
   state: SimPilotStoreState,
-  stage: GenericWorkflowStage
+  stage: GenericWorkflowStage,
 ): WorkflowBottleneckStatus[] {
   const bottlenecks = state.snapshot?.workflowBottleneckSnapshot.bottlenecks
   if (bottlenecks === undefined || bottlenecks.length === 0) {
     return []
   }
 
-  return bottlenecks.filter(b => b.dominantStage === stage)
+  return bottlenecks.filter((b) => b.dominantStage === stage)
 }
 
 export function selectWorkflowBottlenecksByReason(
   state: SimPilotStoreState,
-  reason: WorkflowBottleneckReason
+  reason: WorkflowBottleneckReason,
 ): WorkflowBottleneckStatus[] {
   const bottlenecks = state.snapshot?.workflowBottleneckSnapshot.bottlenecks
   if (bottlenecks === undefined || bottlenecks.length === 0) {
     return []
   }
 
-  return bottlenecks.filter(b => b.bottleneckReason === reason)
+  return bottlenecks.filter((b) => b.bottleneckReason === reason)
 }
 
 export function selectWorkflowBottleneckStats(state: SimPilotStoreState) {
@@ -163,20 +163,28 @@ export function selectWorkflowBottleneckStats(state: SimPilotStoreState) {
       medium: 0,
       low: 0,
       ok: 0,
+      bySeverity: {
+        CRITICAL: 0,
+        HIGH: 0,
+        MEDIUM: 0,
+        LOW: 0,
+        OK: 0,
+      },
       byStage: {
         DESIGN: 0,
         SIMULATION: 0,
         MANUFACTURE: 0,
         EXTERNAL_SUPPLIER: 0,
-        UNKNOWN: 0
+        UNKNOWN: 0,
       },
+      byReason: {} as Record<WorkflowBottleneckReason, number>,
       byKind: {
         TOOLING: 0,
         WELD_GUN: 0,
         ROBOT_CELL: 0,
         FIXTURE: 0,
-        OTHER: 0
-      }
+        OTHER: 0,
+      },
     }
   }
 
@@ -189,7 +197,7 @@ export function selectWorkflowBottleneckStats(state: SimPilotStoreState) {
     high: 0,
     medium: 0,
     low: 0,
-    ok: 0
+    ok: 0,
   }
 
   const kindCounts: Record<WorkflowItemKind, number> = {
@@ -197,7 +205,7 @@ export function selectWorkflowBottleneckStats(state: SimPilotStoreState) {
     WELD_GUN: 0,
     ROBOT_CELL: 0,
     FIXTURE: 0,
-    OTHER: 0
+    OTHER: 0,
   }
 
   for (const bottleneck of bottlenecks) {
@@ -221,7 +229,7 @@ export function selectWorkflowBottleneckStats(state: SimPilotStoreState) {
     bySeverity: baseStats.bySeverity,
     byStage: baseStats.byStage,
     byReason: baseStats.byReason,
-    byKind: kindCounts
+    byKind: kindCounts,
   }
 }
 
@@ -238,7 +246,7 @@ export function selectWorkflowBottleneckStats(state: SimPilotStoreState) {
  */
 export function selectWorstToolingWorkflowBottlenecks(
   state: SimPilotStoreState,
-  limit = 5
+  limit = 5,
 ): WorkflowBottleneckStatus[] {
   const toolingBottlenecks = selectWorkflowBottlenecksByKind(state, 'TOOLING')
   return getWorstWorkflowBottlenecks(toolingBottlenecks, limit)
@@ -250,10 +258,10 @@ export function selectWorstToolingWorkflowBottlenecks(
  */
 export function selectToolingWorkflowBottlenecksByContextKey(
   state: SimPilotStoreState,
-  contextKey: string
+  contextKey: string,
 ): WorkflowBottleneckStatus[] {
   const contextBottlenecks = selectWorkflowBottlenecksByContextKey(state, contextKey)
-  return contextBottlenecks.filter(b => b.kind === 'TOOLING')
+  return contextBottlenecks.filter((b) => b.kind === 'TOOLING')
 }
 
 /**
@@ -262,10 +270,10 @@ export function selectToolingWorkflowBottlenecksByContextKey(
  */
 export function selectToolingWorkflowBottlenecksByStage(
   state: SimPilotStoreState,
-  stage: GenericWorkflowStage
+  stage: GenericWorkflowStage,
 ): WorkflowBottleneckStatus[] {
   const stageBottlenecks = selectWorkflowBottlenecksByStage(state, stage)
-  return stageBottlenecks.filter(b => b.kind === 'TOOLING')
+  return stageBottlenecks.filter((b) => b.kind === 'TOOLING')
 }
 
 /**
@@ -286,7 +294,7 @@ export function selectToolingWorkflowBottleneckStats(state: SimPilotStoreState) 
     byStage: {
       DESIGN: 0, // Would need to filter tooling + stage
       SIMULATION: 0,
-      MANUFACTURE: 0
-    }
+      MANUFACTURE: 0,
+    },
   }
 }

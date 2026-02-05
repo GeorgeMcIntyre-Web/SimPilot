@@ -1,4 +1,4 @@
-import type { Project, Area, Cell, IngestionWarning, SimulationStatus } from '../../domain/core'
+import type { Project, Area, Cell, IngestionWarning } from '../../domain/core'
 import type { OverviewScheduleMetrics } from '../../domain/core'
 
 export interface SimulationMetric {

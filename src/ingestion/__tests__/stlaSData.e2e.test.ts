@@ -25,8 +25,7 @@ import { parseAssembliesList } from '../assembliesListParser'
 // Allow overriding the data location via env to avoid hard-coded local paths
 // Resolve data path from env, or fall back to a repo-relative folder.
 const BASE_PATH =
-  process.env.STLA_S_DATA_PATH ??
-  path.resolve(process.cwd(), 'SimPilot_Data', 'TestData')
+  process.env.STLA_S_DATA_PATH ?? path.resolve(process.cwd(), 'SimPilot_Data', 'TestData')
 
 const STLA_S_FILES = {
   simStatus: [
@@ -34,32 +33,28 @@ const STLA_S_FILES = {
     'STLA-S_REAR_UNIT_Simulation_Status_CSG.xlsx',
     'STLA-S_UNDERBODY_Simulation_Status_CSG.xlsx',
     'STLA-S_REAR_UNIT_Simulation_Status_DES.xlsx',
-    'STLA-S_UNDERBODY_Simulation_Status_DES.xlsx'
+    'STLA-S_UNDERBODY_Simulation_Status_DES.xlsx',
   ],
-  toolList: [
-    'STLA_S_ZAR Tool List.xlsx'
-  ],
+  toolList: ['STLA_S_ZAR Tool List.xlsx'],
   assemblies: [
     'J11006_TMS_STLA_S_BOTTOM_TRAY_Assemblies_List.xlsm',
     'J11006_TMS_STLA_S_FRONT_UNIT_Assemblies_List.xlsm',
     'J11006_TMS_STLA_S_REAR_UNIT_Assemblies_List.xlsm',
-    'J11006_TMS_STLA_S_UNDERBODY_Assemblies_List.xlsm'
+    'J11006_TMS_STLA_S_UNDERBODY_Assemblies_List.xlsm',
   ],
-  robotList: [
-    'Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'
-  ]
+  robotList: ['Robotlist_ZA__STLA-S_UB_Rev05_20251126.xlsx'],
 }
 
 const REQUIRED_FILES = [
   ...STLA_S_FILES.simStatus,
   ...STLA_S_FILES.toolList,
   ...STLA_S_FILES.assemblies,
-  ...STLA_S_FILES.robotList
+  ...STLA_S_FILES.robotList,
 ]
 
 const DATA_AVAILABLE =
   fs.existsSync(BASE_PATH) &&
-  REQUIRED_FILES.some(file => fs.existsSync(path.join(BASE_PATH, file)))
+  REQUIRED_FILES.some((file) => fs.existsSync(path.join(BASE_PATH, file)))
 
 const describeFn = DATA_AVAILABLE ? describe : describe.skip
 
@@ -69,13 +64,13 @@ const describeFn = DATA_AVAILABLE ? describe : describe.skip
 
 export interface StlaSIngestionResult {
   projectIds: Set<string>
-  areas: Set<string>  // Currently mixes Area (FRONT UNIT) and Cell (Rear Rail LH) levels
+  areas: Set<string> // Currently mixes Area (FRONT UNIT) and Cell (Rear Rail LH) levels
   robots: {
     byId: Map<string, any>
     bySerial: Map<string, any[]>
   }
   toolingAssets: any[] // filtered to isActive !== false
-  allCells: any[]  // Station-level simulation rows (166 expected)
+  allCells: any[] // Station-level simulation rows (166 expected)
 }
 
 // ============================================================================
@@ -104,13 +99,11 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
     allCells.push(...result.cells)
 
     // Extract areas and project info
-    result.cells.forEach(cell => {
-      if (cell.areaName) {
-        areas.add(cell.areaName.toUpperCase())
-      }
-      // Project ID would typically come from metadata, default to "STLA-S"
-      projectIds.add('STLA-S')
+    result.areas.forEach((area) => {
+      areas.add(area.name.toUpperCase())
     })
+    // Project ID would typically come from metadata, default to "STLA-S"
+    projectIds.add('STLA-S')
   }
 
   // Process Robot List
@@ -125,7 +118,7 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
     allRobots.push(...result.robots)
 
     // Extract areas from robots
-    result.robots.forEach(robot => {
+    result.robots.forEach((robot) => {
       if (robot.areaName) {
         areas.add(robot.areaName.toUpperCase())
       }
@@ -143,7 +136,7 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
 
     // Filter to active only (isActive !== false)
     // Inactive tools (strikethrough in Excel) are tracked for history but excluded from active count
-    const activeTools = result.tools.filter(tool => tool.isActive !== false)
+    const activeTools = result.tools.filter((tool) => tool.isActive !== false)
     allToolingAssets.push(...activeTools)
   }
 
@@ -157,11 +150,11 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
     const result = await parseAssembliesList(workbook, filename)
 
     // Filter to active only (isActive !== false)
-    const activeTools = result.tools.filter(tool => tool.isActive !== false)
+    const activeTools = result.tools.filter((tool) => tool.isActive !== false)
     allToolingAssets.push(...activeTools)
 
     // Extract areas from assemblies
-    activeTools.forEach(tool => {
+    activeTools.forEach((tool) => {
       if (tool.areaName) {
         areas.add(tool.areaName.toUpperCase())
       }
@@ -172,7 +165,7 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
   const robotsById = new Map<string, any>()
   const robotsBySerial = new Map<string, any[]>()
 
-  allRobots.forEach(robot => {
+  allRobots.forEach((robot) => {
     if (robot.id) {
       robotsById.set(robot.id, robot)
     }
@@ -191,10 +184,10 @@ export async function ingestStlaSData(): Promise<StlaSIngestionResult> {
     areas,
     robots: {
       byId: robotsById,
-      bySerial: robotsBySerial
+      bySerial: robotsBySerial,
     },
     toolingAssets: allToolingAssets,
-    allCells
+    allCells,
   }
 }
 
@@ -206,7 +199,7 @@ describeFn('STLA-S E2E Ingestion', () => {
   if (!DATA_AVAILABLE) {
     console.warn(
       `[STLA-S E2E] Test data not found at ${BASE_PATH}. ` +
-      'Set STLA_S_DATA_PATH to a directory containing the STLA-S workbooks to run this suite.'
+        'Set STLA_S_DATA_PATH to a directory containing the STLA-S workbooks to run this suite.',
     )
   }
 
@@ -265,7 +258,7 @@ describeFn('STLA-S E2E Ingestion', () => {
       'STUD GUN',
       'STUD WELDING PED',
       'TURNTABLE',
-      'WELDING MACHINE TOOL'
+      'WELDING MACHINE TOOL',
     ])
 
     const seen = new Set<string>()
@@ -305,7 +298,7 @@ describeFn('STLA-S E2E Ingestion', () => {
     expect(result.allCells.length).toBeGreaterThan(0)
 
     // Should have cells from multiple files (at least 2-3 since some might share same name)
-    const sourceFiles = new Set(result.allCells.map(c => c.sourceFile))
+    const sourceFiles = new Set(result.allCells.map((c) => c.sourceFile))
     expect(sourceFiles.size).toBeGreaterThanOrEqual(1)
   }, 60000)
 })

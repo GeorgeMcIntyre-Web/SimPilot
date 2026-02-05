@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest'
 import {
   normalizeV801Rows,
   v801RowToToolEntities,
-  validateV801Entities
+  validateV801Entities,
 } from '../v801ToolListSchema'
 import { ValidationAnomaly } from '../normalizeToolListRow'
 
@@ -14,8 +14,13 @@ describe('V801 Schema Adapter', () => {
   describe('normalizeV801Rows', () => {
     it('should propagate area name from section header rows', () => {
       const rawRows = [
-        { 'Area Name': '7F - Final Assembly', 'Station': '' },
-        { 'Area Name': '', 'Station': '7F-010', 'Equipment No': '016ZF-001', 'Tooling Number RH': '7F-010R-H' }
+        { 'Area Name': '7F - Final Assembly', Station: '' },
+        {
+          'Area Name': '',
+          Station: '7F-010',
+          'Equipment No': '016ZF-001',
+          'Tooling Number RH': '7F-010R-H',
+        },
       ]
 
       const result = normalizeV801Rows(rawRows, 'test.xlsx', 0)
@@ -26,9 +31,7 @@ describe('V801 Schema Adapter', () => {
     })
 
     it('should derive atomic station from tooling number', () => {
-      const rawRows = [
-        { 'Area Name': '7F', 'Station': '7F-010', 'Tooling Number RH': '7F-010R-H' }
-      ]
+      const rawRows = [{ 'Area Name': '7F', Station: '7F-010', 'Tooling Number RH': '7F-010R-H' }]
 
       const result = normalizeV801Rows(rawRows, 'test.xlsx', 0)
 
@@ -53,8 +56,9 @@ describe('V801 Schema Adapter', () => {
         toolingNumberOppositeLH: '',
         toolingLR: 'R' as const,
         toolingLROpposite: '' as const,
+        isDeleted: false,
         rawRowIndex: 1,
-        raw: {}
+        raw: {},
       }
 
       const anomalies: ValidationAnomaly[] = []
@@ -83,8 +87,9 @@ describe('V801 Schema Adapter', () => {
         toolingNumberOppositeLH: '',
         toolingLR: '' as const,
         toolingLROpposite: '' as const,
+        isDeleted: false,
         rawRowIndex: 1,
-        raw: {}
+        raw: {},
       }
 
       const anomalies: ValidationAnomaly[] = []
@@ -106,21 +111,22 @@ describe('V801 Schema Adapter', () => {
         equipmentType: 'Weld Gun',
         equipmentNoShown: '016ZF-001',
         equipmentNoOpposite: '',
-        toolingNumberRH: '7M-010R-H',  // Mismatch: 7M vs 7F
+        toolingNumberRH: '7M-010R-H', // Mismatch: 7M vs 7F
         toolingNumberLH: '',
         toolingNumberOppositeRH: '',
         toolingNumberOppositeLH: '',
         toolingLR: 'R' as const,
         toolingLROpposite: '' as const,
+        isDeleted: false,
         rawRowIndex: 1,
-        raw: {}
+        raw: {},
       }
 
       const anomalies: ValidationAnomaly[] = []
       const entities = v801RowToToolEntities(normalized, 'ToolList', anomalies, false)
 
       expect(entities).toHaveLength(1)
-      expect(anomalies.some(a => a.type === 'TOOLING_PREFIX_MISMATCH')).toBe(true)
+      expect(anomalies.some((a) => a.type === 'TOOLING_PREFIX_MISMATCH')).toBe(true)
     })
   })
 
@@ -135,25 +141,25 @@ describe('V801 Schema Adapter', () => {
           areaName: '7F',
           aliases: [],
           source: { file: 'test.xlsx', row: 1, sheet: 'ToolList' },
-          raw: {}
+          raw: {},
         },
         {
-          canonicalKey: 'FORD|7F-010R-H',  // Duplicate
+          canonicalKey: 'FORD|7F-010R-H', // Duplicate
           displayCode: '7F-010R-H',
           stationGroup: '7F-010',
           stationAtomic: '7F-010R',
           areaName: '7F',
           aliases: [],
           source: { file: 'test.xlsx', row: 2, sheet: 'ToolList' },
-          raw: {}
-        }
+          raw: {},
+        },
       ]
 
       const anomalies: ValidationAnomaly[] = []
       const report = validateV801Entities(entities, 2, anomalies)
 
       expect(report.totalEntitiesProduced).toBe(2)
-      expect(anomalies.some(a => a.type === 'DUPLICATE_CANONICAL_KEY')).toBe(true)
+      expect(anomalies.some((a) => a.type === 'DUPLICATE_CANONICAL_KEY')).toBe(true)
     })
   })
 })

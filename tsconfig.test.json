@@ -1,12 +1,15 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "vite/client", "react", "react-dom", "node"]
   },
   "include": [
+    "src/test/setup.ts",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
-    "src/**/__tests__/**/*"
+    "src/**/__tests__/**/*",
+    "tests/integration/**/*.test.ts",
+    "tests/integration/**/*.test.tsx"
   ],
-  "exclude": []
+  "exclude": ["tests/e2e/**"]
 }

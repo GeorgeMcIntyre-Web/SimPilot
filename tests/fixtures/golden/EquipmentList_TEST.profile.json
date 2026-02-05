@@ -1,0 +1,13 @@
+{
+  "fixtureFile": "EquipmentList_TEST.xlsx",
+  "sheetName": "Sheet1",
+  "detectedCategory": "ASSEMBLIES_LIST",
+  "fieldIndex": {
+    "tool_id": 0,
+    "area_name": 2,
+    "station_name": 3,
+    "robot_number": null,
+    "reuse_status": null,
+    "sourcing": null
+  }
+}

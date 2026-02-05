@@ -11,7 +11,7 @@ import {
   weldGunToWorkflowItem,
   robotCellToWorkflowItem,
   type WeldGun,
-  type RobotCell
+  type RobotCell,
 } from '../workflowMappers'
 import type { ToolingItem, ToolingWorkflowStatus } from '../toolingTypes'
 
@@ -29,10 +29,10 @@ describe('toolingItemToWorkflowItem', () => {
         unit: 'Unit1',
         line: 'Line1',
         station: 'Station1',
-        area: 'Area1'
+        area: 'Area1',
       },
       supplier: 'ACME Corp',
-      metadata: { custom: 'data' }
+      metadata: { custom: 'data' },
     }
 
     const result = toolingItemToWorkflowItem(toolingItem)
@@ -58,8 +58,9 @@ describe('toolingItemToWorkflowItem', () => {
         unit: 'U1',
         line: 'L1',
         station: 'S1',
-        area: 'A1'
-      }
+        area: 'A1',
+      },
+      metadata: {},
     }
 
     const result = toolingItemToWorkflowItem(toolingItem)
@@ -77,8 +78,9 @@ describe('toolingItemToWorkflowItem', () => {
         unit: 'U',
         line: 'L',
         station: 'S',
-        area: 'A'
-      }
+        area: 'A',
+      },
+      metadata: {},
     }
 
     const result = toolingItemToWorkflowItem(toolingItem)
@@ -99,30 +101,40 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
   it('should convert tooling workflow status to workflow item', () => {
     const status: ToolingWorkflowStatus = {
       workflowId: 'WF001',
-      toolingId: 'T001',
       toolingNumber: 'TOOL-ABC',
       equipmentNumber: 'EQ-XYZ',
       handedness: 'RH',
       stationKey: 'STLA|Plant1|Unit1|Line1|Station1',
+      program: 'STLA',
+      area: 'Area1',
+      station: 'Station1',
+      location: {
+        program: 'STLA',
+        plant: 'Plant1',
+        unit: 'Unit1',
+        line: 'Line1',
+        station: 'Station1',
+        area: 'Area1',
+      },
       dominantStage: 'SIMULATION',
-      bottleneckReason: 'SIM_CHANGES_REQUESTED',
+      bottleneckReason: 'SIMULATION_DEFECT',
       severity: 'HIGH',
       severityScore: 85,
       designStage: {
         stage: 'DESIGN',
         status: 'ON_TRACK',
-        percentComplete: 100
+        percentComplete: 100,
       },
       simulationStage: {
         stage: 'SIMULATION',
         status: 'AT_RISK',
-        percentComplete: 60
+        percentComplete: 60,
       },
       manufactureStage: {
         stage: 'MANUFACTURE',
         status: 'ON_TRACK',
-        percentComplete: 0
-      }
+        percentComplete: 0,
+      },
     }
 
     const result = toolingWorkflowStatusToWorkflowItem(status)
@@ -139,28 +151,38 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
   it('should convert tooling stage status ON_TRACK to workflow IN_PROGRESS', () => {
     const status: ToolingWorkflowStatus = {
       workflowId: 'WF002',
-      toolingId: 'T002',
       toolingNumber: 'TOOL-001',
       stationKey: 'P|PL|U|L|S',
+      program: 'P',
+      area: 'A',
+      station: 'S',
+      location: {
+        program: 'P',
+        plant: 'PL',
+        unit: 'U',
+        line: 'L',
+        station: 'S',
+        area: 'A',
+      },
       dominantStage: 'DESIGN',
-      bottleneckReason: 'OK',
+      bottleneckReason: 'UNKNOWN',
       severity: 'LOW',
       severityScore: 10,
       designStage: {
         stage: 'DESIGN',
         status: 'ON_TRACK',
-        percentComplete: 50
+        percentComplete: 50,
       },
       simulationStage: {
         stage: 'SIMULATION',
         status: 'ON_TRACK',
-        percentComplete: 30
+        percentComplete: 30,
       },
       manufactureStage: {
         stage: 'MANUFACTURE',
         status: 'ON_TRACK',
-        percentComplete: 0
-      }
+        percentComplete: 0,
+      },
     }
 
     const result = toolingWorkflowStatusToWorkflowItem(status)
@@ -173,28 +195,38 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
   it('should convert tooling stage status AT_RISK to workflow IN_PROGRESS', () => {
     const status: ToolingWorkflowStatus = {
       workflowId: 'WF003',
-      toolingId: 'T003',
       toolingNumber: 'TOOL-002',
       stationKey: 'P|PL|U|L|S',
+      program: 'P',
+      area: 'A',
+      station: 'S',
+      location: {
+        program: 'P',
+        plant: 'PL',
+        unit: 'U',
+        line: 'L',
+        station: 'S',
+        area: 'A',
+      },
       dominantStage: 'SIMULATION',
-      bottleneckReason: 'SIM_CHANGES_REQUESTED',
+      bottleneckReason: 'SIMULATION_DEFECT',
       severity: 'MEDIUM',
       severityScore: 50,
       designStage: {
         stage: 'DESIGN',
         status: 'ON_TRACK',
-        percentComplete: 100
+        percentComplete: 100,
       },
       simulationStage: {
         stage: 'SIMULATION',
         status: 'AT_RISK',
-        percentComplete: 40
+        percentComplete: 40,
       },
       manufactureStage: {
         stage: 'MANUFACTURE',
         status: 'ON_TRACK',
-        percentComplete: 0
-      }
+        percentComplete: 0,
+      },
     }
 
     const result = toolingWorkflowStatusToWorkflowItem(status)
@@ -205,9 +237,19 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
   it('should convert tooling stage status BLOCKED to workflow BLOCKED', () => {
     const status: ToolingWorkflowStatus = {
       workflowId: 'WF004',
-      toolingId: 'T004',
       toolingNumber: 'TOOL-003',
       stationKey: 'P|PL|U|L|S',
+      program: 'P',
+      area: 'A',
+      station: 'S',
+      location: {
+        program: 'P',
+        plant: 'PL',
+        unit: 'U',
+        line: 'L',
+        station: 'S',
+        area: 'A',
+      },
       dominantStage: 'DESIGN',
       bottleneckReason: 'DESIGN_BLOCKED',
       severity: 'HIGH',
@@ -215,18 +257,18 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
       designStage: {
         stage: 'DESIGN',
         status: 'BLOCKED',
-        percentComplete: 20
+        percentComplete: 20,
       },
       simulationStage: {
         stage: 'SIMULATION',
         status: 'ON_TRACK',
-        percentComplete: 0
+        percentComplete: 0,
       },
       manufactureStage: {
         stage: 'MANUFACTURE',
         status: 'ON_TRACK',
-        percentComplete: 0
-      }
+        percentComplete: 0,
+      },
     }
 
     const result = toolingWorkflowStatusToWorkflowItem(status)
@@ -237,11 +279,21 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
   it('should preserve stage metadata (owner, note, updatedAt)', () => {
     const status: ToolingWorkflowStatus = {
       workflowId: 'WF005',
-      toolingId: 'T005',
       toolingNumber: 'TOOL-004',
       stationKey: 'P|PL|U|L|S',
+      program: 'P',
+      area: 'A',
+      station: 'S',
+      location: {
+        program: 'P',
+        plant: 'PL',
+        unit: 'U',
+        line: 'L',
+        station: 'S',
+        area: 'A',
+      },
       dominantStage: 'SIMULATION',
-      bottleneckReason: 'OK',
+      bottleneckReason: 'UNKNOWN',
       severity: 'LOW',
       severityScore: 15,
       designStage: {
@@ -250,7 +302,7 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
         percentComplete: 100,
         owner: 'John Doe',
         note: 'Design complete',
-        updatedAt: '2025-01-15'
+        updatedAt: '2025-01-15',
       },
       simulationStage: {
         stage: 'SIMULATION',
@@ -258,13 +310,13 @@ describe('toolingWorkflowStatusToWorkflowItem', () => {
         percentComplete: 70,
         owner: 'Jane Smith',
         note: 'In progress',
-        updatedAt: '2025-01-16'
+        updatedAt: '2025-01-16',
       },
       manufactureStage: {
         stage: 'MANUFACTURE',
         status: 'ON_TRACK',
-        percentComplete: 0
-      }
+        percentComplete: 0,
+      },
     }
 
     const result = toolingWorkflowStatusToWorkflowItem(status)
@@ -290,9 +342,9 @@ describe('weldGunToWorkflowItem', () => {
         plant: 'Plant1',
         unit: 'Unit1',
         line: 'Line1',
-        station: 'ST-200'
+        station: 'ST-200',
       },
-      metadata: { voltage: 220 }
+      metadata: { voltage: 220 },
     }
 
     const result = weldGunToWorkflowItem(gun)
@@ -314,8 +366,8 @@ describe('weldGunToWorkflowItem', () => {
         plant: 'Plant1',
         unit: 'Unit1',
         line: 'Line1',
-        station: 'ST-200'
-      }
+        station: 'ST-200',
+      },
     }
 
     const result = weldGunToWorkflowItem(gun)
@@ -338,9 +390,9 @@ describe('robotCellToWorkflowItem', () => {
         plant: 'Plant1',
         unit: 'Unit1',
         line: 'Line1',
-        station: 'ST-300'
+        station: 'ST-300',
       },
-      metadata: { robotCount: 4 }
+      metadata: { robotCount: 4 },
     }
 
     const result = robotCellToWorkflowItem(cell)
@@ -361,8 +413,8 @@ describe('robotCellToWorkflowItem', () => {
         plant: 'Plant1',
         unit: 'Unit1',
         line: 'Line1',
-        station: 'ST-300'
-      }
+        station: 'ST-300',
+      },
     }
 
     const result = robotCellToWorkflowItem(cell)

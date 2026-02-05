@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { findStationCandidates, findToolCandidates, findRobotCandidates } from '../fuzzyMatcher'
-import { resolveStationUid, resolveToolUid, resolveRobotUid, createAliasRule, type UidResolutionContext } from '../uidResolver'
-import { StationRecord, ToolRecord, RobotRecord, generateStationUid, generateToolUid, generateRobotUid } from '../../domain/uidTypes'
+import { resolveStationUid, createAliasRule, type UidResolutionContext } from '../uidResolver'
+import {
+  StationRecord,
+  ToolRecord,
+  RobotRecord,
+  generateStationUid,
+  generateToolUid,
+  generateRobotUid,
+} from '../../domain/uidTypes'
 
 describe('Fuzzy Matching - Stations', () => {
   let existingStations: StationRecord[]
@@ -16,13 +23,13 @@ describe('Fuzzy Matching - Stations', () => {
           line: 'AL',
           bay: '010',
           stationNo: '010',
-          fullLabel: 'AL 010 Station 010'
+          fullLabel: 'AL 010 Station 010',
         },
         attributes: {},
         status: 'active',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
-        sourceFile: 'test.xlsx'
+        sourceFile: 'test.xlsx',
       },
       {
         uid: generateStationUid(),
@@ -32,14 +39,14 @@ describe('Fuzzy Matching - Stations', () => {
           line: 'AL',
           bay: '020',
           stationNo: '020',
-          fullLabel: 'AL 020 Station 020'
+          fullLabel: 'AL 020 Station 020',
         },
         attributes: {},
         status: 'active',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
-        sourceFile: 'test.xlsx'
-      }
+        sourceFile: 'test.xlsx',
+      },
     ]
   })
 
@@ -48,7 +55,7 @@ describe('Fuzzy Matching - Stations', () => {
       'AL_010-999',
       { line: 'AL', bay: '010', stationNo: '999', fullLabel: 'AL 010 Station 999' },
       'PLANT_JNAP',
-      existingStations
+      existingStations,
     )
 
     expect(candidates.length).toBeGreaterThan(0)
@@ -61,14 +68,14 @@ describe('Fuzzy Matching - Stations', () => {
       'AL_010-015',
       { line: 'AL', bay: '010', stationNo: '015', fullLabel: 'AL 010 Station 015' },
       'PLANT_JNAP',
-      existingStations
+      existingStations,
     )
 
     expect(candidates.length).toBeGreaterThan(0)
-    const candidate = candidates.find(c => c.key === 'AL_010-010')
+    const candidate = candidates.find((c) => c.key === 'AL_010-010')
     expect(candidate).toBeDefined()
-    expect(candidate?.reasons.some(r => r.startsWith('Same line'))).toBe(true)
-    expect(candidate?.reasons.some(r => r.startsWith('Same bay'))).toBe(true)
+    expect(candidate?.reasons.some((r) => r.startsWith('Same line'))).toBe(true)
+    expect(candidate?.reasons.some((r) => r.startsWith('Same bay'))).toBe(true)
   })
 
   it('should not match across different plants', () => {
@@ -76,7 +83,7 @@ describe('Fuzzy Matching - Stations', () => {
       'AL_010-010',
       { line: 'AL', bay: '010', stationNo: '010', fullLabel: 'AL 010 Station 010' },
       'PLANT_DIFFERENT',
-      existingStations
+      existingStations,
     )
 
     expect(candidates.length).toBe(0)
@@ -87,7 +94,7 @@ describe('Fuzzy Matching - Stations', () => {
       ...existingStations[0],
       uid: generateStationUid(),
       key: 'AL_010-011',
-      status: 'inactive'
+      status: 'inactive',
     }
     const allStations = [...existingStations, inactiveStation]
 
@@ -95,11 +102,11 @@ describe('Fuzzy Matching - Stations', () => {
       'AL_010-012',
       { line: 'AL', bay: '010', stationNo: '012', fullLabel: 'AL 010 Station 012' },
       'PLANT_JNAP',
-      allStations
+      allStations,
     )
 
-    const inactiveCandidate = candidates.find(c => c.key === 'AL_010-011')
-    const activeCandidate = candidates.find(c => c.key === 'AL_010-010')
+    const inactiveCandidate = candidates.find((c) => c.key === 'AL_010-011')
+    const activeCandidate = candidates.find((c) => c.key === 'AL_010-010')
 
     if (inactiveCandidate && activeCandidate) {
       expect(inactiveCandidate.matchScore).toBeLessThan(activeCandidate.matchScore)
@@ -120,14 +127,14 @@ describe('Fuzzy Matching - Tools', () => {
         labels: {
           toolCode: 'GUN01',
           toolName: 'Spot Weld Gun 1',
-          gunNumber: '1'
+          gunNumber: '1',
         },
         attributes: {},
         status: 'active',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
-        sourceFile: 'test.xlsx'
-      }
+        sourceFile: 'test.xlsx',
+      },
     ]
   })
 
@@ -140,7 +147,7 @@ describe('Fuzzy Matching - Tools', () => {
       'AL_010-010_GUN99',
       { toolCode: 'GUN99', toolName: 'Spot Weld Gun 99', gunNumber: '99' },
       'PLANT_JNAP',
-      existingTools
+      existingTools,
     )
 
     // With current logic, no partial match since keys don't contain each other
@@ -154,13 +161,13 @@ describe('Fuzzy Matching - Tools', () => {
       'DIFFERENT_KEY_GUN01',
       { toolCode: 'GUN01', toolName: 'Some Gun', gunNumber: '1' },
       'PLANT_JNAP',
-      existingTools
+      existingTools,
     )
 
     expect(candidates.length).toBeGreaterThan(0)
-    const candidate = candidates.find(c => c.key === 'AL_010-010_GUN01')
+    const candidate = candidates.find((c) => c.key === 'AL_010-010_GUN01')
     expect(candidate).toBeDefined()
-    expect(candidate?.reasons.some(r => r.startsWith('Same tool code'))).toBe(true)
+    expect(candidate?.reasons.some((r) => r.startsWith('Same tool code'))).toBe(true)
   })
 })
 
@@ -177,14 +184,14 @@ describe('Fuzzy Matching - Robots', () => {
         labels: {
           eNumber: 'E123456',
           robotCaption: 'R01',
-          robotName: 'Robot 1'
+          robotName: 'Robot 1',
         },
         attributes: {},
         status: 'active',
         createdAt: '2025-01-01T00:00:00Z',
         updatedAt: '2025-01-01T00:00:00Z',
-        sourceFile: 'test.xlsx'
-      }
+        sourceFile: 'test.xlsx',
+      },
     ]
   })
 
@@ -193,13 +200,13 @@ describe('Fuzzy Matching - Robots', () => {
       'DIFFERENT_KEY',
       { eNumber: 'E123456', robotCaption: 'R99', robotName: 'Different Robot' },
       'PLANT_JNAP',
-      existingRobots
+      existingRobots,
     )
 
     expect(candidates.length).toBeGreaterThan(0)
-    const candidate = candidates.find(c => c.key === 'AL_010-010_R01')
+    const candidate = candidates.find((c) => c.key === 'AL_010-010_R01')
     expect(candidate).toBeDefined()
-    expect(candidate?.reasons.some(r => r.startsWith('Same E-number'))).toBe(true)
+    expect(candidate?.reasons.some((r) => r.startsWith('Same E-number'))).toBe(true)
   })
 })
 
@@ -217,19 +224,19 @@ describe('UID Resolution with Ambiguity', () => {
             line: 'AL',
             bay: '010',
             stationNo: '010',
-            fullLabel: 'AL 010 Station 010'
+            fullLabel: 'AL 010 Station 010',
           },
           attributes: {},
           status: 'active',
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z',
-          sourceFile: 'test.xlsx'
-        }
+          sourceFile: 'test.xlsx',
+        },
       ],
       toolRecords: [],
       robotRecords: [],
       aliasRules: [],
-      plantKey: 'PLANT_JNAP'
+      plantKey: 'PLANT_JNAP',
     }
   })
 
@@ -239,7 +246,7 @@ describe('UID Resolution with Ambiguity', () => {
       { line: 'AL', bay: '010', stationNo: '010', fullLabel: 'AL 010 Station 010' },
       {},
       context,
-      { sourceFile: 'test.xlsx' }
+      { sourceFile: 'test.xlsx' },
     )
 
     expect(resolution.matchedVia).toBe('exact_key')
@@ -253,7 +260,7 @@ describe('UID Resolution with Ambiguity', () => {
       { line: 'AL', bay: '010', stationNo: '999', fullLabel: 'AL 010 Station 999' },
       {},
       context,
-      { sourceFile: 'test.xlsx' }
+      { sourceFile: 'test.xlsx' },
     )
 
     expect(resolution.matchedVia).toBe('ambiguous')
@@ -270,7 +277,7 @@ describe('UID Resolution with Ambiguity', () => {
       { line: 'ZZ', bay: '999', stationNo: '999', fullLabel: 'ZZ 999 Station 999' },
       {},
       context,
-      { sourceFile: 'test.xlsx' }
+      { sourceFile: 'test.xlsx' },
     )
 
     expect(resolution.matchedVia).toBe('created')
@@ -289,7 +296,7 @@ describe('UID Resolution with Ambiguity', () => {
       plantKey: 'PLANT_JNAP',
       reason: 'User linked via UI',
       createdAt: '2025-01-01T00:00:00Z',
-      createdBy: 'test-user'
+      createdBy: 'test-user',
     })
 
     const resolution = resolveStationUid(
@@ -297,7 +304,7 @@ describe('UID Resolution with Ambiguity', () => {
       { line: 'AL', bay: '010', stationNo: '999', fullLabel: 'AL 010 Station 999' },
       {},
       context,
-      { sourceFile: 'test.xlsx' }
+      { sourceFile: 'test.xlsx' },
     )
 
     expect(resolution.matchedVia).toBe('alias')
@@ -313,7 +320,7 @@ describe('Alias Rule Creation', () => {
       'st_existing_1',
       'station',
       'User linked via Import Review',
-      'test-user'
+      'test-user',
     )
 
     expect(rule.fromKey).toBe('AL_010-999')
@@ -338,19 +345,19 @@ describe('Alias Rule Reduces Ambiguity on Re-import', () => {
             line: 'AL',
             bay: '010',
             stationNo: '010',
-            fullLabel: 'AL 010 Station 010'
+            fullLabel: 'AL 010 Station 010',
           },
           attributes: {},
           status: 'active',
           createdAt: '2025-01-01T00:00:00Z',
           updatedAt: '2025-01-01T00:00:00Z',
-          sourceFile: 'test.xlsx'
-        }
+          sourceFile: 'test.xlsx',
+        },
       ],
       toolRecords: [],
       robotRecords: [],
       aliasRules: [],
-      plantKey: 'PLANT_JNAP'
+      plantKey: 'PLANT_JNAP',
     }
 
     // First import - ambiguous
@@ -359,7 +366,7 @@ describe('Alias Rule Reduces Ambiguity on Re-import', () => {
       { line: 'AL', bay: '010', stationNo: '999', fullLabel: 'AL 010 Station 999' },
       {},
       context,
-      { sourceFile: 'test.xlsx' }
+      { sourceFile: 'test.xlsx' },
     )
 
     expect(firstResolution.matchedVia).toBe('ambiguous')
@@ -371,7 +378,7 @@ describe('Alias Rule Reduces Ambiguity on Re-import', () => {
       'st_existing_1',
       'station',
       'User linked via Import Review',
-      'test-user'
+      'test-user',
     )
     context.aliasRules.push(aliasRule)
 
@@ -381,7 +388,7 @@ describe('Alias Rule Reduces Ambiguity on Re-import', () => {
       { line: 'AL', bay: '010', stationNo: '999', fullLabel: 'AL 010 Station 999' },
       {},
       context,
-      { sourceFile: 'test.xlsx' }
+      { sourceFile: 'test.xlsx' },
     )
 
     expect(secondResolution.matchedVia).toBe('alias')

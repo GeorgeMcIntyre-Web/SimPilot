@@ -1,22 +1,22 @@
-import { Search, Filter, X } from 'lucide-react';
-import { SeverityFilter } from '../dashboardUtils';
+import { Search, Filter, X } from 'lucide-react'
+import { StatusFilter } from '../dashboardUtils'
 
 interface FilterControlsProps {
-  searchTerm: string;
-  onSearchChange: (term: string) => void;
-  severityFilter: SeverityFilter;
-  onSeverityChange: (filter: SeverityFilter) => void;
-  selectedArea: string | null;
-  onClearAreaFilter?: () => void;
-  resultCount: number;
-  totalCount: number;
+  searchTerm: string
+  onSearchChange: (term: string) => void
+  statusFilter: StatusFilter
+  onStatusChange: (filter: StatusFilter) => void
+  selectedArea: string | null
+  onClearAreaFilter?: () => void
+  resultCount: number
+  totalCount: number
 }
 
 export function FilterControls({
   searchTerm,
   onSearchChange,
-  severityFilter,
-  onSeverityChange,
+  statusFilter,
+  onStatusChange,
   selectedArea,
   onClearAreaFilter,
   resultCount,
@@ -41,8 +41,8 @@ export function FilterControls({
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
             <select
-              value={severityFilter}
-              onChange={(e) => onSeverityChange(e.target.value as SeverityFilter)}
+              value={statusFilter}
+              onChange={(e) => onStatusChange(e.target.value as StatusFilter)}
               className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">All Statuses</option>
@@ -74,5 +74,5 @@ export function FilterControls({
         Showing {resultCount} of {totalCount}
       </div>
     </div>
-  );
+  )
 }

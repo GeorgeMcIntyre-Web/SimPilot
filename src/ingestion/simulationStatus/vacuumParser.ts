@@ -2,7 +2,7 @@ import type { IngestionWarning } from '../../domain/core'
 import type { CellValue } from '../excelUtils'
 import { isEffectivelyEmptyRow, isEmptyRow, isTotalRow } from '../excelUtils'
 import { createMetric } from './percentNormalizer'
-import { COLUMN_ALIASES, REQUIRED_HEADERS } from './headerMapping'
+import { COLUMN_ALIASES } from './headerMapping'
 import type { SimulationMetric, VacuumParsedRow } from './types'
 
 /**
@@ -16,8 +16,11 @@ export function vacuumParseSimulationSheet(
   headerRowIndex: number,
   fileName: string,
   sheetName: string,
-  globalAreaName?: string
+  globalAreaName?: string,
 ): { rows: VacuumParsedRow[]; warnings: IngestionWarning[] } {
+  void fileName
+  void sheetName
+
   const warnings: IngestionWarning[] = []
   const vacuumRows: VacuumParsedRow[] = []
 
@@ -36,7 +39,12 @@ export function vacuumParseSimulationSheet(
   for (const [coreField, aliases] of Object.entries(COLUMN_ALIASES)) {
     for (const alias of aliases) {
       const aliasUpper = alias.toUpperCase()
-      const index = headerRow.findIndex(h => String(h || '').toUpperCase().trim() === aliasUpper)
+      const index = headerRow.findIndex(
+        (h) =>
+          String(h || '')
+            .toUpperCase()
+            .trim() === aliasUpper,
+      )
 
       if (index >= 0) {
         coreIndices[coreField] = index
@@ -58,7 +66,9 @@ export function vacuumParseSimulationSheet(
         continue
       }
 
-      const headerText = String(headerRow[i] || '').toUpperCase().trim()
+      const headerText = String(headerRow[i] || '')
+        .toUpperCase()
+        .trim()
 
       for (const alias of aliases) {
         if (headerText.includes(alias.toUpperCase())) {
@@ -98,18 +108,26 @@ export function vacuumParseSimulationSheet(
     const row = rows[i]
 
     // Skip footer rows (totals/empty rows)
-    if (!row || row.length === 0 || isEmptyRow(row) || isTotalRow(row) || isEffectivelyEmptyRow(row)) {
+    if (
+      !row ||
+      row.length === 0 ||
+      isEmptyRow(row) ||
+      isTotalRow(row) ||
+      isEffectivelyEmptyRow(row)
+    ) {
       continue
     }
 
     // Extract core fields
     const areaCode = String(row[coreIndices['AREA_CODE'] ?? -1] || '').trim()
-    const areaName = String(row[coreIndices['AREA_NAME'] ?? -1] || globalAreaName || '').trim() || 'UNKNOWN AREA'
+    const rawAreaName = String(row[coreIndices['AREA_NAME'] ?? -1] || globalAreaName || '').trim()
+    const areaName = rawAreaName || areaCode || 'UNKNOWN AREA'
     const assemblyLine = String(row[coreIndices['ASSEMBLY LINE'] ?? -1] || '').trim()
     const stationKey = String(row[coreIndices['STATION'] ?? -1] || '').trim()
     const robotCaption = String(row[coreIndices['ROBOT'] ?? -1] || '').trim()
     const application = String(row[coreIndices['APPLICATION'] ?? -1] || '').trim() || undefined
-    const personResponsible = String(row[coreIndices['PERSONS RESPONSIBLE'] ?? -1] || '').trim() || undefined
+    const personResponsible =
+      String(row[coreIndices['PERSONS RESPONSIBLE'] ?? -1] || '').trim() || undefined
 
     // Skip rows without station or robot (not valid simulation entries)
     if (!stationKey && !robotCaption) {
@@ -139,7 +157,7 @@ export function vacuumParseSimulationSheet(
       application,
       personResponsible,
       metrics,
-      sourceRowIndex: i
+      sourceRowIndex: i,
     })
   }
 

@@ -4,21 +4,21 @@ import {
   matchAllColumns,
   fieldIdToColumnRole,
   type RawSheet,
-  type FieldMatchResult
-} from '../excel'
+  type FieldMatchResult,
+} from '../../excel'
 import type { ColumnRole, ColumnRoleDetection, MatchConfidence, SheetSchemaAnalysis } from './types'
 
 export function analyzeHeaderRowV2(
   headers: CellValue[],
   sheetName: string = 'Sheet',
-  headerRowIndex: number = 0
+  headerRowIndex: number = 0,
 ): SheetSchemaAnalysis {
   const rows: unknown[][] = [headers]
 
   const rawSheet: RawSheet = {
     sheetName,
     rows,
-    headerRowIndex: 0
+    headerRowIndex: 0,
   }
 
   const profile = profileSheet(rawSheet, 'inline-analysis', 0)
@@ -30,13 +30,11 @@ export function analyzeHeaderRowV2(
 
   for (const result of matchResults) {
     const { columnProfile, bestMatch } = result
-    const role: ColumnRole = bestMatch !== undefined
-      ? fieldIdToColumnRole(bestMatch.fieldId)
-      : 'UNKNOWN'
+    const role: ColumnRole =
+      bestMatch !== undefined ? fieldIdToColumnRole(bestMatch.fieldId) : 'UNKNOWN'
 
-    const confidence: MatchConfidence = bestMatch !== undefined
-      ? scoreToConfidence(bestMatch.score)
-      : 'LOW'
+    const confidence: MatchConfidence =
+      bestMatch !== undefined ? scoreToConfidence(bestMatch.score) : 'LOW'
 
     const detection: ColumnRoleDetection = {
       columnIndex: columnProfile.columnIndex,
@@ -45,9 +43,10 @@ export function analyzeHeaderRowV2(
       role,
       confidence,
       matchedPattern: bestMatch?.fieldId ?? '',
-      explanation: bestMatch !== undefined
-        ? `Matched ${bestMatch.fieldId} (score: ${bestMatch.score})`
-        : 'No match found'
+      explanation:
+        bestMatch !== undefined
+          ? `Matched ${bestMatch.fieldId} (score: ${bestMatch.score})`
+          : 'No match found',
     }
 
     columns.push(detection)
@@ -61,14 +60,14 @@ export function analyzeHeaderRowV2(
     }
   }
 
-  const total = columns.filter(c => c.headerText !== '').length
+  const total = columns.filter((c) => c.headerText !== '').length
   const known = total - unknownColumns.length
   const percentage = total > 0 ? Math.round((known / total) * 100) : 0
 
   return {
     sheetName,
     headerRowIndex,
-    headers: headers.map(h => String(h ?? '')),
+    headers: headers.map((h) => String(h ?? '')),
     columns,
     roleMap,
     unknownColumns,
@@ -76,21 +75,21 @@ export function analyzeHeaderRowV2(
       total,
       known,
       unknown: unknownColumns.length,
-      percentage
-    }
+      percentage,
+    },
   }
 }
 
 export function getFieldMatchResults(
   headers: CellValue[],
-  sheetName: string = 'Sheet'
+  sheetName: string = 'Sheet',
 ): FieldMatchResult[] {
   const rows: unknown[][] = [headers]
 
   const rawSheet: RawSheet = {
     sheetName,
     rows,
-    headerRowIndex: 0
+    headerRowIndex: 0,
   }
 
   const profile = profileSheet(rawSheet, 'inline-analysis', 0)

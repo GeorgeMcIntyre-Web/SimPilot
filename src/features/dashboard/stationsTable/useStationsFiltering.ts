@@ -1,65 +1,65 @@
-import { useState, useMemo } from 'react';
-import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes';
+import { useState, useMemo } from 'react'
+import { CellSnapshot } from '../../../domain/crossRef/CrossRefTypes'
 import {
-  filterBySeverity,
+  filterByStatus,
   filterByArea,
   filterBySearch,
   sortCells,
   SortKey,
   SortDirection,
-  SeverityFilter,
-} from '../dashboardUtils';
+  StatusFilter,
+} from '../dashboardUtils'
 
 export function useStationsFiltering(cells: CellSnapshot[], selectedArea: string | null) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
-  const [sortKey, setSortKey] = useState<SortKey>('risk');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [sortKey, setSortKey] = useState<SortKey>('risk')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // Apply filters and sorting
   const filteredCells = useMemo(() => {
-    let result = cells;
+    let result = cells
 
     // Apply area filter
-    result = filterByArea(result, selectedArea);
+    result = filterByArea(result, selectedArea)
 
-    // Apply severity filter
-    result = filterBySeverity(result, severityFilter);
+    // Apply status filter
+    result = filterByStatus(result, statusFilter)
 
     // Apply search filter
-    result = filterBySearch(result, searchTerm);
+    result = filterBySearch(result, searchTerm)
 
     // Apply sorting
-    result = sortCells(result, sortKey, sortDirection);
+    result = sortCells(result, sortKey, sortDirection)
 
-    return result;
-  }, [cells, selectedArea, severityFilter, searchTerm, sortKey, sortDirection]);
+    return result
+  }, [cells, selectedArea, statusFilter, searchTerm, sortKey, sortDirection])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       // Toggle direction
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-      return;
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+      return
     }
-    setSortKey(key);
-    setSortDirection('desc');
-  };
+    setSortKey(key)
+    setSortDirection('desc')
+  }
 
   return {
     // State
     searchTerm,
-    severityFilter,
+    statusFilter,
     sortKey,
     sortDirection,
 
     // Setters
     setSearchTerm,
-    setSeverityFilter,
+    setStatusFilter,
 
     // Handlers
     handleSort,
 
     // Filtered data
     filteredCells,
-  };
+  }
 }

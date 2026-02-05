@@ -8,14 +8,20 @@ import {
   getCompletionPercent,
   getHealthScore,
   countByRisk,
-  filterBySeverity,
+  filterByStatus,
   filterByArea,
   filterBySearch,
   getApplicationDisplay,
   sortCells,
-  generateFocusItems
+  generateFocusItems,
 } from '../dashboardUtils'
-import { CellSnapshot, CrossRefFlag, RobotSnapshot, SimulationStatusSnapshot, ToolSnapshot } from '../../../domain/crossRef/CrossRefTypes'
+import {
+  CellSnapshot,
+  CrossRefFlag,
+  RobotSnapshot,
+  SimulationStatusSnapshot,
+  ToolSnapshot,
+} from '../../../domain/crossRef/CrossRefTypes'
 
 // ============================================================================
 // TEST HELPERS
@@ -23,6 +29,7 @@ import { CellSnapshot, CrossRefFlag, RobotSnapshot, SimulationStatusSnapshot, To
 
 const makeCell = (partial: Partial<CellSnapshot>): CellSnapshot => ({
   stationKey: partial.stationKey ?? 'ST_010',
+  displayCode: partial.displayCode ?? partial.stationKey ?? 'ST_010',
   areaKey: partial.areaKey,
   simulationStatus: partial.simulationStatus,
   tools: partial.tools ?? [],
@@ -30,33 +37,31 @@ const makeCell = (partial: Partial<CellSnapshot>): CellSnapshot => ({
   weldGuns: partial.weldGuns ?? [],
   gunForces: partial.gunForces ?? [],
   risers: partial.risers ?? [],
-  flags: partial.flags ?? []
+  flags: partial.flags ?? [],
 })
 
-const makeSimStatus = (
-  partial: Partial<SimulationStatusSnapshot>
-): SimulationStatusSnapshot => ({
+const makeSimStatus = (partial: Partial<SimulationStatusSnapshot>): SimulationStatusSnapshot => ({
   stationKey: partial.stationKey ?? '010',
   areaKey: partial.areaKey,
   hasIssues: partial.hasIssues,
   firstStageCompletion: partial.firstStageCompletion,
   finalDeliverablesCompletion: partial.finalDeliverablesCompletion,
   application: partial.application,
-  raw: partial.raw ?? {}
+  raw: partial.raw ?? {},
 })
 
 const makeWarningFlag = (type: string, stationKey: string): CrossRefFlag => ({
   type: type as CrossRefFlag['type'],
   stationKey,
   message: `Warning: ${type}`,
-  severity: 'WARNING'
+  severity: 'WARNING',
 })
 
 const makeErrorFlag = (type: string, stationKey: string): CrossRefFlag => ({
   type: type as CrossRefFlag['type'],
   stationKey,
   message: `Error: ${type}`,
-  severity: 'ERROR'
+  severity: 'ERROR',
 })
 
 const makeRobot = (code: string | null): RobotSnapshot => ({
@@ -66,7 +71,7 @@ const makeRobot = (code: string | null): RobotSnapshot => ({
   eNumber: undefined,
   hasDressPackInfo: true,
   oemModel: undefined,
-  raw: code ? { metadata: { Code: code } } : {}
+  raw: code ? { metadata: { Code: code } } : {},
 })
 
 const makeTool = (code: string | null): ToolSnapshot => ({
@@ -78,7 +83,7 @@ const makeTool = (code: string | null): ToolSnapshot => ({
   teamLeader: undefined,
   simDueDate: undefined,
   toolType: 'OTHER',
-  raw: code ? { metadata: { applicationCode: code } } : {}
+  raw: code ? { metadata: { applicationCode: code } } : {},
 })
 
 // ============================================================================
@@ -100,7 +105,7 @@ describe('dashboardUtils', () => {
     it('returns CRITICAL for cells with any errors', () => {
       const flags = [
         makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010'),
-        makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_010')
+        makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_010'),
       ]
       const cell = makeCell({ flags })
       expect(getRiskLevel(cell)).toBe('CRITICAL')
@@ -109,7 +114,7 @@ describe('dashboardUtils', () => {
     it('returns AT_RISK when simulation has issues even without flags', () => {
       const cell = makeCell({
         flags: [],
-        simulationStatus: makeSimStatus({ hasIssues: true, firstStageCompletion: 80 })
+        simulationStatus: makeSimStatus({ hasIssues: true, firstStageCompletion: 80 }),
       })
       expect(getRiskLevel(cell)).toBe('AT_RISK')
     })
@@ -117,7 +122,7 @@ describe('dashboardUtils', () => {
     it('returns AT_RISK for very low completion without other signals', () => {
       const cell = makeCell({
         flags: [],
-        simulationStatus: makeSimStatus({ firstStageCompletion: 20 })
+        simulationStatus: makeSimStatus({ firstStageCompletion: 20 }),
       })
       expect(getRiskLevel(cell)).toBe('AT_RISK')
     })
@@ -140,7 +145,7 @@ describe('dashboardUtils', () => {
     it('returns rounded completion percentage', () => {
       const cell = makeCell({
         stationKey: 'ST_010',
-        simulationStatus: makeSimStatus({ firstStageCompletion: 85.7 })
+        simulationStatus: makeSimStatus({ firstStageCompletion: 85.7 }),
       })
       expect(getCompletionPercent(cell)).toBe(86)
     })
@@ -148,7 +153,7 @@ describe('dashboardUtils', () => {
     it('returns null for undefined completion', () => {
       const cell = makeCell({
         stationKey: 'ST_010',
-        simulationStatus: makeSimStatus({ firstStageCompletion: undefined })
+        simulationStatus: makeSimStatus({ firstStageCompletion: undefined }),
       })
       expect(getCompletionPercent(cell)).toBeNull()
     })
@@ -162,15 +167,15 @@ describe('dashboardUtils', () => {
 
     it('penalizes cells with flags', () => {
       const cell = makeCell({
-        flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010')]
+        flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010')],
       })
       expect(getHealthScore(cell)).toBe(85)
     })
 
     it('clamps score to minimum of 0', () => {
-      const manyFlags = Array(10).fill(null).map(() =>
-        makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010')
-      )
+      const manyFlags = Array(10)
+        .fill(null)
+        .map(() => makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_010'))
       const cell = makeCell({ flags: manyFlags })
       expect(getHealthScore(cell)).toBe(0)
     })
@@ -181,8 +186,14 @@ describe('dashboardUtils', () => {
       const cells = [
         makeCell({ stationKey: 'ST_001', flags: [] }),
         makeCell({ stationKey: 'ST_002', flags: [] }),
-        makeCell({ stationKey: 'ST_003', flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_003')] }),
-        makeCell({ stationKey: 'ST_004', flags: [makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_004')] })
+        makeCell({
+          stationKey: 'ST_003',
+          flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_003')],
+        }),
+        makeCell({
+          stationKey: 'ST_004',
+          flags: [makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_004')],
+        }),
       ]
 
       const counts = countByRisk(cells)
@@ -202,33 +213,43 @@ describe('dashboardUtils', () => {
     })
   })
 
-  describe('filterBySeverity', () => {
+  describe('filterByStatus', () => {
     const cells = [
-      makeCell({ stationKey: 'OK_001', flags: [] }),
-      makeCell({ stationKey: 'WARN_001', flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'WARN_001')] }),
-      makeCell({ stationKey: 'ERR_001', flags: [makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ERR_001')] })
+      makeCell({
+        stationKey: 'ST_100',
+        simulationStatus: makeSimStatus({ firstStageCompletion: 100 }),
+      }),
+      makeCell({
+        stationKey: 'ST_085',
+        simulationStatus: makeSimStatus({ firstStageCompletion: 85 }),
+      }),
+      makeCell({
+        stationKey: 'ST_020',
+        simulationStatus: makeSimStatus({ firstStageCompletion: 20 }),
+      }),
+      makeCell({ stationKey: 'ST_NULL', simulationStatus: undefined }),
     ]
 
     it('returns all cells for "all" filter', () => {
-      expect(filterBySeverity(cells, 'all').length).toBe(3)
+      expect(filterByStatus(cells, 'all').length).toBe(4)
     })
 
-    it('filters to error cells only', () => {
-      const result = filterBySeverity(cells, 'error')
+    it('filters to Complete', () => {
+      const result = filterByStatus(cells, 'Complete')
       expect(result.length).toBe(1)
-      expect(result[0].stationKey).toBe('ERR_001')
+      expect(result[0].stationKey).toBe('ST_100')
     })
 
-    it('filters to warning cells only (excluding errors)', () => {
-      const result = filterBySeverity(cells, 'warning')
+    it('filters to Nearly Complete', () => {
+      const result = filterByStatus(cells, 'Nearly Complete')
       expect(result.length).toBe(1)
-      expect(result[0].stationKey).toBe('WARN_001')
+      expect(result[0].stationKey).toBe('ST_085')
     })
 
-    it('filters to cells with no flags', () => {
-      const result = filterBySeverity(cells, 'none')
+    it('filters to No data', () => {
+      const result = filterByStatus(cells, 'No data')
       expect(result.length).toBe(1)
-      expect(result[0].stationKey).toBe('OK_001')
+      expect(result[0].stationKey).toBe('ST_NULL')
     })
   })
 
@@ -236,7 +257,7 @@ describe('dashboardUtils', () => {
     const cells = [
       makeCell({ stationKey: 'ST_001', areaKey: 'UB' }),
       makeCell({ stationKey: 'ST_002', areaKey: 'UB' }),
-      makeCell({ stationKey: 'ST_003', areaKey: 'MB' })
+      makeCell({ stationKey: 'ST_003', areaKey: 'MB' }),
     ]
 
     it('returns all cells when areaKey is null', () => {
@@ -246,7 +267,7 @@ describe('dashboardUtils', () => {
     it('filters to specific area', () => {
       const result = filterByArea(cells, 'UB')
       expect(result.length).toBe(2)
-      expect(result.every(c => c.areaKey === 'UB')).toBe(true)
+      expect(result.every((c) => c.areaKey === 'UB')).toBe(true)
     })
   })
 
@@ -254,7 +275,7 @@ describe('dashboardUtils', () => {
     const cells = [
       makeCell({ stationKey: 'ST_010_A' }),
       makeCell({ stationKey: 'ST_020_B' }),
-      makeCell({ stationKey: 'ST_030_C' })
+      makeCell({ stationKey: 'ST_030_C' }),
     ]
 
     it('returns all cells for empty search', () => {
@@ -273,7 +294,7 @@ describe('dashboardUtils', () => {
     it('joins unique application codes from robots and tools', () => {
       const cell = makeCell({
         robots: [makeRobot('SPR'), makeRobot('MH')],
-        tools: [makeTool('FDS'), makeTool('SPR')]
+        tools: [makeTool('FDS'), makeTool('SPR')],
       })
 
       expect(getApplicationDisplay(cell)).toBe('SPR + MH + FDS')
@@ -282,7 +303,7 @@ describe('dashboardUtils', () => {
     it('returns dash when no application codes are available', () => {
       const cell = makeCell({
         robots: [makeRobot(null)],
-        tools: [makeTool(null)]
+        tools: [makeTool(null)],
       })
 
       expect(getApplicationDisplay(cell)).toBe('-')
@@ -293,7 +314,7 @@ describe('dashboardUtils', () => {
     const cells = [
       makeCell({ stationKey: 'C_Station', areaKey: 'Z' }),
       makeCell({ stationKey: 'A_Station', areaKey: 'Y' }),
-      makeCell({ stationKey: 'B_Station', areaKey: 'X' })
+      makeCell({ stationKey: 'B_Station', areaKey: 'X' }),
     ]
 
     it('sorts by station key ascending', () => {
@@ -318,18 +339,22 @@ describe('dashboardUtils', () => {
       const withApps = [
         makeCell({ stationKey: 'ST_200', robots: [makeRobot('MH')], tools: [] }),
         makeCell({ stationKey: 'ST_100', robots: [makeRobot('SPR')], tools: [] }),
-        makeCell({ stationKey: 'ST_300', robots: [makeRobot('FDS')], tools: [] })
+        makeCell({ stationKey: 'ST_300', robots: [makeRobot('FDS')], tools: [] }),
       ]
 
       const result = sortCells(withApps, 'application', 'asc')
-      expect(result.map(c => c.stationKey)).toEqual(['ST_300', 'ST_200', 'ST_100'])
+      expect(result.map((c) => c.stationKey)).toEqual(['ST_300', 'ST_200', 'ST_100'])
     })
   })
 
   describe('generateFocusItems', () => {
     it('returns empty array for cells with no issues', () => {
       const cells = [
-        makeCell({ stationKey: 'ST_001', simulationStatus: makeSimStatus({ stationKey: 'ST_001' }), flags: [] })
+        makeCell({
+          stationKey: 'ST_001',
+          simulationStatus: makeSimStatus({ stationKey: 'ST_001' }),
+          flags: [],
+        }),
       ]
       expect(generateFocusItems(cells).length).toBe(0)
     })
@@ -338,42 +363,54 @@ describe('dashboardUtils', () => {
       const cells = [
         makeCell({
           stationKey: 'ST_001',
-          simulationStatus: undefined
-        })
+          simulationStatus: undefined,
+        }),
       ]
       const items = generateFocusItems(cells)
-      expect(items.some(i => i.id === 'missing-sim-status')).toBe(true)
+      expect(items.some((i) => i.id === 'missing-sim-status')).toBe(true)
     })
 
     it('generates focus item for guns without force', () => {
       const cells = [
         makeCell({
           stationKey: 'ST_001',
-          flags: [makeWarningFlag('MISSING_GUN_FORCE_FOR_WELD_GUN', 'ST_001')]
-        })
+          flags: [makeWarningFlag('MISSING_GUN_FORCE_FOR_WELD_GUN', 'ST_001')],
+        }),
       ]
       const items = generateFocusItems(cells)
-      expect(items.some(i => i.id === 'guns-without-force')).toBe(true)
+      expect(items.some((i) => i.id === 'guns-without-force')).toBe(true)
     })
 
     it('generates focus item for robots missing dress pack', () => {
       const cells = [
         makeCell({
           stationKey: 'ST_001',
-          flags: [makeWarningFlag('ROBOT_MISSING_DRESS_PACK_INFO', 'ST_001')]
-        })
+          flags: [makeWarningFlag('ROBOT_MISSING_DRESS_PACK_INFO', 'ST_001')],
+        }),
       ]
       const items = generateFocusItems(cells)
-      expect(items.some(i => i.id === 'robots-missing-dress-pack')).toBe(true)
+      expect(items.some((i) => i.id === 'robots-missing-dress-pack')).toBe(true)
     })
 
     it('limits focus items to 4', () => {
       const cells = [
         makeCell({ stationKey: 'ST_001', simulationStatus: undefined }),
-        makeCell({ stationKey: 'ST_002', flags: [makeWarningFlag('MISSING_GUN_FORCE_FOR_WELD_GUN', 'ST_002')] }),
-        makeCell({ stationKey: 'ST_003', flags: [makeWarningFlag('ROBOT_MISSING_DRESS_PACK_INFO', 'ST_003')] }),
-        makeCell({ stationKey: 'ST_004', flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_004')] }),
-        makeCell({ stationKey: 'ST_005', flags: [makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_005')] })
+        makeCell({
+          stationKey: 'ST_002',
+          flags: [makeWarningFlag('MISSING_GUN_FORCE_FOR_WELD_GUN', 'ST_002')],
+        }),
+        makeCell({
+          stationKey: 'ST_003',
+          flags: [makeWarningFlag('ROBOT_MISSING_DRESS_PACK_INFO', 'ST_003')],
+        }),
+        makeCell({
+          stationKey: 'ST_004',
+          flags: [makeWarningFlag('TOOL_WITHOUT_OWNER', 'ST_004')],
+        }),
+        makeCell({
+          stationKey: 'ST_005',
+          flags: [makeErrorFlag('DUPLICATE_STATION_DEFINITION', 'ST_005')],
+        }),
       ]
       const items = generateFocusItems(cells)
       expect(items.length).toBeLessThanOrEqual(4)

@@ -7,8 +7,8 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     synonyms: ['tool id', 'tool-id', 'tool name', 'tool number', 'tool no', 'equipment id'],
     description: 'Tool or equipment identifier',
     expectedType: 'string',
-    headerRegexes: [/tool[\s\-]*(id|name|number|no|#)/i, /equipment\s*id/i],
-    importance: 'high'
+    headerRegexes: [/tool[\s-]*(id|name|number|no|#)/i, /equipment\s*id/i],
+    importance: 'high',
   },
   {
     id: 'gun_id',
@@ -17,7 +17,7 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     description: 'Weld gun identifier',
     expectedType: 'string',
     headerRegexes: [/gun\s*id/i, /wg\s*id/i],
-    importance: 'high'
+    importance: 'high',
   },
   {
     id: 'gun_number',
@@ -26,7 +26,7 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     description: 'Weld gun number',
     expectedType: 'string',
     headerRegexes: [/gun\s*(number|no|#)/i, /wg\s*(number|no|#)/i, /zangennummer/i],
-    importance: 'high'
+    importance: 'high',
   },
   {
     id: 'device_name',
@@ -35,7 +35,7 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     description: 'Device or equipment name',
     expectedType: 'string',
     headerRegexes: [/device\s*(name)?/i, /asset\s*description/i, /equipment\s*name/i],
-    importance: 'high'
+    importance: 'high',
   },
   {
     id: 'serial_number',
@@ -44,7 +44,7 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     description: 'Equipment serial number',
     expectedType: 'string',
     headerRegexes: [/serial\s*(number|no|#)?/i, /s\/n/i, /body\s*serial/i],
-    importance: 'medium'
+    importance: 'medium',
   },
   {
     id: 'gun_force_kn',
@@ -54,7 +54,7 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     expectedType: 'number',
     expectedUnit: 'kN',
     headerRegexes: [/gun\s*force/i, /force.*kn/i, /weld\s*force/i],
-    importance: 'high'
+    importance: 'high',
   },
   {
     id: 'gun_force_n',
@@ -64,7 +64,7 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     expectedType: 'number',
     expectedUnit: 'N',
     headerRegexes: [/force\s*\[?n\]?/i, /required\s*force/i],
-    importance: 'high'
+    importance: 'high',
   },
   {
     id: 'transformer_kva',
@@ -74,6 +74,6 @@ export const toolingFieldDescriptors: FieldDescriptor[] = [
     expectedType: 'number',
     expectedUnit: 'kVA',
     headerRegexes: [/transformer/i, /trafo/i],
-    importance: 'low'
-  }
+    importance: 'low',
+  },
 ]

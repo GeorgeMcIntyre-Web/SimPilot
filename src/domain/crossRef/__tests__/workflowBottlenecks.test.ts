@@ -13,14 +13,9 @@ import {
   analyzeWorkflowItem,
   analyzeWorkflowBottlenecks,
   getWorstBottlenecks,
-  getBottleneckStats
+  getBottleneckStats,
 } from '../../workflowBottleneckLinker'
-import type {
-  WorkflowItem,
-  WorkflowBottleneckStatus,
-  StageStatusSnapshot,
-  WorkflowStatus
-} from '../../workflowTypes'
+import type { WorkflowItem, StageStatusSnapshot, WorkflowStatus } from '../../workflowTypes'
 
 // ============================================================================
 // TEST FIXTURE HELPERS
@@ -29,7 +24,7 @@ import type {
 function makeStageSnapshot(
   stage: 'DESIGN' | 'SIMULATION' | 'MANUFACTURE',
   status: WorkflowStatus,
-  percentComplete: number | null
+  percentComplete: number | null,
 ): StageStatusSnapshot {
   return { stage, status, percentComplete }
 }
@@ -41,10 +36,13 @@ function makeWorkflowItem(overrides: Partial<WorkflowItem> = {}): WorkflowItem {
     simulationContextKey: overrides.simulationContextKey ?? 'PROG|PLANT|UNIT|LINE|ST010',
     name: overrides.name ?? 'Test Workflow Item',
     itemNumber: overrides.itemNumber ?? 'TOOL-001',
-    designStageStatus: overrides.designStageStatus ?? makeStageSnapshot('DESIGN', 'IN_PROGRESS', 50),
-    simulationStageStatus: overrides.simulationStageStatus ?? makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0),
-    manufactureStageStatus: overrides.manufactureStageStatus ?? makeStageSnapshot('MANUFACTURE', 'NOT_STARTED', 0),
-    ...overrides
+    designStageStatus:
+      overrides.designStageStatus ?? makeStageSnapshot('DESIGN', 'IN_PROGRESS', 50),
+    simulationStageStatus:
+      overrides.simulationStageStatus ?? makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0),
+    manufactureStageStatus:
+      overrides.manufactureStageStatus ?? makeStageSnapshot('MANUFACTURE', 'NOT_STARTED', 0),
+    ...overrides,
   }
 }
 
@@ -57,7 +55,7 @@ describe('Workflow Bottleneck Engine', () => {
     it('returns deterministic results for identical inputs', () => {
       const item = makeWorkflowItem({
         id: 'DETERMINISTIC-001',
-        designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 25)
+        designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 25),
       })
 
       const result1 = analyzeWorkflowItem(item)
@@ -84,7 +82,7 @@ describe('Workflow Bottleneck Engine', () => {
 
     it('preserves simulationContextKey from input', () => {
       const item = makeWorkflowItem({
-        simulationContextKey: 'STLA|PLANT_A|UNIT_1|LINE_2|STATION_030'
+        simulationContextKey: 'STLA|PLANT_A|UNIT_1|LINE_2|STATION_030',
       })
       const result = analyzeWorkflowItem(item)
 
@@ -97,7 +95,7 @@ describe('Workflow Bottleneck Engine', () => {
       const item = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20),
         simulationStageStatus: makeStageSnapshot('SIMULATION', 'BLOCKED', 10),
-        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'BLOCKED', 5)
+        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'BLOCKED', 5),
       })
 
       const result = analyzeWorkflowItem(item)
@@ -109,7 +107,7 @@ describe('Workflow Bottleneck Engine', () => {
     it('detects design not detailed when design incomplete and sim not started', () => {
       const item = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'IN_PROGRESS', 40),
-        simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0)
+        simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0),
       })
 
       const result = analyzeWorkflowItem(item)
@@ -120,7 +118,7 @@ describe('Workflow Bottleneck Engine', () => {
     it('detects simulation blocked after design is complete', () => {
       const item = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
-        simulationStageStatus: makeStageSnapshot('SIMULATION', 'BLOCKED', 30)
+        simulationStageStatus: makeStageSnapshot('SIMULATION', 'BLOCKED', 30),
       })
 
       const result = analyzeWorkflowItem(item)
@@ -132,7 +130,7 @@ describe('Workflow Bottleneck Engine', () => {
     it('detects simulation changes requested', () => {
       const item = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
-        simulationStageStatus: makeStageSnapshot('SIMULATION', 'CHANGES_REQUESTED', 60)
+        simulationStageStatus: makeStageSnapshot('SIMULATION', 'CHANGES_REQUESTED', 60),
       })
 
       const result = analyzeWorkflowItem(item)
@@ -144,7 +142,7 @@ describe('Workflow Bottleneck Engine', () => {
       const item = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
         simulationStageStatus: makeStageSnapshot('SIMULATION', 'IN_PROGRESS', 50),
-        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'IN_PROGRESS', 20)
+        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'IN_PROGRESS', 20),
       })
 
       const result = analyzeWorkflowItem(item)
@@ -158,13 +156,13 @@ describe('Workflow Bottleneck Engine', () => {
     it('assigns higher score to blocked design than in-progress', () => {
       const blockedItem = makeWorkflowItem({
         id: 'BLOCKED',
-        designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 10)
+        designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 10),
       })
 
       const inProgressItem = makeWorkflowItem({
         id: 'IN_PROGRESS',
         designStageStatus: makeStageSnapshot('DESIGN', 'IN_PROGRESS', 90),
-        simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0)
+        simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0),
       })
 
       const blockedResult = analyzeWorkflowItem(blockedItem)
@@ -177,7 +175,7 @@ describe('Workflow Bottleneck Engine', () => {
       const completedItem = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
         simulationStageStatus: makeStageSnapshot('SIMULATION', 'APPROVED', 100),
-        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100)
+        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100),
       })
 
       const result = analyzeWorkflowItem(completedItem)
@@ -193,7 +191,7 @@ describe('Workflow Bottleneck Engine', () => {
       const criticalItem = makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
         simulationStageStatus: makeStageSnapshot('SIMULATION', 'IN_PROGRESS', 60),
-        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'IN_PROGRESS', 20)
+        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'IN_PROGRESS', 20),
       })
 
       const result = analyzeWorkflowItem(criticalItem)
@@ -221,7 +219,7 @@ describe('Batch Bottleneck Analysis', () => {
       const items = [
         makeWorkflowItem({ id: 'FIRST' }),
         makeWorkflowItem({ id: 'SECOND' }),
-        makeWorkflowItem({ id: 'THIRD' })
+        makeWorkflowItem({ id: 'THIRD' }),
       ]
 
       const results = analyzeWorkflowBottlenecks(items)
@@ -240,17 +238,17 @@ describe('Batch Bottleneck Analysis', () => {
           id: 'LOW',
           designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
           simulationStageStatus: makeStageSnapshot('SIMULATION', 'APPROVED', 100),
-          manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100)
+          manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100),
         }),
         makeWorkflowItem({
           id: 'HIGH',
-          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 10)
+          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 10),
         }),
         makeWorkflowItem({
           id: 'MEDIUM',
           designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
-          simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0)
-        })
+          simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0),
+        }),
       ]
 
       const bottlenecks = analyzeWorkflowBottlenecks(items)
@@ -264,8 +262,8 @@ describe('Batch Bottleneck Analysis', () => {
       const items = Array.from({ length: 10 }, (_, i) =>
         makeWorkflowItem({
           id: `ITEM-${i}`,
-          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', i * 10)
-        })
+          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', i * 10),
+        }),
       )
 
       const bottlenecks = analyzeWorkflowBottlenecks(items)
@@ -275,10 +273,7 @@ describe('Batch Bottleneck Analysis', () => {
     })
 
     it('returns all when no limit specified', () => {
-      const items = [
-        makeWorkflowItem({ id: 'A' }),
-        makeWorkflowItem({ id: 'B' })
-      ]
+      const items = [makeWorkflowItem({ id: 'A' }), makeWorkflowItem({ id: 'B' })]
 
       const bottlenecks = analyzeWorkflowBottlenecks(items)
       const worst = getWorstBottlenecks(bottlenecks)
@@ -298,7 +293,7 @@ describe('Bottleneck Statistics', () => {
       const items = [
         makeWorkflowItem({ id: 'A' }),
         makeWorkflowItem({ id: 'B' }),
-        makeWorkflowItem({ id: 'C' })
+        makeWorkflowItem({ id: 'C' }),
       ]
 
       const bottlenecks = analyzeWorkflowBottlenecks(items)
@@ -312,21 +307,21 @@ describe('Bottleneck Statistics', () => {
         // HIGH - design blocked
         makeWorkflowItem({
           id: 'HIGH-1',
-          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20)
+          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20),
         }),
         // OK - complete
         makeWorkflowItem({
           id: 'OK-1',
           designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
           simulationStageStatus: makeStageSnapshot('SIMULATION', 'APPROVED', 100),
-          manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100)
+          manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100),
         }),
         // MEDIUM - sim not started
         makeWorkflowItem({
           id: 'MEDIUM-1',
           designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
-          simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0)
-        })
+          simulationStageStatus: makeStageSnapshot('SIMULATION', 'NOT_STARTED', 0),
+        }),
       ]
 
       const bottlenecks = analyzeWorkflowBottlenecks(items)
@@ -342,21 +337,21 @@ describe('Bottleneck Statistics', () => {
         // DESIGN stage
         makeWorkflowItem({
           id: 'DESIGN-1',
-          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20)
+          designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20),
         }),
         // SIMULATION stage
         makeWorkflowItem({
           id: 'SIM-1',
           designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
-          simulationStageStatus: makeStageSnapshot('SIMULATION', 'BLOCKED', 30)
+          simulationStageStatus: makeStageSnapshot('SIMULATION', 'BLOCKED', 30),
         }),
         // MANUFACTURE stage
         makeWorkflowItem({
           id: 'MFG-1',
           designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
           simulationStageStatus: makeStageSnapshot('SIMULATION', 'APPROVED', 100),
-          manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100)
-        })
+          manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100),
+        }),
       ]
 
       const bottlenecks = analyzeWorkflowBottlenecks(items)
@@ -409,13 +404,13 @@ describe('Bottleneck Data Shape', () => {
 
     const items = [
       makeWorkflowItem({
-        designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 10)
+        designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 10),
       }),
       makeWorkflowItem({
         designStageStatus: makeStageSnapshot('DESIGN', 'COMPLETE', 100),
         simulationStageStatus: makeStageSnapshot('SIMULATION', 'APPROVED', 100),
-        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100)
-      })
+        manufactureStageStatus: makeStageSnapshot('MANUFACTURE', 'COMPLETE', 100),
+      }),
     ]
 
     const bottlenecks = analyzeWorkflowBottlenecks(items)
@@ -429,7 +424,7 @@ describe('Bottleneck Data Shape', () => {
     const validStages = ['DESIGN', 'SIMULATION', 'MANUFACTURE', 'EXTERNAL_SUPPLIER', 'UNKNOWN']
 
     const item = makeWorkflowItem({
-      designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20)
+      designStageStatus: makeStageSnapshot('DESIGN', 'BLOCKED', 20),
     })
 
     const result = analyzeWorkflowItem(item)

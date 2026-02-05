@@ -10,7 +10,7 @@ import {
   RobotSnapshot,
   WeldGunSnapshot,
   GunForceSnapshot,
-  RiserSnapshot
+  RiserSnapshot,
 } from '../CrossRefTypes'
 
 // ============================================================================
@@ -23,66 +23,63 @@ const emptyInput: CrossRefInput = {
   robotSpecsRows: [],
   weldGunRows: [],
   gunForceRows: [],
-  riserRows: []
+  riserRows: [],
 }
 
 const createSimStatus = (
   stationKey: string,
-  overrides: Partial<SimulationStatusSnapshot> = {}
+  overrides: Partial<SimulationStatusSnapshot> = {},
 ): SimulationStatusSnapshot => ({
   stationKey,
   raw: {},
-  ...overrides
+  ...overrides,
 })
 
-const createTool = (
-  stationKey: string,
-  overrides: Partial<ToolSnapshot> = {}
-): ToolSnapshot => ({
+const createTool = (stationKey: string, overrides: Partial<ToolSnapshot> = {}): ToolSnapshot => ({
   stationKey,
   raw: {},
-  ...overrides
+  ...overrides,
 })
 
 const createRobot = (
   stationKey: string,
   robotKey: string,
-  overrides: Partial<RobotSnapshot> = {}
+  overrides: Partial<RobotSnapshot> = {},
 ): RobotSnapshot => ({
   stationKey,
   robotKey,
   hasDressPackInfo: false,
   raw: {},
-  ...overrides
+  ...overrides,
 })
 
 const createWeldGun = (
   stationKey: string,
   gunKey: string,
-  overrides: Partial<WeldGunSnapshot> = {}
+  overrides: Partial<WeldGunSnapshot> = {},
 ): WeldGunSnapshot => ({
   stationKey,
   gunKey,
   raw: {},
-  ...overrides
+  ...overrides,
 })
 
 const createGunForce = (
   gunKey: string,
-  overrides: Partial<GunForceSnapshot> = {}
+  overrides: Partial<GunForceSnapshot> = {},
 ): GunForceSnapshot => ({
   gunKey,
   raw: {},
-  ...overrides
+  ...overrides,
 })
 
 const createRiser = (
   stationKey: string,
-  overrides: Partial<RiserSnapshot> = {}
+  overrides: Partial<RiserSnapshot> = {},
 ): RiserSnapshot => ({
   stationKey,
   raw: {},
-  ...overrides
+  ...overrides,
 })
 
 // ============================================================================
@@ -109,22 +106,16 @@ describe('CrossRefEngine', () => {
         simulationStatusRows: [
           createSimStatus('STATION 010', {
             areaKey: 'UB',
-            firstStageCompletion: 100
-          })
+            firstStageCompletion: 100,
+          }),
         ],
-        toolingRows: [
-          createTool('010', { simLeader: 'Werner' })
-        ],
-        weldGunRows: [
-          createWeldGun('010', 'G100')
-        ],
-        gunForceRows: [
-          createGunForce('G100', { requiredForce: 5000 })
-        ]
+        toolingRows: [createTool('010', { simLeader: 'Werner' })],
+        weldGunRows: [createWeldGun('010', 'G100')],
+        gunForceRows: [createGunForce('G100', { requiredForce: 5000 })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '010')
+      const cell = result.cells.find((c) => c.stationKey === '10')
 
       expect(cell).toBeDefined()
       expect(cell?.simulationStatus).toBeDefined()
@@ -137,15 +128,9 @@ describe('CrossRefEngine', () => {
     it('should normalize station IDs for matching', () => {
       const input: CrossRefInput = {
         ...emptyInput,
-        simulationStatusRows: [
-          createSimStatus('STATION 020')
-        ],
-        toolingRows: [
-          createTool('St. 020', { simLeader: 'John' })
-        ],
-        robotSpecsRows: [
-          createRobot('020', 'R-001', { hasDressPackInfo: true })
-        ]
+        simulationStatusRows: [createSimStatus('STATION 020')],
+        toolingRows: [createTool('St. 020', { simLeader: 'John' })],
+        robotSpecsRows: [createRobot('020', 'R-001', { hasDressPackInfo: true })],
       }
 
       const result = buildCrossRef(input)
@@ -162,12 +147,8 @@ describe('CrossRefEngine', () => {
     it('should handle OP- prefix in station IDs', () => {
       const input: CrossRefInput = {
         ...emptyInput,
-        simulationStatusRows: [
-          createSimStatus('OP-30')
-        ],
-        toolingRows: [
-          createTool('30', { simLeader: 'Alice' })
-        ]
+        simulationStatusRows: [createSimStatus('OP-30')],
+        toolingRows: [createTool('30', { simLeader: 'Alice' })],
       }
 
       const result = buildCrossRef(input)
@@ -185,23 +166,23 @@ describe('CrossRefEngine', () => {
           createSimStatus('010', {
             areaKey: 'OLD_AREA',
             application: 'Welding',
-            firstStageCompletion: 10
+            firstStageCompletion: 10,
           }),
           createSimStatus('010', {
             areaKey: 'NEW_AREA',
             application: 'Sealer',
-            firstStageCompletion: 80
-          })
+            firstStageCompletion: 80,
+          }),
         ],
         toolingRows: [],
         robotSpecsRows: [],
         weldGunRows: [],
         gunForceRows: [],
-        riserRows: []
+        riserRows: [],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '010')
+      const cell = result.cells.find((c) => c.stationKey === '10')
 
       expect(cell).toBeDefined()
       expect(cell?.areaKey).toBe('NEW_AREA')
@@ -216,17 +197,17 @@ describe('CrossRefEngine', () => {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('020')],
         weldGunRows: [createWeldGun('020', 'G_MISSING')],
-        gunForceRows: []
+        gunForceRows: [],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '020')
+      const cell = result.cells.find((c) => c.stationKey === '20')
 
       expect(cell).toBeDefined()
       expect(cell?.weldGuns.length).toBe(1)
       expect(cell?.gunForces.length).toBe(0)
 
-      const flag = cell?.flags.find(f => f.type === 'MISSING_GUN_FORCE_FOR_WELD_GUN')
+      const flag = cell?.flags.find((f) => f.type === 'MISSING_GUN_FORCE_FOR_WELD_GUN')
       expect(flag).toBeDefined()
       expect(flag?.gunKey).toBe('G_MISSING')
     })
@@ -236,11 +217,11 @@ describe('CrossRefEngine', () => {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('030')],
         weldGunRows: [createWeldGun('030', 'G200')],
-        gunForceRows: [createGunForce('G200', { requiredForce: 4500 })]
+        gunForceRows: [createGunForce('G200', { requiredForce: 4500 })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '030')
+      const cell = result.cells.find((c) => c.stationKey === '30')
 
       expect(cell?.gunForces.length).toBe(1)
       expect(cell?.gunForces[0].requiredForce).toBe(4500)
@@ -254,18 +235,18 @@ describe('CrossRefEngine', () => {
         weldGunRows: [createWeldGun('030', 'G_DUP')],
         gunForceRows: [
           createGunForce('G_DUP', { requiredForce: 100 }),
-          createGunForce('G_DUP', { requiredForce: 200 })
-        ]
+          createGunForce('G_DUP', { requiredForce: 200 }),
+        ],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '030')
+      const cell = result.cells.find((c) => c.stationKey === '30')
 
       // Both gun forces should be attached
       expect(cell?.gunForces.length).toBe(2)
 
       // Should flag as ambiguous
-      const flag = cell?.flags.find(f => f.type === 'AMBIGUOUS_GUN_MATCH')
+      const flag = cell?.flags.find((f) => f.type === 'AMBIGUOUS_GUN_MATCH')
       expect(flag).toBeDefined()
     })
   })
@@ -275,16 +256,16 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [],
-        toolingRows: [createTool('GHOST_STATION', { simLeader: 'Bob' })]
+        toolingRows: [createTool('GHOST_STATION', { simLeader: 'Bob' })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === 'GHOST_STATION')
+      const cell = result.cells.find((c) => c.stationKey === 'GHOST_STATION')
 
       expect(cell).toBeDefined()
       expect(cell?.simulationStatus).toBeUndefined()
 
-      const flag = cell?.flags.find(f => f.type === 'STATION_WITHOUT_SIMULATION_STATUS')
+      const flag = cell?.flags.find((f) => f.type === 'STATION_WITHOUT_SIMULATION_STATUS')
       expect(flag).toBeDefined()
     })
 
@@ -292,15 +273,13 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('040')],
-        robotSpecsRows: [
-          createRobot('040', 'R-002', { hasDressPackInfo: false })
-        ]
+        robotSpecsRows: [createRobot('040', 'R-002', { hasDressPackInfo: false })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '040')
+      const cell = result.cells.find((c) => c.stationKey === '40')
 
-      const flag = cell?.flags.find(f => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO')
+      const flag = cell?.flags.find((f) => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO')
       expect(flag).toBeDefined()
       // Flag stores the original robotKey from the snapshot, not normalized
       expect(flag?.robotKey).toBe('R-002')
@@ -310,15 +289,13 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('050')],
-        robotSpecsRows: [
-          createRobot('050', 'R-003', { hasDressPackInfo: true })
-        ]
+        robotSpecsRows: [createRobot('050', 'R-003', { hasDressPackInfo: true })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '050')
+      const cell = result.cells.find((c) => c.stationKey === '50')
 
-      const flag = cell?.flags.find(f => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO')
+      const flag = cell?.flags.find((f) => f.type === 'ROBOT_MISSING_DRESS_PACK_INFO')
       expect(flag).toBeUndefined()
     })
 
@@ -326,15 +303,13 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('060')],
-        toolingRows: [
-          createTool('060', { simLeader: undefined, teamLeader: undefined })
-        ]
+        toolingRows: [createTool('060', { simLeader: undefined, teamLeader: undefined })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '060')
+      const cell = result.cells.find((c) => c.stationKey === '60')
 
-      const flag = cell?.flags.find(f => f.type === 'TOOL_WITHOUT_OWNER')
+      const flag = cell?.flags.find((f) => f.type === 'TOOL_WITHOUT_OWNER')
       expect(flag).toBeDefined()
     })
 
@@ -342,13 +317,13 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('070')],
-        toolingRows: [createTool('070', { simLeader: 'Dale' })]
+        toolingRows: [createTool('070', { simLeader: 'Dale' })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '070')
+      const cell = result.cells.find((c) => c.stationKey === '70')
 
-      const flag = cell?.flags.find(f => f.type === 'TOOL_WITHOUT_OWNER')
+      const flag = cell?.flags.find((f) => f.type === 'TOOL_WITHOUT_OWNER')
       expect(flag).toBeUndefined()
     })
 
@@ -356,13 +331,13 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('080')],
-        toolingRows: [createTool('080', { teamLeader: 'Carol' })]
+        toolingRows: [createTool('080', { teamLeader: 'Carol' })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '080')
+      const cell = result.cells.find((c) => c.stationKey === '80')
 
-      const flag = cell?.flags.find(f => f.type === 'TOOL_WITHOUT_OWNER')
+      const flag = cell?.flags.find((f) => f.type === 'TOOL_WITHOUT_OWNER')
       expect(flag).toBeUndefined()
     })
   })
@@ -372,13 +347,11 @@ describe('CrossRefEngine', () => {
       const input: CrossRefInput = {
         ...emptyInput,
         simulationStatusRows: [createSimStatus('090')],
-        riserRows: [
-          createRiser('090', { brand: 'ACME', height: 500 })
-        ]
+        riserRows: [createRiser('090', { brand: 'ACME', height: 500 })],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '090')
+      const cell = result.cells.find((c) => c.stationKey === '90')
 
       expect(cell?.risers.length).toBe(1)
       expect(cell?.risers[0].brand).toBe('ACME')
@@ -390,28 +363,19 @@ describe('CrossRefEngine', () => {
     it('should calculate correct statistics', () => {
       const input: CrossRefInput = {
         ...emptyInput,
-        simulationStatusRows: [
-          createSimStatus('100'),
-          createSimStatus('110')
-        ],
+        simulationStatusRows: [createSimStatus('100'), createSimStatus('110')],
         toolingRows: [
           createTool('100', { simLeader: 'A' }),
           createTool('110', { simLeader: 'B' }),
-          createTool('110', { simLeader: 'C' })
+          createTool('110', { simLeader: 'C' }),
         ],
         robotSpecsRows: [
           createRobot('100', 'R-100', { hasDressPackInfo: true }),
-          createRobot('110', 'R-110', { hasDressPackInfo: false }) // Will flag
+          createRobot('110', 'R-110', { hasDressPackInfo: false }), // Will flag
         ],
-        weldGunRows: [
-          createWeldGun('100', 'G100')
-        ],
-        gunForceRows: [
-          createGunForce('G100', { requiredForce: 1000 })
-        ],
-        riserRows: [
-          createRiser('100', { height: 300 })
-        ]
+        weldGunRows: [createWeldGun('100', 'G100')],
+        gunForceRows: [createGunForce('G100', { requiredForce: 1000 })],
+        riserRows: [createRiser('100', { height: 300 })],
       }
 
       const result = buildCrossRef(input)
@@ -434,20 +398,17 @@ describe('CrossRefEngine', () => {
         robotSpecsRows: [
           createRobot('200', 'R-A', { hasDressPackInfo: true }),
           createRobot('200', 'R-B', { hasDressPackInfo: true }),
-          createRobot('200', 'R-C', { hasDressPackInfo: true })
+          createRobot('200', 'R-C', { hasDressPackInfo: true }),
         ],
-        weldGunRows: [
-          createWeldGun('200', 'G-A'),
-          createWeldGun('200', 'G-B')
-        ],
+        weldGunRows: [createWeldGun('200', 'G-A'), createWeldGun('200', 'G-B')],
         gunForceRows: [
           createGunForce('G-A', { requiredForce: 1000 }),
-          createGunForce('G-B', { requiredForce: 2000 })
-        ]
+          createGunForce('G-B', { requiredForce: 2000 }),
+        ],
       }
 
       const result = buildCrossRef(input)
-      const cell = result.cells.find(c => c.stationKey === '200')
+      const cell = result.cells.find((c) => c.stationKey === '200')
 
       expect(cell?.robots.length).toBe(3)
       expect(cell?.weldGuns.length).toBe(2)
@@ -462,7 +423,7 @@ describe('CrossRefEngine', () => {
         toolingRows: [createTool('ASSET_ONLY_1', { simLeader: 'X' })],
         robotSpecsRows: [createRobot('ASSET_ONLY_2', 'R-X', { hasDressPackInfo: true })],
         weldGunRows: [createWeldGun('ASSET_ONLY_3', 'G-X')],
-        gunForceRows: [createGunForce('G-X', { requiredForce: 500 })]
+        gunForceRows: [createGunForce('G-X', { requiredForce: 500 })],
       }
 
       const result = buildCrossRef(input)
@@ -471,8 +432,8 @@ describe('CrossRefEngine', () => {
       expect(result.cells.length).toBe(3)
 
       // All should be flagged as missing simulation status
-      const flaggedCells = result.cells.filter(
-        c => c.flags.some(f => f.type === 'STATION_WITHOUT_SIMULATION_STATUS')
+      const flaggedCells = result.cells.filter((c) =>
+        c.flags.some((f) => f.type === 'STATION_WITHOUT_SIMULATION_STATUS'),
       )
       expect(flaggedCells.length).toBe(3)
     })

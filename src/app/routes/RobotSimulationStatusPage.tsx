@@ -11,14 +11,23 @@ import {
   useSimulationStatusStats,
   useSimulationStatusGroupedByStation,
   useSimulationStatusEntities,
-  simulationStatusStore
+  simulationStatusStore,
 } from '../../ingestion/simulationStatus'
 import type { SimulationStatusEntity } from '../../ingestion/simulationStatus'
 import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle2, Circle, AlertCircle, ExternalLink, Bot } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  Circle,
+  AlertCircle,
+  ExternalLink,
+  Bot,
+} from 'lucide-react'
 import { PageHint } from '../../ui/components/PageHint'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCells } from '../../ui/hooks/useDomainData'
+import { log } from '../../lib/log'
 
 export function RobotSimulationStatusPage() {
   const navigate = useNavigate()
@@ -31,7 +40,7 @@ export function RobotSimulationStatusPage() {
   const [selectedRobotId, setSelectedRobotId] = useState<string | null>(null)
   const cellByStationCode = useMemo(() => {
     const map = new Map<string, { id: string; projectId: string }>()
-    cells.forEach(c => {
+    cells.forEach((c) => {
       const code = c.code?.toUpperCase()
       if (code) {
         map.set(code, { id: c.id, projectId: c.projectId })
@@ -41,7 +50,7 @@ export function RobotSimulationStatusPage() {
   }, [cells])
   const handleRobotRowClick = (robot: SimulationStatusEntity) => {
     setSelectedRobotId(robot.robotFullId)
-    console.info('[RobotSimulationStatus] Row click', {
+    log.debug('[RobotSimulationStatus] Row click', {
       robotId: robot.robotFullId,
       station: robot.stationFull,
       area: robot.area,
@@ -50,7 +59,7 @@ export function RobotSimulationStatusPage() {
       linkedTooling: robot.linkedToolingEntityKeys,
       responsiblePerson: robot.responsiblePerson,
       source: robot.source,
-      milestones: robot.milestones
+      milestones: robot.milestones,
     })
   }
 
@@ -66,7 +75,7 @@ export function RobotSimulationStatusPage() {
 
   const selectedRobot = useMemo(() => {
     if (!selectedRobotId) return null
-    return allEntities.find(e => e.robotFullId === selectedRobotId)
+    return allEntities.find((e) => e.robotFullId === selectedRobotId)
   }, [allEntities, selectedRobotId])
 
   const handleClearData = () => {
@@ -116,38 +125,28 @@ export function RobotSimulationStatusPage() {
 
       {/* Overall Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Robots"
-          value={stats.totalRobots}
-          icon="🤖"
-        />
-        <StatCard
-          label="Stations"
-          value={stats.totalStations}
-          icon="📍"
-        />
-        <StatCard
-          label="Average Completion"
-          value={`${stats.averageCompletion}%`}
-          icon="📊"
-        />
-        <StatCard
-          label="Areas"
-          value={stats.totalAreas}
-          icon="🏭"
-        />
+        <StatCard label="Total Robots" value={stats.totalRobots} icon="🤖" />
+        <StatCard label="Stations" value={stats.totalStations} icon="📍" />
+        <StatCard label="Average Completion" value={`${stats.averageCompletion}%`} icon="📊" />
+        <StatCard label="Areas" value={stats.totalAreas} icon="🏭" />
       </div>
 
       {/* Application Type Breakdown */}
       {stats.byApplication.size > 0 && (
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-          <h3 className="typography-label text-gray-900 dark:text-gray-100 mb-4">By Application Type</h3>
+          <h3 className="typography-label text-gray-900 dark:text-gray-100 mb-4">
+            By Application Type
+          </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {Array.from(stats.byApplication.entries()).map(([app, data]) => (
               <div key={app} className="text-center">
-                <div className="typography-metric text-gray-900 dark:text-gray-100">{data.count}</div>
+                <div className="typography-metric text-gray-900 dark:text-gray-100">
+                  {data.count}
+                </div>
                 <div className="typography-body text-gray-700 dark:text-gray-300">{app}</div>
-                <div className="typography-caption text-gray-500 dark:text-gray-500">{data.avgCompletion}% avg</div>
+                <div className="typography-caption text-gray-500 dark:text-gray-500">
+                  {data.avgCompletion}% avg
+                </div>
               </div>
             ))}
           </div>
@@ -159,7 +158,9 @@ export function RobotSimulationStatusPage() {
         {/* Station List */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="typography-title-sm text-gray-900 dark:text-gray-100">Stations & Robots</h3>
+            <h3 className="typography-title-sm text-gray-900 dark:text-gray-100">
+              Stations & Robots
+            </h3>
             <p className="typography-subtitle text-gray-500 dark:text-gray-400 mt-1">
               Click to expand station details
             </p>
@@ -170,7 +171,7 @@ export function RobotSimulationStatusPage() {
               .map(([stationKey, robots]) => {
                 const isExpanded = expandedStations.has(stationKey)
                 const avgCompletion = Math.round(
-                  robots.reduce((sum, r) => sum + r.overallCompletion, 0) / robots.length
+                  robots.reduce((sum, r) => sum + r.overallCompletion, 0) / robots.length,
                 )
 
                 return (
@@ -198,7 +199,9 @@ export function RobotSimulationStatusPage() {
                         <div className="typography-body-strong text-gray-900 dark:text-gray-100">
                           {avgCompletion}%
                         </div>
-                        <div className="typography-caption text-gray-500 dark:text-gray-400">avg</div>
+                        <div className="typography-caption text-gray-500 dark:text-gray-400">
+                          avg
+                        </div>
                       </div>
                     </button>
 
@@ -206,7 +209,7 @@ export function RobotSimulationStatusPage() {
                       <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 space-y-2">
                         {robots
                           .sort((a, b) => a.robotFullId.localeCompare(b.robotFullId))
-                          .map(robot => (
+                          .map((robot) => (
                             <button
                               key={robot.robotFullId}
                               onClick={() => handleRobotRowClick(robot)}
@@ -233,7 +236,9 @@ export function RobotSimulationStatusPage() {
                                       {robot.application}
                                     </div>
                                     {(() => {
-                                      const cell = cellByStationCode.get(robot.stationFull.toUpperCase())
+                                      const cell = cellByStationCode.get(
+                                        robot.stationFull.toUpperCase(),
+                                      )
                                       if (!cell) return null
                                       return (
                                         <div className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-300 mt-1">
@@ -303,7 +308,10 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
 }
 
 function RobotDetail({ robot }: { robot: SimulationStatusEntity }) {
-  const milestones = Object.entries(robot.milestones).filter(([_, value]) => value !== null) as [string, number][]
+  const milestones = Object.entries(robot.milestones).filter(([_, value]) => value !== null) as [
+    string,
+    number,
+  ][]
   const completed = milestones.filter(([_, value]) => value === 100).length
   const inProgress = milestones.filter(([_, value]) => value > 0 && value < 100).length
   const notStarted = milestones.filter(([_, value]) => value === 0).length
@@ -323,34 +331,50 @@ function RobotDetail({ robot }: { robot: SimulationStatusEntity }) {
         <dl className="space-y-2 typography-body">
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Robot ID:</dt>
-            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">{robot.robotFullId}</dd>
+            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">
+              {robot.robotFullId}
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Station:</dt>
-            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">{robot.stationFull}</dd>
+            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">
+              {robot.stationFull}
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Application:</dt>
-            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">{robot.application}</dd>
+            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">
+              {robot.application}
+            </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-gray-600 dark:text-gray-400">Overall:</dt>
-            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">{robot.overallCompletion}%</dd>
+            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">
+              {robot.overallCompletion}%
+            </dd>
           </div>
         </dl>
       </div>
 
       {/* Milestone Summary */}
       <div>
-        <h4 className="typography-label text-gray-700 dark:text-gray-300 mb-3">Milestone Summary</h4>
+        <h4 className="typography-label text-gray-700 dark:text-gray-300 mb-3">
+          Milestone Summary
+        </h4>
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-            <div className="typography-title-sm text-green-700 dark:text-green-400">{completed}</div>
+            <div className="typography-title-sm text-green-700 dark:text-green-400">
+              {completed}
+            </div>
             <div className="typography-caption text-green-600 dark:text-green-500">Completed</div>
           </div>
           <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-            <div className="typography-title-sm text-yellow-700 dark:text-yellow-400">{inProgress}</div>
-            <div className="typography-caption text-yellow-600 dark:text-yellow-500">In Progress</div>
+            <div className="typography-title-sm text-yellow-700 dark:text-yellow-400">
+              {inProgress}
+            </div>
+            <div className="typography-caption text-yellow-600 dark:text-yellow-500">
+              In Progress
+            </div>
           </div>
           <div className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <div className="typography-title-sm text-gray-700 dark:text-gray-400">{notStarted}</div>
@@ -387,8 +411,12 @@ function RobotDetail({ robot }: { robot: SimulationStatusEntity }) {
           {milestones.map(([key, value]) => (
             <div key={key}>
               <div className="flex justify-between text-xs mb-1">
-                <span className="typography-caption text-gray-700 dark:text-gray-300">{formatMilestoneName(key)}</span>
-                <span className="typography-body-strong text-gray-900 dark:text-gray-100">{value}%</span>
+                <span className="typography-caption text-gray-700 dark:text-gray-300">
+                  {formatMilestoneName(key)}
+                </span>
+                <span className="typography-body-strong text-gray-900 dark:text-gray-100">
+                  {value}%
+                </span>
               </div>
               <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                 <div
@@ -396,8 +424,8 @@ function RobotDetail({ robot }: { robot: SimulationStatusEntity }) {
                     value === 100
                       ? 'bg-green-500'
                       : value > 0
-                      ? 'bg-yellow-500'
-                      : 'bg-gray-300 dark:bg-gray-600'
+                        ? 'bg-yellow-500'
+                        : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                   style={{ width: `${value}%` }}
                 />

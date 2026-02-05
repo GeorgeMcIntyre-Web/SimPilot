@@ -1,6 +1,6 @@
 /**
  * Tests for Concurrency Control
- * 
+ *
  * Validates:
  * - Concurrency limiting
  * - Task ordering
@@ -8,12 +8,12 @@
  * - Timing utilities
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import {
   runWithConcurrencyLimit,
   runWithConcurrencyLimitSettled,
   processBatches,
-  withTiming
+  withTiming,
 } from '../concurrency'
 
 // ============================================================================
@@ -24,7 +24,7 @@ import {
  * Create a task that resolves after a delay.
  */
 function createDelayTask<T>(value: T, delayMs: number): () => Promise<T> {
-  return () => new Promise(resolve => setTimeout(() => resolve(value), delayMs))
+  return () => new Promise((resolve) => setTimeout(() => resolve(value), delayMs))
 }
 
 /**
@@ -54,7 +54,7 @@ function createConcurrencyTracker() {
     },
     getMax: () => max,
     getLog: () => log,
-    getCurrent: () => current
+    getCurrent: () => current,
   }
 }
 
@@ -65,11 +65,7 @@ function createConcurrencyTracker() {
 describe('runWithConcurrencyLimit', () => {
   describe('basic functionality', () => {
     it('should return results in order', async () => {
-      const tasks = [
-        createDelayTask('a', 30),
-        createDelayTask('b', 10),
-        createDelayTask('c', 20)
-      ]
+      const tasks = [createDelayTask('a', 30), createDelayTask('b', 10), createDelayTask('c', 20)]
 
       const results = await runWithConcurrencyLimit(2, tasks)
 
@@ -82,18 +78,12 @@ describe('runWithConcurrencyLimit', () => {
     })
 
     it('should handle single task', async () => {
-      const results = await runWithConcurrencyLimit(3, [
-        () => Promise.resolve('only')
-      ])
+      const results = await runWithConcurrencyLimit(3, [() => Promise.resolve('only')])
       expect(results).toEqual(['only'])
     })
 
     it('should process all tasks when limit >= task count', async () => {
-      const tasks = [
-        createDelayTask(1, 10),
-        createDelayTask(2, 10),
-        createDelayTask(3, 10)
-      ]
+      const tasks = [createDelayTask(1, 10), createDelayTask(2, 10), createDelayTask(3, 10)]
 
       const results = await runWithConcurrencyLimit(10, tasks)
 
@@ -105,12 +95,14 @@ describe('runWithConcurrencyLimit', () => {
     it('should respect concurrency limit', async () => {
       const tracker = createConcurrencyTracker()
 
-      const tasks = Array(10).fill(null).map((_, i) => async () => {
-        tracker.start()
-        await new Promise(resolve => setTimeout(resolve, 20))
-        tracker.end()
-        return i
-      })
+      const tasks = Array(10)
+        .fill(null)
+        .map((_, i) => async () => {
+          tracker.start()
+          await new Promise((resolve) => setTimeout(resolve, 20))
+          tracker.end()
+          return i
+        })
 
       await runWithConcurrencyLimit(3, tasks)
 
@@ -121,12 +113,14 @@ describe('runWithConcurrencyLimit', () => {
     it('should achieve maximum concurrency for fast tasks', async () => {
       const tracker = createConcurrencyTracker()
 
-      const tasks = Array(6).fill(null).map((_, i) => async () => {
-        tracker.start()
-        await new Promise(resolve => setTimeout(resolve, 50))
-        tracker.end()
-        return i
-      })
+      const tasks = Array(6)
+        .fill(null)
+        .map((_, i) => async () => {
+          tracker.start()
+          await new Promise((resolve) => setTimeout(resolve, 50))
+          tracker.end()
+          return i
+        })
 
       await runWithConcurrencyLimit(3, tasks)
 
@@ -138,9 +132,9 @@ describe('runWithConcurrencyLimit', () => {
       const taskCount = 4
       const taskDuration = 30
 
-      const tasks = Array(taskCount).fill(null).map((_, i) => 
-        createDelayTask(i, taskDuration)
-      )
+      const tasks = Array(taskCount)
+        .fill(null)
+        .map((_, i) => createDelayTask(i, taskDuration))
 
       const start = Date.now()
       await runWithConcurrencyLimit(4, tasks)
@@ -156,12 +150,14 @@ describe('runWithConcurrencyLimit', () => {
     it('should handle limit of 0 (runs all at once)', async () => {
       const tracker = createConcurrencyTracker()
 
-      const tasks = Array(5).fill(null).map((_, i) => async () => {
-        tracker.start()
-        await new Promise(resolve => setTimeout(resolve, 10))
-        tracker.end()
-        return i
-      })
+      const tasks = Array(5)
+        .fill(null)
+        .map((_, i) => async () => {
+          tracker.start()
+          await new Promise((resolve) => setTimeout(resolve, 10))
+          tracker.end()
+          return i
+        })
 
       await runWithConcurrencyLimit(0, tasks)
 
@@ -172,12 +168,14 @@ describe('runWithConcurrencyLimit', () => {
     it('should handle limit of 1 (sequential)', async () => {
       const tracker = createConcurrencyTracker()
 
-      const tasks = Array(5).fill(null).map((_, i) => async () => {
-        tracker.start()
-        await new Promise(resolve => setTimeout(resolve, 5))
-        tracker.end()
-        return i
-      })
+      const tasks = Array(5)
+        .fill(null)
+        .map((_, i) => async () => {
+          tracker.start()
+          await new Promise((resolve) => setTimeout(resolve, 5))
+          tracker.end()
+          return i
+        })
 
       await runWithConcurrencyLimit(1, tasks)
 
@@ -189,10 +187,7 @@ describe('runWithConcurrencyLimit', () => {
 
 describe('runWithConcurrencyLimitSettled', () => {
   it('should return fulfilled results', async () => {
-    const tasks = [
-      () => Promise.resolve('a'),
-      () => Promise.resolve('b')
-    ]
+    const tasks = [() => Promise.resolve('a'), () => Promise.resolve('b')]
 
     const results = await runWithConcurrencyLimitSettled(2, tasks)
 
@@ -206,7 +201,7 @@ describe('runWithConcurrencyLimitSettled', () => {
     const tasks = [
       () => Promise.resolve('a'),
       createFailTask(error, 10),
-      () => Promise.resolve('c')
+      () => Promise.resolve('c'),
     ]
 
     const results = await runWithConcurrencyLimitSettled(2, tasks)
@@ -222,10 +217,21 @@ describe('runWithConcurrencyLimitSettled', () => {
     const tracker = { completed: 0 }
 
     const tasks = [
-      async () => { tracker.completed++; return 1 },
-      async () => { throw new Error('fail') },
-      async () => { tracker.completed++; return 3 },
-      async () => { tracker.completed++; return 4 }
+      async () => {
+        tracker.completed++
+        return 1
+      },
+      async () => {
+        throw new Error('fail')
+      },
+      async () => {
+        tracker.completed++
+        return 3
+      },
+      async () => {
+        tracker.completed++
+        return 4
+      },
     ]
 
     await runWithConcurrencyLimitSettled(2, tasks)
@@ -238,7 +244,7 @@ describe('runWithConcurrencyLimitSettled', () => {
     const tasks = [
       createDelayTask('a', 30),
       createFailTask(new Error('b failed'), 10),
-      createDelayTask('c', 20)
+      createDelayTask('c', 20),
     ]
 
     const results = await runWithConcurrencyLimitSettled(3, tasks)
@@ -262,7 +268,7 @@ describe('processBatches', () => {
       async (item) => {
         processed.push(item)
         return item * 2
-      }
+      },
     )
 
     expect(results).toEqual([2, 4, 6, 8, 10, 12])
@@ -291,7 +297,7 @@ describe('withTiming', () => {
   it('should return result and timing', async () => {
     const delay = 50
     const result = await withTiming(async () => {
-      await new Promise(resolve => setTimeout(resolve, delay))
+      await new Promise((resolve) => setTimeout(resolve, delay))
       return 'done'
     })
 

@@ -13,7 +13,7 @@ import {
   generateStationUid,
   generateToolUid,
   generateRobotUid,
-  PlantKey
+  PlantKey,
 } from '../../src/domain/uidTypes'
 import { ingestFileWithUid } from '../uidAwareIngestion'
 import { applyMutations } from '../identifierMutator'
@@ -34,8 +34,17 @@ describe('--mutate-names flag', () => {
     // Row 4+: Data rows
     const rows = [
       ['TEST - SIMULATION', '', '', '', '', '', '', ''],
-      ['PERSONS RESPONSIBLE', 'AREA', 'ASSEMBLY LINE', 'STATION', 'ROBOT', 'APPLICATION', 'ROBOT POSITION - STAGE 1', '1st STAGE SIM COMPLETION'],
-      ['DESIGNATION', '', '', '', '', '', 'ROBOT SIMULATION', '']
+      [
+        'PERSONS RESPONSIBLE',
+        'AREA',
+        'ASSEMBLY LINE',
+        'STATION',
+        'ROBOT',
+        'APPLICATION',
+        'ROBOT POSITION - STAGE 1',
+        '1st STAGE SIM COMPLETION',
+      ],
+      ['DESIGNATION', '', '', '', '', '', 'ROBOT SIMULATION', ''],
     ]
 
     // Ensure we have at least 25 rows to pass the row count guard
@@ -50,7 +59,7 @@ describe('--mutate-names flag', () => {
         `R-${stationNo}`,
         'Spot Welding',
         '100%',
-        '100%'
+        '100%',
       ])
     }
 
@@ -58,12 +67,18 @@ describe('--mutate-names flag', () => {
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'SIMULATION')
 
-    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+    const output = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as
+      | ArrayBuffer
+      | Uint8Array
+    const arrayBuffer =
+      output instanceof ArrayBuffer
+        ? output
+        : output.buffer.slice(output.byteOffset, output.byteOffset + output.byteLength)
 
     return {
       path: '/mock/test.xlsx',
       name: 'test_simulation_status.xlsx',
-      buffer: buffer.buffer as ArrayBuffer
+      buffer: arrayBuffer,
     }
   }
 
@@ -72,13 +87,10 @@ describe('--mutate-names flag', () => {
     const file1 = createMockSimulationStatusFile(50)
 
     // Baseline ingestion (no mutations)
-    const baselineResult = await ingestFileWithUid(
-      file1,
-      [],
-      [],
-      [],
-      { plantKey, mutateNames: false }
-    )
+    const baselineResult = await ingestFileWithUid(file1, [], [], [], {
+      plantKey,
+      mutateNames: false,
+    })
 
     if (!baselineResult.success) {
       console.error(`[DEBUG] Baseline ingestion failed: ${baselineResult.error}`)
@@ -97,14 +109,14 @@ describe('--mutate-names flag', () => {
       baselineResult.stationRecords, // Existing records from first import
       baselineResult.toolRecords,
       baselineResult.robotRecords,
-      { 
-        plantKey, 
+      {
+        plantKey,
         mutateNames: true,
         mutationConfig: {
-          mutationRate: 0.10, // 10% mutation rate to ensure we get mutations
-          seed: 42 // Fixed seed for reproducibility
-        }
-      }
+          mutationRate: 0.1, // 10% mutation rate to ensure we get mutations
+          seed: 42, // Fixed seed for reproducibility
+        },
+      },
     )
 
     expect(mutatedResult.success).toBe(true)
@@ -124,8 +136,12 @@ describe('--mutate-names flag', () => {
 
     // Debug: Log what we found
     if (!hasAmbiguityOrCreates) {
-      console.log(`[DEBUG] Mutations applied: ${mutatedResult.mutationsApplied}, ambiguous: ${ambiguousCount}, creates: ${createsCount}`)
-      console.log(`[DEBUG] Baseline stations: ${baselineResult.stationRecords.length}, mutated stations: ${mutatedResult.stationRecords.length}`)
+      console.log(
+        `[DEBUG] Mutations applied: ${mutatedResult.mutationsApplied}, ambiguous: ${ambiguousCount}, creates: ${createsCount}`,
+      )
+      console.log(
+        `[DEBUG] Baseline stations: ${baselineResult.stationRecords.length}, mutated stations: ${mutatedResult.stationRecords.length}`,
+      )
     }
 
     expect(hasAmbiguityOrCreates).toBe(true)
@@ -151,37 +167,31 @@ describe('--mutate-names flag', () => {
         labels: {
           line: 'AL',
           bay: '010',
-          stationNo: String(i).padStart(3, '0')
+          stationNo: String(i).padStart(3, '0'),
         },
         attributes: {},
         status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        sourceFile: 'test.xlsx'
+        sourceFile: 'test.xlsx',
       })
     }
 
     // Apply mutations
     const result = applyMutations(stationRecords, [], [], {
       mutationRate: 0.015,
-      seed: 42
+      seed: 42,
     })
 
     // Expect 1-2 mutations out of 100 (1-2%)
-    expect(result.mutationsApplied).toBeGreaterThanOrEqual(0)
-    expect(result.mutationsApplied).toBeLessThanOrEqual(5) // Allow some variance
+    expect(result.totalMutations).toBeGreaterThanOrEqual(0)
+    expect(result.totalMutations).toBeLessThanOrEqual(5) // Allow some variance
   })
 
   it('should not apply mutations when mutateNames is false', async () => {
     const file = createMockSimulationStatusFile(20)
 
-    const result = await ingestFileWithUid(
-      file,
-      [],
-      [],
-      [],
-      { plantKey, mutateNames: false }
-    )
+    const result = await ingestFileWithUid(file, [], [], [], { plantKey, mutateNames: false })
 
     expect(result.success).toBe(true)
     expect(result.mutationsApplied).toBeUndefined()
@@ -190,13 +200,7 @@ describe('--mutate-names flag', () => {
   it('should track total mutations applied', async () => {
     const file = createMockSimulationStatusFile(100)
 
-    const result = await ingestFileWithUid(
-      file,
-      [],
-      [],
-      [],
-      { plantKey, mutateNames: true }
-    )
+    const result = await ingestFileWithUid(file, [], [], [], { plantKey, mutateNames: true })
 
     expect(result.success).toBe(true)
     expect(result.mutationsApplied).toBeDefined()
@@ -213,24 +217,24 @@ describe('--mutate-names flag', () => {
         labels: {
           line: 'AL',
           bay: '010',
-          stationNo: String(i).padStart(3, '0')
+          stationNo: String(i).padStart(3, '0'),
         },
         attributes: {},
         status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        sourceFile: 'test.xlsx'
+        sourceFile: 'test.xlsx',
       })
     }
 
     const result1 = applyMutations(stationRecords, [], [], {
       mutationRate: 0.02,
-      seed: 42
+      seed: 42,
     })
 
     const result2 = applyMutations(stationRecords, [], [], {
       mutationRate: 0.02,
-      seed: 99
+      seed: 99,
     })
 
     // Different seeds should produce different mutation counts (with high probability)

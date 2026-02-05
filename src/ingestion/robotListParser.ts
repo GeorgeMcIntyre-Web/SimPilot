@@ -10,10 +10,15 @@ import {
   getCellString,
   isEmptyRow,
   isTotalRow,
-  CellValue
+  CellValue,
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
-import { buildStationId, buildRobotId, inferAssembliesAreaName, normalizeStationCode } from './normalizers'
+import {
+  buildStationId,
+  buildRobotId,
+  inferAssembliesAreaName,
+  normalizeStationCode,
+} from './normalizers'
 
 // ============================================================================
 // TYPES
@@ -31,18 +36,19 @@ export interface RobotListResult {
 const POSSIBLE_HEADERS = [
   ['ROBOT', 'AREA', 'STATION'],
   ['ROBOT ID', 'AREA', 'STATION'],
+  ['ROBOT ID', 'AREA', 'STATION CODE'],
   ['ROBOT NAME', 'AREA', 'LINE'],
   ['ID', 'AREA', 'STATION'],
-  ['ROBO NO. NEW', 'AREA', 'STATION'],            // Ford equipment list files
-  ['ROBO NO. NEW', 'AREA', 'LINE'],              // Variant with line instead of station
-  ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'],  // From Robotlist_ZA files
+  ['ROBO NO. NEW', 'AREA', 'STATION'], // Ford equipment list files
+  ['ROBO NO. NEW', 'AREA', 'LINE'], // Variant with line instead of station
+  ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'], // From Robotlist_ZA files
   ['ROBOTNUMBER (E-NUMBER)', 'ASSEMBLY LINE', 'STATION NUMBER'],
   ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER'],
   ['ROBOT', 'ASSEMBLY LINE', 'STATION'],
   // Additional patterns for Robotlist_ZA__STLA-S_UB files
-  ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'],  // Case variations
+  ['ROBOTNUMBER', 'ASSEMBLY LINE', 'STATION NUMBER'], // Case variations
   ['ROBOT CAPTION', 'ASSEMBLY LINE', 'STATION NUMBER'],
-  ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER']  // "Robots Total" contains robot caption
+  ['ROBOTS TOTAL', 'ASSEMBLY LINE', 'STATION NUMBER'], // "Robots Total" contains robot caption
 ]
 
 // ============================================================================
@@ -51,7 +57,7 @@ const POSSIBLE_HEADERS = [
 
 /**
  * Parse a Robot List Excel file into Robot entities
- * 
+ *
  * @param workbook - The Excel workbook to parse
  * @param fileName - Name of the file (for warnings and metadata)
  * @param targetSheetName - Optional: specific sheet to parse (bypasses auto-detection)
@@ -59,7 +65,7 @@ const POSSIBLE_HEADERS = [
 export async function parseRobotList(
   workbook: XLSX.WorkBook,
   fileName: string,
-  targetSheetName?: string
+  targetSheetName?: string,
 ): Promise<RobotListResult> {
   const warnings: IngestionWarning[] = []
 
@@ -69,13 +75,13 @@ export async function parseRobotList(
   let rows: CellValue[][] = []
 
   // If target sheet is specified, only search that sheet
-  const sheetsToSearch = targetSheetName 
-    ? [targetSheetName] 
-    : workbook.SheetNames
+  const sheetsToSearch = targetSheetName ? [targetSheetName] : workbook.SheetNames
 
   // Validate target sheet exists
   if (targetSheetName && workbook.SheetNames.includes(targetSheetName) === false) {
-    throw new Error(`Sheet "${targetSheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+    throw new Error(
+      `Sheet "${targetSheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`,
+    )
   }
 
   for (const name of sheetsToSearch) {
@@ -96,7 +102,9 @@ export async function parseRobotList(
   }
 
   if (headerRowIndex === null || sheetName === null) {
-    throw new Error(`Could not find header row in any sheet of ${fileName}. Tried combinations: ${POSSIBLE_HEADERS.map(h => h.join(', ')).join(' | ')}`)
+    throw new Error(
+      `Could not find header row in any sheet of ${fileName}. Tried combinations: ${POSSIBLE_HEADERS.map((h) => h.join(', ')).join(' | ')}`,
+    )
   }
 
   // Build column map from primary header row
@@ -106,7 +114,8 @@ export async function parseRobotList(
   // check if the next row looks like a secondary header row (has text but no station data)
   // and merge headers from it to capture fields like "Install status"
   const potentialSecondaryRow = rows[headerRowIndex + 1] || []
-  const hasSecondaryHeaders = potentialSecondaryRow.length > 0 &&
+  const hasSecondaryHeaders =
+    potentialSecondaryRow.length > 0 &&
     potentialSecondaryRow.some((cell, idx) => {
       // Check if there are header-like values in columns that are empty in the primary row
       const primaryEmpty = !headerRow[idx] || !String(headerRow[idx]).trim()
@@ -163,7 +172,7 @@ export async function parseRobotList(
     'ROBO NO. NEW',
     'ROBO NO. OLD',
     // Install status for Ford Robot Equipment List
-    'INSTALL STATUS'
+    'INSTALL STATUS',
   ])
 
   // Parse data rows
@@ -195,17 +204,19 @@ export async function parseRobotList(
 
     // Extract station code first - CRITICAL: Only count rows with station numbers
     // This ensures we get exactly 166 robots (rows with stations), not 172 (all rows)
-    const stationCode = getCellString(row, columnMap, 'STATION NO. NEW')
-      || getCellString(row, columnMap, 'STATION')
-      || getCellString(row, columnMap, 'STATION CODE')
-      || getCellString(row, columnMap, 'STATION NUMBER')
-      || getCellString(row, columnMap, 'STATION NO.')
-      || getCellString(row, columnMap, 'CELL')
+    const stationCode =
+      getCellString(row, columnMap, 'STATION NO. NEW') ||
+      getCellString(row, columnMap, 'STATION') ||
+      getCellString(row, columnMap, 'STATION CODE') ||
+      getCellString(row, columnMap, 'STATION NUMBER') ||
+      getCellString(row, columnMap, 'STATION NO.') ||
+      getCellString(row, columnMap, 'CELL')
 
     // Extract assembly line (e.g., "BN", "AL")
-    const lineCode = getCellString(row, columnMap, 'LINE')
-      || getCellString(row, columnMap, 'LINE CODE')
-      || getCellString(row, columnMap, 'ASSEMBLY LINE')
+    const lineCode =
+      getCellString(row, columnMap, 'LINE') ||
+      getCellString(row, columnMap, 'LINE CODE') ||
+      getCellString(row, columnMap, 'ASSEMBLY LINE')
 
     // For Ford Robot Equipment List files, the "Area" header column actually contains
     // "Person Responsible" data, not area names. The real area comes from column 0 (forward-filled).
@@ -214,17 +225,18 @@ export async function parseRobotList(
     // We check if the value from AREA column looks like:
     // - A number (from "Robot count per area" column)
     // - A person's name (mixed case with spaces like "Robyn Holtzhausen")
-    const areaColumnValue = getCellString(row, columnMap, 'AREA')
-      || getCellString(row, columnMap, 'AREA NAME')
-      || getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
+    const areaColumnValue =
+      getCellString(row, columnMap, 'AREA') ||
+      getCellString(row, columnMap, 'AREA NAME') ||
+      getCellString(row, columnMap, 'INDEX') // Robotlist_ZA files use "Index" column for area names
 
     // Check if the area column value is invalid (numeric or a person's name)
     // - Numeric values come from "Robot count per area" column
     // - Person names typically have mixed case and spaces (e.g., "Robyn Holtzhausen")
     // - Area names are typically all caps or title case without spaces (e.g., "DASH", "UNDERBODY")
     const isNumeric = areaColumnValue && /^\d+$/.test(areaColumnValue)
-    const looksLikePersonName = areaColumnValue &&
-      /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(areaColumnValue)
+    const looksLikePersonName =
+      areaColumnValue && /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(areaColumnValue)
     const isInvalidArea = isNumeric || looksLikePersonName
 
     let areaName: string | undefined
@@ -248,33 +260,40 @@ export async function parseRobotList(
 
     // Extract primary robot number from "ROBO NO. NEW" if present, else fall back to caption fields
     const roboNoNew = getCellString(row, columnMap, 'ROBO NO. NEW')
-    const robotCaption = getCellString(row, columnMap, 'ROBOT CAPTION')
-      || getCellString(row, columnMap, 'ROBOTS TOTAL')
-      || getCellString(row, columnMap, 'ROBOT')
-      || getCellString(row, columnMap, 'ROBO NO. OLD')
-      || getCellString(row, columnMap, 'ROBOT NAME')
-      || getCellString(row, columnMap, 'NAME')
+    const robotCaption =
+      getCellString(row, columnMap, 'ROBOT ID') ||
+      getCellString(row, columnMap, 'ID') ||
+      getCellString(row, columnMap, 'ROBOT CAPTION') ||
+      getCellString(row, columnMap, 'ROBOTS TOTAL') ||
+      getCellString(row, columnMap, 'ROBOT') ||
+      getCellString(row, columnMap, 'ROBO NO. OLD') ||
+      getCellString(row, columnMap, 'ROBOT NAME') ||
+      getCellString(row, columnMap, 'NAME')
     const robotNumber = roboNoNew || robotCaption
 
     if (!robotNumber) {
-      warnings.push(createRowSkippedWarning({
-        fileName,
-        sheetName,
-        rowIndex: i + 1,
-        reason: `No robot caption found (station="${stationCode}", line="${lineCode || 'unknown'}", area="${areaName || 'unknown'}")`
-      }))
+      warnings.push(
+        createRowSkippedWarning({
+          fileName,
+          sheetName,
+          rowIndex: i + 1,
+          reason: `No robot caption found (station="${stationCode}", line="${lineCode || 'unknown'}", area="${areaName || 'unknown'}")`,
+        }),
+      )
       continue
     }
 
     // Construct robot number/id using the human-readable robot number (prefer "ROBO NO. NEW")
     // Keep delimiters consistent (hyphens) so UI robot numbers align with IDs
-    const normalizedStation = normalizeStationCode(stationCode) || (stationCode || '').replace(/\s+/g, '')
+    const normalizedStation =
+      normalizeStationCode(stationCode) || (stationCode || '').replace(/\s+/g, '')
     const normalizedRobotNumber = robotNumber.replace(/\s+/g, '')
     const robotId = generateId('robot', normalizedStation, normalizedRobotNumber)
 
     // Extract E-Number (serial number) - this is METADATA, not the robot ID
-    const eNumber = getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)')
-      || getCellString(row, columnMap, 'ROBOTNUMBER')
+    const eNumber =
+      getCellString(row, columnMap, 'ROBOTNUMBER (E-NUMBER)') ||
+      getCellString(row, columnMap, 'ROBOTNUMBER')
 
     // Robot type
     const robotType =
@@ -283,32 +302,50 @@ export async function parseRobotList(
       undefined
 
     // Extract optional fields
-    const oemModel = getCellString(row, columnMap, 'OEM MODEL')
-      || getCellString(row, columnMap, 'MODEL')
-      || getCellString(row, columnMap, 'TYPE')
-      || getCellString(row, columnMap, 'ROBOT TYPE')
-      || getCellString(row, columnMap, 'ROBOT TYPE CONFIRMED')
+    const oemModel =
+      getCellString(row, columnMap, 'OEM MODEL') ||
+      getCellString(row, columnMap, 'MODEL') ||
+      getCellString(row, columnMap, 'TYPE') ||
+      getCellString(row, columnMap, 'ROBOT TYPE') ||
+      getCellString(row, columnMap, 'ROBOT TYPE CONFIRMED')
 
     // Vacuum Parser: Collect all other columns into metadata
     const metadata: Record<string, string | number | boolean | null> = {
       // Store E-Number as serialNumber metadata
       ...(eNumber ? { serialNumber: eNumber } : {}),
       robotNumber: robotNumber,
-      ...(roboNoNew ? { 'Robo No. New': roboNoNew } : {})
+      ...(roboNoNew ? { 'Robo No. New': roboNoNew } : {}),
     }
     const consumedHeaders = [
-      'ROBOT', 'ROBOT ID', 'ROBOT NAME', 'ID', 'NAME',
-      'MODEL', 'OEM MODEL', 'TYPE',
-      'AREA', 'AREA NAME', 'INDEX',
-      'LINE', 'LINE CODE', 'ASSEMBLY LINE',
-      'STATION', 'STATION CODE', 'STATION NUMBER', 'CELL',
-      'ROBOTNUMBER', 'ROBOTNUMBER (E-NUMBER)', 'ROBOT CAPTION', 'ROBOTS TOTAL',
-      'ROBOT TYPE', 'ROBOT TYPE CONFIRMED'
+      'ROBOT',
+      'ROBOT ID',
+      'ROBOT NAME',
+      'ID',
+      'NAME',
+      'MODEL',
+      'OEM MODEL',
+      'TYPE',
+      'AREA',
+      'AREA NAME',
+      'INDEX',
+      'LINE',
+      'LINE CODE',
+      'ASSEMBLY LINE',
+      'STATION',
+      'STATION CODE',
+      'STATION NUMBER',
+      'CELL',
+      'ROBOTNUMBER',
+      'ROBOTNUMBER (E-NUMBER)',
+      'ROBOT CAPTION',
+      'ROBOTS TOTAL',
+      'ROBOT TYPE',
+      'ROBOT TYPE CONFIRMED',
     ]
 
     // Create a set of consumed indices based on the column map and consumed headers
     const consumedIndices = new Set<number>()
-    consumedHeaders.forEach(h => {
+    consumedHeaders.forEach((h) => {
       const idx = columnMap[h]
       if (idx !== null && idx !== undefined) consumedIndices.add(idx)
     })
@@ -351,26 +388,28 @@ export async function parseRobotList(
         ...(lineCode ? { lineCode } : {}),
         ...(robotType ? { robotType } : {}),
         // Store areaGroup in metadata for display in assets table
-        ...(areaName ? { areaGroup: areaName } : {})
+        ...(areaName ? { areaGroup: areaName } : {}),
       },
       sourceFile: fileName,
       sheetName,
-      rowIndex: i
+      rowIndex: i,
     }
 
     robots.push(robot)
   }
 
   if (robots.length === 0) {
-    warnings.push(createParserErrorWarning({
-      fileName,
-      sheetName,
-      error: 'No valid robot rows found after parsing'
-    }))
+    warnings.push(
+      createParserErrorWarning({
+        fileName,
+        sheetName,
+        error: 'No valid robot rows found after parsing',
+      }),
+    )
   }
 
   return {
     robots,
-    warnings
+    warnings,
   }
 }
