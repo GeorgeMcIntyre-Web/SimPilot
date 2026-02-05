@@ -376,7 +376,7 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto max-h-[680px] custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
@@ -587,12 +587,12 @@ function RobotSimulationPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="h-full flex flex-col gap-6">
       <PageHeader title="Robot Status" />
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <section className="flex-1 lg:flex-none lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col">
-          <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
+        <section className="flex-1 lg:flex-none lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0">
+          <div className="flex-1 overflow-hidden min-h-0">
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
             ) : (

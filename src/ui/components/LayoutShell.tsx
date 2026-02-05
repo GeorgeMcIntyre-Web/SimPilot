@@ -20,7 +20,7 @@ export function LayoutShell() {
     log.debug('LayoutShell render. hasData:', hasData);
 
     return (
-        <div data-testid="app-shell" className="min-h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col relative">
+        <div data-testid="app-shell" className="h-screen bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex flex-col relative overflow-hidden">
             <Header
                 hasData={hasData}
                 themeMode={themeMode}
@@ -39,8 +39,8 @@ export function LayoutShell() {
             />
 
             {/* Main Content */}
-            <main className="flex-1 py-6">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <main className="flex-1 min-h-0 py-6 overflow-auto">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
                     <Outlet />
                 </div>
             </main>
