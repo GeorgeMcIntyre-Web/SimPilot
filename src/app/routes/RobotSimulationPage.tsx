@@ -499,7 +499,18 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
 
 function RobotSimulationPage() {
   const { cells, loading, hasData } = useCrossRefData()
-  const tableCells = hasData ? cells : []
+  // Only show cells that have actual simulation status data (not equipment-only entries)
+  const tableCells = useMemo(() => {
+    if (!hasData) return []
+    return cells.filter(c => {
+      const sim = c.simulationStatus
+      if (!sim) return false
+      return sim.firstStageCompletion != null
+        || sim.panelMilestones != null
+        || (sim.application != null && sim.application.trim() !== '')
+        || (sim.engineer != null && sim.engineer.trim() !== '')
+    })
+  }, [cells, hasData])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
