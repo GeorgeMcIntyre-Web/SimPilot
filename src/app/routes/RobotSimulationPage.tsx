@@ -499,7 +499,19 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
 
 function RobotSimulationPage() {
   const { cells, loading, hasData } = useCrossRefData()
-  const tableCells = hasData ? cells : []
+  // Only show cells that have actual simulation status data (not equipment-only entries)
+  const tableCells = useMemo(() => {
+    if (!hasData) return []
+    return cells.filter(c => {
+      const sim = c.simulationStatus
+      if (!sim) return false
+      // A cell has real simulation data if it has completion, milestones, application, or engineer
+      return sim.firstStageCompletion != null
+        || sim.panelMilestones != null
+        || (sim.application != null && sim.application.trim() !== '')
+        || (sim.engineer != null && sim.engineer.trim() !== '')
+    })
+  }, [cells, hasData])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
@@ -567,7 +579,7 @@ function RobotSimulationPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Robot Status"
+          title="Robot Simulation Status"
           subtitle={
             <PageHint
               standardText="Track robot-by-robot simulation progress"
@@ -588,7 +600,7 @@ function RobotSimulationPage() {
 
   return (
     <div className="h-full flex flex-col gap-6">
-      <PageHeader title="Robot Status" />
+      <PageHeader title="Robot Simulation Status" />
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
         <section className="flex-1 lg:flex-none lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0">
