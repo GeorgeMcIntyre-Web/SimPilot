@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { AppLogo } from './AppLogo';
 import { DataStatusIndicator } from './DataStatusIndicator';
@@ -64,7 +65,9 @@ export function Header({
                             {/* Left Section: Logo and Navigation */}
                             <div className="flex">
                                 <div className="flex-shrink-0 flex items-center">
-                                    <AppLogo />
+                                    <Link to="/dashboard" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md">
+                                        <AppLogo />
+                                    </Link>
                                 </div>
                                 <DesktopNav />
                     </div>
