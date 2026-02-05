@@ -37,7 +37,7 @@ export function createAssetsTableColumns(
 ): Column<AssetWithMetadata>[] {
   return [
     {
-      header: <SortHeader label="Robot #" keyName="robotNumber" onSort={onSort} />,
+      header: <SortHeader label="Asset #" keyName="robotNumber" onSort={onSort} />,
       accessor: (asset) => {
         const robotNumber =
           extractMetadata<string>(asset, 'robotNumber') ||
@@ -145,7 +145,7 @@ export function createAssetsTableColumns(
       },
     },
     {
-      header: <SortHeader label="Robot Type" keyName="robotType" onSort={onSort} />,
+      header: <SortHeader label="Type" keyName="robotType" onSort={onSort} />,
       accessor: (asset) => {
         const type =
           extractMetadata<string>(asset, 'robotType') ||

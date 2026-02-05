@@ -340,7 +340,7 @@ export function AssetDetailPage() {
         </div>
         <div className="p-3">
           <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
-            <DetailItem label="Robot Type" value={robotType} />
+            <DetailItem label="Type" value={robotType} />
             <DetailItem label="Order Code" value={robotOrderCode} />
             <DetailItem label="Payload" value={payloadKg !== undefined ? `${payloadKg} kg` : undefined} />
             <DetailItem label="Reach" value={reachMm !== undefined ? `${reachMm} mm` : undefined} />
