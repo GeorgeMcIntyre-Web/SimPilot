@@ -160,10 +160,8 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
           const label = formatRobotLabel({ ...cell, robots: [robot] })
           const assetId = robot.robotKey || robot.caption
           const application =
-            // Prefer metadata from robot asset
             ((robot.raw as any)?.metadata?.application ??
               (robot.raw as any)?.metadata?.function ??
-              // Simulation-status robots keep application at root, not metadata
               (robot.raw as any)?.application ??
               cell.simulationStatus?.application ??
               'Unknown')

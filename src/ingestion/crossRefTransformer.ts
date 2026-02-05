@@ -273,7 +273,7 @@ export function buildCrossRefInputFromApplyResult(
     }))
 
     // Convert Robots from robot list files to RobotSnapshot (using merged robots)
-    const robotSpecsRows: RobotSnapshot[] = allRobots.map(robot => ({
+    let robotSpecsRows: RobotSnapshot[] = allRobots.map(robot => ({
         stationKey: robot.stationNumber || '',
         robotKey: robot.id,
         caption: robot.name,
@@ -287,34 +287,41 @@ export function buildCrossRefInputFromApplyResult(
     // These represent station+robot combinations found in the simulation status file
     // One station can have multiple robots, so this is the authoritative source for robot counts
     if (simulationRobots && simulationRobots.length > 0) {
-        // Track which station+robot combinations we've already added from robot specs
-        const existingCombinations = new Set(
-            robotSpecsRows.map(r => `${r.stationKey.toUpperCase()}::${(r.caption || '').toUpperCase()}`)
-        )
+        // Track robots by station+caption, but let simulation status entries win
+        const byCompositeKey = new Map<string, RobotSnapshot>()
 
+        // Seed with existing robot specs (equipment lists, etc.)
+        for (const r of robotSpecsRows) {
+            const key = `${r.stationKey.toUpperCase()}::${(r.caption || '').toUpperCase()}`
+            byCompositeKey.set(key, r)
+        }
+
+        // Merge simulation-status robots, replacing any non-simulation entry for the same combo
         for (const simRobot of simulationRobots) {
             const stationKey = simRobot.stationKey
             const compositeKey = `${stationKey.toUpperCase()}::${simRobot.robotCaption.toUpperCase()}`
 
-            // Skip if we already have this station+robot from robot specs
-            if (existingCombinations.has(compositeKey)) {
+            const existing = byCompositeKey.get(compositeKey)
+            const isExistingFromSimulation = existing && (existing.raw as any)?.source === 'simulationStatus'
+            if (isExistingFromSimulation) {
                 continue
             }
 
-            robotSpecsRows.push({
-                stationKey: stationKey,
+            const simSnapshot: RobotSnapshot = {
+                stationKey,
                 robotKey: `simstatus-${stationKey}-${simRobot.robotCaption}`.replace(/\s+/g, '_'),
                 caption: simRobot.robotCaption,
                 eNumber: undefined,
                 hasDressPackInfo: false, // Not available from simulation status
                 oemModel: undefined,
                 raw: { source: 'simulationStatus', ...simRobot }
-            })
+            }
 
-            existingCombinations.add(compositeKey)
+            byCompositeKey.set(compositeKey, simSnapshot)
         }
 
-        log.debug(`[CrossRef] Added ${simulationRobots.length} robots from simulation status`)
+        robotSpecsRows = Array.from(byCompositeKey.values())
+        log.debug(`[CrossRef] Added/merged ${simulationRobots.length} robots from simulation status`)
     }
 
     // Empty arrays for data types not available in ApplyResult
