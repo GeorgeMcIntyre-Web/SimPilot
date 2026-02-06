@@ -7,6 +7,51 @@ import { useToolsFiltered, ToolType, SpotWeldSubType, Tool } from '../../ui/hook
 import { Search, Filter } from 'lucide-react';
 import { EmptyState } from '../../ui/components/EmptyState';
 import { PageHint } from '../../ui/components/PageHint';
+import { ReuseStatusBadge } from '../../features/assets';
+import type { ToolMountType } from '../../domain/core';
+import type { ReuseAllocationStatus } from '../../ingestion/excelIngestionTypes';
+
+const TOOL_TYPE_LABELS: Record<ToolType, string> = {
+    SPOT_WELD: 'Spot Weld',
+    SEALER: 'Sealer',
+    STUD_WELD: 'Stud Weld',
+    GRIPPER: 'Gripper',
+    OTHER: 'Other'
+};
+
+const SPOT_WELD_SUBTYPE_LABELS: Record<SpotWeldSubType, string> = {
+    PNEUMATIC: 'Pneumatic',
+    SERVO: 'Servo',
+    UNKNOWN: 'Unknown'
+};
+
+const MOUNT_TYPE_LABELS: Record<ToolMountType, string> = {
+    ROBOT_MOUNTED: 'Robot Mounted',
+    STAND_MOUNTED: 'Stand Mounted',
+    HAND_TOOL: 'Hand Tool',
+    UNKNOWN: 'Unknown'
+};
+
+function humanizeToolType(type: ToolType) {
+    return TOOL_TYPE_LABELS[type] ?? type;
+}
+
+function humanizeSubType(subType?: SpotWeldSubType | null) {
+    if (!subType) return null;
+    return SPOT_WELD_SUBTYPE_LABELS[subType] ?? subType;
+}
+
+function humanizeMountType(mountType?: ToolMountType | null) {
+    if (!mountType) return null;
+    return MOUNT_TYPE_LABELS[mountType] ?? mountType;
+}
+
+function asReuseStatus(status?: string | null): ReuseAllocationStatus | null {
+    if (!status) return null;
+    const upper = status.toUpperCase() as ReuseAllocationStatus;
+    const allowed: ReuseAllocationStatus[] = ['AVAILABLE', 'ALLOCATED', 'IN_USE', 'RESERVED', 'UNKNOWN'];
+    return allowed.includes(upper) ? upper : null;
+}
 
 export function ToolsPage() {
     const [typeFilter, setTypeFilter] = useState<ToolType | 'ALL'>('ALL');
@@ -37,29 +82,61 @@ export function ToolsPage() {
 
     const columns: Column<Tool>[] = [
         {
-            header: 'Tool Name',
-            accessor: (t) => t.name,
+            header: 'Tool',
+            accessor: (t) => (
+                <div className="flex flex-col leading-tight">
+                    <span className="font-medium text-gray-900 dark:text-white">{t.name}</span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {t.toolId || t.toolNo || '—'}
+                    </span>
+                </div>
+            ),
             sortValue: (t) => t.name
         },
         {
             header: 'Type',
-            accessor: (t) => <Tag label={t.toolType} color="blue" />,
-            sortValue: (t) => t.toolType
+            accessor: (t) => <Tag label={humanizeToolType(t.toolType)} color="blue" />,
+            sortValue: (t) => humanizeToolType(t.toolType)
         },
         {
             header: 'Subtype',
-            accessor: (t) => t.subType ? <Tag label={t.subType} color="gray" /> : '-',
+            accessor: (t) => t.subType ? <Tag label={humanizeSubType(t.subType) ?? t.subType} color="gray" /> : '-',
             sortValue: (t) => t.subType || ''
         },
-        { header: 'Line', accessor: (t) => t.lineCode || '-', sortValue: (t) => t.lineCode || '' },
+        {
+            header: 'Mount',
+            accessor: (t) => {
+                const label = humanizeMountType(t.mountType);
+                return label ? <Tag label={label} color="purple" /> : '—';
+            },
+            sortValue: (t) => humanizeMountType(t.mountType) || ''
+        },
+        { header: 'Line', accessor: (t) => t.lineCode || '—', sortValue: (t) => t.lineCode || '' },
         {
             header: 'Station',
-            accessor: (t) => t.stationCode || '-',
+            accessor: (t) => t.stationCode || '—',
             sortValue: (t) => t.stationCode || ''
         },
-        { header: 'Model', accessor: (t) => t.oemModel || '-', sortValue: (t) => t.oemModel || '' },
-        { header: 'Reuse', accessor: (t) => t.reuseStatus || '-', sortValue: (t) => t.reuseStatus || '' },
-        { header: 'Source', accessor: (t) => t.sourceFile ? <span className="text-xs text-gray-500" title={t.sourceFile}>{t.sourceFile.split('/').pop()}</span> : '-', sortValue: (t) => t.sourceFile || '' },
+        { header: 'Model', accessor: (t) => t.oemModel || '—', sortValue: (t) => t.oemModel || '' },
+        {
+            header: 'Robot',
+            accessor: (t) => t.robotId || '—',
+            sortValue: (t) => t.robotId || ''
+        },
+        {
+            header: 'Reuse',
+            accessor: (t) => {
+                const reuse = asReuseStatus(t.reuseStatus);
+                if (reuse) return <ReuseStatusBadge status={reuse} size="sm" showIcon={false} />;
+                return t.reuseStatus || '—';
+            },
+            sortValue: (t) => t.reuseStatus || ''
+        },
+        {
+            header: 'Source',
+            accessor: (t) => t.sourceFile ? <span className="text-xs text-gray-500" title={t.sourceFile}>{t.sourceFile.split('/').pop()}</span> : '—',
+            sortValue: (t) => t.sourceFile || ''
+        },
     ];
 
     const navigate = useNavigate();
@@ -89,7 +166,7 @@ export function ToolsPage() {
     const hasActiveFilters = typeFilter !== 'ALL' || subTypeFilter !== 'ALL' || searchTerm.trim() !== '';
 
     return (
-        <div className="space-y-4">
+        <div className="h-full flex flex-col gap-4">
             <PageHeader
                 title="Tools & Equipment"
                 subtitle={
@@ -169,13 +246,14 @@ export function ToolsPage() {
             </div>
 
             {/* Tools Table */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow rounded-lg overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 20rem)' }}>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow rounded-lg overflow-hidden flex flex-col flex-1 min-h-0">
                 <DataTable
                     data={filteredTools}
                     columns={columns}
                     enableSorting
                     defaultSortIndex={0}
                     emptyMessage="No tools found matching current filters."
+                    keyExtractor={(t) => t.id ?? t.canonicalKey ?? `${t.toolType}-${t.name}-${t.stationCode ?? ''}-${t.oemModel ?? ''}`}
                 />
             </div>
         </div>
