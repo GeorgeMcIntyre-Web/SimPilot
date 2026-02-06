@@ -71,9 +71,6 @@ function LineGroup({
           )}
           <div className="flex items-center gap-2 min-w-0">
             <Layers className="h-4 w-4 text-blue-500" />
-            <span className="font-semibold text-sm text-gray-900 dark:text-white">
-              {line}
-            </span>
             <span className="text-[11px] text-gray-500 dark:text-gray-400">
               {unit}
             </span>

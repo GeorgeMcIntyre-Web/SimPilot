@@ -2,7 +2,7 @@
 // Compact card showing station summary for the simulation board
 // Displays asset counts, sourcing breakdown, and simulation status
 
-import { Bot, Zap, Wrench, Box, RefreshCw, ShoppingCart, HelpCircle } from 'lucide-react'
+import { RefreshCw, ShoppingCart, HelpCircle, MapPin, Wrench } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
 import { getCompletionBadgeClass, getCompletionBarClass } from '../simulationSelectors'
@@ -20,35 +20,6 @@ interface StationCardProps {
 // ============================================================================
 // HELPER COMPONENTS
 // ============================================================================
-
-interface CountBadgeProps {
-  icon: React.ReactNode
-  count: number
-  label: string
-  color: 'purple' | 'yellow' | 'blue' | 'gray'
-}
-
-function CountBadge({ icon, count, label, color }: CountBadgeProps) {
-  const colorClasses = {
-    purple: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200 border border-purple-100 dark:border-purple-800',
-    yellow: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-100 dark:border-amber-800',
-    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-100 dark:border-blue-800',
-    gray: 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700'
-  }
-
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold',
-        colorClasses[color]
-      )}
-      title={label}
-    >
-      {icon}
-      <span>{count}</span>
-    </div>
-  )
-}
 
 interface SourcingIndicatorProps {
   reuse: number
@@ -115,6 +86,8 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
   const engineer = station.simulationStatus?.engineer
   const unitLabel = station.unit || station.plant || '—'
   const lineLabel = station.line || '—'
+  const toolCount = station.assetCounts.tools
+  const otherCount = station.assetCounts.other
 
   return (
     <button
@@ -122,30 +95,25 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
       aria-label={`Station ${station.station} on ${station.line}${completion !== undefined ? `, ${completion}% complete` : ''}`}
       aria-pressed={isSelected}
       className={cn(
-        'w-full text-left p-4 rounded-2xl border transition-all duration-200 overflow-hidden',
-        'hover:shadow-lg hover:-translate-y-[1px]',
+        'w-full text-left p-4 rounded-xl border transition-all duration-200 overflow-hidden',
+        'hover:shadow-md hover:-translate-y-[1px]',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-gray-900',
         isSelected
-          ? 'bg-blue-50/70 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 shadow-md'
-          : 'bg-white/90 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
+          ? 'bg-blue-50/60 dark:bg-blue-900/15 border-blue-300 dark:border-blue-600 shadow-md'
+          : 'bg-white/85 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
       )}
       data-testid={`station-card-${station.contextKey}`}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="min-w-0">
-          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
+        <div className="min-w-0 space-y-0.5">
+          <h4 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight truncate">
             {station.station}
           </h4>
-          <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-            <span className="uppercase tracking-wide">{lineLabel}</span>
-            <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-            <span className="capitalize">{unitLabel}</span>
-          </div>
         </div>
         {completion !== undefined && (
           <span className={cn(
-            'text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm self-start flex-shrink-0',
+            'text-[11px] font-semibold px-2 py-1 rounded-full shadow-sm self-start flex-shrink-0',
             getCompletionBadgeClass(completion)
           )}>
             {completion}%
@@ -158,43 +126,29 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
         <CompletionBar percent={completion} />
       </div>
 
-      {/* Asset counts */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        <CountBadge
-          icon={<Bot className="h-3 w-3" />}
-          count={station.assetCounts.robots}
-          label="Robots"
-          color="purple"
-        />
-        <CountBadge
-          icon={<Zap className="h-3 w-3" />}
-          count={station.assetCounts.guns}
-          label="Weld Guns"
-          color="yellow"
-        />
-        <CountBadge
-          icon={<Wrench className="h-3 w-3" />}
-          count={station.assetCounts.tools}
-          label="Tools"
-          color="blue"
-        />
-        <CountBadge
-          icon={<Box className="h-3 w-3" />}
-          count={station.assetCounts.other}
-          label="Other"
-          color="gray"
-        />
+      {/* Slim asset summary */}
+      <div className="flex flex-wrap gap-3 text-xs text-gray-700 dark:text-gray-300 mb-3">
+        {toolCount + otherCount > 0 && (
+          <span className="flex items-center gap-1">
+            <Wrench className="h-3.5 w-3.5 text-blue-500" />
+            <span className="font-medium">{toolCount + otherCount}</span>
+            <span className="text-gray-500">other</span>
+          </span>
+        )}
       </div>
 
-      {/* Sourcing breakdown */}
-      <div className="flex items-center justify-between">
+      {/* Sourcing + owner */}
+      <div className="flex items-center justify-between gap-2">
         <SourcingIndicator
           reuse={station.sourcingCounts.reuse + station.sourcingCounts.freeIssue}
           newBuy={station.sourcingCounts.newBuy}
           unknown={station.sourcingCounts.unknown}
         />
         {engineer && (
-          <span className="text-[11px] text-gray-600 dark:text-gray-300 truncate max-w-[140px] px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full" title={engineer}>
+          <span
+            className="text-[11px] text-gray-700 dark:text-gray-200 truncate max-w-[140px] px-2 py-1 bg-gray-100/70 dark:bg-gray-700/70 rounded-full"
+            title={engineer}
+          >
             {engineer}
           </span>
         )}
