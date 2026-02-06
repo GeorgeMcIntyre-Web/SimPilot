@@ -199,7 +199,19 @@ export function ToolsPage() {
         },
     ];
 
-    if (tools.length === 0 && typeFilter === 'ALL' && subTypeFilter === 'ALL' && !searchTerm) {
+    const showInitialEmpty =
+        tools.length === 0 &&
+        typeFilter === 'ALL' &&
+        subTypeFilter === 'ALL' &&
+        !searchTerm &&
+        mountFilter === 'ALL' &&
+        reuseFilter === 'ALL' &&
+        lineFilter === 'ALL' &&
+        areaFilter === 'ALL' &&
+        stationFilter === 'ALL' &&
+        sourceFilter === 'ALL';
+
+    if (showInitialEmpty) {
         return (
             <div className="space-y-4">
                 <PageHeader
@@ -243,6 +255,18 @@ export function ToolsPage() {
         sourceFilter !== 'ALL' ? { label: `Source: ${sourceFilter}`, onClear: () => setSourceFilter('ALL') } : null,
         searchTerm.trim() !== '' ? { label: `Search: “${searchTerm}”`, onClear: () => setSearchTerm('') } : null,
     ].filter(Boolean) as { label: string; onClear: () => void }[];
+
+    const clearAllFilters = () => {
+        setSearchTerm('');
+        setTypeFilter('ALL');
+        setSubTypeFilter('ALL');
+        setMountFilter('ALL');
+        setReuseFilter('ALL');
+        setLineFilter('ALL');
+        setAreaFilter('ALL');
+        setStationFilter('ALL');
+        setSourceFilter('ALL');
+    };
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -385,17 +409,7 @@ export function ToolsPage() {
                             </span>
                             {hasActiveFilters && (
                                 <button
-                                    onClick={() => {
-                                        setSearchTerm('');
-                                        setTypeFilter('ALL');
-                                        setSubTypeFilter('ALL');
-                                        setMountFilter('ALL');
-                                        setReuseFilter('ALL');
-                                        setLineFilter('ALL');
-                                        setAreaFilter('ALL');
-                                        setStationFilter('ALL');
-                                        setSourceFilter('ALL');
-                                    }}
+                                    onClick={clearAllFilters}
                                     className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline whitespace-nowrap"
                                 >
                                     Clear
@@ -429,24 +443,35 @@ export function ToolsPage() {
 
             {/* Tools Table */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow rounded-lg overflow-hidden flex flex-col flex-1 min-h-0">
-                <DataTable
-                    data={filteredTools}
-                    columns={columns}
-                    enableSorting
-                    defaultSortIndex={0}
-                    emptyMessage="No tools found matching current filters."
-                    keyExtractor={(t) => t.id ?? t.canonicalKey ?? `${t.toolType}-${t.name}-${t.stationCode ?? ''}-${t.oemModel ?? ''}`}
-                    onRowDoubleClick={(t) => {
-                        if (t.id) {
-                            navigate(`/assets/${encodeURIComponent(t.id)}`);
-                            return;
-                        }
-                        if (t.stationId) {
-                            navigate(`/cells/${encodeURIComponent(t.stationId)}`);
-                            return;
-                        }
-                    }}
-                />
+                {filteredTools.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center p-6">
+                        <EmptyState
+                            title="No tools match these filters"
+                            message="Try clearing filters or import additional tools via the Data Loader."
+                            ctaLabel={hasActiveFilters ? "Clear filters" : undefined}
+                            onCtaClick={hasActiveFilters ? clearAllFilters : undefined}
+                        />
+                    </div>
+                ) : (
+                    <DataTable
+                        data={filteredTools}
+                        columns={columns}
+                        enableSorting
+                        defaultSortIndex={0}
+                        emptyMessage="No tools found."
+                        keyExtractor={(t) => t.id ?? t.canonicalKey ?? `${t.toolType}-${t.name}-${t.stationCode ?? ''}-${t.oemModel ?? ''}`}
+                        onRowDoubleClick={(t) => {
+                            if (t.id) {
+                                navigate(`/assets/${encodeURIComponent(t.id)}`);
+                                return;
+                            }
+                            if (t.stationId) {
+                                navigate(`/cells/${encodeURIComponent(t.stationId)}`);
+                                return;
+                            }
+                        }}
+                    />
+                )}
             </div>
         </div>
     );
