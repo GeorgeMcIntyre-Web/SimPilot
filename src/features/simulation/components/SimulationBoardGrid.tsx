@@ -71,13 +71,14 @@ function LineGroup({
           )}
           <div className="flex items-center gap-2 min-w-0">
             <Layers className="h-4 w-4 text-blue-500" />
-            <span className="text-[11px] text-gray-500 dark:text-gray-400">
+            <span className={cn('typography-caption truncate', 'text-gray-500 dark:text-gray-400')}>
               {unit}
             </span>
           </div>
           <span
             className={cn(
-              'ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-shrink-0',
+              'ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0',
+              'typography-caption font-semibold',
               getCompletionTextClass(avgCompletion),
               'bg-white text-gray-900 dark:bg-gray-900/70 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
             )}
@@ -163,10 +164,10 @@ export function SimulationBoardGrid({
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
         <Layers className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+        <h3 className="typography-title-sm mb-1">
           No Stations Found
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="typography-subtitle">
           Try adjusting your filters or load data from the Data Loader.
         </p>
       </div>
@@ -174,7 +175,7 @@ export function SimulationBoardGrid({
   }
 
   return (
-    <div className="space-y-4">
+    <div className={cn('space-y-4', 'typography-body')}>
       {/* Line Groups - Max 10 visible with scroll */}
       <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
         {sortedLines.map(aggregation => (
