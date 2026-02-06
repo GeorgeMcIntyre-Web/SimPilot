@@ -63,6 +63,7 @@ export function ToolsPage() {
     const [areaFilter, setAreaFilter] = useState<string>('ALL');
     const [stationFilter, setStationFilter] = useState<string>('ALL');
     const [sourceFilter, setSourceFilter] = useState<string>('ALL');
+    const navigate = useNavigate();
 
     const tools = useToolsFiltered({
         type: typeFilter === 'ALL' ? undefined : typeFilter,
@@ -197,8 +198,6 @@ export function ToolsPage() {
             sortValue: (t) => t.sourceFile || ''
         },
     ];
-
-    const navigate = useNavigate();
 
     if (tools.length === 0 && typeFilter === 'ALL' && subTypeFilter === 'ALL' && !searchTerm) {
         return (
@@ -437,6 +436,16 @@ export function ToolsPage() {
                     defaultSortIndex={0}
                     emptyMessage="No tools found matching current filters."
                     keyExtractor={(t) => t.id ?? t.canonicalKey ?? `${t.toolType}-${t.name}-${t.stationCode ?? ''}-${t.oemModel ?? ''}`}
+                    onRowDoubleClick={(t) => {
+                        if (t.id) {
+                            navigate(`/assets/${encodeURIComponent(t.id)}`);
+                            return;
+                        }
+                        if (t.stationId) {
+                            navigate(`/cells/${encodeURIComponent(t.stationId)}`);
+                            return;
+                        }
+                    }}
                 />
             </div>
         </div>
