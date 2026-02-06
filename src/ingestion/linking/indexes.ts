@@ -1,4 +1,4 @@
-import { Cell, Robot } from '../domain/core'
+import { Cell, Robot } from '../../domain/core'
 import { normalizeStation, normalizeArea, normalizeLine, normalizeAssetName } from './normalizers'
 
 export interface CellIndex {

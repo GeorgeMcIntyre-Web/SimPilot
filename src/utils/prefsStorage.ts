@@ -1,20 +1,19 @@
+import {
+  getUserPreference as getCoreUserPreference,
+  setUserPreference as setCoreUserPreference,
+} from '../core/prefs/userPreferences'
+import { appLogger } from '../runtime/adapters/appLogger'
+import { createBrowserLocalStorageAdapter } from '../runtime/adapters/browserStorageAdapter'
+
+const defaultDeps = {
+  storage: createBrowserLocalStorageAdapter(),
+  logger: appLogger,
+}
+
 export function getUserPreference<T>(key: string, fallback: T): T {
-    try {
-        const item = localStorage.getItem(key)
-        if (item === null) {
-            return fallback
-        }
-        return JSON.parse(item) as T
-    } catch (_e) {
-        return fallback
-    }
+  return getCoreUserPreference(defaultDeps, key, fallback)
 }
 
 export function setUserPreference<T>(key: string, value: T): void {
-    try {
-        const str = JSON.stringify(value)
-        localStorage.setItem(key, str)
-    } catch (_e) {
-        // Ignore errors
-    }
+  setCoreUserPreference(defaultDeps, key, value)
 }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { useCoreStore } from '../../domain/coreStore'
 import { InfoPill } from '../../ui/components/InfoPill'
 import { SourcingBadge, ReuseStatusBadge, AssetKindBadge } from '../../features/assets/AssetBadges'
@@ -7,7 +7,6 @@ import type { AssetWithMetadata } from '../../features/assets'
 import type { ReuseAllocationStatus, DetailedAssetKind } from '../../ingestion/excelIngestionTypes'
 import { getMetadataValue } from '../../utils/metadata'
 import {
-  ExternalLink,
   MapPin,
   FileSpreadsheet,
   Recycle,
@@ -18,7 +17,7 @@ import {
   Package,
   Building2,
   MessageSquare,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react'
 
 // ============================================================================
@@ -33,7 +32,7 @@ function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefine
 const HEADER_GRADIENT = {
   light: 'from-blue-50 to-blue-100',
   dark: 'dark:from-blue-950/30 dark:to-blue-900/30',
-  border: 'border-blue-200 dark:border-blue-800'
+  border: 'border-blue-200 dark:border-blue-800',
 }
 
 // ============================================================================
@@ -52,9 +51,7 @@ function DetailItem({ label, value, className }: DetailItemProps) {
       <dt className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
         {label}
       </dt>
-      <dd className="mt-0.5 text-sm text-gray-900 dark:text-gray-100">
-        {value || '—'}
-      </dd>
+      <dd className="mt-0.5 text-sm text-gray-900 dark:text-gray-100">{value || '—'}</dd>
     </div>
   )
 }
@@ -65,29 +62,12 @@ function DetailItem({ label, value, className }: DetailItemProps) {
 
 export function AssetDetailPage() {
   const { assetId } = useParams<{ assetId: string }>()
-  const navigate = useNavigate()
   const { assets } = useCoreStore()
 
   const asset = useMemo(
-    () => assets.find(a => a.id === assetId) as AssetWithMetadata | undefined,
-    [assets, assetId]
+    () => assets.find((a) => a.id === assetId) as AssetWithMetadata | undefined,
+    [assets, assetId],
   )
-
-  const handleOpenInSimulation = (a: AssetWithMetadata) => {
-    const params = new URLSearchParams()
-    const stationId = a.stationId ?? a.metadata?.stationId
-    const areaName = a.areaName ?? a.metadata?.areaName
-    const lineCode = a.metadata?.lineCode ?? a.metadata?.assemblyLine
-    const station = a.stationNumber ?? a.metadata?.station
-
-    if (stationId) params.set('stationId', String(stationId))
-    if (areaName) params.set('area', String(areaName))
-    if (lineCode) params.set('line', String(lineCode))
-    if (station) params.set('station', String(station))
-
-    const query = params.toString()
-    navigate(query ? `/simulation?${query}` : '/simulation')
-  }
 
   if (!asset) {
     return (
@@ -113,7 +93,8 @@ export function AssetDetailPage() {
   const detailedKind = extractMetadata<DetailedAssetKind>(asset, 'detailedKind')
   const reuseStatus = extractMetadata<ReuseAllocationStatus>(asset, 'reuseAllocationStatus')
   const projectCode = extractMetadata<string>(asset, 'projectCode')
-  const assemblyLine = extractMetadata<string>(asset, 'assemblyLine') ?? extractMetadata<string>(asset, 'lineCode')
+  const assemblyLine =
+    extractMetadata<string>(asset, 'assemblyLine') ?? extractMetadata<string>(asset, 'lineCode')
   const station = asset.stationNumber ?? extractMetadata<string>(asset, 'station')
   const robotNumber = extractMetadata<string>(asset, 'robotNumber')
   const gunId = extractMetadata<string>(asset, 'gunId')
@@ -148,12 +129,14 @@ export function AssetDetailPage() {
   // Provenance info
   const primaryWorkbookId = extractMetadata<string>(asset, 'primaryWorkbookId')
   const sourceWorkbookIdsJson = extractMetadata<string>(asset, 'sourceWorkbookIds')
-  const sourceWorkbookIds: string[] = sourceWorkbookIdsJson !== undefined ? JSON.parse(sourceWorkbookIdsJson) : []
+  const sourceWorkbookIds: string[] =
+    sourceWorkbookIdsJson !== undefined ? JSON.parse(sourceWorkbookIdsJson) : []
 
   // Additional metadata fields
   const simulationSourceKind = extractMetadata<string>(asset, 'simulationSourceKind')
   const siteLocation = extractMetadata<string>(asset, 'siteLocation')
-  const robotType = extractMetadata<string>(asset, 'robotType') ?? extractMetadata<string>(asset, 'Robot Type')
+  const robotType =
+    extractMetadata<string>(asset, 'robotType') ?? extractMetadata<string>(asset, 'Robot Type')
   const robotOrderCode = extractMetadata<string>(asset, 'robotOrderCode')
   const applicationCode = extractMetadata<string>(asset, 'applicationCode')
   const technologyCode = extractMetadata<string>(asset, 'technologyCode')
@@ -189,14 +172,18 @@ export function AssetDetailPage() {
     <div className="space-y-4" data-testid="asset-detail-root">
       {/* Breadcrumb */}
       <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-        <Link to="/assets" className="hover:text-blue-600 dark:hover:text-blue-400">Assets</Link>
+        <Link to="/assets" className="hover:text-blue-600 dark:hover:text-blue-400">
+          Assets
+        </Link>
         <span>/</span>
         <span className="text-gray-900 dark:text-white font-medium">{asset.name || 'Asset'}</span>
       </div>
 
       {/* Header Card */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className={`bg-gradient-to-r ${HEADER_GRADIENT.light} ${HEADER_GRADIENT.dark} border-b ${HEADER_GRADIENT.border} px-4 py-3`}>
+        <div
+          className={`bg-gradient-to-r ${HEADER_GRADIENT.light} ${HEADER_GRADIENT.dark} border-b ${HEADER_GRADIENT.border} px-4 py-3`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -236,10 +223,10 @@ export function AssetDetailPage() {
                     {projectCode}
                   </span>
                 )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         {/* Key Metrics Grid */}
         <div className="p-4">
@@ -292,9 +279,32 @@ export function AssetDetailPage() {
               <DetailItem label="Reference #" value={referenceNumber} />
               <DetailItem label="Payload Class" value={payloadClass} />
               <DetailItem label="Stand #" value={standNumber} />
-              <DetailItem label="Source Type" value={simulationSourceKind ? (simulationSourceKind === 'InternalSimulation' ? 'Internal' : 'Outsource') : undefined} />
-              <DetailItem label="Site Location" value={siteLocation && siteLocation !== 'Unknown' ? siteLocation : undefined} />
-              <DetailItem label="Last Updated" value={lastUpdated ? new Date(lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : undefined} />
+              <DetailItem
+                label="Source Type"
+                value={
+                  simulationSourceKind
+                    ? simulationSourceKind === 'InternalSimulation'
+                      ? 'Internal'
+                      : 'Outsource'
+                    : undefined
+                }
+              />
+              <DetailItem
+                label="Site Location"
+                value={siteLocation && siteLocation !== 'Unknown' ? siteLocation : undefined}
+              />
+              <DetailItem
+                label="Last Updated"
+                value={
+                  lastUpdated
+                    ? new Date(lastUpdated).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : undefined
+                }
+              />
             </dl>
           </div>
         </div>
@@ -342,10 +352,19 @@ export function AssetDetailPage() {
           <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
             <DetailItem label="Type" value={robotType} />
             <DetailItem label="Order Code" value={robotOrderCode} />
-            <DetailItem label="Payload" value={payloadKg !== undefined ? `${payloadKg} kg` : undefined} />
+            <DetailItem
+              label="Payload"
+              value={payloadKg !== undefined ? `${payloadKg} kg` : undefined}
+            />
             <DetailItem label="Reach" value={reachMm !== undefined ? `${reachMm} mm` : undefined} />
-            <DetailItem label="Track Used" value={trackUsed !== undefined ? (trackUsed ? 'Yes' : 'No') : undefined} />
-            <DetailItem label="Max Force" value={maxForce !== undefined ? `${maxForce} kN` : undefined} />
+            <DetailItem
+              label="Track Used"
+              value={trackUsed !== undefined ? (trackUsed ? 'Yes' : 'No') : undefined}
+            />
+            <DetailItem
+              label="Max Force"
+              value={maxForce !== undefined ? `${maxForce} kN` : undefined}
+            />
           </dl>
         </div>
       </div>
@@ -358,7 +377,9 @@ export function AssetDetailPage() {
           </h3>
         </div>
         <div className="p-3">
-          <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{description || '—'}</p>
+          <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+            {description || '—'}
+          </p>
         </div>
       </div>
 
@@ -455,7 +476,9 @@ export function AssetDetailPage() {
           <div className="flex items-center gap-2 text-sm">
             <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
             <span className="font-medium text-gray-700 dark:text-gray-300">Primary Workbook:</span>
-            <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{primaryWorkbookId || '—'}</span>
+            <span className="font-mono text-xs text-gray-600 dark:text-gray-400">
+              {primaryWorkbookId || '—'}
+            </span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <ArrowRight className="w-3.5 h-3.5 text-gray-400 mt-0.5" />
@@ -464,7 +487,9 @@ export function AssetDetailPage() {
               {sourceWorkbookIds.length > 0 ? (
                 <ul className="list-disc list-inside space-y-0.5">
                   {sourceWorkbookIds.map((id) => (
-                    <li key={id} className="font-mono text-xs text-gray-600 dark:text-gray-400">{id}</li>
+                    <li key={id} className="font-mono text-xs text-gray-600 dark:text-gray-400">
+                      {id}
+                    </li>
                   ))}
                 </ul>
               ) : (
@@ -474,7 +499,10 @@ export function AssetDetailPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
             <DetailItem label="Source File" value={asset.sourceFile} />
-            <DetailItem label="Sheet / Row" value={`${asset.sheetName ?? '—'}${asset.rowIndex !== undefined ? ` / ${asset.rowIndex}` : ''}`} />
+            <DetailItem
+              label="Sheet / Row"
+              value={`${asset.sheetName ?? '—'}${asset.rowIndex !== undefined ? ` / ${asset.rowIndex}` : ''}`}
+            />
             <DetailItem label="Station ID" value={asset.stationId} />
             <DetailItem label="Robot ID" value={asset.robotId} />
             <DetailItem label="Tool ID" value={asset.toolId} />

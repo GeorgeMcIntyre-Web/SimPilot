@@ -8,7 +8,7 @@ import { LastSeenBadge } from '../../components/registry/LastSeenBadge'
 import {
   createActivateAuditEntry,
   createDeactivateAuditEntry,
-  createAddAliasAuditEntry
+  createAddAliasAuditEntry,
 } from '../../domain/auditLog'
 
 export default function RegistryPage() {
@@ -22,28 +22,34 @@ export default function RegistryPage() {
   // Get unique plant keys
   const allPlants = useMemo(() => {
     const plants = new Set<string>()
-    stationRecords.forEach(s => plants.add(s.plantKey))
-    toolRecords.forEach(t => plants.add(t.plantKey))
-    robotRecords.forEach(r => plants.add(r.plantKey))
+    stationRecords.forEach((s) => plants.add(s.plantKey))
+    toolRecords.forEach((t) => plants.add(t.plantKey))
+    robotRecords.forEach((r) => plants.add(r.plantKey))
     return Array.from(plants).sort()
   }, [stationRecords, toolRecords, robotRecords])
 
   // Helper function to check if entity is stale (inactive and not seen in 30+ days)
-  const isEntityStale = (lastSeenImportRunId: string | undefined, status: 'active' | 'inactive'): boolean => {
+  const isEntityStale = (
+    lastSeenImportRunId: string | undefined,
+    status: 'active' | 'inactive',
+  ): boolean => {
     if (status === 'active') return false
     if (!lastSeenImportRunId) return true // Never seen = stale
 
-    const importRun = importRuns.find(run => run.id === lastSeenImportRunId)
+    const importRun = importRuns.find((run) => run.id === lastSeenImportRunId)
     if (!importRun) return true // Import run not found = stale
 
-    const daysSinceLastSeen = Math.floor((Date.now() - new Date(importRun.importedAt).getTime()) / (1000 * 60 * 60 * 24))
+    const daysSinceLastSeen = Math.floor(
+      (Date.now() - new Date(importRun.importedAt).getTime()) / (1000 * 60 * 60 * 24),
+    )
     return daysSinceLastSeen >= 30
   }
 
-  const filteredStations = stationRecords.filter(s => {
+  const filteredStations = stationRecords.filter((s) => {
     const matchesStatus = statusFilter === 'all' || s.status === statusFilter
     const matchesPlant = plantFilter === 'all' || s.plantKey === plantFilter
-    const matchesSearch = s.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      s.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.labels.fullLabel?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.labels.area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.uid.toLowerCase().includes(searchTerm.toLowerCase())
@@ -51,10 +57,11 @@ export default function RegistryPage() {
     return matchesStatus && matchesPlant && matchesSearch && matchesStale
   })
 
-  const filteredTools = toolRecords.filter(t => {
+  const filteredTools = toolRecords.filter((t) => {
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter
     const matchesPlant = plantFilter === 'all' || t.plantKey === plantFilter
-    const matchesSearch = t.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      t.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.labels.toolCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.labels.toolName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.uid.toLowerCase().includes(searchTerm.toLowerCase())
@@ -62,10 +69,11 @@ export default function RegistryPage() {
     return matchesStatus && matchesPlant && matchesSearch && matchesStale
   })
 
-  const filteredRobots = robotRecords.filter(r => {
+  const filteredRobots = robotRecords.filter((r) => {
     const matchesStatus = statusFilter === 'all' || r.status === statusFilter
     const matchesPlant = plantFilter === 'all' || r.plantKey === plantFilter
-    const matchesSearch = r.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch =
+      r.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.labels.robotCaption?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.labels.robotName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.uid.toLowerCase().includes(searchTerm.toLowerCase())
@@ -87,9 +95,10 @@ export default function RegistryPage() {
               onClick={() => setActiveTab('stations')}
               className={`
                 px-6 py-3 border-b-2 font-medium text-sm
-                ${activeTab === 'stations'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ${
+                  activeTab === 'stations'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }
               `}
             >
@@ -99,9 +108,10 @@ export default function RegistryPage() {
               onClick={() => setActiveTab('tools')}
               className={`
                 px-6 py-3 border-b-2 font-medium text-sm
-                ${activeTab === 'tools'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ${
+                  activeTab === 'tools'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }
               `}
             >
@@ -111,9 +121,10 @@ export default function RegistryPage() {
               onClick={() => setActiveTab('robots')}
               className={`
                 px-6 py-3 border-b-2 font-medium text-sm
-                ${activeTab === 'robots'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ${
+                  activeTab === 'robots'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }
               `}
             >
@@ -137,8 +148,10 @@ export default function RegistryPage() {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="all">All Plants</option>
-              {allPlants.map(plant => (
-                <option key={plant} value={plant}>{plant}</option>
+              {allPlants.map((plant) => (
+                <option key={plant} value={plant}>
+                  {plant}
+                </option>
               ))}
             </select>
             <select
@@ -199,7 +212,7 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
         station.uid,
         'station',
         station.key,
-        reason || undefined
+        reason || undefined,
       )
       coreStore.addAuditEntry(auditEntry)
     } else {
@@ -212,7 +225,7 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
         station.uid,
         'station',
         station.key,
-        reason || undefined
+        reason || undefined,
       )
       coreStore.addAuditEntry(auditEntry)
     }
@@ -226,7 +239,7 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
       station.uid,
       'station',
       reasonInput.trim() || `Manual alias mapping via Registry UI`,
-      undefined
+      undefined,
     )
 
     coreStore.addAliasRules([rule])
@@ -236,7 +249,7 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
       'station',
       station.key,
       aliasInput.trim(),
-      reasonInput.trim() || undefined
+      reasonInput.trim() || undefined,
     )
     coreStore.addAuditEntry(auditEntry)
 
@@ -249,7 +262,9 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
-          {searchTerm ? 'No stations match your search.' : 'No stations yet. Import an Excel file to populate the registry.'}
+          {searchTerm
+            ? 'No stations match your search.'
+            : 'No stations yet. Import an Excel file to populate the registry.'}
         </p>
       </div>
     )
@@ -287,26 +302,27 @@ function StationRegistryTable({ stations, searchTerm }: StationRegistryTableProp
           {stations.map((station) => (
             <tr key={station.uid} className={station.status === 'inactive' ? 'opacity-50' : ''}>
               <td className="px-4 py-3 whitespace-nowrap">
-                <span className={`
+                <span
+                  className={`
                   px-2 py-1 text-xs font-medium rounded-full
-                  ${station.status === 'active'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                  ${
+                    station.status === 'active'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
                   }
-                `}>
+                `}
+                >
                   {station.status}
                 </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <code className="text-xs text-gray-600 dark:text-gray-400">
-                  {station.uid}
-                </code>
+                <code className="text-xs text-gray-600 dark:text-gray-400">{station.uid}</code>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
                 <CanonicalIdDisplay
                   plantKey={station.plantKey}
                   uid={station.uid}
-                  key={station.key}
+                  entityKey={station.key}
                 />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
@@ -399,12 +415,7 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
 
       coreStore.deactivateTool(tool.uid)
 
-      const auditEntry = createDeactivateAuditEntry(
-        tool.uid,
-        'tool',
-        tool.key,
-        reason || undefined
-      )
+      const auditEntry = createDeactivateAuditEntry(tool.uid, 'tool', tool.key, reason || undefined)
       coreStore.addAuditEntry(auditEntry)
     } else {
       const reason = prompt('Reason for reactivation (optional):')
@@ -412,12 +423,7 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
 
       coreStore.reactivateTool(tool.uid)
 
-      const auditEntry = createActivateAuditEntry(
-        tool.uid,
-        'tool',
-        tool.key,
-        reason || undefined
-      )
+      const auditEntry = createActivateAuditEntry(tool.uid, 'tool', tool.key, reason || undefined)
       coreStore.addAuditEntry(auditEntry)
     }
   }
@@ -430,7 +436,7 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
       tool.uid,
       'tool',
       reasonInput.trim() || `Manual alias mapping via Registry UI`,
-      undefined
+      undefined,
     )
 
     coreStore.addAliasRules([rule])
@@ -440,7 +446,7 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
       'tool',
       tool.key,
       aliasInput.trim(),
-      reasonInput.trim() || undefined
+      reasonInput.trim() || undefined,
     )
     coreStore.addAuditEntry(auditEntry)
 
@@ -453,7 +459,9 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
-          {searchTerm ? 'No tools match your search.' : 'No tools yet. Import an Excel file to populate the registry.'}
+          {searchTerm
+            ? 'No tools match your search.'
+            : 'No tools yet. Import an Excel file to populate the registry.'}
         </p>
       </div>
     )
@@ -491,27 +499,24 @@ function ToolRegistryTable({ tools, searchTerm }: ToolRegistryTableProps) {
           {tools.map((tool) => (
             <tr key={tool.uid} className={tool.status === 'inactive' ? 'opacity-50' : ''}>
               <td className="px-4 py-3 whitespace-nowrap">
-                <span className={`
+                <span
+                  className={`
                   px-2 py-1 text-xs font-medium rounded-full
-                  ${tool.status === 'active'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                  ${
+                    tool.status === 'active'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
                   }
-                `}>
+                `}
+                >
                   {tool.status}
                 </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <code className="text-xs text-gray-600 dark:text-gray-400">
-                  {tool.uid}
-                </code>
+                <code className="text-xs text-gray-600 dark:text-gray-400">{tool.uid}</code>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <CanonicalIdDisplay
-                  plantKey={tool.plantKey}
-                  uid={tool.uid}
-                  key={tool.key}
-                />
+                <CanonicalIdDisplay plantKey={tool.plantKey} uid={tool.uid} entityKey={tool.key} />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                 {tool.plantKey}
@@ -596,7 +601,9 @@ function RobotRegistryTable({ robots, searchTerm }: RobotRegistryTableProps) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
-          {searchTerm ? 'No robots match your search.' : 'No robots yet. Import an Excel file to populate the registry.'}
+          {searchTerm
+            ? 'No robots match your search.'
+            : 'No robots yet. Import an Excel file to populate the registry.'}
         </p>
       </div>
     )
@@ -631,26 +638,27 @@ function RobotRegistryTable({ robots, searchTerm }: RobotRegistryTableProps) {
           {robots.map((robot) => (
             <tr key={robot.uid} className={robot.status === 'inactive' ? 'opacity-50' : ''}>
               <td className="px-4 py-3 whitespace-nowrap">
-                <span className={`
+                <span
+                  className={`
                   px-2 py-1 text-xs font-medium rounded-full
-                  ${robot.status === 'active'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                  ${
+                    robot.status === 'active'
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
                   }
-                `}>
+                `}
+                >
                   {robot.status}
                 </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
-                <code className="text-xs text-gray-600 dark:text-gray-400">
-                  {robot.uid}
-                </code>
+                <code className="text-xs text-gray-600 dark:text-gray-400">{robot.uid}</code>
               </td>
               <td className="px-4 py-3 whitespace-nowrap">
                 <CanonicalIdDisplay
                   plantKey={robot.plantKey}
                   uid={robot.uid}
-                  key={robot.key}
+                  entityKey={robot.key}
                 />
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">

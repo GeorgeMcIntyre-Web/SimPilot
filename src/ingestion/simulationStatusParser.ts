@@ -8,27 +8,29 @@ import type { IngestionWarning } from '../domain/core'
 import { sheetToMatrix, findHeaderRow } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 import { parseOverviewSchedule } from './simulationStatus/overviewSchedule'
-import { findAllSimulationSheets, extractAreaNameFromTitle } from './simulationStatus/sheetDiscovery'
+import {
+  findAllSimulationSheets,
+  extractAreaNameFromTitle,
+} from './simulationStatus/sheetDiscovery'
 import { deriveProjectName, deriveCustomer } from './simulationStatus/projectNaming'
 import { COLUMN_ALIASES, REQUIRED_HEADERS } from './simulationStatus/headerMapping'
 import { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
 import { extractRobotsFromVacuumRows } from './simulationStatus/robotExtraction'
 import { buildEntities } from './simulationStatus/entityBuilder'
-import type {
-  VacuumParsedRow,
-  ParsedSimulationRow,
-  SimulationStatusResult
-} from './simulationStatus/types'
+import type { VacuumParsedRow, ParsedSimulationRow, SimulationStatusResult } from './simulationStatus/types'
 
 // Re-export selected helpers for external consumers
 export { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
-export { convertVacuumRowsToPanelMilestones, getPanelMilestonesForRobot } from './simulationStatus/panelMilestones'
+export {
+  convertVacuumRowsToPanelMilestones,
+  getPanelMilestonesForRobot,
+} from './simulationStatus/panelMilestones'
 export type {
   SimulationMetric,
   VacuumParsedRow,
   ParsedSimulationRow,
   SimulationRobot,
-  SimulationStatusResult
+  SimulationStatusResult,
 } from './simulationStatus/types'
 
 // ============================================================================
@@ -36,7 +38,7 @@ export type {
 // ============================================================================
 
 function toParsedRows(vacuumRows: VacuumParsedRow[]): ParsedSimulationRow[] {
-  return vacuumRows.map(vr => {
+  return vacuumRows.map((vr) => {
     const stageMetrics: Record<string, number> = {}
 
     for (const metric of vr.metrics) {
@@ -54,7 +56,7 @@ function toParsedRows(vacuumRows: VacuumParsedRow[]): ParsedSimulationRow[] {
       robotName: vr.robotCaption,
       application: vr.application,
       stageMetrics,
-      sourceRowIndex: vr.sourceRowIndex
+      sourceRowIndex: vr.sourceRowIndex,
     }
   })
 }
@@ -71,7 +73,7 @@ function toParsedRows(vacuumRows: VacuumParsedRow[]): ParsedSimulationRow[] {
 export async function parseSimulationStatus(
   workbook: XLSX.WorkBook,
   fileName: string,
-  targetSheetName?: string
+  targetSheetName?: string,
 ): Promise<SimulationStatusResult> {
   const warnings: IngestionWarning[] = []
   const overviewSchedule = parseOverviewSchedule(workbook)
@@ -85,11 +87,13 @@ export async function parseSimulationStatus(
     workbookSheets: workbook.SheetNames,
     targetSheetName,
     sheetsToParse,
-    parsedFile: fileName
+    parsedFile: fileName,
   })
 
   if (sheetsToParse.length === 0) {
-    throw new Error(`No simulation sheets found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+    throw new Error(
+      `No simulation sheets found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`,
+    )
   }
 
   log.info(`[Parser] Parsing ${sheetsToParse.length} sheet(s): ${sheetsToParse.join(', ')}`)
@@ -99,22 +103,26 @@ export async function parseSimulationStatus(
 
   for (const sheetName of sheetsToParse) {
     if (workbook.SheetNames.includes(sheetName) === false) {
-      warnings.push(createParserErrorWarning({
-        fileName,
-        sheetName,
-        error: `Sheet "${sheetName}" not found in workbook`
-      }))
+      warnings.push(
+        createParserErrorWarning({
+          fileName,
+          sheetName,
+          error: `Sheet "${sheetName}" not found in workbook`,
+        }),
+      )
       continue
     }
 
     const rows = sheetToMatrix(workbook, sheetName)
 
     if (rows.length < 5) {
-      warnings.push(createParserErrorWarning({
-        fileName,
-        sheetName,
-        error: `Sheet has too few rows (${rows.length}). Expected at least 5 rows.`
-      }))
+      warnings.push(
+        createParserErrorWarning({
+          fileName,
+          sheetName,
+          error: `Sheet has too few rows (${rows.length}). Expected at least 5 rows.`,
+        }),
+      )
       continue
     }
 
@@ -123,11 +131,13 @@ export async function parseSimulationStatus(
     log.debug(`[Parser] ${sheetName}: Header row index: ${headerRowIndex}`)
 
     if (headerRowIndex === null) {
-      warnings.push(createParserErrorWarning({
-        fileName,
-        sheetName,
-        error: `Could not find header row with required columns: ${REQUIRED_HEADERS.join(', ')}`
-      }))
+      warnings.push(
+        createParserErrorWarning({
+          fileName,
+          sheetName,
+          error: `Could not find header row with required columns: ${REQUIRED_HEADERS.join(', ')}`,
+        }),
+      )
       continue
     }
 
@@ -146,29 +156,29 @@ export async function parseSimulationStatus(
       headerRowIndex,
       fileName,
       sheetName,
-      globalAreaName
+      globalAreaName,
     )
 
     warnings.push(...parseWarnings)
 
     if (vacuumRows.length === 0) {
-      warnings.push(createParserErrorWarning({
-        fileName,
-        sheetName,
-        error: 'No valid data rows found after parsing'
-      }))
+      warnings.push(
+        createParserErrorWarning({
+          fileName,
+          sheetName,
+          error: 'No valid data rows found after parsing',
+        }),
+      )
       continue
     }
 
     // Prefix metrics with sheet name to avoid conflicts (except for SIMULATION sheet)
-    const prefixedVacuumRows = vacuumRows.map(vr => ({
+    const prefixedVacuumRows = vacuumRows.map((vr) => ({
       ...vr,
-      metrics: vr.metrics.map(m => ({
+      metrics: vr.metrics.map((m) => ({
         ...m,
-        label: sheetName === 'SIMULATION'
-          ? m.label
-          : `${sheetName}: ${m.label}`
-      }))
+        label: sheetName === 'SIMULATION' ? m.label : `${sheetName}: ${m.label}`,
+      })),
     }))
 
     allVacuumRows.push(...prefixedVacuumRows)
@@ -182,7 +192,8 @@ export async function parseSimulationStatus(
   }
 
   // Use the first sheet name for backward compatibility (or SIMULATION if available)
-  const primarySheetName = sheetsToParse.find(s => s.toUpperCase() === 'SIMULATION') || sheetsToParse[0]
+  const primarySheetName =
+    sheetsToParse.find((s) => s.toUpperCase() === 'SIMULATION') || sheetsToParse[0]
 
   const projectName = deriveProjectName(fileName)
   const customer = deriveCustomer(fileName)
@@ -194,18 +205,18 @@ export async function parseSimulationStatus(
     customer,
     fileName,
     primarySheetName,
-    overviewSchedule
+    overviewSchedule,
   )
 
   // Extract robots from vacuum rows and detect duplicate station+robot combinations
   const { robots: robotsFromSimStatus, warnings: robotWarnings } = extractRobotsFromVacuumRows(
     allVacuumRows,
     fileName,
-    primarySheetName
+    primarySheetName,
   )
   warnings.push(...robotWarnings)
 
-  const areaNames = areas.map(a => `${a.name} (${a.code || 'No Code'})`).join(', ')
+  const areaNames = areas.map((a) => `${a.name} (${a.code || 'No Code'})`).join(', ')
 
   // Console debug message for import summary
   log.info(`[Parser] Simulation document imported: ${fileName}`)
@@ -221,7 +232,7 @@ export async function parseSimulationStatus(
     warnings,
     vacuumRows: allVacuumRows,
     robotsFromSimStatus,
-    overviewSchedule
+    overviewSchedule,
   }
 }
 

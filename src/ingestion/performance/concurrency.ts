@@ -1,9 +1,9 @@
 /**
  * Concurrency Control
- * 
+ *
  * Provides utilities for processing multiple files in parallel with
  * configurable concurrency limits to prevent overwhelming the browser.
- * 
+ *
  * Part of the Performance Engine for Excel ingestion.
  */
 
@@ -26,13 +26,13 @@ export type ConcurrencyConfig = {
  */
 export const DEFAULT_CONCURRENCY_CONFIG: ConcurrencyConfig = {
   limit: 3,
-  continueOnError: true
+  continueOnError: true,
 }
 
 /**
  * Result of a parallel task execution.
  */
-export type TaskResult<T> = 
+export type TaskResult<T> =
   | { status: 'fulfilled'; value: T; index: number }
   | { status: 'rejected'; reason: Error; index: number }
 
@@ -42,16 +42,16 @@ export type TaskResult<T> =
 
 /**
  * Run tasks with a concurrency limit.
- * 
+ *
  * Executes an array of async task functions with at most `limit` running
  * concurrently. Returns results in the same order as input tasks.
- * 
+ *
  * Uses guard clauses and avoids complex queuing for simplicity.
- * 
+ *
  * @param limit - Maximum concurrent tasks (default: 3)
  * @param tasks - Array of async task functions
  * @returns Array of results in same order as input
- * 
+ *
  * @example
  * ```ts
  * const files = [file1, file2, file3, file4, file5]
@@ -63,7 +63,7 @@ export type TaskResult<T> =
  */
 export async function runWithConcurrencyLimit<T>(
   limit: number,
-  tasks: (() => Promise<T>)[]
+  tasks: (() => Promise<T>)[],
 ): Promise<T[]> {
   // Guard: empty tasks
   if (tasks.length === 0) {
@@ -72,7 +72,7 @@ export async function runWithConcurrencyLimit<T>(
 
   // Guard: no limit needed
   if (limit <= 0 || limit >= tasks.length) {
-    return Promise.all(tasks.map(task => task()))
+    return Promise.all(tasks.map((task) => task()))
   }
 
   const results: T[] = new Array(tasks.length)
@@ -80,7 +80,7 @@ export async function runWithConcurrencyLimit<T>(
   let running = 0
   let resolveAll: () => void
 
-  const allDone = new Promise<void>(resolve => {
+  const allDone = new Promise<void>((resolve) => {
     resolveAll = resolve
   })
 
@@ -99,11 +99,10 @@ export async function runWithConcurrencyLimit<T>(
       results[currentIndex] = await task()
     } finally {
       running--
-      
+
       // Check if all done
       if (nextIndex >= tasks.length && running === 0) {
         resolveAll()
-        return
       }
 
       // Start next task if available
@@ -125,16 +124,16 @@ export async function runWithConcurrencyLimit<T>(
 
 /**
  * Run tasks with concurrency limit, collecting all results including errors.
- * 
+ *
  * Similar to Promise.allSettled but with concurrency control.
- * 
+ *
  * @param limit - Maximum concurrent tasks
  * @param tasks - Array of async task functions
  * @returns Array of task results with status
  */
 export async function runWithConcurrencyLimitSettled<T>(
   limit: number,
-  tasks: (() => Promise<T>)[]
+  tasks: (() => Promise<T>)[],
 ): Promise<TaskResult<T>[]> {
   // Guard: empty tasks
   if (tasks.length === 0) {
@@ -143,15 +142,15 @@ export async function runWithConcurrencyLimitSettled<T>(
 
   // Guard: no limit needed
   if (limit <= 0 || limit >= tasks.length) {
-    const settled = await Promise.allSettled(tasks.map(task => task()))
+    const settled = await Promise.allSettled(tasks.map((task) => task()))
     return settled.map((result, index) => {
       if (result.status === 'fulfilled') {
         return { status: 'fulfilled' as const, value: result.value, index }
       }
-      return { 
-        status: 'rejected' as const, 
+      return {
+        status: 'rejected' as const,
         reason: result.reason instanceof Error ? result.reason : new Error(String(result.reason)),
-        index 
+        index,
       }
     })
   }
@@ -161,7 +160,7 @@ export async function runWithConcurrencyLimitSettled<T>(
   let running = 0
   let resolveAll: () => void
 
-  const allDone = new Promise<void>(resolve => {
+  const allDone = new Promise<void>((resolve) => {
     resolveAll = resolve
   })
 
@@ -184,11 +183,10 @@ export async function runWithConcurrencyLimitSettled<T>(
       results[currentIndex] = { status: 'rejected', reason, index: currentIndex }
     } finally {
       running--
-      
+
       // Check if all done
       if (nextIndex >= tasks.length && running === 0) {
         resolveAll()
-        return
       }
 
       // Start next task if available
@@ -214,10 +212,10 @@ export async function runWithConcurrencyLimitSettled<T>(
 
 /**
  * Process items in batches with a concurrency limit per batch.
- * 
+ *
  * Useful for processing large arrays where you want to control
  * both batch size and concurrency within each batch.
- * 
+ *
  * @param items - Array of items to process
  * @param batchSize - Number of items per batch
  * @param concurrency - Concurrent tasks per batch
@@ -228,7 +226,7 @@ export async function processBatches<T, R>(
   items: T[],
   batchSize: number,
   concurrency: number,
-  processor: (item: T, index: number) => Promise<R>
+  processor: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
   // Guard: empty items
   if (items.length === 0) {
@@ -236,11 +234,11 @@ export async function processBatches<T, R>(
   }
 
   const results: R[] = []
-  
+
   for (let batchStart = 0; batchStart < items.length; batchStart += batchSize) {
     const batchEnd = Math.min(batchStart + batchSize, items.length)
     const batch = items.slice(batchStart, batchEnd)
-    
+
     const tasks = batch.map((item, localIndex) => {
       const globalIndex = batchStart + localIndex
       return () => processor(item, globalIndex)
@@ -259,12 +257,12 @@ export async function processBatches<T, R>(
 
 /**
  * Execute a function and return both result and elapsed time.
- * 
+ *
  * @param fn - Async function to execute
  * @returns Object with result and elapsed milliseconds
  */
 export async function withTiming<T>(
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<{ result: T; elapsedMs: number }> {
   const start = performance.now()
   const result = await fn()
@@ -274,16 +272,16 @@ export async function withTiming<T>(
 
 /**
  * Execute multiple functions with concurrency and return timing for each.
- * 
+ *
  * @param limit - Maximum concurrent tasks
  * @param tasks - Array of named task functions
  * @returns Array of results with timing information
  */
 export async function runWithTimingAndConcurrency<T>(
   limit: number,
-  tasks: { name: string; fn: () => Promise<T> }[]
+  tasks: { name: string; fn: () => Promise<T> }[],
 ): Promise<{ name: string; result: T; elapsedMs: number }[]> {
-  const timedTasks = tasks.map(task => async () => {
+  const timedTasks = tasks.map((task) => async () => {
     const { result, elapsedMs } = await withTiming(task.fn)
     return { name: task.name, result, elapsedMs }
   })

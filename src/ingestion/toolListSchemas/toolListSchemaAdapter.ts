@@ -6,30 +6,28 @@
  */
 
 import * as XLSX from 'xlsx'
-import { sheetToMatrix, buildColumnMap, getCellString, CellValue, isCellStruck } from '../excelUtils'
+import {
+  sheetToMatrix,
+  buildColumnMap,
+  getCellString,
+  CellValue,
+  isCellStruck,
+} from '../excelUtils'
 import {
   ProjectHint,
   ToolEntity,
   ValidationReport,
-  ValidationAnomaly
+  ValidationAnomaly,
 } from './normalizeToolListRow'
 import { getProjectIdentifierHeaders, isPossibleShapeRedaction } from '../excelCellStyles'
 import { log } from '../../lib/log'
-import {
-  normalizeBMWRow,
-  bmwRowToToolEntities,
-  validateBMWEntities
-} from './bmwToolListSchema'
+import { normalizeBMWRow, bmwRowToToolEntities, validateBMWEntities } from './bmwToolListSchema'
 import {
   normalizeV801Rows,
   v801RowToToolEntities,
-  validateV801Entities
+  validateV801Entities,
 } from './v801ToolListSchema'
-import {
-  normalizeSTLARow,
-  stlaRowToToolEntities,
-  validateSTLAEntities
-} from './stlaToolListSchema'
+import { normalizeSTLARow, stlaRowToToolEntities, validateSTLAEntities } from './stlaToolListSchema'
 
 // ============================================================================
 // TYPES
@@ -50,7 +48,7 @@ export interface ToolListSchemaResult {
  */
 export function detectProjectHint(fileName: string, columns: string[]): ProjectHint {
   const fileNameLower = fileName.toLowerCase()
-  const columnSet = new Set(columns.map(c => c.toLowerCase()))
+  const columnSet = new Set(columns.map((c) => c.toLowerCase()))
 
   // STLA signature: "SUB Area Name" column
   if (columnSet.has('sub area name')) {
@@ -63,7 +61,11 @@ export function detectProjectHint(fileName: string, columns: string[]): ProjectH
   }
 
   // BMW signature: "J10735" or "BMW" in filename
-  if (fileNameLower.includes('j10735') || fileNameLower.includes('bmw') || fileNameLower.includes('ncar')) {
+  if (
+    fileNameLower.includes('j10735') ||
+    fileNameLower.includes('bmw') ||
+    fileNameLower.includes('ncar')
+  ) {
     return 'BMW_J10735'
   }
 
@@ -91,7 +93,7 @@ export async function parseToolListWithSchema(
   workbook: XLSX.WorkBook,
   fileName: string,
   sheetName: string,
-  debug = false
+  debug = false,
 ): Promise<ToolListSchemaResult> {
   const rows = sheetToMatrix(workbook, sheetName)
   const sheet = workbook.Sheets[sheetName]
@@ -103,7 +105,9 @@ export async function parseToolListWithSchema(
   // Find header row (first row with multiple non-empty cells)
   let headerRowIndex = 0
   for (let i = 0; i < Math.min(20, rows.length); i++) {
-    const nonEmptyCount = rows[i].filter(cell => cell !== null && String(cell).trim() !== '').length
+    const nonEmptyCount = rows[i].filter(
+      (cell) => cell !== null && String(cell).trim() !== '',
+    ).length
     if (nonEmptyCount >= 3) {
       headerRowIndex = i
       break
@@ -111,17 +115,21 @@ export async function parseToolListWithSchema(
   }
 
   const headerRow = rows[headerRowIndex]
-  const columns = headerRow.map((h, idx) => h ? String(h).trim() : `Column_${idx}`)
+  const columns = headerRow.map((h, idx) => (h ? String(h).trim() : `Column_${idx}`))
 
   // Detect project type
   const projectHint = detectProjectHint(fileName, columns)
-  
+
   if (debug) {
-    log.debug(`[ToolListSchemaAdapter] File: ${fileName}, Header row: ${headerRowIndex}, Columns: ${columns.slice(0, 10).join(', ')}, Project: ${projectHint}`)
+    log.debug(
+      `[ToolListSchemaAdapter] File: ${fileName}, Header row: ${headerRowIndex}, Columns: ${columns.slice(0, 10).join(', ')}, Project: ${projectHint}`,
+    )
   }
 
   if (projectHint === 'UNKNOWN') {
-    throw new Error(`Could not detect project type for file: ${fileName}. Columns found: ${columns.slice(0, 10).join(', ')}`)
+    throw new Error(
+      `Could not detect project type for file: ${fileName}. Columns found: ${columns.slice(0, 10).join(', ')}`,
+    )
   }
 
   // Build column map
@@ -140,11 +148,11 @@ export async function parseToolListWithSchema(
     'Tooling Number LH',
     'Tooling Number RH (Opposite)',
     'Tooling Number LH (Opposite)',
-    'SHOP'
+    'SHOP',
   ])
 
   const dataStartIndex = headerRowIndex + 1
-  
+
   // Store header row for vacuum parsing (pass to parse functions)
   const headerRowForVacuum = headerRow as CellValue[]
   const anomalies: ValidationAnomaly[] = []
@@ -152,19 +160,52 @@ export async function parseToolListWithSchema(
 
   // Route to appropriate schema adapter
   if (projectHint === 'BMW_J10735') {
-    entities = parseBMWRows(rows, dataStartIndex, columnMap, fileName, sheetName, sheet, projectHint, anomalies, debug, headerRowForVacuum)
+    entities = parseBMWRows(
+      rows,
+      dataStartIndex,
+      columnMap,
+      fileName,
+      sheetName,
+      sheet,
+      projectHint,
+      anomalies,
+      debug,
+      headerRowForVacuum,
+    )
     const validation = validateBMWEntities(entities, rows.length - dataStartIndex, anomalies)
     return { entities, validation, projectHint }
   }
 
   if (projectHint === 'FORD_V801') {
-    entities = parseV801Rows(rows, dataStartIndex, columnMap, fileName, sheetName, sheet, projectHint, anomalies, debug, headerRowForVacuum)
+    entities = parseV801Rows(
+      rows,
+      dataStartIndex,
+      columnMap,
+      fileName,
+      sheetName,
+      sheet,
+      projectHint,
+      anomalies,
+      debug,
+      headerRowForVacuum,
+    )
     const validation = validateV801Entities(entities, rows.length - dataStartIndex, anomalies)
     return { entities, validation, projectHint }
   }
 
   if (projectHint === 'STLA_S_ZAR') {
-    entities = parseSTLARows(rows, dataStartIndex, columnMap, fileName, sheetName, sheet, projectHint, anomalies, debug, headerRowForVacuum)
+    entities = parseSTLARows(
+      rows,
+      dataStartIndex,
+      columnMap,
+      fileName,
+      sheetName,
+      sheet,
+      projectHint,
+      anomalies,
+      debug,
+      headerRowForVacuum,
+    )
     const validation = validateSTLAEntities(entities, rows.length - dataStartIndex, anomalies)
     return { entities, validation, projectHint }
   }
@@ -186,7 +227,7 @@ function parseBMWRows(
   projectHint: string,
   anomalies: ValidationAnomaly[],
   debug: boolean,
-  headerRow: CellValue[]
+  headerRow: CellValue[],
 ): ToolEntity[] {
   const entities: ToolEntity[] = []
   const idHeaders = getProjectIdentifierHeaders(projectHint)
@@ -195,19 +236,19 @@ function parseBMWRows(
     const row = rows[i] as CellValue[]
 
     // Skip empty rows
-    if (row.every(cell => cell === null || String(cell).trim() === '')) {
+    if (row.every((cell) => cell === null || String(cell).trim() === '')) {
       continue
     }
 
     const rawRow: Record<string, unknown> = {
-      'ID': getCellString(row, columnMap, 'ID'),
+      ID: getCellString(row, columnMap, 'ID'),
       'Area Name': getCellString(row, columnMap, 'Area Name'),
-      'Station': getCellString(row, columnMap, 'Station'),
+      Station: getCellString(row, columnMap, 'Station'),
       'Equipment Type': getCellString(row, columnMap, 'Equipment Type'),
       'Equipment No': getCellString(row, columnMap, 'Equipment No'),
-      'Tool': getCellString(row, columnMap, 'Tool'),
+      Tool: getCellString(row, columnMap, 'Tool'),
       'Tooling Number RH': getCellString(row, columnMap, 'Tooling Number RH'),
-      'Tooling Number LH': getCellString(row, columnMap, 'Tooling Number LH')
+      'Tooling Number LH': getCellString(row, columnMap, 'Tooling Number LH'),
     }
 
     // Vacuum parser: Capture ALL columns from the row (including unmapped ones)
@@ -215,10 +256,16 @@ function parseBMWRows(
     for (let colIdx = 0; colIdx < Math.max(headerRow.length, row.length); colIdx++) {
       const header = headerRow[colIdx] ? String(headerRow[colIdx]).trim() : `Column_${colIdx}`
       const cellValue = row[colIdx]
-      
+
       // Only add if not already in rawRow (avoid overwriting mapped columns)
       // and if the cell has a value
-      if (header && !rawRow.hasOwnProperty(header) && cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
+      if (
+        header &&
+        !Object.prototype.hasOwnProperty.call(rawRow, header) &&
+        cellValue !== null &&
+        cellValue !== undefined &&
+        String(cellValue).trim() !== ''
+      ) {
         rawRow[header] = cellValue
       }
     }
@@ -235,7 +282,7 @@ function parseBMWRows(
     }
 
     // Detect deletion: check if any identifier cells are struck through
-    const isDeleted = idHeaders.some(header => {
+    const isDeleted = idHeaders.some((header) => {
       const colIndex = columnMap[header]
       if (colIndex === null || colIndex === undefined) {
         return false
@@ -247,15 +294,15 @@ function parseBMWRows(
     const hasShapeRedaction = [
       rawRow['Equipment No'],
       rawRow['Tooling Number RH'],
-      rawRow['Tooling Number LH']
-    ].some(val => val && isPossibleShapeRedaction(String(val || '')))
+      rawRow['Tooling Number LH'],
+    ].some((val) => val && isPossibleShapeRedaction(String(val || '')))
 
     if (hasShapeRedaction && !isDeleted) {
       anomalies.push({
         type: 'POSSIBLE_SHAPE_REDACTION',
         row: i + 1,
         message: `Row ${i + 1} has possible shape redaction (underscore/dash runs) but no strike-through`,
-        data: rawRow
+        data: rawRow,
       })
     }
 
@@ -269,7 +316,7 @@ function parseBMWRows(
           type: 'DELETED_ROW',
           row: i + 1,
           message: `Row ${i + 1} skipped: struck-through identifiers detected`,
-          data: rawRow
+          data: rawRow,
         })
       }
       continue
@@ -292,7 +339,7 @@ function parseV801Rows(
   projectHint: string,
   anomalies: ValidationAnomaly[],
   debug: boolean,
-  headerRow: CellValue[]
+  headerRow: CellValue[],
 ): ToolEntity[] {
   const rawRows = []
   const idHeaders = getProjectIdentifierHeaders(projectHint)
@@ -301,17 +348,17 @@ function parseV801Rows(
     const row = rows[i] as CellValue[]
 
     // Skip empty rows
-    if (row.every(cell => cell === null || String(cell).trim() === '')) {
+    if (row.every((cell) => cell === null || String(cell).trim() === '')) {
       continue
     }
 
     const rawRow: Record<string, unknown> = {
       'Area Name': getCellString(row, columnMap, 'Area Name'),
-      'Station': getCellString(row, columnMap, 'Station'),
+      Station: getCellString(row, columnMap, 'Station'),
       'Equipment No': getCellString(row, columnMap, 'Equipment No'),
       'Tooling Number RH': getCellString(row, columnMap, 'Tooling Number RH'),
       'Tooling Number LH': getCellString(row, columnMap, 'Tooling Number LH'),
-      'Equipment Type': getCellString(row, columnMap, 'Equipment Type')
+      'Equipment Type': getCellString(row, columnMap, 'Equipment Type'),
     }
 
     // Vacuum parser: Capture ALL columns from the row (including unmapped ones)
@@ -319,16 +366,22 @@ function parseV801Rows(
     for (let colIdx = 0; colIdx < Math.max(headerRow.length, row.length); colIdx++) {
       const header = headerRow[colIdx] ? String(headerRow[colIdx]).trim() : `Column_${colIdx}`
       const cellValue = row[colIdx]
-      
+
       // Only add if not already in rawRow (avoid overwriting mapped columns)
       // and if the cell has a value
-      if (header && !rawRow.hasOwnProperty(header) && cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
+      if (
+        header &&
+        !Object.prototype.hasOwnProperty.call(rawRow, header) &&
+        cellValue !== null &&
+        cellValue !== undefined &&
+        String(cellValue).trim() !== ''
+      ) {
         rawRow[header] = cellValue
       }
     }
 
     // Detect deletion
-    const isDeleted = idHeaders.some(header => {
+    const isDeleted = idHeaders.some((header) => {
       const colIndex = columnMap[header]
       if (colIndex === null || colIndex === undefined) {
         return false
@@ -340,15 +393,15 @@ function parseV801Rows(
     const hasShapeRedaction = [
       rawRow['Equipment No'],
       rawRow['Tooling Number RH'],
-      rawRow['Tooling Number LH']
-    ].some(val => val && isPossibleShapeRedaction(String(val || '')))
+      rawRow['Tooling Number LH'],
+    ].some((val) => val && isPossibleShapeRedaction(String(val || '')))
 
     if (hasShapeRedaction && !isDeleted) {
       anomalies.push({
         type: 'POSSIBLE_SHAPE_REDACTION',
         row: i + 1,
         message: `Row ${i + 1} has possible shape redaction but no strike-through`,
-        data: rawRow
+        data: rawRow,
       })
     }
 
@@ -358,7 +411,7 @@ function parseV801Rows(
           type: 'DELETED_ROW',
           row: i + 1,
           message: `Row ${i + 1} skipped: struck-through identifiers detected`,
-          data: rawRow
+          data: rawRow,
         })
       }
       continue
@@ -388,7 +441,7 @@ function parseSTLARows(
   projectHint: string,
   anomalies: ValidationAnomaly[],
   debug: boolean,
-  headerRowForVacuum: CellValue[]
+  headerRowForVacuum: CellValue[],
 ): ToolEntity[] {
   const entities: ToolEntity[] = []
   const idHeaders = getProjectIdentifierHeaders(projectHint)
@@ -397,14 +450,16 @@ function parseSTLARows(
     const row = rows[i] as CellValue[]
 
     // Skip empty rows
-    if (row.every(cell => cell === null || String(cell).trim() === '')) {
+    if (row.every((cell) => cell === null || String(cell).trim() === '')) {
       continue
     }
 
     // Build rawRow with mapped columns
     const rawRow: Record<string, unknown> = {
       'SUB Area Name': getCellString(row, columnMap, 'SUB Area Name'),
-      'Station': getCellString(row, columnMap, 'Station') || getCellString(row, columnMap, 'Work Cell / Station Group'),
+      Station:
+        getCellString(row, columnMap, 'Station') ||
+        getCellString(row, columnMap, 'Work Cell / Station Group'),
       'Equipment No Shown': getCellString(row, columnMap, 'Equipment No Shown'),
       'Equipment No Opposite': getCellString(row, columnMap, 'Equipment No Opposite'),
       'Tooling Number RH': getCellString(row, columnMap, 'Tooling Number RH'),
@@ -412,18 +467,26 @@ function parseSTLARows(
       'Tooling Number RH (Opposite)': getCellString(row, columnMap, 'Tooling Number RH (Opposite)'),
       'Tooling Number LH (Opposite)': getCellString(row, columnMap, 'Tooling Number LH (Opposite)'),
       'Equipment Type': getCellString(row, columnMap, 'Equipment Type'),
-      'SHOP': getCellString(row, columnMap, 'SHOP')
+      SHOP: getCellString(row, columnMap, 'SHOP'),
     }
-    
+
     // Vacuum parser: Capture ALL columns from the row (including unmapped ones)
     // This ensures metadata like 'Sim. Leader', 'Sim. Employee', etc. are preserved
     for (let colIdx = 0; colIdx < Math.max(headerRowForVacuum.length, row.length); colIdx++) {
-      const header = headerRowForVacuum[colIdx] ? String(headerRowForVacuum[colIdx]).trim() : `Column_${colIdx}`
+      const header = headerRowForVacuum[colIdx]
+        ? String(headerRowForVacuum[colIdx]).trim()
+        : `Column_${colIdx}`
       const cellValue = row[colIdx]
-      
+
       // Only add if not already in rawRow (avoid overwriting mapped columns)
       // and if the cell has a value
-      if (header && !rawRow.hasOwnProperty(header) && cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') {
+      if (
+        header &&
+        !Object.prototype.hasOwnProperty.call(rawRow, header) &&
+        cellValue !== null &&
+        cellValue !== undefined &&
+        String(cellValue).trim() !== ''
+      ) {
         rawRow[header] = cellValue
       }
     }
@@ -434,7 +497,7 @@ function parseSTLARows(
     }
 
     // Detect deletion
-    const isDeleted = idHeaders.some(header => {
+    const isDeleted = idHeaders.some((header) => {
       const colIndex = columnMap[header]
       if (colIndex === null || colIndex === undefined) {
         return false
@@ -449,15 +512,15 @@ function parseSTLARows(
       rawRow['Tooling Number RH'],
       rawRow['Tooling Number LH'],
       rawRow['Tooling Number RH (Opposite)'],
-      rawRow['Tooling Number LH (Opposite)']
-    ].some(val => val && isPossibleShapeRedaction(String(val || '')))
+      rawRow['Tooling Number LH (Opposite)'],
+    ].some((val) => val && isPossibleShapeRedaction(String(val || '')))
 
     if (hasShapeRedaction && !isDeleted) {
       anomalies.push({
         type: 'POSSIBLE_SHAPE_REDACTION',
         row: i + 1,
         message: `Row ${i + 1} has possible shape redaction but no strike-through`,
-        data: rawRow
+        data: rawRow,
       })
     }
 
@@ -471,7 +534,7 @@ function parseSTLARows(
           type: 'DELETED_ROW',
           row: i + 1,
           message: `Row ${i + 1} skipped: struck-through identifiers detected`,
-          data: rawRow
+          data: rawRow,
         })
       }
       continue

@@ -22,11 +22,11 @@ export function inferSourcing(input: {
   lifecycleHint?: string | null
 }): EquipmentSourcing {
   // Normalize: join, lowercase, collapse whitespace
-  const allText = [
-    input.cellText ?? '',
-    input.lifecycleHint ?? '',
-    ...input.rawTags
-  ].join(' ').toLowerCase().replace(/\s+/g, ' ').trim()
+  const allText = [input.cellText ?? '', input.lifecycleHint ?? '', ...input.rawTags]
+    .join(' ')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
 
   // Explicit free issue → REUSE (check longer patterns first)
   if (
@@ -35,6 +35,7 @@ export function inferSourcing(input: {
     allText.includes('freeissue') ||
     allText.includes('f.i.') ||
     allText.includes('f/i') ||
+    allText === 'fi' ||
     allText.includes(' fi ') ||
     allText.startsWith('fi ') ||
     allText.endsWith(' fi')

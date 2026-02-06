@@ -28,11 +28,15 @@ describe('coreStore.setData validation', () => {
   })
 
   it('should throw error for undefined data', () => {
-    expect(() => coreStore.setData(undefined as any, 'Local')).toThrow('Invalid data: must be an object')
+    expect(() => coreStore.setData(undefined as any, 'Local')).toThrow(
+      'Invalid data: must be an object',
+    )
   })
 
   it('should throw error for non-object data', () => {
-    expect(() => coreStore.setData('invalid' as any, 'Local')).toThrow('Invalid data: must be an object')
+    expect(() => coreStore.setData('invalid' as any, 'Local')).toThrow(
+      'Invalid data: must be an object',
+    )
   })
 
   it('should throw error if projects is not an array', () => {
@@ -45,7 +49,9 @@ describe('coreStore.setData validation', () => {
       warnings: [],
     }
 
-    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow('Invalid data: projects must be an array')
+    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow(
+      'Invalid data: projects must be an array',
+    )
   })
 
   it('should throw error if areas is not an array', () => {
@@ -58,7 +64,9 @@ describe('coreStore.setData validation', () => {
       warnings: [],
     }
 
-    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow('Invalid data: areas must be an array')
+    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow(
+      'Invalid data: areas must be an array',
+    )
   })
 
   it('should throw error if cells is missing', () => {
@@ -71,7 +79,9 @@ describe('coreStore.setData validation', () => {
       warnings: [],
     }
 
-    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow('Invalid data: cells must be an array')
+    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow(
+      'Invalid data: cells must be an array',
+    )
   })
 
   it('should throw error if referenceData.employees is not an array', () => {
@@ -88,7 +98,9 @@ describe('coreStore.setData validation', () => {
       },
     }
 
-    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow('Invalid data: referenceData.employees must be an array')
+    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow(
+      'Invalid data: referenceData.employees must be an array',
+    )
   })
 
   it('should throw error if referenceData.suppliers is not an array', () => {
@@ -105,7 +117,9 @@ describe('coreStore.setData validation', () => {
       },
     }
 
-    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow('Invalid data: referenceData.suppliers must be an array')
+    expect(() => coreStore.setData(invalidData as any, 'Local')).toThrow(
+      'Invalid data: referenceData.suppliers must be an array',
+    )
   })
 
   it('should accept valid referenceData', () => {
@@ -127,7 +141,9 @@ describe('coreStore.setData validation', () => {
 
   it('should populate store with valid data', () => {
     const validData = {
-      projects: [{ id: 'p1', name: 'Project 1', description: 'Test', status: 'active' as const, createdAt: '2024-01-01', updatedAt: '2024-01-01' }],
+      projects: [
+        { id: 'p1', name: 'Project 1', customer: 'Test Customer', status: 'Planning' as const },
+      ],
       areas: [],
       cells: [],
       robots: [],

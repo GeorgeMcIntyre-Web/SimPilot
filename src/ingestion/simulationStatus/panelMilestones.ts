@@ -60,13 +60,13 @@ export function matchesMilestone(metricLabel: string, milestoneColumn: string): 
  */
 export function extractPanelGroup(
   metrics: SimulationMetric[],
-  milestoneDefinitions: Record<string, string>
+  milestoneDefinitions: Record<string, string>,
 ): MilestoneGroup {
   const milestones: Record<string, MilestoneValue> = {}
 
   for (const [_key, columnName] of Object.entries(milestoneDefinitions)) {
     // Find matching metric
-    const matchingMetric = metrics.find(m => matchesMilestone(m.label, columnName))
+    const matchingMetric = metrics.find((m) => matchesMilestone(m.label, columnName))
     milestones[columnName] = matchingMetric?.percent ?? null
   }
 
@@ -85,7 +85,7 @@ export function extractPanelGroup(
  * - Station-level keys: "stationKey" (e.g., "8X-010") - aggregated from all robots at that station
  */
 export function convertVacuumRowsToPanelMilestones(
-  vacuumRows: VacuumParsedRow[]
+  vacuumRows: VacuumParsedRow[],
 ): Map<string, PanelMilestones> {
   const resultMap = new Map<string, PanelMilestones>()
 
@@ -96,9 +96,7 @@ export function convertVacuumRowsToPanelMilestones(
 
   for (const row of vacuumRows) {
     // Robot-level key
-    const robotKey = row.robotCaption
-      ? `${row.stationKey}::${row.robotCaption}`
-      : row.stationKey
+    const robotKey = row.robotCaption ? `${row.stationKey}::${row.robotCaption}` : row.stationKey
 
     const existingRobot = robotRowsMap.get(robotKey) || []
     existingRobot.push(row)
@@ -138,13 +136,6 @@ export function convertVacuumRowsToPanelMilestones(
       continue
     }
 
-    // Build a unique robot set for averaging. If robot captions are missing,
-    // fall back to row count to avoid division by zero.
-    const uniqueRobots = new Set(
-      rows.map(r => (r.robotCaption && r.robotCaption.trim()) || `__row_${r.sourceRowIndex}`)
-    )
-    const robotCount = uniqueRobots.size || rows.length || 1
-
     // Create panel milestones with station-level aggregation
     const panels = createEmptyPanelMilestones()
 
@@ -160,7 +151,7 @@ export function convertVacuumRowsToPanelMilestones(
           const robotKey = row.robotCaption?.trim() || `__row_${row.sourceRowIndex}`
           // Only take the first value seen per robot to avoid duplicates
           if (!perRobot.has(robotKey)) {
-            const metric = row.metrics.find(m => matchesMilestone(m.label, columnName))
+            const metric = row.metrics.find((m) => matchesMilestone(m.label, columnName))
             if (typeof metric?.percent === 'number') {
               perRobot.set(robotKey, metric.percent)
             }
@@ -194,7 +185,7 @@ export function convertVacuumRowsToPanelMilestones(
 export function getPanelMilestonesForRobot(
   robotCaption: string,
   stationKey: string,
-  panelMilestonesMap: Map<string, PanelMilestones>
+  panelMilestonesMap: Map<string, PanelMilestones>,
 ): PanelMilestones | undefined {
   // Try with robot caption first
   const robotKey = `${stationKey}::${robotCaption}`

@@ -19,7 +19,7 @@ import { truncateAreaName } from '../normalizers'
 import {
   SimulationStatusEntity,
   SimulationStatusValidationAnomaly,
-  SimulationStatusValidationReport
+  SimulationStatusValidationReport,
 } from './simulationStatusTypes'
 import { simulationStatusStore } from '../../domain/simulationStatusStore'
 import { isCellStruck } from '../excelUtils'
@@ -59,13 +59,13 @@ export interface SimulationStatusIngestionError {
 export async function ingestSimulationStatusFile(
   workbook: XLSX.WorkBook,
   fileName: string,
-  targetSheetName: string = 'SIMULATION'
+  targetSheetName: string = 'SIMULATION',
 ): Promise<SimulationStatusIngestionResult> {
   // Validate workbook has the target sheet
   if (!workbook.Sheets[targetSheetName]) {
     const availableSheets = workbook.SheetNames.join(', ')
     throw new Error(
-      `Sheet "${targetSheetName}" not found in ${fileName}. Available sheets: ${availableSheets}`
+      `Sheet "${targetSheetName}" not found in ${fileName}. Available sheets: ${availableSheets}`,
     )
   }
 
@@ -90,7 +90,7 @@ export async function ingestSimulationStatusFile(
 
   if (headerRowIndex === -1) {
     throw new Error(
-      `Could not find header row in sheet "${targetSheetName}". Expected row with "STATION" and "ROBOT" columns.`
+      `Could not find header row in sheet "${targetSheetName}". Expected row with "STATION" and "ROBOT" columns.`,
     )
   }
 
@@ -99,9 +99,7 @@ export async function ingestSimulationStatusFile(
 
   // Find ROBOT column index for strike-through detection
   const headers = rawData[headerRowIndex] as string[]
-  const robotColIndex = headers.findIndex(h =>
-    h && String(h).toLowerCase().includes('robot')
-  )
+  const robotColIndex = headers.findIndex((h) => h && String(h).toLowerCase().includes('robot'))
 
   // Filter out deleted rows (strike-through on ROBOT column)
   const nonDeletedRows = dataWithHeaders.filter((_, idx) => {
@@ -113,11 +111,7 @@ export async function ingestSimulationStatusFile(
   const deletedCount = dataWithHeaders.length - nonDeletedRows.length
 
   // Normalize rows
-  const normalized = normalizeSimulationStatusRows(
-    nonDeletedRows,
-    fileName,
-    headerRowIndex + 1
-  )
+  const normalized = normalizeSimulationStatusRows(nonDeletedRows, fileName, headerRowIndex + 1)
 
   // Convert to entities
   const anomalies: SimulationStatusValidationAnomaly[] = []
@@ -128,12 +122,12 @@ export async function ingestSimulationStatusFile(
       type: 'MISSING_ROBOT',
       row: 0,
       message: `${deletedCount} row(s) skipped due to strike-through deletion`,
-      data: { deletedCount }
+      data: { deletedCount },
     })
   }
 
   const entities = normalized
-    .map(row => simulationRowToEntity(row, targetSheetName, anomalies))
+    .map((row) => simulationRowToEntity(row, targetSheetName, anomalies))
     .filter((e): e is NonNullable<typeof e> => e !== null)
 
   // Extract and attach panel milestones from the SIMULATION sheet
@@ -142,16 +136,20 @@ export async function ingestSimulationStatusFile(
   attachPanelMilestonesToEntities(entities, robotPanelsMap)
 
   // Log detected areas and stations
-  const uniqueAreas = Array.from(new Set(entities.map(e => e.area))).filter(Boolean)
-  const uniqueStations = Array.from(new Set(entities.map(e => e.station))).filter(Boolean).sort()
+  const uniqueAreas = Array.from(new Set(entities.map((e) => e.area)))
+    .filter(Boolean)
+    .sort()
+  const uniqueStations = Array.from(new Set(entities.map((e) => e.station)))
+    .filter(Boolean)
+    .sort()
 
-  console.log('--------------------------------------------------')
-  console.log(`[Simulation Ingestion] File: ${fileName}`)
-  console.log(`[Simulation Ingestion] Document Area: ${documentAreaName || 'Unknown'}`)
-  console.log(`[Simulation Ingestion] Rows/Robots Found: ${entities.length}`)
-  console.log(`[Simulation Ingestion] Areas Found: ${uniqueAreas.join(', ')}`)
-  console.log(`[Simulation Ingestion] Stations Found: ${uniqueStations.join(', ')}`)
-  console.log('--------------------------------------------------')
+  log.info('[Simulation Ingestion] Parsed', {
+    fileName,
+    documentAreaName: documentAreaName || 'Unknown',
+    rowsOrRobotsFound: entities.length,
+    areasFound: uniqueAreas,
+    stationsFound: uniqueStations,
+  })
 
   // Validate
   const report = validateSimulationStatusEntities(entities, dataWithHeaders.length, anomalies)
@@ -161,7 +159,7 @@ export async function ingestSimulationStatusFile(
     report,
     sourceFile: fileName,
     sheetName: targetSheetName,
-    documentAreaName
+    documentAreaName,
   }
 }
 
@@ -178,7 +176,7 @@ export async function ingestAndStoreSimulationStatus(
   workbook: XLSX.WorkBook,
   fileName: string,
   targetSheetName: string = 'SIMULATION',
-  replaceExisting: boolean = true
+  replaceExisting: boolean = true,
 ): Promise<SimulationStatusIngestionResult> {
   const result = await ingestSimulationStatusFile(workbook, fileName, targetSheetName)
 
@@ -201,7 +199,7 @@ export async function ingestAndStoreSimulationStatus(
  * @param toolEntities - Tool entities from tool list ingestion
  */
 export function linkSimulationStatusToTools(
-  toolEntities: Array<{ canonicalKey: string; areaName: string; stationGroup: string }>
+  toolEntities: Array<{ canonicalKey: string; areaName: string; stationGroup: string }>,
 ): void {
   const simEntities = simulationStatusStore.getState().entities
 
@@ -249,12 +247,12 @@ export function getIngestionSummary(result: SimulationStatusIngestionResult): st
 
   // Station summary
   const stations = new Set<string>()
-  entities.forEach(e => stations.add(e.stationFull))
+  entities.forEach((e) => stations.add(e.stationFull))
   lines.push(`📍 ${stations.size} station(s) covered`)
 
   // Application summary
   const applications = new Map<string, number>()
-  entities.forEach(e => {
+  entities.forEach((e) => {
     const count = applications.get(e.application) || 0
     applications.set(e.application, count + 1)
   })

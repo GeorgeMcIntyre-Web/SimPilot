@@ -15,14 +15,14 @@ describe('deduplication prefers latest simulation data', () => {
       id: 'project-1',
       name: 'STLA-S',
       customer: 'STLA-S',
-      status: 'Running'
+      status: 'Running',
     }
 
     const area: Area = {
       id: 'area-1',
       projectId: project.id,
       name: 'UNDERBODY',
-      code: 'L-01'
+      code: 'L-01',
     }
 
     const initialCell: Cell = {
@@ -41,8 +41,8 @@ describe('deduplication prefers latest simulation data', () => {
         metrics: {},
         sourceFile: 'old.xlsx',
         sheetName: 'SIMULATION',
-        rowIndex: 2
-      }
+        rowIndex: 2,
+      },
     }
 
     coreStore.setData({
@@ -51,7 +51,7 @@ describe('deduplication prefers latest simulation data', () => {
       cells: [initialCell],
       robots: [],
       tools: [],
-      warnings: []
+      warnings: [],
     })
 
     const updatedCell: Cell = {
@@ -60,8 +60,8 @@ describe('deduplication prefers latest simulation data', () => {
       simulation: {
         ...initialCell.simulation!,
         percentComplete: 85,
-        sourceFile: 'new.xlsx'
-      }
+        sourceFile: 'new.xlsx',
+      },
     }
 
     const result = applyIngestedData({
@@ -69,8 +69,8 @@ describe('deduplication prefers latest simulation data', () => {
         projects: [{ ...project }],
         areas: [{ ...area }],
         cells: [updatedCell],
-        warnings: []
-      }
+        warnings: [],
+      },
     })
 
     expect(result.cells).toHaveLength(1)
@@ -79,7 +79,7 @@ describe('deduplication prefers latest simulation data', () => {
     expect(cell.simulation?.sourceFile).toBe('new.xlsx')
     expect(cell.assignedEngineer).toBe('New Engineer')
 
-    const collisionWarning = result.warnings.find(w => w.id === 'id-collisions')
-    expect(collisionWarning?.message).toContain('Replaced existing records with the latest upload')
+    const collisionWarning = result.warnings.find((w) => w.id === 'id-collisions')
+    expect(collisionWarning).toBeUndefined()
   })
 })

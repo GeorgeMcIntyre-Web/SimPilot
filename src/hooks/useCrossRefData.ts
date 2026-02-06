@@ -7,7 +7,7 @@ import {
   CellHealthSummary,
   CrossRefFlag,
   CrossRefResult,
-  CellRiskLevel
+  CellRiskLevel,
 } from '../domain/crossRef/CrossRefTypes'
 import { buildCellHealthSummaries } from '../domain/crossRef/CellHealthSummary'
 import { log } from '../lib/log'
@@ -60,40 +60,61 @@ export interface CrossRefDataResult {
 
 let crossRefStore: CrossRefResult | null = null
 const crossRefSubscribers = new Set<() => void>()
+let crossRefPersistTimeout: ReturnType<typeof setTimeout> | undefined
+
+const canPersistCrossRefSnapshot = (): boolean => {
+  if (typeof window === 'undefined') return false
+  if (typeof indexedDB === 'undefined') return false
+  return true
+}
+
+const persistCrossRefSnapshot = async (result: CrossRefResult): Promise<void> => {
+  if (canPersistCrossRefSnapshot() === false) return
+
+  try {
+    const [{ persistenceService }, { coreStore }] = await Promise.all([
+      import('../persistence/indexedDbService'),
+      import('../domain/coreStore'),
+    ])
+    const snapshot = coreStore.getSnapshot(result)
+    await persistenceService.save(snapshot)
+    log.debug('[setCrossRefData] Persisted snapshot with crossRef')
+  } catch (err) {
+    log.warn('[setCrossRefData] Failed to persist snapshot with crossRef', err)
+  }
+}
+
+const schedulePersistCrossRefSnapshot = (result: CrossRefResult): void => {
+  if (canPersistCrossRefSnapshot() === false) return
+
+  if (crossRefPersistTimeout !== undefined) {
+    clearTimeout(crossRefPersistTimeout)
+  }
+
+  crossRefPersistTimeout = setTimeout(() => {
+    void persistCrossRefSnapshot(result)
+  }, 1200)
+}
 
 /**
  * Set cross-reference data (called by ingestion pipeline)
  */
 export const setCrossRefData = (result: CrossRefResult): void => {
-  const uniqueAreas = result.cells.map(c => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
+  const uniqueAreas = result.cells.map((c) => c.areaKey).filter((v, i, a) => a.indexOf(v) === i)
   log.info('[setCrossRefData] Setting CrossRef data:', {
     cellsCount: result.cells.length,
     subscribersCount: crossRefSubscribers.size,
     uniqueAreas: uniqueAreas.length,
-    areaNames: uniqueAreas.slice(0, 10) // First 10 areas for debugging
+    areaNames: uniqueAreas.slice(0, 10), // First 10 areas for debugging
   })
   crossRefStore = result
-  crossRefSubscribers.forEach(cb => {
+  crossRefSubscribers.forEach((cb) => {
     log.debug('[setCrossRefData] Notifying subscriber')
     cb()
   })
   log.info(`[setCrossRefData] Notified ${crossRefSubscribers.size} subscribers`)
 
-  // Persist crossRef alongside core store for fast restore (debounced)
-  try {
-    const { persistenceService } = require('../persistence/indexedDbService')
-    const { coreStore } = require('../domain/coreStore')
-    if ((setCrossRefData as any)._persistTimeout) {
-      clearTimeout((setCrossRefData as any)._persistTimeout)
-    }
-    ;(setCrossRefData as any)._persistTimeout = setTimeout(async () => {
-      const snapshot = coreStore.getSnapshot(result)
-      await persistenceService.save(snapshot)
-      log.debug('[setCrossRefData] Persisted snapshot with crossRef')
-    }, 1200)
-  } catch (err) {
-    log.error('[setCrossRefData] Failed to persist snapshot with crossRef', err)
-  }
+  schedulePersistCrossRefSnapshot(result)
 }
 
 /**
@@ -108,7 +129,7 @@ export const getCrossRefData = (): CrossRefResult | null => {
  */
 export const clearCrossRefData = (): void => {
   crossRefStore = null
-  crossRefSubscribers.forEach(cb => cb())
+  crossRefSubscribers.forEach((cb) => cb())
 }
 
 /**
@@ -159,14 +180,14 @@ const groupByArea = (cells: CellSnapshot[]): Record<string, CellSnapshot[]> => {
 const getRiskLevel = (cell: CellSnapshot): CellRiskLevel => {
   const flags = cell.flags || []
 
-  const hasError = flags.some(f => f.severity === 'ERROR')
+  const hasError = flags.some((f) => f.severity === 'ERROR')
   if (hasError) return 'CRITICAL'
 
   if (cell.simulationStatus?.hasIssues) {
     return 'AT_RISK'
   }
 
-  const hasWarning = flags.some(f => f.severity === 'WARNING')
+  const hasWarning = flags.some((f) => f.severity === 'WARNING')
   if (hasWarning) return 'AT_RISK'
 
   const completion = cell.simulationStatus?.firstStageCompletion
@@ -209,7 +230,7 @@ const buildAreaSummary = (areaKey: string, cells: CellSnapshot[]): AreaSummary =
     criticalCount,
     atRiskCount,
     okCount,
-    totalFlags
+    totalFlags,
   }
 }
 
@@ -236,7 +257,7 @@ const emptyStats = (): CrossRefStats => ({
   robotCount: 0,
   toolCount: 0,
   weldGunCount: 0,
-  riserCount: 0
+  riserCount: 0,
 })
 
 // ============================================================================
@@ -253,7 +274,10 @@ export function useCrossRefData(): CrossRefDataResult {
   const [data, setData] = useState<CrossRefResult | null>(crossRefStore)
 
   useEffect(() => {
-    log.info('[useCrossRefData] Hook mounted, initial data:', crossRefStore ? `${crossRefStore.cells.length} cells` : 'null')
+    log.info(
+      '[useCrossRefData] Hook mounted, initial data:',
+      crossRefStore ? `${crossRefStore.cells.length} cells` : 'null',
+    )
 
     // Sync with current store state
     setData(crossRefStore)
@@ -261,7 +285,10 @@ export function useCrossRefData(): CrossRefDataResult {
     // Subscribe to future changes
     const unsubscribe = subscribeToCrossRef(() => {
       const newData = getCrossRefData()
-      log.info('[useCrossRefData] Store updated, refreshing component with', newData ? `${newData.cells.length} cells` : 'null')
+      log.info(
+        '[useCrossRefData] Store updated, refreshing component with',
+        newData ? `${newData.cells.length} cells` : 'null',
+      )
       setData(newData)
     })
 
@@ -286,7 +313,7 @@ export function useCrossRefData(): CrossRefDataResult {
         areaSummaries: [],
         loading: false,
         error: null,
-        hasData: false
+        hasData: false,
       }
     }
 
@@ -301,13 +328,13 @@ export function useCrossRefData(): CrossRefDataResult {
       stats: data.stats,
       globalFlags: data.globalFlags,
       healthSummaries,
-       areaMetrics: data.areaMetrics ?? {},
+      areaMetrics: data.areaMetrics ?? {},
       areas,
       byArea,
       areaSummaries,
       loading: false,
       error: null,
-      hasData: cells.length > 0
+      hasData: cells.length > 0,
     }
   }, [data])
 
@@ -336,7 +363,7 @@ export function useCrossRefCellsByRisk(riskLevel: CellRiskLevel): CellSnapshot[]
   const { cells } = useCrossRefData()
 
   return useMemo(() => {
-    return cells.filter(cell => getRiskLevel(cell) === riskLevel)
+    return cells.filter((cell) => getRiskLevel(cell) === riskLevel)
   }, [cells, riskLevel])
 }
 
@@ -347,7 +374,7 @@ export function useCrossRefCellsWithFlags(): CellSnapshot[] {
   const { cells } = useCrossRefData()
 
   return useMemo(() => {
-    return cells.filter(cell => cell.flags.length > 0)
+    return cells.filter((cell) => cell.flags.length > 0)
   }, [cells])
 }
 
@@ -358,6 +385,6 @@ export function useCrossRefHealthSummary(stationKey: string): CellHealthSummary 
   const { healthSummaries } = useCrossRefData()
 
   return useMemo(() => {
-    return healthSummaries.find(h => h.stationKey === stationKey)
+    return healthSummaries.find((h) => h.stationKey === stationKey)
   }, [healthSummaries, stationKey])
 }

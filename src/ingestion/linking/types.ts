@@ -1,10 +1,6 @@
-import { Cell, Robot, Tool, IngestionWarning } from '../domain/core'
+import { Cell, Robot, Tool, IngestionWarning } from '../../domain/core'
 
-export type LinkType =
-  | 'ROBOT_TO_CELL'
-  | 'TOOL_TO_CELL'
-  | 'TOOL_TO_ROBOT'
-  | 'ROBOT_TO_TOOL'
+export type LinkType = 'ROBOT_TO_CELL' | 'TOOL_TO_CELL' | 'TOOL_TO_ROBOT' | 'ROBOT_TO_TOOL'
 
 export type LinkConfidence = 'HIGH' | 'MEDIUM' | 'LOW'
 

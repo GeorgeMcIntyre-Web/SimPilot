@@ -6,6 +6,7 @@ import { PageHint } from '../../ui/components/PageHint'
 import { EmptyState } from '../../ui/components/EmptyState'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
+import { log } from '../../lib/log'
 import {
   PanelType,
   PanelMilestones,
@@ -13,9 +14,7 @@ import {
 } from '../../ingestion/simulationStatus/simulationStatusTypes'
 
 const formatRobotLabel = (cell: CellSnapshot): string => {
-  const robotCaptions = (cell.robots || [])
-    .map(r => r.caption || r.robotKey)
-    .filter(Boolean)
+  const robotCaptions = (cell.robots || []).map((r) => r.caption || r.robotKey).filter(Boolean)
   if (robotCaptions.length > 0) {
     return Array.from(new Set(robotCaptions)).join(', ')
   }
@@ -35,7 +34,7 @@ const formatRobotLabel = (cell: CellSnapshot): string => {
  */
 const getPanelCompletion = (
   panelMilestones: PanelMilestones | undefined,
-  panelType: PanelType
+  panelType: PanelType,
 ): number | null => {
   if (!panelMilestones) return null
   const group = panelMilestones[panelType]
@@ -51,8 +50,8 @@ const getPanelCompletion = (
   // Fallback: derive from milestone values (allow numeric strings)
   const values = Object.values(group.milestones)
   const numericValues = values
-    .map(v => (typeof v === 'number' ? v : Number(v)))
-    .filter(v => Number.isFinite(v))
+    .map((v) => (typeof v === 'number' ? v : Number(v)))
+    .filter((v) => Number.isFinite(v))
 
   if (numericValues.length === 0) return null
   const avg = numericValues.reduce((sum, v) => sum + v, 0) / numericValues.length
@@ -69,7 +68,7 @@ const getRowOverallCompletion = (row: StationRow): string => {
     let robotPanels = perRobotPanels[row.label]
     if (!robotPanels) {
       const upperLabel = row.label.toUpperCase()
-      const matchKey = Object.keys(perRobotPanels).find(k => k.toUpperCase() === upperLabel)
+      const matchKey = Object.keys(perRobotPanels).find((k) => k.toUpperCase() === upperLabel)
       if (matchKey) robotPanels = perRobotPanels[matchKey]
     }
     if (!robotPanels) return '-'
@@ -96,7 +95,7 @@ const getRowPanelMilestones = (row: StationRow, panelType: PanelType): number | 
     if (!robotPanels) {
       // Try case-insensitive match
       const upperLabel = row.label.toUpperCase()
-      const matchKey = Object.keys(perRobotPanels).find(k => k.toUpperCase() === upperLabel)
+      const matchKey = Object.keys(perRobotPanels).find((k) => k.toUpperCase() === upperLabel)
       if (matchKey) robotPanels = perRobotPanels[matchKey]
     }
     // If robotPanelMilestones exist but this robot has none, treat as N/A
@@ -114,7 +113,11 @@ const getRowPanelMilestones = (row: StationRow, panelType: PanelType): number | 
 const PANEL_CONFIGS: { title: string; panelType: PanelType; slug: string }[] = [
   { title: 'Robot Simulation', panelType: 'robotSimulation', slug: 'robot-simulation' },
   { title: 'Spot Welding', panelType: 'spotWelding', slug: 'spot-welding' },
-  { title: 'Alternative Joining Applications', panelType: 'alternativeJoining', slug: 'alternative-joining-applications' },
+  {
+    title: 'Alternative Joining Applications',
+    panelType: 'alternativeJoining',
+    slug: 'alternative-joining-applications',
+  },
   { title: 'Sealer', panelType: 'sealer', slug: 'sealer' },
   { title: 'Fixture', panelType: 'fixture', slug: 'fixture' },
   { title: 'Gripper', panelType: 'gripper', slug: 'gripper' },
@@ -131,7 +134,13 @@ type StationRow = { cell: CellSnapshot; label: string; application: string; asse
  * Station table is defined outside the page component to avoid remounting on parent state changes,
  * which would reset scroll and selection.
  */
-function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot[]; onSelect: (row: StationRow) => void }) {
+function RobotSimulationStationsTable({
+  cells,
+  onSelect,
+}: {
+  cells: CellSnapshot[]
+  onSelect: (row: StationRow) => void
+}) {
   type SortKey = 'robot' | 'area' | 'application' | 'simulator' | 'completion'
 
   const [search, setSearch] = useState('')
@@ -140,9 +149,16 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
   const [areaFilter, setAreaFilter] = useState<string>('ALL')
   const [applicationFilter, setApplicationFilter] = useState<string>('ALL')
   const [simulatorFilter, setSimulatorFilter] = useState<string>('ALL')
-  const [completionFilter, setCompletionFilter] = useState<'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETE'>('ALL')
+  const [completionFilter, setCompletionFilter] = useState<
+    'ALL' | 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETE'
+  >('ALL')
 
-  const hasActiveFilters = areaFilter !== 'ALL' || applicationFilter !== 'ALL' || simulatorFilter !== 'ALL' || completionFilter !== 'ALL' || search.trim() !== ''
+  const hasActiveFilters =
+    areaFilter !== 'ALL' ||
+    applicationFilter !== 'ALL' ||
+    simulatorFilter !== 'ALL' ||
+    completionFilter !== 'ALL' ||
+    search.trim() !== ''
 
   const clearAllFilters = () => {
     setSearch('')
@@ -161,12 +177,12 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
           const assetId = robot.robotKey || robot.caption
           const application =
             // Prefer metadata from robot asset
-            ((robot.raw as any)?.metadata?.application ??
-              (robot.raw as any)?.metadata?.function ??
-              // Simulation-status robots keep application at root, not metadata
-              (robot.raw as any)?.application ??
-              cell.simulationStatus?.application ??
-              'Unknown')
+            (robot.raw as any)?.metadata?.application ??
+            (robot.raw as any)?.metadata?.function ??
+            // Simulation-status robots keep application at root, not metadata
+            (robot.raw as any)?.application ??
+            cell.simulationStatus?.application ??
+            'Unknown'
           rows.push({ cell, label, assetId, application })
         }
       } else {
@@ -182,13 +198,13 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
   // Build filter option lists
   const areaOptions = useMemo(() => {
     const set = new Set<string>()
-    cells.forEach(c => set.add(c.areaKey ?? 'Unknown'))
+    cells.forEach((c) => set.add(c.areaKey ?? 'Unknown'))
     return ['ALL', ...Array.from(set).sort()]
   }, [cells])
 
   const applicationOptions = useMemo(() => {
     const set = new Set<string>()
-    cells.forEach(c => {
+    cells.forEach((c) => {
       const app = c.simulationStatus?.application?.trim()
       set.add(app && app.length > 0 ? app : 'Unknown')
     })
@@ -197,7 +213,7 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
 
   const simulatorOptions = useMemo(() => {
     const set = new Set<string>()
-    cells.forEach(c => {
+    cells.forEach((c) => {
       const sim = c.simulationStatus?.engineer?.trim()
       set.add(sim && sim.length > 0 ? sim : 'UNASSIGNED')
     })
@@ -207,9 +223,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
   const filteredAndSorted = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    const filtered = robotRows.filter(row => {
+    const filtered = robotRows.filter((row) => {
       const robot = row.label.toLowerCase()
-      const area = (row.cell.areaKey ?? 'Unknown')
+      const area = row.cell.areaKey ?? 'Unknown'
       const applicationRaw = row.cell.simulationStatus?.application?.trim() || 'Unknown'
       const simulatorRaw = row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
       const simulator = simulatorRaw.toLowerCase()
@@ -217,7 +233,10 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       const completion = typeof completionVal === 'number' ? completionVal : null
 
       const matchesSearch = term
-        ? robot.includes(term) || area.toLowerCase().includes(term) || simulator.includes(term) || applicationRaw.toLowerCase().includes(term)
+        ? robot.includes(term) ||
+          area.toLowerCase().includes(term) ||
+          simulator.includes(term) ||
+          applicationRaw.toLowerCase().includes(term)
         : true
 
       const matchesArea = areaFilter === 'ALL' || area === areaFilter
@@ -236,7 +255,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
               ? completion !== null && completion > 0 && completion < 100
               : completion === 100
 
-      return matchesSearch && matchesArea && matchesApplication && matchesSimulator && matchesCompletion
+      return (
+        matchesSearch && matchesArea && matchesApplication && matchesSimulator && matchesCompletion
+      )
     })
 
     const sorted = [...filtered].sort((a, b) => {
@@ -248,12 +269,14 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       const appB = b.application ?? 'Unknown'
       const simA = a.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
       const simB = b.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'
-      const compA = typeof a.cell.simulationStatus?.firstStageCompletion === 'number'
-        ? a.cell.simulationStatus.firstStageCompletion
-        : -1
-      const compB = typeof b.cell.simulationStatus?.firstStageCompletion === 'number'
-        ? b.cell.simulationStatus.firstStageCompletion
-        : -1
+      const compA =
+        typeof a.cell.simulationStatus?.firstStageCompletion === 'number'
+          ? a.cell.simulationStatus.firstStageCompletion
+          : -1
+      const compB =
+        typeof b.cell.simulationStatus?.firstStageCompletion === 'number'
+          ? b.cell.simulationStatus.firstStageCompletion
+          : -1
 
       let cmp = 0
       if (sortKey === 'robot') cmp = robotA.localeCompare(robotB)
@@ -266,11 +289,20 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
     })
 
     return sorted
-  }, [robotRows, search, sortDir, sortKey, areaFilter, applicationFilter, simulatorFilter, completionFilter])
+  }, [
+    robotRows,
+    search,
+    sortDir,
+    sortKey,
+    areaFilter,
+    applicationFilter,
+    simulatorFilter,
+    completionFilter,
+  ])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortKey(key)
       setSortDir('asc')
@@ -279,9 +311,11 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
 
   const SortIcon = ({ column }: { column: SortKey }) => {
     if (sortKey !== column) return <ArrowUpDown className="inline h-3.5 w-3.5 ml-1 opacity-40" />
-    return sortDir === 'asc'
-      ? <ArrowUp className="inline h-3.5 w-3.5 ml-1 text-blue-500" />
-      : <ArrowDown className="inline h-3.5 w-3.5 ml-1 text-blue-500" />
+    return sortDir === 'asc' ? (
+      <ArrowUp className="inline h-3.5 w-3.5 ml-1 text-blue-500" />
+    ) : (
+      <ArrowDown className="inline h-3.5 w-3.5 ml-1 text-blue-500" />
+    )
   }
 
   if (cells.length === 0) {
@@ -320,9 +354,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
         <select
           className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
           value={areaFilter}
-          onChange={e => setAreaFilter(e.target.value)}
+          onChange={(e) => setAreaFilter(e.target.value)}
         >
-          {areaOptions.map(opt => (
+          {areaOptions.map((opt) => (
             <option key={opt} value={opt}>
               {opt === 'ALL' ? 'All Areas' : opt}
             </option>
@@ -331,9 +365,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
         <select
           className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
           value={applicationFilter}
-          onChange={e => setApplicationFilter(e.target.value)}
+          onChange={(e) => setApplicationFilter(e.target.value)}
         >
-          {applicationOptions.map(opt => (
+          {applicationOptions.map((opt) => (
             <option key={opt} value={opt}>
               {opt === 'ALL' ? 'All Applications' : opt}
             </option>
@@ -342,9 +376,9 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
         <select
           className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
           value={simulatorFilter}
-          onChange={e => setSimulatorFilter(e.target.value)}
+          onChange={(e) => setSimulatorFilter(e.target.value)}
         >
-          {simulatorOptions.map(opt => (
+          {simulatorOptions.map((opt) => (
             <option key={opt} value={opt}>
               {opt === 'ALL' ? 'All Simulators' : opt}
             </option>
@@ -353,7 +387,7 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
         <select
           className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
           value={completionFilter}
-          onChange={e => setCompletionFilter(e.target.value as any)}
+          onChange={(e) => setCompletionFilter(e.target.value as any)}
         >
           <option value="ALL">All Completion</option>
           <option value="NOT_STARTED">Not Started (0%)</option>
@@ -365,10 +399,20 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
       {/* Result count */}
       <div className="flex items-center justify-between pb-2 text-xs text-gray-500 dark:text-gray-400">
         <span>
-          Showing <span className="font-semibold text-gray-700 dark:text-gray-200">{filteredAndSorted.length}</span>
+          Showing{' '}
+          <span className="font-semibold text-gray-700 dark:text-gray-200">
+            {filteredAndSorted.length}
+          </span>
           {filteredAndSorted.length !== robotRows.length && (
-            <> of <span className="font-semibold text-gray-700 dark:text-gray-200">{robotRows.length}</span></>
-          )} robots
+            <>
+              {' '}
+              of{' '}
+              <span className="font-semibold text-gray-700 dark:text-gray-200">
+                {robotRows.length}
+              </span>
+            </>
+          )}{' '}
+          robots
         </span>
         <span className="text-gray-400 dark:text-gray-500">
           Sorted by {sortKey} ({sortDir === 'asc' ? 'A\u2192Z' : 'Z\u2192A'})
@@ -413,83 +457,85 @@ function RobotSimulationStationsTable({ cells, onSelect }: { cells: CellSnapshot
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
-          {filteredAndSorted.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">
-                No robots match the current filters.
-              </td>
-            </tr>
-          ) : (
-            filteredAndSorted.map(row => (
-              <tr
-                key={`${row.cell.stationKey}-${row.label}`}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                onClick={() => onSelect(row)}
-              >
-              <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
-                {row.assetId ? (
-                  <Link
-                    to={`/assets/${encodeURIComponent(row.assetId)}`}
-                    className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px] hover:underline"
-                    title={`Open asset ${row.assetId}`}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {row.label}
-                  </Link>
-                ) : (
-                  <span
-                    className="font-medium text-gray-500 dark:text-gray-400 block truncate max-w-[240px]"
-                    title="No matching asset found"
-                  >
-                    {row.label}
-                  </span>
-                )}
-              </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
-                  {row.cell.areaKey ?? 'Unknown'}
+            {filteredAndSorted.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">
+                  No robots match the current filters.
                 </td>
-              <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
-                {row.application ?? 'Unknown'}
-              </td>
-                <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                  {row.cell.simulationStatus?.engineer?.trim() ? (
-                    <Link
-                      to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus.engineer.trim())}`}
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
-                      title={row.cell.simulationStatus.engineer.trim()}
-                    >
-                      {row.cell.simulationStatus.engineer.trim()}
-                    </Link>
-                  ) : (
-                    'UNASSIGNED'
-                  )}
-                </td>
-              <td className="whitespace-nowrap px-3 py-3">
-                {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          row.cell.simulationStatus.firstStageCompletion >= 100
-                            ? 'bg-green-500'
-                            : row.cell.simulationStatus.firstStageCompletion >= 50
-                              ? 'bg-blue-500'
-                              : 'bg-amber-400'
-                        }`}
-                        style={{ width: `${Math.min(100, Math.max(0, row.cell.simulationStatus.firstStageCompletion))}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {Math.round(row.cell.simulationStatus.firstStageCompletion)}%
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-gray-400 dark:text-gray-500">N/A</span>
-                )}
-              </td>
               </tr>
-            ))
-          )}
+            ) : (
+              filteredAndSorted.map((row) => (
+                <tr
+                  key={`${row.cell.stationKey}-${row.label}`}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                  onClick={() => onSelect(row)}
+                >
+                  <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+                    {row.assetId ? (
+                      <Link
+                        to={`/assets/${encodeURIComponent(row.assetId)}`}
+                        className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px] hover:underline"
+                        title={`Open asset ${row.assetId}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.label}
+                      </Link>
+                    ) : (
+                      <span
+                        className="font-medium text-gray-500 dark:text-gray-400 block truncate max-w-[240px]"
+                        title="No matching asset found"
+                      >
+                        {row.label}
+                      </span>
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                    {row.cell.areaKey ?? 'Unknown'}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                    {row.application ?? 'Unknown'}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
+                    {row.cell.simulationStatus?.engineer?.trim() ? (
+                      <Link
+                        to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus.engineer.trim())}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                        title={row.cell.simulationStatus.engineer.trim()}
+                      >
+                        {row.cell.simulationStatus.engineer.trim()}
+                      </Link>
+                    ) : (
+                      'UNASSIGNED'
+                    )}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-3">
+                    {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              row.cell.simulationStatus.firstStageCompletion >= 100
+                                ? 'bg-green-500'
+                                : row.cell.simulationStatus.firstStageCompletion >= 50
+                                  ? 'bg-blue-500'
+                                  : 'bg-amber-400'
+                            }`}
+                            style={{
+                              width: `${Math.min(100, Math.max(0, row.cell.simulationStatus.firstStageCompletion))}%`,
+                            }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {Math.round(row.cell.simulationStatus.firstStageCompletion)}%
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500">N/A</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -513,19 +559,20 @@ function RobotSimulationPage() {
   }, [cells, hasData])
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [selectedRow, setSelectedRow] = useState<{ cell: CellSnapshot; label: string } | null>(null)
+  const [selectedRow, setSelectedRow] = useState<StationRow | null>(null)
 
   // Debug: Log panel milestones data when selection changes
   useEffect(() => {
     if (selectedRow) {
       const cell = selectedRow.cell
-      console.log('[RobotSimulationPage] Selected row:', {
+      log.debug('[RobotSimulationPage] Selected row:', {
         stationKey: cell.stationKey,
         displayCode: cell.displayCode,
         hasSimulationStatus: !!cell.simulationStatus,
         hasPanelMilestones: !!cell.simulationStatus?.panelMilestones,
         panelMilestones: cell.simulationStatus?.panelMilestones,
-        robotSimulationCompletion: cell.simulationStatus?.panelMilestones?.robotSimulation?.completion,
+        robotSimulationCompletion:
+          cell.simulationStatus?.panelMilestones?.robotSimulation?.completion,
       })
     }
   }, [selectedRow])
@@ -533,15 +580,17 @@ function RobotSimulationPage() {
   // Debug: Log cells data on mount
   useEffect(() => {
     if (hasData && cells.length > 0) {
-      const cellsWithPanelMilestones = cells.filter(c => c.simulationStatus?.panelMilestones)
-      console.log('[RobotSimulationPage] Cells loaded:', {
+      const cellsWithPanelMilestones = cells.filter((c) => c.simulationStatus?.panelMilestones)
+      log.debug('[RobotSimulationPage] Cells loaded:', {
         totalCells: cells.length,
-        cellsWithSimulationStatus: cells.filter(c => c.simulationStatus).length,
+        cellsWithSimulationStatus: cells.filter((c) => c.simulationStatus).length,
         cellsWithPanelMilestones: cellsWithPanelMilestones.length,
-        sampleCell: cells[0] ? {
-          stationKey: cells[0].stationKey,
-          hasPanelMilestones: !!cells[0].simulationStatus?.panelMilestones
-        } : null
+        sampleCell: cells[0]
+          ? {
+              stationKey: cells[0].stationKey,
+              hasPanelMilestones: !!cells[0].simulationStatus?.panelMilestones,
+            }
+          : null,
       })
     }
   }, [hasData, cells])
@@ -554,7 +603,7 @@ function RobotSimulationPage() {
     if (!stationParam || !robotParam) return
 
     // Find matching cell and robot label
-    const matchCell = cells.find(c => c.stationKey === stationParam)
+    const matchCell = cells.find((c) => c.stationKey === stationParam)
     if (!matchCell) return
 
     const candidateLabels: string[] = []
@@ -566,11 +615,15 @@ function RobotSimulationPage() {
       candidateLabels.push(formatRobotLabel(matchCell))
     }
 
-    const labelMatch = candidateLabels.find(l => l === robotParam)
+    const labelMatch = candidateLabels.find((l) => l === robotParam)
     if (!labelMatch) return
 
     // Recreate StationRow minimal object
-    const row: StationRow = { cell: matchCell, label: labelMatch, application: matchCell.simulationStatus?.application ?? 'Unknown' }
+    const row: StationRow = {
+      cell: matchCell,
+      label: labelMatch,
+      application: matchCell.simulationStatus?.application ?? 'Unknown',
+    }
     setSelectedRow(row)
   }, [hasData, cells, selectedRow, searchParams])
 
@@ -617,7 +670,7 @@ function RobotSimulationPage() {
 
         <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0 h-full overflow-hidden">
           {selectedRow ? (
-              <div className="space-y-3 flex-1 min-h-0 h-full">
+            <div className="space-y-3 flex-1 min-h-0 h-full">
               <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 shadow-sm">
                 {/* Top row: Robot name + badges */}
                 <div className="flex items-start justify-between gap-3">
@@ -645,7 +698,9 @@ function RobotSimulationPage() {
                 {/* Metadata row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Simulator</span>
+                    <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">
+                      Simulator
+                    </span>
                     {selectedRow.cell.simulationStatus?.engineer?.trim() ? (
                       <Link
                         to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus.engineer.trim())}`}
@@ -654,12 +709,18 @@ function RobotSimulationPage() {
                         {selectedRow.cell.simulationStatus.engineer.trim()}
                       </Link>
                     ) : (
-                      <span className="text-sm font-medium text-gray-400 dark:text-gray-500">Unassigned</span>
+                      <span className="text-sm font-medium text-gray-400 dark:text-gray-500">
+                        Unassigned
+                      </span>
                     )}
                   </div>
                   <div>
-                    <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">Completion</span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">{getRowOverallCompletion(selectedRow as StationRow)}</span>
+                    <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">
+                      Completion
+                    </span>
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">
+                      {getRowOverallCompletion(selectedRow)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -673,12 +734,22 @@ function RobotSimulationPage() {
                       <button
                         key={title}
                         type="button"
-                        onClick={() => navigate(`/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}&station=${encodeURIComponent(selectedRow.cell.stationKey)}`)}
+                        onClick={() =>
+                          navigate(
+                            `/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}&station=${encodeURIComponent(selectedRow.cell.stationKey)}`,
+                          )
+                        }
                         className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <div className="flex items-start justify-between text-sm font-semibold text-gray-900 dark:text-white gap-2">
                           <span className="whitespace-normal leading-tight">{title}</span>
-                          <span className={hasData ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}>
+                          <span
+                            className={
+                              hasData
+                                ? 'text-gray-700 dark:text-gray-200'
+                                : 'text-gray-400 dark:text-gray-500'
+                            }
+                          >
                             {hasData ? `${completion}%` : 'N/A'}
                           </span>
                         </div>

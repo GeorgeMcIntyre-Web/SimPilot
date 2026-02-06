@@ -14,12 +14,12 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'gun force',
       'force [n]',
       'max force',
-      'required force'  // From GUN_FORCE files
+      'required force', // From GUN_FORCE files
       // Note: 'force' alone is too generic - removed to avoid false matches
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
-  
+
   // -------------------------------------------------------------------------
   // Identity Columns (HIGH priority)
   // -------------------------------------------------------------------------
@@ -33,9 +33,9 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'gun',
       'wg number',
       'wg id',
-      'welding gun'
+      'welding gun',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
   {
     role: 'DEVICE_NAME',
@@ -45,32 +45,19 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'device',
       'asset description',
       'equipment name',
-      'equipment id'
+      'equipment id',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
   {
     role: 'SERIAL_NUMBER',
-    patterns: [
-      'serial number complete wg',
-      'serial number',
-      'serial no',
-      'serial #',
-      's/n'
-    ],
-    confidence: 'HIGH'
+    patterns: ['serial number complete wg', 'serial number', 'serial no', 'serial #', 's/n'],
+    confidence: 'HIGH',
   },
   {
     role: 'TOOL_ID',
-    patterns: [
-      'tool id',
-      'tool name',
-      'tool number',
-      'tool no',
-      'tool #',
-      'tool'
-    ],
-    confidence: 'HIGH'
+    patterns: ['tool id', 'tool name', 'tool number', 'tool no', 'tool #', 'tool'],
+    confidence: 'HIGH',
   },
   {
     role: 'ROBOT_ID',
@@ -83,9 +70,9 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'robot #',
       'robot caption',
       'robotnumber (e-number)',
-      'robot'
+      'robot',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
 
   // -------------------------------------------------------------------------
@@ -99,28 +86,19 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'due date',
       'deadline',
       'date',
-      'date required'
+      'date required',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
   {
     role: 'START_DATE',
-    patterns: [
-      'start date',
-      'planned start',
-      'start'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['start date', 'planned start', 'start'],
+    confidence: 'MEDIUM',
   },
   {
     role: 'END_DATE',
-    patterns: [
-      'end date',
-      'planned end',
-      'finish date',
-      'end'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['end date', 'planned end', 'finish date', 'end'],
+    confidence: 'MEDIUM',
   },
 
   // -------------------------------------------------------------------------
@@ -128,15 +106,8 @@ export const ROLE_PATTERNS: RolePattern[] = [
   // -------------------------------------------------------------------------
   {
     role: 'AREA',
-    patterns: [
-      'area name',
-      'area',
-      'area code',
-      'area description',
-      'zone',
-      'workcell'
-    ],
-    confidence: 'HIGH'
+    patterns: ['area name', 'area', 'area code', 'area description', 'zone', 'workcell'],
+    confidence: 'HIGH',
   },
   {
     role: 'STATION',
@@ -147,36 +118,24 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'station code',
       'station key',
       'station no. new',
-      'new station'
+      'new station',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
   {
     role: 'LINE_CODE',
-    patterns: [
-      'assembly line',
-      'line code',
-      'line',
-      'new line'
-    ],
-    confidence: 'HIGH'
+    patterns: ['assembly line', 'line code', 'line', 'new line'],
+    confidence: 'HIGH',
   },
   {
     role: 'ZONE',
-    patterns: [
-      'zone',
-      'cell',
-      'zone name'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['zone', 'cell', 'zone name'],
+    confidence: 'MEDIUM',
   },
   {
     role: 'CELL',
-    patterns: [
-      'cell',
-      'cell name'
-    ],
-    confidence: 'LOW'
+    patterns: ['cell', 'cell name'],
+    confidence: 'LOW',
   },
 
   // -------------------------------------------------------------------------
@@ -189,26 +148,19 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'person responsible',
       'engineer',
       'responsible',
-      'assigned to'
+      'assigned to',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
   {
     role: 'SIM_LEADER',
-    patterns: [
-      'sim. leader',
-      'sim leader',
-      'simulation leader'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['sim. leader', 'sim leader', 'simulation leader'],
+    confidence: 'MEDIUM',
   },
   {
     role: 'TEAM_LEADER',
-    patterns: [
-      'team leader',
-      'teamlead'
-    ],
-    confidence: 'LOW'
+    patterns: ['team leader', 'teamlead'],
+    confidence: 'LOW',
   },
 
   // -------------------------------------------------------------------------
@@ -217,21 +169,19 @@ export const ROLE_PATTERNS: RolePattern[] = [
   {
     role: 'REUSE_STATUS',
     patterns: [
+      'refreshment ok',
+      'refresment ok',
       'reuse',
       'reuse status',
       'reuse plan',
-      'reuse yes/no'
+      'reuse yes/no',
     ],
-    confidence: 'HIGH'
+    confidence: 'HIGH',
   },
   {
     role: 'SOURCING',
-    patterns: [
-      'sourcing',
-      'source',
-      'sourcing status'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['sourcing', 'source', 'sourcing status'],
+    confidence: 'MEDIUM',
   },
   {
     role: 'PROJECT',
@@ -239,9 +189,9 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'project',
       'project code',
       'project name',
-      'proyect' // common typo
+      'proyect', // common typo
     ],
-    confidence: 'LOW'
+    confidence: 'HIGH',
   },
 
   // -------------------------------------------------------------------------
@@ -249,52 +199,33 @@ export const ROLE_PATTERNS: RolePattern[] = [
   // -------------------------------------------------------------------------
   {
     role: 'OEM_MODEL',
-    patterns: [
-      'fanuc order code',
-      'oem model',
-      'model',
-      'robot model'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['fanuc order code', 'oem model', 'model', 'robot model'],
+    confidence: 'MEDIUM',
   },
   {
     role: 'ROBOT_TYPE',
-    patterns: [
-      'robot type',
-      'type'
-    ],
-    confidence: 'MEDIUM'
+    patterns: ['robot type', 'type'],
+    confidence: 'MEDIUM',
   },
   {
     role: 'PAYLOAD',
-    patterns: [
-      'payload',
-      'payload class'
-    ],
-    confidence: 'LOW'
+    patterns: ['payload', 'payload class'],
+    confidence: 'LOW',
   },
   {
     role: 'REACH',
-    patterns: [
-      'reach'
-    ],
-    confidence: 'LOW'
+    patterns: ['reach'],
+    confidence: 'LOW',
   },
   {
     role: 'HEIGHT',
-    patterns: [
-      'height',
-      'riser height'
-    ],
-    confidence: 'LOW'
+    patterns: ['height', 'riser height'],
+    confidence: 'LOW',
   },
   {
     role: 'BRAND',
-    patterns: [
-      'brand',
-      'supplier'
-    ],
-    confidence: 'LOW'
+    patterns: ['brand', 'supplier'],
+    confidence: 'LOW',
   },
 
   // -------------------------------------------------------------------------
@@ -306,9 +237,9 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'comments',
       'notes',
       'remarks',
-      'coments' // common typo
+      'coments', // common typo
     ],
-    confidence: 'LOW'
+    confidence: 'MEDIUM',
   },
 
   // -------------------------------------------------------------------------
@@ -321,9 +252,9 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'qty',
       'count',
       'amount',
-      'additional'  // From GUN_FORCE files - often indicates additional quantity
+      'additional', // From GUN_FORCE files - often indicates additional quantity
     ],
-    confidence: 'MEDIUM'
+    confidence: 'MEDIUM',
   },
   {
     role: 'RESERVE',
@@ -331,8 +262,8 @@ export const ROLE_PATTERNS: RolePattern[] = [
       'reserve',
       'spare',
       'backup',
-      'additional'  // Can also indicate reserve/additional stock
+      'additional', // Can also indicate reserve/additional stock
     ],
-    confidence: 'LOW'
-  }
+    confidence: 'LOW',
+  },
 ]

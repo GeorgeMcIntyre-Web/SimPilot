@@ -11,6 +11,7 @@ import { CellSnapshot, CrossRefFlag, SimulationStatusSnapshot } from '../CrossRe
 
 const makeCell = (partial: Partial<CellSnapshot>): CellSnapshot => ({
   stationKey: partial.stationKey || 'ST_010',
+  displayCode: partial.displayCode || partial.stationKey || 'ST_010',
   areaKey: partial.areaKey,
   simulationStatus: partial.simulationStatus,
   tools: partial.tools || [],
@@ -18,18 +19,16 @@ const makeCell = (partial: Partial<CellSnapshot>): CellSnapshot => ({
   weldGuns: partial.weldGuns || [],
   gunForces: partial.gunForces || [],
   risers: partial.risers || [],
-  flags: partial.flags || []
+  flags: partial.flags || [],
 })
 
-const makeSimStatus = (
-  partial: Partial<SimulationStatusSnapshot>
-): SimulationStatusSnapshot => ({
+const makeSimStatus = (partial: Partial<SimulationStatusSnapshot>): SimulationStatusSnapshot => ({
   stationKey: partial.stationKey || '010',
   areaKey: partial.areaKey,
   firstStageCompletion: partial.firstStageCompletion,
   finalDeliverablesCompletion: partial.finalDeliverablesCompletion,
   dcsConfigured: partial.dcsConfigured,
-  raw: partial.raw || {}
+  raw: partial.raw || {},
 })
 
 // ============================================================================
@@ -47,14 +46,14 @@ describe('CellHealthSummary', () => {
           areaKey: 'UB',
           firstStageCompletion: 100,
           finalDeliverablesCompletion: 100,
-          dcsConfigured: true
+          dcsConfigured: true,
         }),
         tools: [{} as any, {} as any],
         robots: [{} as any],
         weldGuns: [{} as any],
         gunForces: [{} as any],
         risers: [{} as any],
-        flags: []
+        flags: [],
       })
 
       const summary = summarizeCellHealth(cell)
@@ -83,12 +82,12 @@ describe('CellHealthSummary', () => {
         type: 'STATION_WITHOUT_SIMULATION_STATUS',
         stationKey: 'GHOST',
         message: 'Missing simulation status',
-        severity: 'WARNING'
+        severity: 'WARNING',
       }
 
       const cell = makeCell({
         stationKey: 'GHOST',
-        flags: [warningFlag]
+        flags: [warningFlag],
       })
 
       const summary = summarizeCellHealth(cell)
@@ -105,19 +104,19 @@ describe('CellHealthSummary', () => {
         type: 'DUPLICATE_STATION_DEFINITION',
         stationKey: '010',
         message: 'Duplicate station definition',
-        severity: 'ERROR'
+        severity: 'ERROR',
       }
 
       const warningFlag: CrossRefFlag = {
         type: 'STATION_WITHOUT_SIMULATION_STATUS',
         stationKey: '010',
         message: 'Missing simulation status',
-        severity: 'WARNING'
+        severity: 'WARNING',
       }
 
       const cell = makeCell({
         stationKey: '010',
-        flags: [warningFlag, errorFlag]
+        flags: [warningFlag, errorFlag],
       })
 
       const summary = summarizeCellHealth(cell)
@@ -133,7 +132,7 @@ describe('CellHealthSummary', () => {
         type: 'TOOL_WITHOUT_OWNER',
         stationKey: '020',
         message: 'Tool has no owner',
-        severity: 'WARNING'
+        severity: 'WARNING',
       }
 
       const warningFlag2: CrossRefFlag = {
@@ -141,13 +140,13 @@ describe('CellHealthSummary', () => {
         stationKey: '020',
         robotKey: 'R-001',
         message: 'Robot missing dress pack',
-        severity: 'WARNING'
+        severity: 'WARNING',
       }
 
       const cell = makeCell({
         stationKey: '020',
         simulationStatus: makeSimStatus({ stationKey: '020' }),
-        flags: [warningFlag1, warningFlag2]
+        flags: [warningFlag1, warningFlag2],
       })
 
       const summary = summarizeCellHealth(cell)
@@ -162,7 +161,7 @@ describe('CellHealthSummary', () => {
         type: 'DUPLICATE_STATION_DEFINITION',
         stationKey: '030',
         message: 'Duplicate station',
-        severity: 'ERROR'
+        severity: 'ERROR',
       }
 
       const errorFlag2: CrossRefFlag = {
@@ -170,12 +169,12 @@ describe('CellHealthSummary', () => {
         stationKey: '030',
         robotKey: 'R-002',
         message: 'Ambiguous robot match',
-        severity: 'ERROR'
+        severity: 'ERROR',
       }
 
       const cell = makeCell({
         stationKey: '030',
-        flags: [errorFlag1, errorFlag2]
+        flags: [errorFlag1, errorFlag2],
       })
 
       const summary = summarizeCellHealth(cell)
@@ -188,7 +187,7 @@ describe('CellHealthSummary', () => {
     it('handles cell without simulation status', () => {
       const cell = makeCell({
         stationKey: '040',
-        simulationStatus: undefined
+        simulationStatus: undefined,
       })
 
       const summary = summarizeCellHealth(cell)
@@ -206,8 +205,8 @@ describe('CellHealthSummary', () => {
           stationKey: '050',
           firstStageCompletion: 75,
           finalDeliverablesCompletion: undefined,
-          dcsConfigured: false
-        })
+          dcsConfigured: false,
+        }),
       })
 
       const summary = summarizeCellHealth(cell)
@@ -222,8 +221,8 @@ describe('CellHealthSummary', () => {
         stationKey: '060',
         simulationStatus: makeSimStatus({
           stationKey: '060',
-          firstStageCompletion: NaN
-        })
+          firstStageCompletion: NaN,
+        }),
       })
 
       const summary = summarizeCellHealth(cell)
@@ -238,7 +237,7 @@ describe('CellHealthSummary', () => {
         robots: [],
         weldGuns: [],
         gunForces: [],
-        risers: []
+        risers: [],
       })
 
       const summary = summarizeCellHealth(cell)
@@ -261,7 +260,7 @@ describe('CellHealthSummary', () => {
       const cells = [
         makeCell({ stationKey: '100' }),
         makeCell({ stationKey: '110' }),
-        makeCell({ stationKey: '120' })
+        makeCell({ stationKey: '120' }),
       ]
 
       const result = buildCellHealthSummaries(cells)
@@ -276,27 +275,31 @@ describe('CellHealthSummary', () => {
       const okCell = makeCell({
         stationKey: '200',
         simulationStatus: makeSimStatus({ stationKey: '200' }),
-        flags: []
+        flags: [],
       })
 
       const atRiskCell = makeCell({
         stationKey: '210',
-        flags: [{
-          type: 'TOOL_WITHOUT_OWNER',
-          stationKey: '210',
-          message: 'No owner',
-          severity: 'WARNING'
-        }]
+        flags: [
+          {
+            type: 'TOOL_WITHOUT_OWNER',
+            stationKey: '210',
+            message: 'No owner',
+            severity: 'WARNING',
+          },
+        ],
       })
 
       const criticalCell = makeCell({
         stationKey: '220',
-        flags: [{
-          type: 'DUPLICATE_STATION_DEFINITION',
-          stationKey: '220',
-          message: 'Duplicate',
-          severity: 'ERROR'
-        }]
+        flags: [
+          {
+            type: 'DUPLICATE_STATION_DEFINITION',
+            stationKey: '220',
+            message: 'Duplicate',
+            severity: 'ERROR',
+          },
+        ],
       })
 
       const result = buildCellHealthSummaries([okCell, atRiskCell, criticalCell])

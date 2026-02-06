@@ -8,7 +8,6 @@ import {
   getAllFieldIds,
   isValidFieldId,
   type FieldId,
-  type FieldDescriptor
 } from '../fieldRegistry'
 
 describe('fieldRegistry', () => {
@@ -44,7 +43,7 @@ describe('fieldRegistry', () => {
 
     it('all descriptors have unique IDs', () => {
       const descriptors = getAllFieldDescriptors()
-      const ids = descriptors.map(d => d.id)
+      const ids = descriptors.map((d) => d.id)
       const uniqueIds = new Set(ids)
 
       expect(uniqueIds.size).toBe(ids.length)
@@ -90,26 +89,26 @@ describe('fieldRegistry', () => {
       const highImportance = getFieldDescriptorsByImportance('high')
 
       expect(highImportance.length).toBeGreaterThan(10)
-      expect(highImportance.every(d => d.importance === 'high')).toBe(true)
+      expect(highImportance.every((d) => d.importance === 'high')).toBe(true)
     })
 
     it('returns medium importance fields', () => {
       const mediumImportance = getFieldDescriptorsByImportance('medium')
 
       expect(mediumImportance.length).toBeGreaterThan(5)
-      expect(mediumImportance.every(d => d.importance === 'medium')).toBe(true)
+      expect(mediumImportance.every((d) => d.importance === 'medium')).toBe(true)
     })
 
     it('returns low importance fields', () => {
       const lowImportance = getFieldDescriptorsByImportance('low')
 
       expect(lowImportance.length).toBeGreaterThan(5)
-      expect(lowImportance.every(d => d.importance === 'low')).toBe(true)
+      expect(lowImportance.every((d) => d.importance === 'low')).toBe(true)
     })
 
     it('high importance includes key identity fields', () => {
       const highImportance = getFieldDescriptorsByImportance('high')
-      const ids = highImportance.map(d => d.id)
+      const ids = highImportance.map((d) => d.id)
 
       expect(ids).toContain('area_name')
       expect(ids).toContain('station_name')
@@ -122,28 +121,28 @@ describe('fieldRegistry', () => {
       const stringFields = getFieldDescriptorsByType('string')
 
       expect(stringFields.length).toBeGreaterThan(10)
-      expect(stringFields.every(d => d.expectedType === 'string')).toBe(true)
+      expect(stringFields.every((d) => d.expectedType === 'string')).toBe(true)
     })
 
     it('returns number type fields', () => {
       const numberFields = getFieldDescriptorsByType('number')
 
       expect(numberFields.length).toBeGreaterThan(0)
-      expect(numberFields.every(d => d.expectedType === 'number')).toBe(true)
+      expect(numberFields.every((d) => d.expectedType === 'number')).toBe(true)
     })
 
     it('returns date type fields', () => {
       const dateFields = getFieldDescriptorsByType('date')
 
       expect(dateFields.length).toBeGreaterThan(0)
-      expect(dateFields.every(d => d.expectedType === 'date')).toBe(true)
+      expect(dateFields.every((d) => d.expectedType === 'date')).toBe(true)
     })
 
     it('returns percentage type fields', () => {
       const percentageFields = getFieldDescriptorsByType('percentage')
 
       expect(percentageFields.length).toBeGreaterThan(0)
-      expect(percentageFields.every(d => d.expectedType === 'percentage')).toBe(true)
+      expect(percentageFields.every((d) => d.expectedType === 'percentage')).toBe(true)
     })
   })
 
@@ -152,14 +151,14 @@ describe('fieldRegistry', () => {
       const results = findFieldDescriptorsBySynonym('Area')
 
       expect(results.length).toBeGreaterThan(0)
-      expect(results.some(d => d.id === 'area_name')).toBe(true)
+      expect(results.some((d) => d.id === 'area_name')).toBe(true)
     })
 
     it('finds field by exact synonym', () => {
       const results = findFieldDescriptorsBySynonym('area name')
 
       expect(results.length).toBeGreaterThan(0)
-      expect(results.some(d => d.id === 'area_name')).toBe(true)
+      expect(results.some((d) => d.id === 'area_name')).toBe(true)
     })
 
     it('is case insensitive', () => {
@@ -179,7 +178,7 @@ describe('fieldRegistry', () => {
       const results = findFieldDescriptorsBySynonym('robotnumber')
 
       expect(results.length).toBeGreaterThan(0)
-      expect(results.some(d => d.id === 'robot_id' || d.id === 'robot_number')).toBe(true)
+      expect(results.some((d) => d.id === 'robot_id' || d.id === 'robot_number')).toBe(true)
     })
 
     it('returns empty array for unknown synonym', () => {
@@ -192,7 +191,7 @@ describe('fieldRegistry', () => {
       const results = findFieldDescriptorsBySynonym('coments')
 
       expect(results.length).toBeGreaterThan(0)
-      expect(results.some(d => d.id === 'comment')).toBe(true)
+      expect(results.some((d) => d.id === 'comment')).toBe(true)
     })
 
     it('finds field with typo synonyms (proyect)', () => {
@@ -213,7 +212,7 @@ describe('fieldRegistry', () => {
     it('all IDs are strings', () => {
       const ids = getAllFieldIds()
 
-      expect(ids.every(id => typeof id === 'string')).toBe(true)
+      expect(ids.every((id) => typeof id === 'string')).toBe(true)
     })
 
     it('includes key field IDs', () => {
@@ -282,12 +281,12 @@ describe('fieldRegistry', () => {
         { synonym: 'assembly line', expectedField: 'assembly_line' },
         { synonym: 'robot caption', expectedField: 'robot_caption' },
         { synonym: 'fanuc order code', expectedField: 'robot_order_code' },
-        { synonym: 'sim. leader', expectedField: 'sim_leader' }
+        { synonym: 'sim. leader', expectedField: 'sim_leader' },
       ]
 
       for (const { synonym, expectedField } of testCases) {
         const results = findFieldDescriptorsBySynonym(synonym)
-        expect(results.some(d => d.id === expectedField)).toBe(true)
+        expect(results.some((d) => d.id === expectedField)).toBe(true)
       }
     })
 

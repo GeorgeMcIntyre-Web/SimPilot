@@ -1,0 +1,13 @@
+{
+  "fixtureFile": "SimulationStatus_TEST.xlsx",
+  "sheetName": "SIMULATION",
+  "detectedCategory": "SIMULATION_STATUS",
+  "fieldIndex": {
+    "area_name": 0,
+    "station_name": 2,
+    "robot_name": 3,
+    "application_code": 4,
+    "stage_1_completion": null,
+    "dcs_configured": 7
+  }
+}

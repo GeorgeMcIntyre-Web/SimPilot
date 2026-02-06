@@ -46,14 +46,17 @@ export function truncateAreaName(raw: string | null | undefined): string | null 
     return trimmed
   }
 
-  const suffix = trimmed.substring(dashIndex + 1).trim().toUpperCase()
-  
+  const suffix = trimmed
+    .substring(dashIndex + 1)
+    .trim()
+    .toUpperCase()
+
   // List of suffixes that are considered "noise" (informational only)
   // We only truncate these, as they don't help identify the unique area.
   const noiseSuffixes = ['SIMULATION', 'STATUS', 'REPORT', 'DATA', 'EXPORT', 'VIEW']
-  
-  const isNoise = noiseSuffixes.some(noise => suffix.includes(noise))
-  
+
+  const isNoise = noiseSuffixes.some((noise) => suffix.includes(noise))
+
   if (isNoise) {
     return trimmed.substring(0, dashIndex).trim()
   }
@@ -88,58 +91,74 @@ function expandAreaAbbreviation(areaName: string): string {
   if (/^FU[\s\d]/.test(upper) || /^FU$/.test(upper)) {
     return 'FRONT UNIT'
   }
-  if (/^FRT?\s*(FL|RL)/.test(upper)) {  // "FR FL 1", "FRT RL", "FRT RL PRE" (Front Floor/Rail)
+  if (/^FRT?\s*(FL|RL)/.test(upper)) {
+    // "FR FL 1", "FRT RL", "FRT RL PRE" (Front Floor/Rail)
     return 'FRONT UNIT'
   }
-  if (/^DSH/.test(upper) || /^DASH/.test(upper)) {  // "DSH L", "DSH_BRD", "DASH UPR"
+  if (/^DSH/.test(upper) || /^DASH/.test(upper)) {
+    // "DSH L", "DSH_BRD", "DASH UPR"
     return 'FRONT UNIT'
   }
-  if (/^WH.*F/.test(upper) || /^WH\s*HS\s*F/.test(upper)) {  // "WH HS F" (Wheelhouse Front)
+  if (/^WH.*F/.test(upper) || /^WH\s*HS\s*F/.test(upper)) {
+    // "WH HS F" (Wheelhouse Front)
     return 'FRONT UNIT'
   }
-  if (/^XMBR/.test(upper) || /^X\s*MBR/.test(upper)) {  // "XMBR" (Cross Member - Front)
+  if (/^XMBR/.test(upper) || /^X\s*MBR/.test(upper)) {
+    // "XMBR" (Cross Member - Front)
     return 'FRONT UNIT'
   }
-  if (/^FNDR/.test(upper) || /^FENDER/.test(upper)) {  // "FNDR INR" (Fender Inner)
+  if (/^FNDR/.test(upper) || /^FENDER/.test(upper)) {
+    // "FNDR INR" (Fender Inner)
     return 'FRONT UNIT'
   }
-  if (/^AF\d/.test(upper) || /^AF\s/.test(upper)) {  // "AF010" area prefix
+  if (/^AF\d/.test(upper) || /^AF\s/.test(upper)) {
+    // "AF010" area prefix
     return 'FRONT UNIT'
   }
 
   // REAR UNIT patterns: RR, R UN (Rear Unit), WH...R (Wheelhouse Rear)
-  if (/^RR[\s\d]/.test(upper) || /^RR$/.test(upper)) {  // "RR FLR", "RR RLS", "RR UN 1"
+  if (/^RR[\s\d]/.test(upper) || /^RR$/.test(upper)) {
+    // "RR FLR", "RR RLS", "RR UN 1"
     return 'REAR UNIT'
   }
-  if (/^R\s*UN/.test(upper)) {  // "R UN PRE" (Rear Unit Pre)
+  if (/^R\s*UN/.test(upper)) {
+    // "R UN PRE" (Rear Unit Pre)
     return 'REAR UNIT'
   }
-  if (/^WH.*R/.test(upper) || /^WHS\s*RR/.test(upper)) {  // "WHS RR" (Wheelhouse Rear)
+  if (/^WH.*R/.test(upper) || /^WHS\s*RR/.test(upper)) {
+    // "WHS RR" (Wheelhouse Rear)
     return 'REAR UNIT'
   }
-  if (/^RL\+FL/.test(upper)) {  // "RL+FL" (Rail+Floor combo)
+  if (/^RL\+FL/.test(upper)) {
+    // "RL+FL" (Rail+Floor combo)
     return 'REAR UNIT'
   }
-  if (/^SIL/.test(upper) || /^SILL/.test(upper)) {  // "SIL_RNF", "SILL INR" (Sill Reinforcement)
+  if (/^SIL/.test(upper) || /^SILL/.test(upper)) {
+    // "SIL_RNF", "SILL INR" (Sill Reinforcement)
     return 'REAR UNIT'
   }
-  if (/^C[NLME]\d/.test(upper)) {  // "CN010", "CL010", "CM010", "CE010" area prefixes
+  if (/^C[NLME]\d/.test(upper)) {
+    // "CN010", "CL010", "CM010", "CE010" area prefixes
     return 'REAR UNIT'
   }
-  if (/^CA\d/.test(upper)) {  // "CA008" area prefix
+  if (/^CA\d/.test(upper)) {
+    // "CA008" area prefix
     return 'REAR UNIT'
   }
-  if (/^AL\d/.test(upper)) {  // "AL010" area prefix (Rear floor/rail area)
+  if (/^AL\d/.test(upper)) {
+    // "AL010" area prefix (Rear floor/rail area)
     return 'REAR UNIT'
   }
 
   // UNDERBODY patterns: UB
-  if (/^UB[\s\d]/.test(upper) || /^UB$/.test(upper)) {  // "UB1", "UB2", "UB 1"
+  if (/^UB[\s\d]/.test(upper) || /^UB$/.test(upper)) {
+    // "UB1", "UB2", "UB 1"
     return 'UNDERBODY'
   }
 
   // BOTTOM TRAY patterns: BT
-  if (/^BT[\s\d]/.test(upper) || /^BT$/.test(upper)) {  // "BT PREP", "BT ILOT 1"
+  if (/^BT[\s\d]/.test(upper) || /^BT$/.test(upper)) {
+    // "BT PREP", "BT ILOT 1"
     return 'BOTTOM TRAY'
   }
 
@@ -175,9 +194,7 @@ export function normalizeAreaName(raw: string | null | undefined): string | null
   // Then expand abbreviations
   const expanded = expandAreaAbbreviation(truncated)
 
-  return expanded
-    .toUpperCase()
-    .replace(/\s+/g, ' ')  // collapse multiple spaces
+  return expanded.toUpperCase().replace(/\s+/g, ' ') // collapse multiple spaces
 }
 
 /**
@@ -210,7 +227,7 @@ export function normalizeStationCode(raw: string | null | undefined): string | n
   })
 
   // Normalize separators to underscores (bridge the gap with CrossRef/Station table)
-  normalized = normalized.replace(/[\s\-]+/g, '_')
+  normalized = normalized.replace(/[\s-]+/g, '_')
 
   return normalized.toUpperCase()
 }
@@ -305,7 +322,7 @@ export function inferAssembliesAreaName(args: {
  * Returns the raw station code (before normalization)
  */
 export function extractRawStationCodeFromAssembliesLabel(
-  label: string | null | undefined
+  label: string | null | undefined,
 ): string | null {
   if (!label) return null
 
@@ -347,7 +364,7 @@ export function extractRawStationCodeFromAssembliesLabel(
  */
 export function buildStationId(
   area: string | null | undefined,
-  station: string | null | undefined
+  station: string | null | undefined,
 ): string | null {
   const normalizedArea = normalizeAreaName(area)
   const normalizedStation = normalizeStationCode(station)
@@ -383,7 +400,7 @@ export function buildStationId(
  */
 export function buildRobotId(
   stationId: string | null | undefined,
-  robotCaption: string | null | undefined
+  robotCaption: string | null | undefined,
 ): string | null {
   if (!stationId) return null
 
@@ -407,7 +424,7 @@ export function buildRobotId(
 export function buildToolId(
   stationId: string | null | undefined,
   toolCode: string | null | undefined,
-  fallbackKey?: string | null | undefined
+  fallbackKey?: string | null | undefined,
 ): string | null {
   if (!stationId) return null
 
@@ -430,9 +447,9 @@ export function buildToolId(
 // ============================================================================
 
 export interface AreaZoneParsed {
-  parentArea: string      // "FRONT UNIT", "REAR UNIT", "UNDERBODY"
-  zone: string | null     // "Rear Rail LH", "Front Floor ASS 1", null if no sub-zone
-  fullName: string        // Original full name
+  parentArea: string // "FRONT UNIT", "REAR UNIT", "UNDERBODY"
+  zone: string | null // "Rear Rail LH", "Front Floor ASS 1", null if no sub-zone
+  fullName: string // Original full name
 }
 
 /**
@@ -493,7 +510,10 @@ export function parseAreaZone(rawAreaName: string | null | undefined): AreaZoneP
   const zoneSuffixes = ['UPR', 'LWR', 'INR', 'MIG']
   for (const suffix of zoneSuffixes) {
     if (upper.endsWith(` ${suffix}`)) {
-      const parentArea = fullName.replace(new RegExp(`\\s+${suffix}$`, 'i'), '').trim().toUpperCase()
+      const parentArea = fullName
+        .replace(new RegExp(`\\s+${suffix}$`, 'i'), '')
+        .trim()
+        .toUpperCase()
       return { parentArea, zone: fullName, fullName }
     }
   }

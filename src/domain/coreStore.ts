@@ -2,7 +2,17 @@
 // Simple in-memory store for new domain entities (Project, Area, Cell, Robot, Tool)
 
 import { useState, useEffect } from 'react'
-import { Project, Area, Cell, Robot, Tool, UnifiedAsset, EmployeeRecord, SupplierRecord, OverviewScheduleMetrics } from './core'
+import {
+  Project,
+  Area,
+  Cell,
+  Robot,
+  Tool,
+  UnifiedAsset,
+  EmployeeRecord,
+  SupplierRecord,
+  OverviewScheduleMetrics,
+} from './core'
 import { clearFileTrackingHistory } from '../ingestion/fileTracker'
 import {
   getProjectMetrics,
@@ -12,13 +22,21 @@ import {
   getEngineerMetrics,
   type ProjectMetrics,
   type GlobalSimulationMetrics,
-  type EngineerMetrics
+  type EngineerMetrics,
 } from './derivedMetrics'
 import { getDemoScenarioData, DemoScenarioId, DEMO_SCENARIOS } from './demoData'
 import { StoreSnapshot, createSnapshotFromState, applySnapshotToState } from './storeSnapshot'
 import { ChangeRecord } from './changeLog'
-import { StationRecord, ToolRecord, RobotRecord, AliasRule, ImportRun, DiffResult } from './uidTypes'
+import {
+  StationRecord,
+  ToolRecord,
+  RobotRecord,
+  AliasRule,
+  ImportRun,
+  DiffResult,
+} from './uidTypes'
 import { AuditEntry } from './auditLog'
+import type { CrossRefResult } from './crossRef/CrossRefTypes'
 
 export { DEMO_SCENARIOS }
 export type { DemoScenarioId, DemoScenarioSummary } from './demoData'
@@ -40,7 +58,7 @@ export interface CoreStoreState {
   warnings: string[]
   changeLog: ChangeRecord[]
   lastUpdated: string | null
-  dataSource: 'Demo' | 'Local' | 'MS365' | null  // Track where data came from
+  dataSource: 'Demo' | 'Local' | 'MS365' | null // Track where data came from
   referenceData: {
     employees: EmployeeRecord[]
     suppliers: SupplierRecord[]
@@ -52,8 +70,8 @@ export interface CoreStoreState {
   robotRecords: RobotRecord[]
   aliasRules: AliasRule[]
   importRuns: ImportRun[]
-  diffResults: DiffResult[]  // Store diff results from imports for UI display
-  auditLog: AuditEntry[]     // Phase 1: Registry change audit trail
+  diffResults: DiffResult[] // Store diff results from imports for UI display
+  auditLog: AuditEntry[] // Phase 1: Registry change audit trail
 }
 
 let storeState: CoreStoreState = {
@@ -67,7 +85,7 @@ let storeState: CoreStoreState = {
   dataSource: null,
   referenceData: {
     employees: [],
-    suppliers: []
+    suppliers: [],
   },
   overviewSchedule: undefined,
   stationRecords: [],
@@ -76,14 +94,14 @@ let storeState: CoreStoreState = {
   aliasRules: [],
   importRuns: [],
   diffResults: [],
-  auditLog: []
+  auditLog: [],
 }
 
 // Subscribers for reactive updates
 const subscribers = new Set<() => void>()
 
 function notifySubscribers() {
-  subscribers.forEach(callback => callback())
+  subscribers.forEach((callback) => callback())
 }
 
 // ============================================================================
@@ -136,19 +154,22 @@ export const coreStore = {
    * Replace all entities with new data
    * @throws {Error} If data structure is invalid
    */
-  setData(data: {
-    projects: Project[]
-    areas: Area[]
-    cells: Cell[]
-    robots: Robot[]
-    tools: Tool[]
-    warnings: string[]
-    overviewSchedule?: OverviewScheduleMetrics
-    referenceData?: {
-      employees: EmployeeRecord[]
-      suppliers: SupplierRecord[]
-    }
-  }, source?: 'Demo' | 'Local' | 'MS365'): void {
+  setData(
+    data: {
+      projects: Project[]
+      areas: Area[]
+      cells: Cell[]
+      robots: Robot[]
+      tools: Tool[]
+      warnings: string[]
+      overviewSchedule?: OverviewScheduleMetrics
+      referenceData?: {
+        employees: EmployeeRecord[]
+        suppliers: SupplierRecord[]
+      }
+    },
+    source?: 'Demo' | 'Local' | 'MS365',
+  ): void {
     // Validate input structure
     validateSetDataInput(data)
 
@@ -170,7 +191,7 @@ export const coreStore = {
       aliasRules: storeState.aliasRules,
       importRuns: storeState.importRuns,
       diffResults: storeState.diffResults,
-      auditLog: storeState.auditLog
+      auditLog: storeState.auditLog,
     }
     notifySubscribers()
   },
@@ -190,7 +211,7 @@ export const coreStore = {
       dataSource: null,
       referenceData: {
         employees: [],
-        suppliers: []
+        suppliers: [],
       },
       overviewSchedule: undefined,
       stationRecords: [],
@@ -199,7 +220,7 @@ export const coreStore = {
       aliasRules: [],
       importRuns: [],
       diffResults: [],
-      auditLog: []
+      auditLog: [],
     }
     // Clear file tracking history when data is cleared
     clearFileTrackingHistory()
@@ -213,7 +234,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       changeLog: [...storeState.changeLog, change],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -225,7 +246,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       changeLog: [],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -236,10 +257,10 @@ export const coreStore = {
   updateCellEngineer(cellId: string, newEngineer: string | undefined): void {
     storeState = {
       ...storeState,
-      cells: storeState.cells.map(c =>
-        c.id === cellId ? { ...c, assignedEngineer: newEngineer } : c
+      cells: storeState.cells.map((c) =>
+        c.id === cellId ? { ...c, assignedEngineer: newEngineer } : c,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -255,10 +276,14 @@ export const coreStore = {
   /**
    * Get a snapshot of the current state
    */
-  getSnapshot(crossRef?: ReturnType<typeof import('./crossRef/CrossRefTypes').CrossRefResult>): StoreSnapshot {
-    return createSnapshotFromState(storeState, {
-      sourceKind: 'unknown' // Caller should override this if known
-    }, crossRef)
+  getSnapshot(crossRef?: CrossRefResult): StoreSnapshot {
+    return createSnapshotFromState(
+      storeState,
+      {
+        sourceKind: 'unknown', // Caller should override this if known
+      },
+      crossRef,
+    )
   },
 
   /**
@@ -284,7 +309,7 @@ export const coreStore = {
    * Add or update StationRecords
    */
   upsertStationRecords(records: StationRecord[]): void {
-    const byUid = new Map(storeState.stationRecords.map(r => [r.uid, r]))
+    const byUid = new Map(storeState.stationRecords.map((r) => [r.uid, r]))
 
     for (const record of records) {
       byUid.set(record.uid, record)
@@ -293,7 +318,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       stationRecords: Array.from(byUid.values()),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -302,7 +327,7 @@ export const coreStore = {
    * Add or update ToolRecords
    */
   upsertToolRecords(records: ToolRecord[]): void {
-    const byUid = new Map(storeState.toolRecords.map(r => [r.uid, r]))
+    const byUid = new Map(storeState.toolRecords.map((r) => [r.uid, r]))
 
     for (const record of records) {
       byUid.set(record.uid, record)
@@ -311,7 +336,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       toolRecords: Array.from(byUid.values()),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -320,7 +345,7 @@ export const coreStore = {
    * Add or update RobotRecords
    */
   upsertRobotRecords(records: RobotRecord[]): void {
-    const byUid = new Map(storeState.robotRecords.map(r => [r.uid, r]))
+    const byUid = new Map(storeState.robotRecords.map((r) => [r.uid, r]))
 
     for (const record of records) {
       byUid.set(record.uid, record)
@@ -329,7 +354,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       robotRecords: Array.from(byUid.values()),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -338,9 +363,7 @@ export const coreStore = {
    * Add alias rules (deduplicated by fromKey + entityType)
    */
   addAliasRules(rules: AliasRule[]): void {
-    const existing = new Map(
-      storeState.aliasRules.map(r => [`${r.entityType}:${r.fromKey}`, r])
-    )
+    const existing = new Map(storeState.aliasRules.map((r) => [`${r.entityType}:${r.fromKey}`, r]))
 
     for (const rule of rules) {
       existing.set(`${rule.entityType}:${rule.fromKey}`, rule)
@@ -349,7 +372,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       aliasRules: Array.from(existing.values()),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -361,7 +384,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       importRuns: [...storeState.importRuns, importRun],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -373,7 +396,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       diffResults: [...storeState.diffResults, diffResult],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -384,10 +407,10 @@ export const coreStore = {
   updateDiffResult(importRunId: string, updates: Partial<DiffResult>): void {
     storeState = {
       ...storeState,
-      diffResults: storeState.diffResults.map(d =>
-        d.importRunId === importRunId ? { ...d, ...updates } : d
+      diffResults: storeState.diffResults.map((d) =>
+        d.importRunId === importRunId ? { ...d, ...updates } : d,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -399,7 +422,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       aliasRules: [...storeState.aliasRules, rule],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -410,10 +433,12 @@ export const coreStore = {
   deactivateStation(uid: string): void {
     storeState = {
       ...storeState,
-      stationRecords: storeState.stationRecords.map(r =>
-        r.uid === uid ? { ...r, status: 'inactive' as const, updatedAt: new Date().toISOString() } : r
+      stationRecords: storeState.stationRecords.map((r) =>
+        r.uid === uid
+          ? { ...r, status: 'inactive' as const, updatedAt: new Date().toISOString() }
+          : r,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -424,10 +449,12 @@ export const coreStore = {
   reactivateStation(uid: string): void {
     storeState = {
       ...storeState,
-      stationRecords: storeState.stationRecords.map(r =>
-        r.uid === uid ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() } : r
+      stationRecords: storeState.stationRecords.map((r) =>
+        r.uid === uid
+          ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() }
+          : r,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -438,10 +465,12 @@ export const coreStore = {
   deactivateTool(uid: string): void {
     storeState = {
       ...storeState,
-      toolRecords: storeState.toolRecords.map(r =>
-        r.uid === uid ? { ...r, status: 'inactive' as const, updatedAt: new Date().toISOString() } : r
+      toolRecords: storeState.toolRecords.map((r) =>
+        r.uid === uid
+          ? { ...r, status: 'inactive' as const, updatedAt: new Date().toISOString() }
+          : r,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -452,10 +481,12 @@ export const coreStore = {
   reactivateTool(uid: string): void {
     storeState = {
       ...storeState,
-      toolRecords: storeState.toolRecords.map(r =>
-        r.uid === uid ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() } : r
+      toolRecords: storeState.toolRecords.map((r) =>
+        r.uid === uid
+          ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() }
+          : r,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -466,10 +497,12 @@ export const coreStore = {
   reactivateRobot(uid: string): void {
     storeState = {
       ...storeState,
-      robotRecords: storeState.robotRecords.map(r =>
-        r.uid === uid ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() } : r
+      robotRecords: storeState.robotRecords.map((r) =>
+        r.uid === uid
+          ? { ...r, status: 'active' as const, updatedAt: new Date().toISOString() }
+          : r,
       ),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -485,7 +518,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       auditLog: [...storeState.auditLog, entry],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -497,7 +530,7 @@ export const coreStore = {
     storeState = {
       ...storeState,
       auditLog: [...storeState.auditLog, ...entries],
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
     notifySubscribers()
   },
@@ -513,8 +546,8 @@ export const coreStore = {
    * Get audit entries for a specific entity
    */
   getEntityAuditLog(entityUid: string): AuditEntry[] {
-    return storeState.auditLog.filter(entry => entry.entityUid === entityUid)
-  }
+    return storeState.auditLog.filter((entry) => entry.entityUid === entityUid)
+  },
 }
 
 // ============================================================================
@@ -550,7 +583,7 @@ export function useProjects(): Project[] {
  */
 export function useProject(projectId: string): Project | undefined {
   const projects = useProjects()
-  return projects.find(p => p.id === projectId)
+  return projects.find((p) => p.id === projectId)
 }
 
 /**
@@ -559,7 +592,7 @@ export function useProject(projectId: string): Project | undefined {
 export function useAreas(projectId?: string): Area[] {
   const state = useCoreStore()
   if (!projectId) return state.areas
-  return state.areas.filter(a => a.projectId === projectId)
+  return state.areas.filter((a) => a.projectId === projectId)
 }
 
 /**
@@ -569,11 +602,11 @@ export function useCells(projectId?: string, areaId?: string): Cell[] {
   const state = useCoreStore()
 
   if (areaId) {
-    return state.cells.filter(c => c.areaId === areaId)
+    return state.cells.filter((c) => c.areaId === areaId)
   }
 
   if (projectId) {
-    return state.cells.filter(c => c.projectId === projectId)
+    return state.cells.filter((c) => c.projectId === projectId)
   }
 
   return state.cells
@@ -584,7 +617,7 @@ export function useCells(projectId?: string, areaId?: string): Cell[] {
  */
 export function useCell(cellId: string): Cell | undefined {
   const state = useCoreStore()
-  return state.cells.find(c => c.id === cellId)
+  return state.cells.find((c) => c.id === cellId)
 }
 
 /**
@@ -592,9 +625,9 @@ export function useCell(cellId: string): Cell | undefined {
  */
 export function useRobots(cellId?: string): Robot[] {
   const state = useCoreStore()
-  const robots = state.assets.filter(a => a.kind === 'ROBOT') as unknown as Robot[]
+  const robots = state.assets.filter((a) => a.kind === 'ROBOT') as unknown as Robot[]
   if (!cellId) return robots
-  return robots.filter(r => r.cellId === cellId)
+  return robots.filter((r) => r.cellId === cellId)
 }
 
 /**
@@ -603,9 +636,9 @@ export function useRobots(cellId?: string): Robot[] {
 export function useTools(cellId?: string): Tool[] {
   const state = useCoreStore()
   // Tools are everything that is NOT a robot (Guns, Tools, Others)
-  const tools = state.assets.filter(a => a.kind !== 'ROBOT') as unknown as Tool[]
+  const tools = state.assets.filter((a) => a.kind !== 'ROBOT') as unknown as Tool[]
   if (!cellId) return tools
-  return tools.filter(t => t.cellId === cellId)
+  return tools.filter((t) => t.cellId === cellId)
 }
 
 /**
@@ -644,8 +677,7 @@ export function useHasUnsyncedChanges(): boolean {
  * Hook to access a cell by ID with optional undefined handling
  */
 export function useCellById(cellId: string | undefined): Cell | undefined {
-  if (!cellId) return undefined
-  return useCell(cellId)
+  return useCell(cellId ?? '')
 }
 
 /**
@@ -671,7 +703,7 @@ export function useToolsByCell(cellId: string): Tool[] {
  */
 export function useProjectMetrics(projectId: string): ProjectMetrics | undefined {
   const state = useCoreStore()
-  const project = state.projects.find(p => p.id === projectId)
+  const project = state.projects.find((p) => p.id === projectId)
 
   if (!project) return undefined
 

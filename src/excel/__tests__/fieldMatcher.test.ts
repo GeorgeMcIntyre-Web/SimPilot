@@ -10,9 +10,9 @@ import {
   getMatchSummary,
   formatMatchResult,
   normalizeScore,
-  DEFAULT_SCORING_CONFIG
+  DEFAULT_SCORING_CONFIG,
 } from '../fieldMatcher'
-import { profileSheet, type SheetProfile } from '../sheetProfiler'
+import { profileSheet } from '../sheetProfiler'
 import type { ColumnProfile } from '../columnProfiler'
 import { getAllFieldDescriptors } from '../fieldRegistry'
 
@@ -20,10 +20,13 @@ import { getAllFieldDescriptors } from '../fieldRegistry'
 function createMockProfile(
   headerRaw: string,
   dominantType: 'string' | 'number' | 'date' | 'boolean' | 'empty' | 'mixed' = 'string',
-  columnIndex: number = 0
+  columnIndex: number = 0,
 ): ColumnProfile {
   const headerNormalized = headerRaw.toLowerCase().trim().replace(/\s+/g, ' ')
-  const headerTokens = headerRaw.toLowerCase().split(/[\s_\-/]+/).filter(t => t.length > 0)
+  const headerTokens = headerRaw
+    .toLowerCase()
+    .split(/[\s_\-/]+/)
+    .filter((t) => t.length > 0)
 
   return {
     workbookId: 'test-workbook',
@@ -41,10 +44,10 @@ function createMockProfile(
       integerRatio: dominantType === 'number' ? 0.5 : 0,
       dateRatio: dominantType === 'date' ? 1 : 0,
       booleanRatio: dominantType === 'boolean' ? 1 : 0,
-      emptyRatio: dominantType === 'empty' ? 1 : 0
+      emptyRatio: dominantType === 'empty' ? 1 : 0,
     },
     distinctCountEstimate: 50,
-    dominantType
+    dominantType,
   }
 }
 
@@ -162,7 +165,7 @@ describe('fieldMatcher', () => {
       const result = matchFieldForColumn(profile, descriptors)
 
       expect(result.bestMatch?.reasons.length).toBeGreaterThan(0)
-      expect(result.bestMatch?.reasons.some(r => r.includes('match'))).toBe(true)
+      expect(result.bestMatch?.reasons.some((r) => r.includes('match'))).toBe(true)
     })
 
     it('returns multiple match candidates', () => {
@@ -183,7 +186,9 @@ describe('fieldMatcher', () => {
       const stringResult = matchFieldForColumn(stringProfile, descriptors)
 
       // Numeric should score higher (or equal) due to type compatibility
-      expect(numericResult.bestMatch?.score).toBeGreaterThanOrEqual(stringResult.bestMatch?.score ?? 0)
+      expect(numericResult.bestMatch?.score).toBeGreaterThanOrEqual(
+        stringResult.bestMatch?.score ?? 0,
+      )
     })
 
     it('matches reuse allocation fields', () => {
@@ -191,7 +196,7 @@ describe('fieldMatcher', () => {
         { header: 'Old Project', fieldId: 'old_project' },
         { header: 'New Line', fieldId: 'target_line' },
         { header: 'New Station', fieldId: 'target_station' },
-        { header: 'New Sector', fieldId: 'target_sector' }
+        { header: 'New Sector', fieldId: 'target_sector' },
       ]
 
       for (const { header, fieldId } of testCases) {
@@ -207,7 +212,7 @@ describe('fieldMatcher', () => {
       const testCases = [
         { header: '1st STAGE SIM COMPLETION', fieldId: 'stage_1_completion' },
         { header: 'FINAL DELIVERABLES', fieldId: 'final_deliverables' },
-        { header: 'DCS CONFIGURED', fieldId: 'dcs_configured' }
+        { header: 'DCS CONFIGURED', fieldId: 'dcs_configured' },
       ]
 
       for (const { header, fieldId } of testCases) {
@@ -221,9 +226,9 @@ describe('fieldMatcher', () => {
 
     it('matches typo synonyms from real Excel files', () => {
       const testCases = [
-        { header: 'Proyect', fieldId: 'project_id' },  // Spanish typo
-        { header: 'Coments', fieldId: 'comment' },      // Typo
-        { header: 'refresment ok', fieldId: 'reuse_status' }  // Typo in real files
+        { header: 'Proyect', fieldId: 'project_id' }, // Spanish typo
+        { header: 'Coments', fieldId: 'comment' }, // Typo
+        { header: 'refresment ok', fieldId: 'reuse_status' }, // Typo in real files
       ]
 
       for (const { header, fieldId } of testCases) {
@@ -241,20 +246,16 @@ describe('fieldMatcher', () => {
       const rows = [
         ['Area', 'Station', 'Robot', 'Application'],
         ['Front Unit', '010', 'R01', 'SW'],
-        ['Rear Unit', '020', 'R02', 'MH']
+        ['Rear Unit', '020', 'R02', 'MH'],
       ]
 
-      const sheetProfile = profileSheet(
-        { sheetName: 'SIMULATION', rows },
-        'test-workbook',
-        0
-      )
+      const sheetProfile = profileSheet({ sheetName: 'SIMULATION', rows }, 'test-workbook', 0)
 
       const results = matchAllColumns(sheetProfile)
 
       expect(results.length).toBe(4)
-      expect(results.some(r => r.bestMatch?.fieldId === 'area_name')).toBe(true)
-      expect(results.some(r => r.bestMatch?.fieldId === 'station_name')).toBe(true)
+      expect(results.some((r) => r.bestMatch?.fieldId === 'area_name')).toBe(true)
+      expect(results.some((r) => r.bestMatch?.fieldId === 'station_name')).toBe(true)
     })
   })
 
@@ -291,10 +292,10 @@ describe('fieldMatcher', () => {
       const profiles = [
         createMockProfile('Area', 'string', 0),
         createMockProfile('Station', 'string', 1),
-        createMockProfile('Area Name', 'string', 2)  // Another area column
+        createMockProfile('Area Name', 'string', 2), // Another area column
       ]
 
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
       const areaColumns = findColumnsForField(results, 'area_name')
 
       expect(areaColumns.length).toBe(2)
@@ -306,10 +307,10 @@ describe('fieldMatcher', () => {
       const profiles = [
         createMockProfile('Area', 'string', 0),
         createMockProfile('Station', 'string', 1),
-        createMockProfile('Robot', 'string', 2)
+        createMockProfile('Robot', 'string', 2),
       ]
 
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
       const map = buildFieldToColumnMap(results)
 
       expect(map.get('area_name')).toEqual([0])
@@ -322,10 +323,10 @@ describe('fieldMatcher', () => {
       const profiles = [
         createMockProfile('Area', 'string', 0),
         createMockProfile('XYZABC', 'string', 1),
-        createMockProfile('Station', 'string', 2)
+        createMockProfile('Station', 'string', 2),
       ]
 
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
       const unmatched = getUnmatchedColumns(results)
 
       expect(unmatched.length).toBe(1)
@@ -336,20 +337,22 @@ describe('fieldMatcher', () => {
   describe('getLowConfidenceMatches', () => {
     it('identifies low confidence matches', () => {
       const profiles = [
-        createMockProfile('Area', 'string', 0),  // High confidence (exact match)
-        createMockProfile('Note', 'string', 1)   // Lower confidence (partial match only)
+        createMockProfile('Area', 'string', 0), // High confidence (exact match)
+        createMockProfile('Note', 'string', 1), // Lower confidence (partial match only)
       ]
 
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
       const lowConfidence = getLowConfidenceMatches(results, 40)
 
       // 'Note' (if matched) would have a lower confidence match
       // Check that we correctly identify matches below threshold
-      const areaMatch = results.find(r => r.columnProfile.headerRaw === 'Area')
+      const areaMatch = results.find((r) => r.columnProfile.headerRaw === 'Area')
       expect(areaMatch?.bestMatch?.score).toBeGreaterThan(40)
-      
+
       // Verify the function works correctly
-      expect(lowConfidence.every(r => r.bestMatch !== undefined && r.bestMatch.score < 40)).toBe(true)
+      expect(lowConfidence.every((r) => r.bestMatch !== undefined && r.bestMatch.score < 40)).toBe(
+        true,
+      )
     })
   })
 
@@ -358,10 +361,10 @@ describe('fieldMatcher', () => {
       const profiles = [
         createMockProfile('Area', 'string', 0),
         createMockProfile('Station', 'string', 1),
-        createMockProfile('XYZABC', 'string', 2)
+        createMockProfile('XYZABC', 'string', 2),
       ]
 
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
       const summary = getMatchSummary(results)
 
       expect(summary.totalColumns).toBe(3)
@@ -422,13 +425,15 @@ describe('fieldMatcher', () => {
 
       const customConfig = {
         ...DEFAULT_SCORING_CONFIG,
-        exactSynonymMatch: 100  // Much higher
+        exactSynonymMatch: 100, // Much higher
       }
 
       const customResult = matchFieldForColumn(profile, descriptors, customConfig)
 
       // Custom config should produce different score
-      expect(customResult.bestMatch?.score).toBeGreaterThanOrEqual(defaultResult.bestMatch?.score ?? 0)
+      expect(customResult.bestMatch?.score).toBeGreaterThanOrEqual(
+        defaultResult.bestMatch?.score ?? 0,
+      )
     })
   })
 
@@ -440,11 +445,11 @@ describe('fieldMatcher', () => {
         'ASSEMBLY LINE',
         'STATION',
         'ROBOT',
-        'APPLICATION'
+        'APPLICATION',
       ]
 
       const profiles = headers.map((h, i) => createMockProfile(h, 'string', i))
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
 
       // All should have matches
       for (const result of results) {
@@ -461,14 +466,14 @@ describe('fieldMatcher', () => {
         'Robot caption',
         'Robotnumber (E-Number)',
         'Gun number',
-        'Transformer [kVA]'
+        'Transformer [kVA]',
       ]
 
       const profiles = headers.map((h, i) => createMockProfile(h, i >= 6 ? 'number' : 'string', i))
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
 
       // Most should have matches
-      const matched = results.filter(r => r.bestMatch !== undefined)
+      const matched = results.filter((r) => r.bestMatch !== undefined)
       expect(matched.length).toBeGreaterThan(5)
     })
 
@@ -481,7 +486,7 @@ describe('fieldMatcher', () => {
         'Gun Force [N]',
         'Area',
         'Robot Number',
-        'Required Force'
+        'Required Force',
       ]
 
       const profiles = headers.map((h, i) => {
@@ -489,13 +494,13 @@ describe('fieldMatcher', () => {
         return createMockProfile(h, isNumeric ? 'number' : 'string', i)
       })
 
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
 
       // Check specific matches
-      const gunNumberResult = results.find(r => r.columnProfile.headerRaw === 'Gun Number')
+      const gunNumberResult = results.find((r) => r.columnProfile.headerRaw === 'Gun Number')
       expect(gunNumberResult?.bestMatch?.fieldId).toBe('gun_number')
 
-      const forceResult = results.find(r => r.columnProfile.headerRaw === 'Gun Force [N]')
+      const forceResult = results.find((r) => r.columnProfile.headerRaw === 'Gun Force [N]')
       expect(forceResult?.bestMatch).toBeDefined()
       expect(['gun_force_n', 'gun_force_kn']).toContain(forceResult?.bestMatch?.fieldId)
     })
@@ -512,22 +517,22 @@ describe('fieldMatcher', () => {
         'Project STLA/P1H/O1H/LPM',
         'New Line',
         'New station',
-        'Coments'
+        'Coments',
       ]
 
       const profiles = headers.map((h, i) => createMockProfile(h, 'string', i))
-      const results = profiles.map(p => matchFieldForColumn(p, getAllFieldDescriptors()))
+      const results = profiles.map((p) => matchFieldForColumn(p, getAllFieldDescriptors()))
 
       // Proyect should match project_id (with typo)
-      const proyectResult = results.find(r => r.columnProfile.headerRaw === 'Proyect')
+      const proyectResult = results.find((r) => r.columnProfile.headerRaw === 'Proyect')
       expect(proyectResult?.bestMatch?.fieldId).toBe('project_id')
 
       // Coments should match comment (with typo)
-      const comentsResult = results.find(r => r.columnProfile.headerRaw === 'Coments')
+      const comentsResult = results.find((r) => r.columnProfile.headerRaw === 'Coments')
       expect(comentsResult?.bestMatch?.fieldId).toBe('comment')
 
       // New Line should match target_line
-      const newLineResult = results.find(r => r.columnProfile.headerRaw === 'New Line')
+      const newLineResult = results.find((r) => r.columnProfile.headerRaw === 'New Line')
       expect(newLineResult?.bestMatch?.fieldId).toBe('target_line')
     })
   })

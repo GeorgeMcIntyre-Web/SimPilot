@@ -5,16 +5,9 @@
  * Phase 3: Verifies tooling → workflow mapping and bottleneck analysis with real data
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type {
-  SimPilotDataSnapshot
-} from '../ExcelIngestionFacade'
-import type {
-  ToolingItem,
-  ToolingWorkflowStatus,
-  ToolingSnapshot,
-  BottleneckSnapshot
-} from '../toolingTypes'
+import { describe, it, expect } from 'vitest'
+import type { SimPilotDataSnapshot } from '../ExcelIngestionFacade'
+import type { ToolingItem, ToolingWorkflowStatus, BottleneckSnapshot } from '../toolingTypes'
 import { toolingItemToWorkflowItem } from '../workflowMappers'
 import { analyzeWorkflowBottlenecks } from '../workflowBottleneckLinker'
 
@@ -35,33 +28,33 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
             ALLOCATED: 0,
             IN_USE: 0,
             RESERVED: 0,
-            UNKNOWN: 0
+            UNKNOWN: 0,
           },
-          unmatchedReuseCount: 0
+          unmatchedReuseCount: 0,
         },
         linkingStats: {
           totalAssets: 0,
           assetsWithReuseInfo: 0,
           matchedReuseRecords: 0,
-          unmatchedReuseRecords: 0
+          unmatchedReuseRecords: 0,
         },
         errors: [],
         toolingSnapshot: {
           updatedAt: '2025-01-15T10:00:00Z',
-          items: []
+          items: [],
         },
         bottleneckSnapshot: {
           generatedAt: '2025-01-15T10:00:00Z',
-          workflowStatuses: []
+          workflowStatuses: [],
         },
         workflowSnapshot: {
           generatedAt: '2025-01-15T10:00:00Z',
-          items: []
+          items: [],
         },
         workflowBottleneckSnapshot: {
           generatedAt: '2025-01-15T10:00:00Z',
-          bottlenecks: []
-        }
+          bottlenecks: [],
+        },
       }
 
       // Verify workflow snapshot is empty
@@ -83,10 +76,10 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
             unit: 'Unit1',
             line: 'Line1',
             station: 'ST-100',
-            area: 'Underbody'
+            area: 'Underbody',
           },
           supplier: 'ACME Corp',
-          metadata: { custom: 'data' }
+          metadata: { custom: 'data' },
         },
         {
           toolingId: 'T002',
@@ -97,20 +90,14 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
             unit: 'Unit1',
             line: 'Line1',
             station: 'ST-200',
-            area: 'Body'
+            area: 'Body',
           },
-          metadata: {}
-        }
+          metadata: {},
+        },
       ]
 
-      // Build a complete snapshot (simulating what the facade would return)
-      const toolingSnapshot: ToolingSnapshot = {
-        updatedAt: '2025-01-15T10:00:00Z',
-        items: toolingItems
-      }
-
       // Simulate the facade's workflow mapping logic
-      const workflowItems = toolingItems.map(item => ({
+      const workflowItems = toolingItems.map((item) => ({
         id: item.toolingId,
         kind: 'TOOLING' as const,
         simulationContextKey: `${item.location.program}|${item.location.plant}|${item.location.unit}|${item.location.line}|${item.location.station}`,
@@ -121,20 +108,20 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
         designStageStatus: {
           stage: 'DESIGN' as const,
           status: 'UNKNOWN' as const,
-          percentComplete: null
+          percentComplete: null,
         },
         simulationStageStatus: {
           stage: 'SIMULATION' as const,
           status: 'UNKNOWN' as const,
-          percentComplete: null
+          percentComplete: null,
         },
         manufactureStageStatus: {
           stage: 'MANUFACTURE' as const,
           status: 'UNKNOWN' as const,
-          percentComplete: null
+          percentComplete: null,
         },
         externalSupplierName: item.supplier,
-        metadata: item.metadata
+        metadata: item.metadata,
       }))
 
       // Verify conversion
@@ -172,32 +159,32 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
           unit: 'Unit1',
           line: 'Line1',
           station: 'ST-100',
-          area: 'Underbody'
+          area: 'Underbody',
         },
         designStage: {
           stage: 'DESIGN',
           status: 'BLOCKED',
-          percentComplete: 20
+          percentComplete: 20,
         },
         simulationStage: {
           stage: 'SIMULATION',
           status: 'AT_RISK',
-          percentComplete: 60
+          percentComplete: 60,
         },
         manufactureStage: {
           stage: 'MANUFACTURE',
           status: 'ON_TRACK',
-          percentComplete: 80
+          percentComplete: 80,
         },
         dominantStage: 'DESIGN',
         bottleneckReason: 'DESIGN_BLOCKED',
         severity: 'HIGH',
-        severityScore: 85
+        severityScore: 85,
       }
 
       const bottleneckSnapshot: BottleneckSnapshot = {
         generatedAt: '2025-01-15T10:00:00Z',
-        workflowStatuses: [toolingStatus]
+        workflowStatuses: [toolingStatus],
       }
 
       // Verify the snapshot structure
@@ -224,11 +211,11 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
           unit: 'Body',
           line: 'L1',
           station: 'ST-050',
-          area: 'Critical'
+          area: 'Critical',
         },
         supplier: 'External Vendor',
         owner: 'Engineering Team',
-        metadata: { priority: 'critical', leadTime: 120 }
+        metadata: { priority: 'critical', leadTime: 120 },
       }
 
       // Verify all key fields are preserved in conversion
@@ -257,10 +244,10 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
             unit: 'Unit1',
             line: 'Line1',
             station: 'ST-100',
-            area: 'Underbody'
+            area: 'Underbody',
           },
           supplier: 'ACME Corp',
-          metadata: {}
+          metadata: {},
         },
         {
           toolingId: 'T002',
@@ -271,10 +258,10 @@ describe('ExcelIngestionFacade - Workflow Snapshot Building', () => {
             unit: 'Unit1',
             line: 'Line1',
             station: 'ST-200',
-            area: 'Body'
+            area: 'Body',
           },
-          metadata: {}
-        }
+          metadata: {},
+        },
       ]
 
       // Convert to workflow items
