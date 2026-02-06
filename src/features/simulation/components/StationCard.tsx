@@ -84,8 +84,6 @@ function CompletionBar({ percent }: CompletionBarProps) {
 export function StationCard({ station, onClick, isSelected = false }: StationCardProps) {
   const completion = station.simulationStatus?.firstStageCompletion
   const engineer = station.simulationStatus?.engineer
-  const unitLabel = station.unit || station.plant || '—'
-  const lineLabel = station.line || '—'
   const toolCount = station.assetCounts.tools
   const otherCount = station.assetCounts.other
 
