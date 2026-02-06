@@ -30,95 +30,64 @@ export function SimulationTabContent({ station }: SimulationTabContentProps) {
 
   return (
     <div className="space-y-3">
-      {/* Completion Metrics */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <BarChart3 className="h-3.5 w-3.5 text-gray-500" />
-          <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-            Completion Progress
-          </h3>
+      {/* Progress */}
+      <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80">
+        <div className="flex items-center gap-2 mb-2">
+          <BarChart3 className="h-4 w-4 text-blue-500" />
+          <h3 className="text-xs font-semibold text-gray-800 dark:text-gray-200">Progress</h3>
         </div>
-        <div className="space-y-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-          <MetricRow
-            label="1st Stage"
-            value={simStatus.firstStageCompletion}
-            threshold={80}
-          />
-          <MetricRow
-            label="Final Deliverables"
-            value={simStatus.finalDeliverablesCompletion}
-            threshold={80}
-          />
+        <div className="space-y-2">
+          <MetricRow label="1st Stage" value={simStatus.firstStageCompletion} threshold={80} />
+          <MetricRow label="Final Deliverables" value={simStatus.finalDeliverablesCompletion} threshold={80} />
         </div>
       </div>
 
-      {/* DCS Configuration */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-2">
-          <CheckCircle2 className="h-3.5 w-3.5 text-gray-500" />
-          <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Configuration</h3>
+      {/* Status */}
+      <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 space-y-2">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          <h3 className="text-xs font-semibold text-gray-800 dark:text-gray-200">Status</h3>
         </div>
-        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+        <div className="flex items-center gap-2 text-xs font-medium px-2 py-2 rounded bg-gray-50 dark:bg-gray-700/60">
           {simStatus.dcsConfigured ? (
             <>
               <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                DCS Configured
-              </span>
+              <span className="text-emerald-700 dark:text-emerald-300">DCS configured</span>
             </>
           ) : (
             <>
               <Clock className="h-4 w-4 text-amber-500" />
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-                DCS Not Configured
-              </span>
+              <span className="text-amber-700 dark:text-amber-300">DCS not configured</span>
             </>
           )}
         </div>
+        <div className="flex items-center gap-2 text-xs px-2 py-2 rounded bg-gray-50 dark:bg-gray-700/60">
+          <User className="h-4 w-4 text-blue-500" />
+          <span className="text-gray-600 dark:text-gray-200">
+            {simStatus.engineer || 'Unassigned'}
+          </span>
+        </div>
       </div>
 
-      {/* Engineer Assignment */}
-      {simStatus.engineer && (
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <User className="h-3.5 w-3.5 text-gray-500" />
-            <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Assignment</h3>
-          </div>
-          <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-            <User className="h-4 w-4 text-blue-500" />
-            <span className="text-xs font-medium text-blue-900 dark:text-blue-100">
-              {simStatus.engineer}
-            </span>
-          </div>
+      {/* Data source (collapsed text, no accordion) */}
+      <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 text-[11px] space-y-1">
+        <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 font-semibold">
+          <FileSpreadsheet className="h-3.5 w-3.5" />
+          <span>Data source</span>
         </div>
-      )}
-
-      {/* Source Information */}
-      <details className="group">
-        <summary className="flex items-center gap-1.5 cursor-pointer list-none hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-1 px-1 py-1 rounded transition-colors">
-          <ChevronRight className="h-3 w-3 text-gray-400 transition-transform group-open:rotate-90" />
-          <FileSpreadsheet className="h-3.5 w-3.5 text-gray-500" />
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-            Data Source
-          </span>
-        </summary>
-        <div className="pl-5 pt-2 space-y-1 text-[10px]">
-          <div className="flex justify-between py-0.5">
+        <div className="flex flex-col gap-1 text-gray-600 dark:text-gray-300">
+          <div className="flex gap-1">
             <span className="text-gray-500 dark:text-gray-400">File:</span>
-            <span className="text-gray-900 dark:text-white font-mono truncate ml-2">
-              {simStatus.sourceFile}
-            </span>
+            <span className="font-mono truncate">{simStatus.sourceFile || 'Unknown'}</span>
           </div>
           {simStatus.sheetName && (
-            <div className="flex justify-between py-0.5">
+            <div className="flex gap-1">
               <span className="text-gray-500 dark:text-gray-400">Sheet:</span>
-              <span className="text-gray-900 dark:text-white font-mono">
-                {simStatus.sheetName}
-              </span>
+              <span className="font-mono truncate">{simStatus.sheetName}</span>
             </div>
           )}
         </div>
-      </details>
+      </div>
     </div>
   );
 }

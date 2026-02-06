@@ -122,7 +122,7 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
       aria-label={`Station ${station.station} on ${station.line}${completion !== undefined ? `, ${completion}% complete` : ''}`}
       aria-pressed={isSelected}
       className={cn(
-        'w-full text-left p-4 rounded-2xl border transition-all duration-200',
+        'w-full text-left p-4 rounded-2xl border transition-all duration-200 overflow-hidden',
         'hover:shadow-lg hover:-translate-y-[1px]',
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-gray-900',
         isSelected
@@ -132,8 +132,8 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
       data-testid={`station-card-${station.contextKey}`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0">
           <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
             {station.station}
           </h4>
@@ -145,7 +145,7 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
         </div>
         {completion !== undefined && (
           <span className={cn(
-            'text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm',
+            'text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm self-start flex-shrink-0',
             getCompletionBadgeClass(completion)
           )}>
             {completion}%

@@ -58,18 +58,18 @@ function LineGroup({
       <button
         onClick={onToggle}
         className={cn(
-          'w-full flex items-center justify-between px-4 py-3',
+          'w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3',
           'bg-slate-50 dark:bg-gray-800/70 hover:bg-slate-100 dark:hover:bg-gray-700/70',
           'transition-colors'
         )}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           {isExpanded ? (
             <ChevronDown className="h-4 w-4 text-gray-500" />
           ) : (
             <ChevronRight className="h-4 w-4 text-gray-500" />
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <Layers className="h-4 w-4 text-blue-500" />
             <span className="font-semibold text-sm text-gray-900 dark:text-white">
               {line}
@@ -80,7 +80,7 @@ function LineGroup({
           </div>
           <span
             className={cn(
-              'ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold',
+              'ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-shrink-0',
               getCompletionTextClass(avgCompletion),
               'bg-white text-gray-900 dark:bg-gray-900/70 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
             )}
