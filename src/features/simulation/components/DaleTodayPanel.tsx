@@ -109,20 +109,22 @@ export function DaleTodayPanel({
   if (attentionItems.length === 0) {
     return (
       <div
-        className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 p-6"
+        className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5"
         data-testid="dale-today-panel-empty"
       >
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-            <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
+            <Sparkles className="h-5 w-5" />
           </div>
-          <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">
-            All Clear!
-          </h3>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
+              All clear
+            </h3>
+            <p className="text-[13px] text-gray-600 dark:text-gray-300 truncate">
+              No stations need attention right now.
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-emerald-700 dark:text-emerald-300">
-          No stations need immediate attention. Everything is on track.
-        </p>
       </div>
     )
   }

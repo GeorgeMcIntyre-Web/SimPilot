@@ -2,7 +2,7 @@
 // Compact card showing station summary for the simulation board
 // Displays asset counts, sourcing breakdown, and simulation status
 
-import { RefreshCw, ShoppingCart, HelpCircle, Wrench } from 'lucide-react'
+import { RefreshCw, ShoppingCart, Wrench } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
 import { getCompletionBarClass } from '../simulationSelectors'
@@ -46,12 +46,6 @@ function SourcingIndicator({ reuse, newBuy, unknown }: SourcingIndicatorProps) {
         <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
           <ShoppingCart className="h-3 w-3" />
           <span>{newBuyPercent}%</span>
-        </div>
-      )}
-      {unknown > 0 && (
-        <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
-          <HelpCircle className="h-3 w-3" />
-          <span>{unknown}</span>
         </div>
       )}
     </div>

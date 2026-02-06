@@ -191,7 +191,6 @@ export function useStationsLowCompletion(threshold: number = 30): StationAttenti
  * Get all stations needing attention for Dale's Today Panel
  */
 export function useStationsNeedingAttention(): StationAttentionItem[] {
-  const unknownSourcing = useStationsWithUnknownSourcing(2)
   const expectingReuse = useStationsExpectingReuse()
   const lowCompletion = useStationsLowCompletion(30)
   
@@ -203,7 +202,6 @@ export function useStationsNeedingAttention(): StationAttentionItem[] {
     // Priority order: errors first, then warnings, then info
     const allItems = [
       ...lowCompletion,
-      ...unknownSourcing,
       ...expectingReuse
     ]
     
@@ -214,7 +212,7 @@ export function useStationsNeedingAttention(): StationAttentionItem[] {
     }
     
     return combined.slice(0, 10) // Top 10 items
-  }, [unknownSourcing, expectingReuse, lowCompletion])
+  }, [expectingReuse, lowCompletion])
 }
 
 // ============================================================================
