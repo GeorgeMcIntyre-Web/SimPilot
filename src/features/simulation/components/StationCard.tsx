@@ -4,6 +4,7 @@
 
 import { RefreshCw, ShoppingCart, Wrench } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
+import { Link } from 'react-router-dom'
 import type { StationContext } from '../simulationStore'
 import { getCompletionBarClass } from '../simulationSelectors'
 
@@ -134,12 +135,14 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
           unknown={station.sourcingCounts.unknown}
         />
         {engineer && (
-          <span
-            className="text-[11px] text-gray-700 dark:text-gray-200 truncate max-w-[140px] px-2 py-1 bg-gray-100/70 dark:bg-gray-700/70 rounded-full"
+          <Link
+            to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-[11px] text-blue-700 dark:text-blue-300 truncate max-w-[140px] px-2 py-1 bg-blue-50/70 dark:bg-blue-900/30 rounded-full hover:underline"
             title={engineer}
           >
             {engineer}
-          </span>
+          </Link>
         )}
       </div>
     </button>
