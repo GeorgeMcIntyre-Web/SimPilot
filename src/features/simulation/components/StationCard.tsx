@@ -29,19 +29,17 @@ interface CountBadgeProps {
 }
 
 function CountBadge({ icon, count, label, color }: CountBadgeProps) {
-  if (count === 0) return null
-
   const colorClasses = {
-    purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
-    blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-    gray: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+    purple: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-200 border border-purple-100 dark:border-purple-800',
+    yellow: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-100 dark:border-amber-800',
+    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-100 dark:border-blue-800',
+    gray: 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700'
   }
 
   return (
     <div
       className={cn(
-        'flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium',
+        'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold',
         colorClasses[color]
       )}
       title={label}
@@ -95,9 +93,13 @@ interface CompletionBarProps {
 
 function CompletionBar({ percent }: CompletionBarProps) {
   return (
-    <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
       <div
-        className={cn('h-full transition-all duration-300', getCompletionBarClass(percent))}
+        className={cn(
+          'h-full transition-all duration-300',
+          'bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400',
+          getCompletionBarClass(percent)
+        )}
         style={{ width: `${percent ?? 0}%` }}
       />
     </div>
@@ -111,6 +113,8 @@ function CompletionBar({ percent }: CompletionBarProps) {
 export function StationCard({ station, onClick, isSelected = false }: StationCardProps) {
   const completion = station.simulationStatus?.firstStageCompletion
   const engineer = station.simulationStatus?.engineer
+  const unitLabel = station.unit || station.plant || '—'
+  const lineLabel = station.line || '—'
 
   return (
     <button
@@ -118,28 +122,30 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
       aria-label={`Station ${station.station} on ${station.line}${completion !== undefined ? `, ${completion}% complete` : ''}`}
       aria-pressed={isSelected}
       className={cn(
-        'w-full text-left p-4 rounded-xl border transition-all duration-200',
-        'hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600',
-        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+        'w-full text-left p-4 rounded-2xl border transition-all duration-200 overflow-hidden',
+        'hover:shadow-lg hover:-translate-y-[1px]',
+        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-gray-900',
         isSelected
-          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600 shadow-md'
-          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+          ? 'bg-blue-50/70 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600 shadow-md'
+          : 'bg-white/90 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
       )}
       data-testid={`station-card-${station.contextKey}`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-2">
-        <div>
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0">
           <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
             {station.station}
           </h4>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            {station.line}
-          </p>
+          <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+            <span className="uppercase tracking-wide">{lineLabel}</span>
+            <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+            <span className="capitalize">{unitLabel}</span>
+          </div>
         </div>
         {completion !== undefined && (
           <span className={cn(
-            'text-xs font-medium px-2 py-0.5 rounded-full',
+            'text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm self-start flex-shrink-0',
             getCompletionBadgeClass(completion)
           )}>
             {completion}%
@@ -153,7 +159,7 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
       </div>
 
       {/* Asset counts */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
+      <div className="flex flex-wrap gap-2 mb-3">
         <CountBadge
           icon={<Bot className="h-3 w-3" />}
           count={station.assetCounts.robots}
@@ -188,7 +194,7 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
           unknown={station.sourcingCounts.unknown}
         />
         {engineer && (
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[100px]" title={engineer}>
+          <span className="text-[11px] text-gray-600 dark:text-gray-300 truncate max-w-[140px] px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full" title={engineer}>
             {engineer}
           </span>
         )}

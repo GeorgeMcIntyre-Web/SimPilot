@@ -53,52 +53,57 @@ function LineGroup({
   onToggle
 }: LineGroupProps) {
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm">
       {/* Line Header */}
       <button
         onClick={onToggle}
         className={cn(
-          'w-full flex items-center justify-between px-4 py-3',
-          'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50',
+          'w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3',
+          'bg-slate-50 dark:bg-gray-800/70 hover:bg-slate-100 dark:hover:bg-gray-700/70',
           'transition-colors'
         )}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           {isExpanded ? (
             <ChevronDown className="h-4 w-4 text-gray-500" />
           ) : (
             <ChevronRight className="h-4 w-4 text-gray-500" />
           )}
-          <Layers className="h-4 w-4 text-blue-500" />
-          <span className="font-medium text-sm text-gray-900 dark:text-white">
-            {line}
-          </span>
-          <span className={cn(
-            'font-semibold w-12 text-right',
-            getCompletionTextClass(avgCompletion)
-          )}>
-            {avgCompletion !== null ? `${avgCompletion}%` : '-'}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            in {unit}
+          <div className="flex items-center gap-2 min-w-0">
+            <Layers className="h-4 w-4 text-blue-500" />
+            <span className="font-semibold text-sm text-gray-900 dark:text-white">
+              {line}
+            </span>
+            <span className="text-[11px] text-gray-500 dark:text-gray-400">
+              {unit}
+            </span>
+          </div>
+          <span
+            className={cn(
+              'ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-shrink-0',
+              getCompletionTextClass(avgCompletion),
+              'bg-white text-gray-900 dark:bg-gray-900/70 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
+            )}
+          >
+            {avgCompletion !== null ? `${avgCompletion}% complete` : 'No data'}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
           {/* Station count */}
-          <span className="text-sm text-gray-600 dark:text-gray-300">
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-200 bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 px-2 py-1 rounded-full">
             {stations.length} station{stations.length !== 1 ? 's' : ''}
           </span>
 
           {/* Asset counts */}
-          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1">
-              <Bot className="h-3.5 w-3.5 text-purple-500" />
-              {robotCount}
+          <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-200 border border-purple-100 dark:border-purple-800">
+              <Bot className="h-3.5 w-3.5" />
+              {robotCount} robots
             </span>
-            <span className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 text-yellow-500" />
-              {gunCount}
+            <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200 border border-amber-100 dark:border-amber-800">
+              <Zap className="h-3.5 w-3.5" />
+              {gunCount} guns
             </span>
           </div>
         </div>
@@ -106,8 +111,8 @@ function LineGroup({
 
       {/* Stations Grid */}
       {isExpanded && (
-        <div className="p-4 bg-white dark:bg-gray-800 max-h-[600px] overflow-y-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="p-4 bg-white dark:bg-gray-800/80 max-h-[560px] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {stations.map(station => (
               <StationCard
                 key={station.contextKey}
