@@ -1,4 +1,4 @@
-import { Cell, Robot, Tool } from '../domain/core'
+import { Cell, Robot, Tool } from '../../domain/core'
 import { CellIndex, RobotIndex } from './indexes'
 import { normalizeStation, normalizeArea, normalizeLine } from './normalizers'
 import { LinkConfidence } from './types'
@@ -33,7 +33,7 @@ export function buildMatchResult<T>(options: {
     method: options.method,
     key: options.key,
     ambiguous: options.ambiguous ?? false,
-    candidateCount: options.candidateCount ?? 0
+    candidateCount: options.candidateCount ?? 0,
   }
 }
 
@@ -44,7 +44,7 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
   const normalizedStation = normalizeStation(asset.stationCode)
 
   if (normalizedStation === '') {
-    return buildMatchResult({ match: null, confidence: 'LOW', method: 'none', key: '' })
+    return buildMatchResult<Cell>({ match: null, confidence: 'LOW', method: 'none', key: '' })
   }
 
   if (asset.areaName) {
@@ -57,7 +57,7 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
         confidence: 'HIGH',
         method: 'area+station',
         key: areaKey,
-        candidateCount: 1
+        candidateCount: 1,
       })
     }
 
@@ -68,7 +68,7 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
         method: 'area+station',
         key: areaKey,
         ambiguous: true,
-        candidateCount: areaMatches.length
+        candidateCount: areaMatches.length,
       })
     }
   }
@@ -83,7 +83,7 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
         confidence: 'HIGH',
         method: 'line+station',
         key: lineKey,
-        candidateCount: 1
+        candidateCount: 1,
       })
     }
 
@@ -94,7 +94,7 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
         method: 'line+station',
         key: lineKey,
         ambiguous: true,
-        candidateCount: lineMatches.length
+        candidateCount: lineMatches.length,
       })
     }
   }
@@ -107,7 +107,7 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
       confidence: 'MEDIUM',
       method: 'station',
       key: normalizedStation,
-      candidateCount: 1
+      candidateCount: 1,
     })
   }
 
@@ -118,11 +118,16 @@ export function findCellForAsset(asset: AssetLike, index: CellIndex): MatchResul
       method: 'station',
       key: normalizedStation,
       ambiguous: true,
-      candidateCount: stationMatches.length
+      candidateCount: stationMatches.length,
     })
   }
 
-  return buildMatchResult({ match: null, confidence: 'LOW', method: 'none', key: normalizedStation })
+  return buildMatchResult<Cell>({
+    match: null,
+    confidence: 'LOW',
+    method: 'none',
+    key: normalizedStation,
+  })
 }
 
 /**
@@ -140,7 +145,7 @@ export function findRobotForTool(tool: Tool, index: RobotIndex): MatchResult<Rob
         confidence: 'MEDIUM',
         method: 'station',
         key: normalizedStation,
-        candidateCount: 1
+        candidateCount: 1,
       })
     }
 
@@ -151,23 +156,23 @@ export function findRobotForTool(tool: Tool, index: RobotIndex): MatchResult<Rob
         method: 'station',
         key: normalizedStation,
         ambiguous: true,
-        candidateCount: stationRobots.length
+        candidateCount: stationRobots.length,
       })
     }
   }
 
-  return buildMatchResult({ match: null, confidence: 'LOW', method: 'none', key: '' })
+  return buildMatchResult<Robot>({ match: null, confidence: 'LOW', method: 'none', key: '' })
 }
 
 export function buildMatchKeyString(
   stationCode?: string,
   areaName?: string,
-  lineCode?: string
+  lineCode?: string,
 ): string {
   const parts: string[] = [
     stationCode ? `station:${stationCode}` : undefined,
     areaName ? `area:${areaName}` : undefined,
-    lineCode ? `line:${lineCode}` : undefined
+    lineCode ? `line:${lineCode}` : undefined,
   ].filter(Boolean) as string[]
 
   return parts.length > 0 ? parts.join(', ') : 'no matching criteria'

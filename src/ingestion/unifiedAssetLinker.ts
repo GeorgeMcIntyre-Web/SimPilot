@@ -10,7 +10,7 @@ import {
   LinkStats,
   LinkingResult,
   LinkType,
-  LinkConfidence
+  LinkConfidence,
 } from './linking/types'
 import {
   getLinksFrom,
@@ -18,7 +18,7 @@ import {
   getRobotsForCell,
   getToolsForCell,
   getCellForRobot,
-  getLinkStatsSummary
+  getLinkStatsSummary,
 } from './linking/linkGraph'
 
 let linkIdCounter = 0
@@ -38,11 +38,7 @@ const append = <T>(map: Map<string, T[]>, key: string, value: T): void => {
   map.set(key, items)
 }
 
-export function linkAssets(
-  cells: Cell[],
-  robots: Robot[],
-  tools: Tool[]
-): LinkingResult {
+export function linkAssets(cells: Cell[], robots: Robot[], tools: Tool[]): LinkingResult {
   const warnings: IngestionWarning[] = []
   const links: AssetLink[] = []
 
@@ -64,7 +60,7 @@ export function linkAssets(
         'ROBOT',
         robot,
         buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode),
-        'No matching cell found'
+        'No matching cell found',
       )
       continue
     }
@@ -75,7 +71,7 @@ export function linkAssets(
         'ROBOT',
         robot,
         matchResult.candidateCount,
-        buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode)
+        buildMatchKeyString(robot.stationCode, robot.areaName, robot.lineCode),
       )
       ambiguousCount += 1
     }
@@ -89,7 +85,7 @@ export function linkAssets(
       targetKind: 'CELL',
       confidence: matchResult.confidence,
       matchMethod: matchResult.method,
-      matchKey: matchResult.key
+      matchKey: matchResult.key,
     }
     links.push(link)
 
@@ -117,7 +113,7 @@ export function linkAssets(
           targetKind: 'ROBOT',
           confidence: robotMatch.confidence,
           matchMethod: robotMatch.method,
-          matchKey: robotMatch.key
+          matchKey: robotMatch.key,
         }
         links.push(toolRobotLink)
 
@@ -142,7 +138,7 @@ export function linkAssets(
         'TOOL',
         tool,
         buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode),
-        'No matching cell or robot found'
+        'No matching cell or robot found',
       )
       continue
     }
@@ -153,7 +149,7 @@ export function linkAssets(
         'TOOL',
         tool,
         matchResult.candidateCount,
-        buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode)
+        buildMatchKeyString(tool.stationCode, tool.areaName, tool.lineCode),
       )
       ambiguousCount += 1
     }
@@ -167,7 +163,7 @@ export function linkAssets(
       targetKind: 'CELL',
       confidence: matchResult.confidence,
       matchMethod: matchResult.method,
-      matchKey: matchResult.key
+      matchKey: matchResult.key,
     }
     links.push(link)
 
@@ -198,7 +194,7 @@ export function linkAssets(
     cellsWithRobots: cellsWithRobots.size,
     cellsWithTools: cellsWithTools.size,
     linkCount: links.length,
-    ambiguousCount
+    ambiguousCount,
   }
 
   return {
@@ -206,7 +202,7 @@ export function linkAssets(
     robots,
     tools,
     graph: { links, bySource, byTarget, stats },
-    warnings
+    warnings,
   }
 }
 
@@ -216,6 +212,6 @@ export {
   getRobotsForCell,
   getToolsForCell,
   getCellForRobot,
-  getLinkStatsSummary
+  getLinkStatsSummary,
 }
-export { LinkType, LinkConfidence, AssetLink, LinkGraph, LinkStats, LinkingResult }
+export type { LinkType, LinkConfidence, AssetLink, LinkGraph, LinkStats, LinkingResult }

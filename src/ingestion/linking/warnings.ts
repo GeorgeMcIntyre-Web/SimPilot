@@ -1,4 +1,4 @@
-import { IngestionWarning, Robot, Tool } from '../domain/core'
+import { IngestionWarning, Robot, Tool } from '../../domain/core'
 import { createLinkingAmbiguousWarning, createLinkingMissingTargetWarning } from '../warningUtils'
 import { EntityKind } from './types'
 
@@ -7,16 +7,18 @@ export const pushMissingTarget = (
   kind: EntityKind,
   entity: Robot | Tool,
   matchKey: string,
-  reason: string
+  reason: string,
 ): void => {
-  warnings.push(createLinkingMissingTargetWarning({
-    entityType: kind,
-    entityId: entity.id,
-    entityName: entity.name,
-    fileName: entity.sourceFile ?? '',
-    matchKey,
-    reason
-  }))
+  warnings.push(
+    createLinkingMissingTargetWarning({
+      entityType: kind,
+      entityId: entity.id,
+      entityName: entity.name,
+      fileName: entity.sourceFile ?? '',
+      matchKey,
+      reason,
+    }),
+  )
 }
 
 export const pushAmbiguous = (
@@ -24,13 +26,15 @@ export const pushAmbiguous = (
   kind: EntityKind,
   entity: Robot | Tool,
   candidateCount: number,
-  matchKey: string
+  matchKey: string,
 ): void => {
-  warnings.push(createLinkingAmbiguousWarning({
-    entityType: kind,
-    entityId: entity.id,
-    fileName: entity.sourceFile ?? '',
-    candidatesCount: candidateCount,
-    matchKey
-  }))
+  warnings.push(
+    createLinkingAmbiguousWarning({
+      entityType: kind,
+      entityId: entity.id,
+      fileName: entity.sourceFile ?? '',
+      candidatesCount: candidateCount,
+      matchKey,
+    }),
+  )
 }
