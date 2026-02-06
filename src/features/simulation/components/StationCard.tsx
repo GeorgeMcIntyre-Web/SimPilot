@@ -2,10 +2,10 @@
 // Compact card showing station summary for the simulation board
 // Displays asset counts, sourcing breakdown, and simulation status
 
-import { RefreshCw, ShoppingCart, HelpCircle, MapPin, Wrench } from 'lucide-react'
+import { RefreshCw, ShoppingCart, HelpCircle, Wrench } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import type { StationContext } from '../simulationStore'
-import { getCompletionBadgeClass, getCompletionBarClass } from '../simulationSelectors'
+import { getCompletionBarClass } from '../simulationSelectors'
 
 // ============================================================================
 // TYPES
@@ -64,15 +64,20 @@ interface CompletionBarProps {
 
 function CompletionBar({ percent }: CompletionBarProps) {
   return (
-    <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-      <div
-        className={cn(
-          'h-full transition-all duration-300',
-          'bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400',
-          getCompletionBarClass(percent)
-        )}
-        style={{ width: `${percent ?? 0}%` }}
-      />
+    <div className="flex items-center gap-2">
+      <div className="h-2 flex-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+        <div
+          className={cn(
+            'h-full transition-all duration-300',
+            'bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400',
+            getCompletionBarClass(percent)
+          )}
+          style={{ width: `${percent ?? 0}%` }}
+        />
+      </div>
+      <span className="text-[11px] font-medium text-gray-700 dark:text-gray-200 min-w-[32px] text-right">
+        {percent !== undefined ? `${percent}%` : '—'}
+      </span>
     </div>
   )
 }
@@ -109,14 +114,6 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
             {station.station}
           </h4>
         </div>
-        {completion !== undefined && (
-          <span className={cn(
-            'text-[11px] font-semibold px-2 py-1 rounded-full shadow-sm self-start flex-shrink-0',
-            getCompletionBadgeClass(completion)
-          )}>
-            {completion}%
-          </span>
-        )}
       </div>
 
       {/* Completion bar */}
