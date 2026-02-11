@@ -6,18 +6,16 @@ import {
   RefreshCw,
   ShoppingCart,
   HelpCircle,
-  ExternalLink,
+  ChevronRight,
 } from 'lucide-react';
 import { AssetCountRow } from '../SimulationDetailPieces';
 import type { StationContext } from '../../simulationStore';
-import { ChevronRight } from 'lucide-react';
 
 interface OverviewTabContentProps {
   station: StationContext;
-  onViewAssets: () => void;
 }
 
-export function OverviewTabContent({ station, onViewAssets }: OverviewTabContentProps) {
+export function OverviewTabContent({ station }: OverviewTabContentProps) {
   return (
     <div className="space-y-3">
       {/* Hierarchy Breadcrumb */}
@@ -97,16 +95,6 @@ export function OverviewTabContent({ station, onViewAssets }: OverviewTabContent
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={onViewAssets}
-          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          View Assets in Detail
-        </button>
-      </div>
     </div>
   );
 }

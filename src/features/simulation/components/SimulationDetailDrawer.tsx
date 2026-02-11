@@ -3,14 +3,13 @@
 // Provides action to view assets in Assets tab
 
 import { useState } from 'react';
-import { ExternalLink, AlertTriangle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
 import { cn } from '../../../ui/lib/utils';
 import type { StationContext } from '../simulationStore';
 import { DrawerHeader } from './drawer/DrawerHeader';
 import { TabNavigation, type TabView } from './drawer/TabNavigation';
 import { OverviewTab } from './drawer/OverviewTab';
 import { AssetsTab } from './drawer/AssetsTab';
-import { useDrawerNavigation } from './drawer/useDrawerNavigation';
 
 interface SimulationDetailDrawerProps {
   station: StationContext | null;
@@ -26,17 +25,11 @@ export function SimulationDetailDrawer({
   const [activeTab, setActiveTab] = useState<TabView>('overview');
   const [_isToolingDrawerOpen, setIsToolingDrawerOpen] = useState(false);
 
-  const { handleViewAssets } = useDrawerNavigation(onClose);
-
   if (station === null) return null;
 
   // TODO(George): Re-enable bottleneck integration after migrating to generic workflow system
   const toolingBottlenecks: any[] = [];
   const hasToolingBottlenecks = toolingBottlenecks.length > 0;
-
-  const handleOpenGeneralAssets = () => {
-    handleViewAssets(station.station, station.line);
-  };
 
   return (
     <>
@@ -103,8 +96,8 @@ export function SimulationDetailDrawer({
             {activeTab === 'assets' && <AssetsTab station={station} />}
 
             {/* Actions */}
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">
-              {hasToolingBottlenecks && (
+            {hasToolingBottlenecks && (
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setIsToolingDrawerOpen(true)}
                   className={cn(
@@ -117,15 +110,8 @@ export function SimulationDetailDrawer({
                   <AlertTriangle className="h-3.5 w-3.5" />
                   View Tooling Bottlenecks
                 </button>
-              )}
-              <button
-                onClick={handleOpenGeneralAssets}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                View All Assets
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

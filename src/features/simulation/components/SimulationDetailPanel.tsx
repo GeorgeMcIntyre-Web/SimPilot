@@ -3,7 +3,6 @@
 // Used in split view layout (not a drawer)
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Package } from 'lucide-react';
 import type { StationContext } from '../simulationStore';
 import { PanelHeader } from './detailPanel/PanelHeader';
@@ -33,20 +32,11 @@ function EmptyState() {
 }
 
 export function SimulationDetailPanel({ station, onClose }: SimulationDetailPanelProps) {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabView>('overview');
 
   if (station === null) {
     return <EmptyState />;
   }
-
-  const handleViewAssets = () => {
-    // Navigate to assets page with station filter in query params
-    const params = new URLSearchParams();
-    params.set('station', station.station);
-    params.set('line', station.line);
-    navigate(`/assets?${params.toString()}`);
-  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col">
@@ -71,7 +61,7 @@ export function SimulationDetailPanel({ station, onClose }: SimulationDetailPane
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-3">
           {activeTab === 'overview' && (
-            <OverviewTabContent station={station} onViewAssets={handleViewAssets} />
+            <OverviewTabContent station={station} />
           )}
           {activeTab === 'assets' && <AssetsTabContent station={station} />}
         </div>
