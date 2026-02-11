@@ -38,6 +38,7 @@ export function AssetsTabContent({ station }: AssetsTabContentProps) {
             <div className="flex-1 min-w-0">
               <Link
                 to={`/assets/${encodeURIComponent(asset.id)}`}
+                state={{ from: '/simulation', fromLabel: 'Simulation' }}
                 className="font-medium text-xs text-blue-600 dark:text-blue-400 hover:underline truncate block"
               >
                 {asset.name}

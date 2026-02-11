@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import { useCoreStore } from '../../domain/coreStore'
 import { InfoPill } from '../../ui/components/InfoPill'
 import { SourcingBadge, ReuseStatusBadge, AssetKindBadge } from '../../features/assets/AssetBadges'
@@ -62,7 +62,15 @@ function DetailItem({ label, value, className }: DetailItemProps) {
 
 export function AssetDetailPage() {
   const { assetId } = useParams<{ assetId: string }>()
+  const location = useLocation()
   const { assets } = useCoreStore()
+
+  const { from: fromPath, fromLabel } = (location.state || {}) as {
+    from?: string
+    fromLabel?: string
+  }
+  const breadcrumbRootHref = fromPath || '/assets'
+  const breadcrumbRootLabel = fromLabel || 'Assets'
 
   const asset = useMemo(
     () => assets.find((a) => a.id === assetId) as AssetWithMetadata | undefined,
@@ -78,11 +86,11 @@ export function AssetDetailPage() {
             The requested asset could not be located.
           </p>
           <Link
-            to="/assets"
+            to={breadcrumbRootHref}
             className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             <ArrowRight className="h-4 w-4 rotate-180" />
-            Back to Assets
+            Back to {breadcrumbRootLabel}
           </Link>
         </div>
       </div>
@@ -172,8 +180,8 @@ export function AssetDetailPage() {
     <div className="space-y-4" data-testid="asset-detail-root">
       {/* Breadcrumb */}
       <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-        <Link to="/assets" className="hover:text-blue-600 dark:hover:text-blue-400">
-          Assets
+        <Link to={breadcrumbRootHref} className="hover:text-blue-600 dark:hover:text-blue-400">
+          {breadcrumbRootLabel}
         </Link>
         <span>/</span>
         <span className="text-gray-900 dark:text-white font-medium">{asset.name || 'Asset'}</span>
