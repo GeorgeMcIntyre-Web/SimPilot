@@ -7,6 +7,12 @@ interface AssetsTabContentProps {
   station: StationContext;
 }
 
+function buildReturnUrl(station: StationContext): string {
+  const params = new URLSearchParams()
+  params.set('stationId', station.contextKey)
+  return `/simulation?${params.toString()}`
+}
+
 export function AssetsTabContent({ station }: AssetsTabContentProps) {
   if (station.assets.length === 0) {
     return (
@@ -38,7 +44,7 @@ export function AssetsTabContent({ station }: AssetsTabContentProps) {
             <div className="flex-1 min-w-0">
               <Link
                 to={`/assets/${encodeURIComponent(asset.id)}`}
-                state={{ from: '/simulation', fromLabel: 'Simulation' }}
+                state={{ from: buildReturnUrl(station), fromLabel: 'Simulation' }}
                 className="font-medium text-xs text-blue-600 dark:text-blue-400 hover:underline truncate block"
               >
                 {asset.name}
