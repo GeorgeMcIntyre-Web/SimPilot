@@ -65,6 +65,7 @@ export function SimulationDetailPanel({ station, onClose }: SimulationDetailPane
           activeTab={activeTab}
           assetCount={station.assetCounts.total}
           onTabChange={setActiveTab}
+          showSimulationTab={false}
         />
       </div>
 
