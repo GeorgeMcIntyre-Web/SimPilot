@@ -9,25 +9,27 @@ import { Cell, SchedulePhase, ScheduleStatus } from './core'
 // ============================================================================
 
 export interface CellScheduleRisk {
-    cellId: string
-    projectId?: string
-    areaId?: string
-    phase: SchedulePhase
-    status: ScheduleStatus
-    completion: number | null
-    daysLate?: number
-    hasDueDate: boolean
-    plannedStart?: string
-    plannedEnd?: string
+  cellId: string
+  projectId?: string
+  areaId?: string
+  phase: SchedulePhase
+  status: ScheduleStatus
+  completion: number | null
+  dueDate?: string
+  daysLate?: number
+  daysToDue?: number
+  hasDueDate: boolean
+  plannedStart?: string
+  plannedEnd?: string
 }
 
 export interface ProjectScheduleSummary {
-    projectId: string
-    onTrackCount: number
-    atRiskCount: number
-    lateCount: number
-    unknownCount: number
-    avgCompletion: number | null
+  projectId: string
+  onTrackCount: number
+  atRiskCount: number
+  lateCount: number
+  unknownCount: number
+  avgCompletion: number | null
 }
 
 // ============================================================================
@@ -46,133 +48,154 @@ export interface ProjectScheduleSummary {
  *   - If completion >= 100% → onTrack (completed on time)
  */
 export function computeScheduleStatus(
-    dueDate: string | undefined,
-    plannedEnd: string | undefined,
-    completion: number | null
+  dueDate: string | undefined,
+  plannedEnd: string | undefined,
+  completion: number | null,
 ): ScheduleStatus {
-    const targetDate = dueDate || plannedEnd
+  const targetDate = dueDate || plannedEnd
 
-    if (targetDate === undefined || targetDate === '') {
-        return 'unknown'
+  if (targetDate === undefined || targetDate === '') {
+    return 'unknown'
+  }
+
+  const now = new Date()
+  const target = new Date(targetDate)
+  const daysDiff = Math.floor((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Past due date
+  if (daysDiff < 0) {
+    if (completion === null || completion < 100) {
+      return 'late'
     }
+    return 'onTrack' // Completed, even if past due
+  }
 
-    const now = new Date()
-    const target = new Date(targetDate)
-    const daysDiff = Math.floor((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-
-    // Past due date
-    if (daysDiff < 0) {
-        if (completion === null || completion < 100) {
-            return 'late'
-        }
-        return 'onTrack' // Completed, even if past due
+  // Future due date
+  if (completion === null || completion < 50) {
+    // Low completion
+    if (daysDiff < 14) {
+      // Less than 2 weeks to deadline
+      return 'atRisk'
     }
+  }
 
-    // Future due date
-    if (completion === null || completion < 50) {
-        // Low completion
-        if (daysDiff < 14) {
-            // Less than 2 weeks to deadline
-            return 'atRisk'
-        }
+  if (completion !== null && completion < 75) {
+    // Moderate completion
+    if (daysDiff < 7) {
+      // Less than 1 week to deadline
+      return 'atRisk'
     }
+  }
 
-    if (completion !== null && completion < 75) {
-        // Moderate completion
-        if (daysDiff < 7) {
-            // Less than 1 week to deadline
-            return 'atRisk'
-        }
-    }
-
-    return 'onTrack'
+  return 'onTrack'
 }
 
 /**
  * Calculate days late (negative if not yet late)
  */
 export function calculateDaysLate(dueDate: string | undefined): number | undefined {
-    if (dueDate === undefined || dueDate === '') return undefined
+  if (dueDate === undefined || dueDate === '') return undefined
 
-    const now = new Date()
-    const target = new Date(dueDate)
-    const daysDiff = Math.floor((now.getTime() - target.getTime()) / (1000 * 60 * 60 * 24))
+  const now = new Date()
+  const target = new Date(dueDate)
+  const daysDiff = Math.floor((now.getTime() - target.getTime()) / (1000 * 60 * 60 * 24))
 
-    return daysDiff > 0 ? daysDiff : undefined
+  return daysDiff > 0 ? daysDiff : undefined
+}
+
+/**
+ * Calculate days until due date (negative when overdue)
+ */
+export function calculateDaysToDue(
+  dueDate: string | undefined,
+  plannedEnd?: string,
+): number | undefined {
+  const targetDate = dueDate || plannedEnd
+  if (!targetDate) return undefined
+
+  const now = new Date()
+  const target = new Date(targetDate)
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 /**
  * Get schedule risk for a single cell
  */
 export function getCellScheduleRisk(cell: Cell): CellScheduleRisk {
-    const schedule = cell.schedule
-    const completion = cell.simulation?.percentComplete ?? null
+  const schedule = cell.schedule
+  const completion = cell.simulation?.percentComplete ?? null
 
-    const phase: SchedulePhase = schedule?.phase ?? 'unspecified'
-    const status: ScheduleStatus = schedule?.status ?? computeScheduleStatus(
-        schedule?.dueDate,
-        schedule?.plannedEnd,
-        completion
-    )
+  const phase: SchedulePhase = schedule?.phase ?? 'unspecified'
+  const status: ScheduleStatus =
+    schedule?.status ?? computeScheduleStatus(schedule?.dueDate, schedule?.plannedEnd, completion)
 
-    const daysLate = calculateDaysLate(schedule?.dueDate)
-    const hasDueDate = Boolean(schedule?.dueDate || schedule?.plannedEnd)
+  const daysLate = calculateDaysLate(schedule?.dueDate)
+  const daysToDue = calculateDaysToDue(schedule?.dueDate, schedule?.plannedEnd)
+  const hasDueDate = Boolean(schedule?.dueDate || schedule?.plannedEnd)
 
-    return {
-        cellId: cell.id,
-        projectId: cell.projectId,
-        areaId: cell.areaId,
-        phase,
-        status,
-        completion,
-        daysLate,
-        hasDueDate,
-        plannedStart: schedule?.plannedStart,
-        plannedEnd: schedule?.plannedEnd
-    }
+  return {
+    cellId: cell.id,
+    projectId: cell.projectId,
+    areaId: cell.areaId,
+    phase,
+    status,
+    completion,
+    dueDate: schedule?.dueDate || schedule?.plannedEnd,
+    daysLate,
+    daysToDue,
+    hasDueDate,
+    plannedStart: schedule?.plannedStart,
+    plannedEnd: schedule?.plannedEnd,
+  }
 }
 
 /**
  * Get schedule summary for a project
  */
 export function getProjectScheduleSummary(projectId: string): ProjectScheduleSummary {
-    const state = coreStore.getState()
-    const projectCells = state.cells.filter(c => c.projectId === projectId)
+  const state = coreStore.getState()
+  const projectCells = state.cells.filter((c) => c.projectId === projectId)
 
-    const risks = projectCells.map(getCellScheduleRisk)
+  const risks = projectCells.map(getCellScheduleRisk)
 
-    const onTrackCount = risks.filter(r => r.status === 'onTrack').length
-    const atRiskCount = risks.filter(r => r.status === 'atRisk').length
-    const lateCount = risks.filter(r => r.status === 'late').length
-    const unknownCount = risks.filter(r => r.status === 'unknown').length
+  const onTrackCount = risks.filter((r) => r.status === 'onTrack').length
+  const atRiskCount = risks.filter((r) => r.status === 'atRisk').length
+  const lateCount = risks.filter((r) => r.status === 'late').length
+  const unknownCount = risks.filter((r) => r.status === 'unknown').length
 
-    const cellsWithCompletion = projectCells.filter(c => c.simulation?.percentComplete !== undefined)
-    const avgCompletion = cellsWithCompletion.length > 0
-        ? Math.round(cellsWithCompletion.reduce((acc, c) => acc + (c.simulation?.percentComplete || 0), 0) / cellsWithCompletion.length)
-        : null
+  const cellsWithCompletion = projectCells.filter(
+    (c) => c.simulation?.percentComplete !== undefined,
+  )
+  const avgCompletion =
+    cellsWithCompletion.length > 0
+      ? Math.round(
+          cellsWithCompletion.reduce((acc, c) => acc + (c.simulation?.percentComplete || 0), 0) /
+            cellsWithCompletion.length,
+        )
+      : null
 
-    return {
-        projectId,
-        onTrackCount,
-        atRiskCount,
-        lateCount,
-        unknownCount,
-        avgCompletion
-    }
+  return {
+    projectId,
+    onTrackCount,
+    atRiskCount,
+    lateCount,
+    unknownCount,
+    avgCompletion,
+  }
 }
 
 /**
  * Get schedule summaries for all projects
  */
 export function getAllProjectScheduleSummaries(): ProjectScheduleSummary[] {
-    const state = coreStore.getState()
-    return state.projects.map(p => getProjectScheduleSummary(p.id))
+  const state = coreStore.getState()
+  return state.projects.map((p) => getProjectScheduleSummary(p.id))
 }
 
 /**
  * Get all cells with schedule risk
  */
 export function getAllCellScheduleRisks(): CellScheduleRisk[] {
-    const state = coreStore.getState()
-    return state.cells.map(getCellScheduleRisk)
+  const state = coreStore.getState()
+  return state.cells.map(getCellScheduleRisk)
 }
