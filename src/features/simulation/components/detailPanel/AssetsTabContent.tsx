@@ -1,4 +1,5 @@
 import { Bot, Zap, Wrench, Box, Package, RefreshCw, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '../../../../ui/lib/utils';
 import type { StationContext } from '../../simulationStore';
 
@@ -35,9 +36,12 @@ export function AssetsTabContent({ station }: AssetsTabContentProps) {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-xs text-gray-900 dark:text-white truncate">
+              <Link
+                to={`/assets/${encodeURIComponent(asset.id)}`}
+                className="font-medium text-xs text-blue-600 dark:text-blue-400 hover:underline truncate block"
+              >
                 {asset.name}
-              </div>
+              </Link>
               {asset.oemModel && (
                 <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                   {asset.oemModel}
