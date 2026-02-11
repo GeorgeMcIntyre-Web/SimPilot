@@ -10,7 +10,6 @@ import { DrawerHeader } from './drawer/DrawerHeader';
 import { TabNavigation, type TabView } from './drawer/TabNavigation';
 import { OverviewTab } from './drawer/OverviewTab';
 import { AssetsTab } from './drawer/AssetsTab';
-import { SimulationTab } from './drawer/SimulationTab';
 import { useDrawerNavigation } from './drawer/useDrawerNavigation';
 
 interface SimulationDetailDrawerProps {
@@ -102,7 +101,6 @@ export function SimulationDetailDrawer({
             {/* Tab Content */}
             {activeTab === 'overview' && <OverviewTab station={station} />}
             {activeTab === 'assets' && <AssetsTab station={station} />}
-            {activeTab === 'simulation' && <SimulationTab station={station} />}
 
             {/* Actions */}
             <div className="pt-2 border-t border-gray-200 dark:border-gray-700 space-y-2">

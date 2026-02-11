@@ -10,9 +10,8 @@ import { PanelHeader } from './detailPanel/PanelHeader';
 import { TabNavigation } from './detailPanel/TabNavigation';
 import { OverviewTabContent } from './detailPanel/OverviewTabContent';
 import { AssetsTabContent } from './detailPanel/AssetsTabContent';
-import { SimulationTabContent } from './detailPanel/SimulationTabContent';
 
-type TabView = 'overview' | 'assets' | 'simulation';
+type TabView = 'overview' | 'assets';
 
 interface SimulationDetailPanelProps {
   station: StationContext | null;
@@ -65,7 +64,6 @@ export function SimulationDetailPanel({ station, onClose }: SimulationDetailPane
           activeTab={activeTab}
           assetCount={station.assetCounts.total}
           onTabChange={setActiveTab}
-          showSimulationTab={false}
         />
       </div>
 
@@ -76,7 +74,6 @@ export function SimulationDetailPanel({ station, onClose }: SimulationDetailPane
             <OverviewTabContent station={station} onViewAssets={handleViewAssets} />
           )}
           {activeTab === 'assets' && <AssetsTabContent station={station} />}
-          {activeTab === 'simulation' && <SimulationTabContent station={station} />}
         </div>
       </div>
     </div>

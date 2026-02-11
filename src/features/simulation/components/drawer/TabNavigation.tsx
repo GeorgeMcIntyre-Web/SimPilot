@@ -1,7 +1,7 @@
-import { BarChart3, Package, FileSpreadsheet } from 'lucide-react';
+import { BarChart3, Package } from 'lucide-react';
 import { cn } from '../../../../ui/lib/utils';
 
-export type TabView = 'overview' | 'assets' | 'simulation';
+export type TabView = 'overview' | 'assets';
 
 interface TabNavigationProps {
   activeTab: TabView;
@@ -38,20 +38,6 @@ export function TabNavigation({ activeTab, assetCount, onTabChange }: TabNavigat
         <div className="flex items-center justify-center gap-1.5">
           <Package className="h-3.5 w-3.5" />
           Assets ({assetCount})
-        </div>
-      </button>
-      <button
-        onClick={() => onTabChange('simulation')}
-        className={cn(
-          'flex-1 px-3 py-2 text-xs font-medium transition-colors border-b-2',
-          activeTab === 'simulation'
-            ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
-            : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-        )}
-      >
-        <div className="flex items-center justify-center gap-1.5">
-          <FileSpreadsheet className="h-3.5 w-3.5" />
-          Simulation
         </div>
       </button>
     </div>
