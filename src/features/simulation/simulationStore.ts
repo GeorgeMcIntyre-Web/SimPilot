@@ -26,6 +26,7 @@ export interface SimulationContext {
  */
 export interface StationContext {
   contextKey: string
+  cellId: string
   program: string
   plant: string
   unit: string

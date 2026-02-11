@@ -200,6 +200,7 @@ export function transformToStationContexts(state: CoreStoreState): StationContex
     
     const context: StationContext = {
       contextKey: generateContextKey(hierarchy),
+      cellId: cell.id,
       program: hierarchy.program,
       plant: hierarchy.plant,
       unit: hierarchy.unit,

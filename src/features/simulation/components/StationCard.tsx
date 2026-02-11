@@ -106,7 +106,13 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0 space-y-0.5">
           <h4 className="font-semibold text-gray-900 dark:text-white text-sm leading-tight truncate">
-            {station.station}
+            <Link
+              to={`/cells/${encodeURIComponent(station.cellId)}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {station.station}
+            </Link>
           </h4>
         </div>
       </div>
