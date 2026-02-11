@@ -470,9 +470,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
                 'font-bold flex-shrink-0',
                 styles.text,
               )}
-            >
-              {completion}%
-            </span>
+            ></span>
           )}
         </div>
       </div>
@@ -577,7 +575,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
             to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
             className="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-300 hover:underline"
           >
-            View cell
+            View station
             <ArrowUpRight className="h-3 w-3" />
           </Link>
           <span className="text-[10px] text-gray-400">{item.station.line}</span>
