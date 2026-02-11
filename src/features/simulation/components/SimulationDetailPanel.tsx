@@ -58,7 +58,7 @@ export function SimulationDetailPanel({ station, onClose }: SimulationDetailPane
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="p-3 space-y-3">
           {activeTab === 'overview' && (
             <OverviewTabContent station={station} />

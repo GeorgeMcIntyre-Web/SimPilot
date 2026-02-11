@@ -48,7 +48,7 @@ export function SimulationDetailDrawer({
         className={cn(
           'fixed right-0 top-0 h-full w-full max-w-md bg-white dark:bg-gray-800 shadow-2xl z-50',
           'transform transition-transform duration-300 ease-out',
-          'overflow-y-auto flex flex-col',
+          'overflow-y-auto flex flex-col custom-scrollbar',
           isOpen ? 'translate-x-0' : 'translate-x-full'
         )}
         role="dialog"
@@ -74,7 +74,7 @@ export function SimulationDetailDrawer({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="px-3 py-3 space-y-3">
             {/* Context Breadcrumb */}
             <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded p-2 border border-blue-100 dark:border-blue-800">
