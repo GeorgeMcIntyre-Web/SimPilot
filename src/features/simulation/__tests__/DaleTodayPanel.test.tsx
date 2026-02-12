@@ -6,12 +6,20 @@ import { DaleTodayPanel } from '../components/DaleTodayPanel'
 import { useStationsNeedingAttention } from '../simulationSelectors'
 
 // Mock the selectors
-vi.mock('../simulationSelectors', () => ({
-  useStationsNeedingAttention: vi.fn()
-}))
+vi.mock('../simulationSelectors', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../simulationSelectors')>()
+  return {
+    ...actual,
+    useStationsNeedingAttention: vi.fn(),
+  }
+})
 
 // Simple mock data factory to avoid reference issues
-const createMockItem = (station: string, severity: 'error' | 'warning' = 'error', key = 'key1') => ({
+const createMockItem = (
+  station: string,
+  severity: 'error' | 'warning' = 'error',
+  key = 'key1',
+) => ({
   station: {
     contextKey: key,
     program: 'P1',
@@ -21,16 +29,16 @@ const createMockItem = (station: string, severity: 'error' | 'warning' = 'error'
     station: station,
     assetCounts: { total: 1, robots: 0, guns: 0, tools: 0, other: 0 },
     sourcingCounts: { reuse: 0, freeIssue: 0, newBuy: 0, unknown: 0 },
-    assets: []
+    assets: [],
   },
   severity,
-  reason: 'Test reason'
+  reason: 'Test reason',
 })
 
 describe('DaleTodayPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-      ; (useStationsNeedingAttention as any).mockReturnValue([])
+    ;(useStationsNeedingAttention as any).mockReturnValue([])
   })
 
   afterEach(() => {
@@ -38,7 +46,7 @@ describe('DaleTodayPanel', () => {
   })
 
   it('renders empty state when no stations need attention', () => {
-    ; (useStationsNeedingAttention as any).mockReturnValue([])
+    ;(useStationsNeedingAttention as any).mockReturnValue([])
     render(<DaleTodayPanel />)
     expect(screen.getByTestId('dale-today-panel-empty')).toBeInTheDocument()
     expect(screen.getByText(/all clear/i)).toBeInTheDocument()
@@ -46,7 +54,7 @@ describe('DaleTodayPanel', () => {
 
   it('displays stations needing attention', () => {
     const items = [createMockItem('010', 'error', 'k1')]
-      ; (useStationsNeedingAttention as any).mockReturnValue(items)
+    ;(useStationsNeedingAttention as any).mockReturnValue(items)
 
     render(<DaleTodayPanel />)
     expect(screen.getByTestId('dale-today-panel')).toBeInTheDocument()
@@ -55,7 +63,7 @@ describe('DaleTodayPanel', () => {
 
   it('shows station names in attention items', () => {
     const items = [createMockItem('020', 'error', 'k1')]
-      ; (useStationsNeedingAttention as any).mockReturnValue(items)
+    ;(useStationsNeedingAttention as any).mockReturnValue(items)
 
     render(<DaleTodayPanel />)
     expect(screen.getByText('020')).toBeInTheDocument()
@@ -63,15 +71,15 @@ describe('DaleTodayPanel', () => {
 
   it('shows count of stations needing attention', () => {
     const items = [createMockItem('010', 'error', 'k1'), createMockItem('020', 'error', 'k2')]
-      ; (useStationsNeedingAttention as any).mockReturnValue(items)
+    ;(useStationsNeedingAttention as any).mockReturnValue(items)
 
     render(<DaleTodayPanel />)
-    expect(screen.getByText('(2)')).toBeInTheDocument()
+    expect(screen.getByText('2 total')).toBeInTheDocument()
   })
 
   it('respects maxItems prop', () => {
     const items = [createMockItem('010', 'error', 'k1'), createMockItem('020', 'error', 'k2')]
-      ; (useStationsNeedingAttention as any).mockReturnValue(items)
+    ;(useStationsNeedingAttention as any).mockReturnValue(items)
 
     render(<DaleTodayPanel maxItems={1} />)
     const renderItems = screen.getAllByTestId(/attention-item-/)
@@ -80,7 +88,7 @@ describe('DaleTodayPanel', () => {
 
   it('shows severity indicators', () => {
     const items = [createMockItem('010', 'error', 'k1')]
-      ; (useStationsNeedingAttention as any).mockReturnValue(items)
+    ;(useStationsNeedingAttention as any).mockReturnValue(items)
 
     render(<DaleTodayPanel />)
     expect(screen.getByTestId('attention-item-k1')).toBeInTheDocument()
@@ -88,7 +96,7 @@ describe('DaleTodayPanel', () => {
 
   it('calls onStationClick when item is clicked', () => {
     const items = [createMockItem('010', 'error', 'k1')]
-      ; (useStationsNeedingAttention as any).mockReturnValue(items)
+    ;(useStationsNeedingAttention as any).mockReturnValue(items)
     const onStationClick = vi.fn()
 
     render(<DaleTodayPanel onStationClick={onStationClick} />)
