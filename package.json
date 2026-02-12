@@ -86,7 +86,6 @@
     "react-router-dom": "^7.9.6",
     "react-window": "^1.8.11",
     "tailwind-merge": "^3.4.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
-    "xlsx-patched": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
   }
 }

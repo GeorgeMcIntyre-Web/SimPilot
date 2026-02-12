@@ -1,11 +1,6 @@
 import { defineConfig, configDefaults } from 'vitest/config'
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      xlsx: 'xlsx-patched',
-    },
-  },
   test: {
     globals: true,
     environment: 'jsdom',
