@@ -1,51 +1,86 @@
-import {
-  Bot,
-  Zap,
-  Wrench,
-  User,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  HelpCircle,
-} from 'lucide-react';
-import { cn } from '../../../../ui/lib/utils';
-import type { StationContext } from '../../simulationStore';
+import { Link } from 'react-router-dom'
+import { Bot, Zap, Wrench, User, CheckCircle2, Clock, AlertCircle, HelpCircle } from 'lucide-react'
+import { cn } from '../../../../ui/lib/utils'
+import type { StationContext } from '../../simulationStore'
 
 interface OverviewTabContentProps {
-  station: StationContext;
+  station: StationContext
 }
 
 // Helper to get completion status styling
 function getCompletionStatus(percent: number | undefined) {
-  if (percent === undefined) return { label: 'No Data', color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-700', icon: HelpCircle };
-  if (percent >= 80) return { label: 'On Track', color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20', icon: CheckCircle2 };
-  if (percent >= 50) return { label: 'In Progress', color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20', icon: Clock };
-  if (percent >= 25) return { label: 'Behind', color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', icon: AlertCircle };
-  return { label: 'Critical', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', icon: AlertCircle };
+  if (percent === undefined)
+    return {
+      label: 'No Data',
+      color: 'text-gray-500',
+      bg: 'bg-gray-100 dark:bg-gray-700',
+      icon: HelpCircle,
+    }
+  if (percent >= 80)
+    return {
+      label: 'On Track',
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      icon: CheckCircle2,
+    }
+  if (percent >= 50)
+    return {
+      label: 'In Progress',
+      color: 'text-blue-600 dark:text-blue-400',
+      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      icon: Clock,
+    }
+  if (percent >= 25)
+    return {
+      label: 'Behind',
+      color: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      icon: AlertCircle,
+    }
+  return {
+    label: 'Critical',
+    color: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-900/20',
+    icon: AlertCircle,
+  }
 }
 
 export function OverviewTabContent({ station }: OverviewTabContentProps) {
-  const completion = station.simulationStatus?.firstStageCompletion;
-  const finalCompletion = station.simulationStatus?.finalDeliverablesCompletion;
-  const engineer = station.simulationStatus?.engineer;
-  const status = getCompletionStatus(completion);
-  const StatusIcon = status.icon;
+  const completion = station.simulationStatus?.firstStageCompletion
+  const finalCompletion = station.simulationStatus?.finalDeliverablesCompletion
+  const engineer = station.simulationStatus?.engineer
+  const status = getCompletionStatus(completion)
+  const StatusIcon = status.icon
 
   // Calculate sourcing percentages
-  const totalSourcing = station.sourcingCounts.reuse + station.sourcingCounts.newBuy +
-                        station.sourcingCounts.freeIssue + station.sourcingCounts.unknown;
-  const reusePercent = totalSourcing > 0 ? Math.round((station.sourcingCounts.reuse / totalSourcing) * 100) : 0;
-  const newBuyPercent = totalSourcing > 0 ? Math.round((station.sourcingCounts.newBuy / totalSourcing) * 100) : 0;
+  const totalSourcing =
+    station.sourcingCounts.reuse +
+    station.sourcingCounts.newBuy +
+    station.sourcingCounts.freeIssue +
+    station.sourcingCounts.unknown
+  const reusePercent =
+    totalSourcing > 0 ? Math.round((station.sourcingCounts.reuse / totalSourcing) * 100) : 0
+  const newBuyPercent =
+    totalSourcing > 0 ? Math.round((station.sourcingCounts.newBuy / totalSourcing) * 100) : 0
 
   return (
     <div className="space-y-4">
       {/* Simulation Progress Card */}
-      <div className={cn('rounded-lg border p-4', status.bg,
-        completion !== undefined && completion >= 80 ? 'border-emerald-200 dark:border-emerald-800' :
-        completion !== undefined && completion >= 50 ? 'border-blue-200 dark:border-blue-800' :
-        completion !== undefined && completion >= 25 ? 'border-amber-200 dark:border-amber-800' :
-        completion !== undefined ? 'border-red-200 dark:border-red-800' : 'border-gray-200 dark:border-gray-700'
-      )}>
+      <div
+        className={cn(
+          'rounded-lg border p-4',
+          status.bg,
+          completion !== undefined && completion >= 80
+            ? 'border-emerald-200 dark:border-emerald-800'
+            : completion !== undefined && completion >= 50
+              ? 'border-blue-200 dark:border-blue-800'
+              : completion !== undefined && completion >= 25
+                ? 'border-amber-200 dark:border-amber-800'
+                : completion !== undefined
+                  ? 'border-red-200 dark:border-red-800'
+                  : 'border-gray-200 dark:border-gray-700',
+        )}
+      >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <StatusIcon className={cn('h-4 w-4', status.color)} />
@@ -63,10 +98,15 @@ export function OverviewTabContent({ station }: OverviewTabContentProps) {
           <div
             className={cn(
               'h-full rounded-full transition-all duration-500',
-              completion !== undefined && completion >= 80 ? 'bg-emerald-500' :
-              completion !== undefined && completion >= 50 ? 'bg-blue-500' :
-              completion !== undefined && completion >= 25 ? 'bg-amber-500' :
-              completion !== undefined ? 'bg-red-500' : 'bg-gray-400'
+              completion !== undefined && completion >= 80
+                ? 'bg-emerald-500'
+                : completion !== undefined && completion >= 50
+                  ? 'bg-blue-500'
+                  : completion !== undefined && completion >= 25
+                    ? 'bg-amber-500'
+                    : completion !== undefined
+                      ? 'bg-red-500'
+                      : 'bg-gray-400',
             )}
             style={{ width: `${completion ?? 0}%` }}
           />
@@ -103,7 +143,12 @@ export function OverviewTabContent({ station }: OverviewTabContentProps) {
               <span className="text-xs">Engineer</span>
             </div>
             <span className="text-xs font-medium text-gray-900 dark:text-white">
-              {engineer || 'Unassigned'}
+              <Link
+                to={`/engineers?highlightEngineer=${encodeURIComponent(engineer || 'UNASSIGNED')}`}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {engineer || 'UNASSIGNED'}
+              </Link>
             </span>
           </div>
         </div>
@@ -128,7 +173,9 @@ export function OverviewTabContent({ station }: OverviewTabContentProps) {
               <div className="text-lg font-bold text-purple-900 dark:text-purple-100">
                 {station.assetCounts.robots}
               </div>
-              <div className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Robots</div>
+              <div className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                Robots
+              </div>
             </div>
             <div className="text-center p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
               <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
@@ -205,7 +252,9 @@ export function OverviewTabContent({ station }: OverviewTabContentProps) {
               </div>
               <span className="text-xs font-semibold text-gray-900 dark:text-white">
                 {station.sourcingCounts.newBuy}
-                {totalSourcing > 0 && <span className="text-gray-500 ml-1">({newBuyPercent}%)</span>}
+                {totalSourcing > 0 && (
+                  <span className="text-gray-500 ml-1">({newBuyPercent}%)</span>
+                )}
               </span>
             </div>
             <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
@@ -230,5 +279,5 @@ export function OverviewTabContent({ station }: OverviewTabContentProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

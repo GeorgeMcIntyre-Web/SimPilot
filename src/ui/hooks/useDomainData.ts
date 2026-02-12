@@ -202,13 +202,11 @@ export function useAllEngineerMetrics() {
   const engineers: Record<string, Cell[]> = {}
 
   cells.forEach((c) => {
-    const name = c.assignedEngineer?.trim()
-    if (name) {
-      if (!engineers[name]) {
-        engineers[name] = []
-      }
-      engineers[name].push(c)
+    const name = c.assignedEngineer?.trim() || 'UNASSIGNED'
+    if (!engineers[name]) {
+      engineers[name] = []
     }
+    engineers[name].push(c)
   })
 
   return Object.entries(engineers)

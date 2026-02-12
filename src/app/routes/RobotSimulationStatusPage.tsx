@@ -57,7 +57,7 @@ export function RobotSimulationStatusPage() {
       application: robot.application,
       overallCompletion: robot.overallCompletion,
       linkedTooling: robot.linkedToolingEntityKeys,
-      responsiblePerson: robot.responsiblePerson,
+      responsiblePerson: robot.responsiblePerson || 'UNASSIGNED',
       source: robot.source,
       milestones: robot.milestones,
     })
@@ -345,6 +345,17 @@ function RobotDetail({ robot }: { robot: SimulationStatusEntity }) {
             <dt className="text-gray-600 dark:text-gray-400">Application:</dt>
             <dd className="typography-body-strong text-gray-900 dark:text-gray-100">
               {robot.application}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-gray-600 dark:text-gray-400">Owner:</dt>
+            <dd className="typography-body-strong text-gray-900 dark:text-gray-100">
+              <Link
+                to={`/engineers?highlightEngineer=${encodeURIComponent(robot.responsiblePerson || 'UNASSIGNED')}`}
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {robot.responsiblePerson || 'UNASSIGNED'}
+              </Link>
             </dd>
           </div>
           <div className="flex justify-between">
