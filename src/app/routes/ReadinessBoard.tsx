@@ -363,9 +363,33 @@ export function ReadinessBoard() {
       {/* Board */}
       {sorted.length > 0 ? (
         <div className="max-h-[900px] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             {grouped.map(({ phase, items }) => (
-              <PhaseColumn key={phase} phase={phase} items={items} density={density} />
+              <div
+                key={phase}
+                className="relative bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden flex flex-col shadow-sm backdrop-blur-sm"
+              >
+                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2 flex-shrink-0">
+                  <div className="flex items-center justify-between gap-2 h-6">
+                    <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                      {PHASE_LABELS[phase]}
+                    </h3>
+                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded">
+                      {items.length}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-2.5 space-y-2.5 overflow-y-auto custom-scrollbar max-h-[70vh]">
+                  {items.map((item) => (
+                    <StationReadinessCard
+                      key={item.station.contextKey}
+                      item={item}
+                      density={density}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -378,157 +402,6 @@ export function ReadinessBoard() {
           </p>
         </div>
       )}
-    </div>
-  )
-}
-
-// ============================================================================
-// PHASE COLUMN COMPONENT
-// ============================================================================
-
-const PHASE_STYLES: Record<SchedulePhase, { gradient: string; icon: string; accent: string }> = {
-  presim: {
-    gradient: 'from-violet-500/10 to-violet-600/5 dark:from-violet-500/20 dark:to-violet-600/10',
-    icon: 'text-violet-600 dark:text-violet-400',
-    accent: 'border-t-violet-500',
-  },
-  offline: {
-    gradient: 'from-blue-500/10 to-blue-600/5 dark:from-blue-500/20 dark:to-blue-600/10',
-    icon: 'text-blue-600 dark:text-blue-400',
-    accent: 'border-t-blue-500',
-  },
-  onsite: {
-    gradient: 'from-cyan-500/10 to-cyan-600/5 dark:from-cyan-500/20 dark:to-cyan-600/10',
-    icon: 'text-cyan-600 dark:text-cyan-400',
-    accent: 'border-t-cyan-500',
-  },
-  rampup: {
-    gradient: 'from-amber-500/10 to-amber-600/5 dark:from-amber-500/20 dark:to-amber-600/10',
-    icon: 'text-amber-600 dark:text-amber-400',
-    accent: 'border-t-amber-500',
-  },
-  handover: {
-    gradient:
-      'from-emerald-500/10 to-emerald-600/5 dark:from-emerald-500/20 dark:to-emerald-600/10',
-    icon: 'text-emerald-600 dark:text-emerald-400',
-    accent: 'border-t-emerald-500',
-  },
-  unspecified: {
-    gradient: 'from-gray-500/10 to-gray-600/5 dark:from-gray-500/20 dark:to-gray-600/10',
-    icon: 'text-gray-600 dark:text-gray-400',
-    accent: 'border-t-gray-400',
-  },
-}
-
-interface PhaseColumnProps {
-  phase: SchedulePhase
-  items: StationReadinessItem[]
-  density: 'compact' | 'comfortable'
-}
-
-function PhaseColumn({ phase, items, density }: PhaseColumnProps) {
-  const phaseStyle = PHASE_STYLES[phase]
-
-  // Group items by area
-  const groupedByArea = useMemo(() => {
-    const areaMap = new Map<string, StationReadinessItem[]>()
-    for (const item of items) {
-      const areaKey = item.areaName ?? 'Unassigned'
-      const existing = areaMap.get(areaKey) ?? []
-      existing.push(item)
-      areaMap.set(areaKey, existing)
-    }
-    // Sort areas alphabetically
-    return Array.from(areaMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
-  }, [items])
-
-  // Stats for this phase
-  const stats = useMemo(() => {
-    const onTrack = items.filter((i) => i.status === 'onTrack').length
-    const atRisk = items.filter((i) => i.status === 'atRisk').length
-    const late = items.filter((i) => i.status === 'late').length
-    return { onTrack, atRisk, late }
-  }, [items])
-
-  return (
-    <div
-      className={cn(
-        'relative flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm',
-        'bg-white dark:bg-gray-900',
-        'border-t-4',
-        phaseStyle.accent,
-      )}
-    >
-      {/* Phase Header */}
-      <div
-        className={cn(
-          'px-4 py-3 border-b border-gray-100 dark:border-gray-800',
-          'bg-gradient-to-br',
-          phaseStyle.gradient,
-        )}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-              {PHASE_LABELS[phase]}
-            </h3>
-          </div>
-          <span className="text-xs font-bold text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-800/80 px-2.5 py-1 rounded-full shadow-sm">
-            {items.length}
-          </span>
-        </div>
-
-        {/* Mini status indicators */}
-        <div className="flex items-center gap-3 mt-2">
-          {stats.onTrack > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {stats.onTrack}
-            </span>
-          )}
-          {stats.atRisk > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              {stats.atRisk}
-            </span>
-          )}
-          {stats.late > 0 && (
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-rose-700 dark:text-rose-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              {stats.late}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Cards grouped by area */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar max-h-[70vh]">
-        {groupedByArea.map(([areaName, areaItems]) => (
-          <div
-            key={areaName}
-            className="border-b border-gray-100 dark:border-gray-800 last:border-b-0"
-          >
-            {/* Area subheader */}
-            <div className="sticky top-0 z-10 px-3 py-1.5 bg-gray-50/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide truncate">
-                  {areaName}
-                </span>
-                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 bg-gray-200/60 dark:bg-gray-700/60 px-1.5 py-0.5 rounded">
-                  {areaItems.length}
-                </span>
-              </div>
-            </div>
-
-            {/* Station cards for this area */}
-            <div className="p-2 space-y-2">
-              {areaItems.map((item) => (
-                <StationReadinessCard key={item.station.contextKey} item={item} density={density} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }
