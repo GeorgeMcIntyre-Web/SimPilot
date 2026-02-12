@@ -21,7 +21,7 @@ import {
   StationsTable,
   FocusSummaryCards,
   generateFocusItems,
-  countByRisk
+  countByRisk,
 } from '../../features/dashboard'
 
 type AreaSort = 'total-desc' | 'alpha' | 'risk-desc'
@@ -46,10 +46,7 @@ export function DashboardPage() {
 
   // Fallback to check if simulation data exists (legacy)
   const hasLegacyData = useHasSimulationData()
-  const visibleCells = useMemo(
-    () => cells.filter(c => c.simulationStatus && c.areaKey),
-    [cells]
-  )
+  const visibleCells = useMemo(() => cells.filter((c) => c.simulationStatus && c.areaKey), [cells])
   const hasData = (hasCrossRefData && visibleCells.length > 0) || hasLegacyData
 
   // Derived data
@@ -68,7 +65,7 @@ export function DashboardPage() {
       return {
         areaKey,
         displayTitle,
-        counts: countByRisk(areaCells)
+        counts: countByRisk(areaCells),
       }
     })
   }, [visibleCells])
@@ -76,9 +73,10 @@ export function DashboardPage() {
   const filteredAreas = useMemo(() => {
     const term = areaSearch.trim().toLowerCase()
     let list = term
-      ? areaData.filter(({ areaKey, displayTitle }) => 
-          areaKey.toLowerCase().includes(term) || 
-          (displayTitle && displayTitle.toLowerCase().includes(term))
+      ? areaData.filter(
+          ({ areaKey, displayTitle }) =>
+            areaKey.toLowerCase().includes(term) ||
+            (displayTitle && displayTitle.toLowerCase().includes(term)),
         )
       : areaData
 
@@ -109,14 +107,14 @@ export function DashboardPage() {
   const handleSelectStation = (cell: CellSnapshot) => {
     // Find matching Cell in legacy store by stationKey
     const normalizedStationKey = normalizeStationId(cell.stationKey)
-    
+
     if (!normalizedStationKey) {
       log.warn('Cannot navigate: invalid stationKey', cell.stationKey)
       return
     }
 
     // Try to find matching cell by normalized station code
-    const matchingCell = legacyCells.find(c => {
+    const matchingCell = legacyCells.find((c) => {
       const normalizedCode = normalizeStationId(c.code)
       return normalizedCode === normalizedStationKey
     })
@@ -126,7 +124,12 @@ export function DashboardPage() {
     } else {
       // If no legacy cell found, try to navigate using stationKey directly
       // This might work if there's a route that accepts stationKey
-      log.warn('No matching Cell found for stationKey:', cell.stationKey, 'Available cells:', legacyCells.length)
+      log.warn(
+        'No matching Cell found for stationKey:',
+        cell.stationKey,
+        'Available cells:',
+        legacyCells.length,
+      )
       // For now, we could show a drawer or modal with station details
       // But since StationDetailDrawer might be on origin/main, we'll just log
     }
@@ -171,9 +174,7 @@ export function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <PageHeader
-          title={
-            'Dashboard'
-          }
+          title={'Dashboard'}
           subtitle={
             <PageHint
               standardText="Overview of simulation progress"
@@ -183,16 +184,11 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Top summary */}
-      <FocusSummaryCards items={focusItems} className="w-full" />
-
       {/* Area Overview Cards */}
       <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
         <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
           <div>
-            <h3 className="typography-title-sm">
-              Areas Overview
-            </h3>
+            <h3 className="typography-title-sm">Areas Overview</h3>
             <p className="typography-caption">
               {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
             </p>
@@ -282,6 +278,9 @@ export function DashboardPage() {
           />
         </div>
       </section>
+
+      {/* Focus Summary */}
+      <FocusSummaryCards items={focusItems} className="w-full" />
     </div>
   )
 }
