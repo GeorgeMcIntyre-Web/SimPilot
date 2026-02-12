@@ -415,7 +415,7 @@ interface StationReadinessCardProps {
 }
 
 function StationReadinessCard({ item, density }: StationReadinessCardProps) {
-  const styles = STATUS_TOKENS[item.status]
+  const statusStyles = STATUS_TOKENS[item.status]
   const isCompact = density === 'compact'
   const engineer = item.station.simulationStatus?.engineer
   const completion = item.completion ?? undefined
@@ -454,14 +454,14 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
     <div
       className={cn(
         'relative rounded-xl border shadow-sm transition-all duration-200',
-        'bg-white/85 dark:bg-gray-800',
+        'bg-white dark:bg-gray-800',
+        'border-gray-200 dark:border-gray-700',
         'hover:shadow-md hover:-translate-y-[1px]',
-        styles.border,
       )}
       aria-label={`Station ${item.station.station}, status ${item.status}`}
     >
-      {/* Status accent bar */}
-      <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-xl', styles.dot)} />
+      {/* Neutral accent bar */}
+      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gray-300 dark:bg-gray-600" />
 
       {/* Card content */}
       <div className={cn('pl-4 pr-3', isCompact ? 'py-3' : 'py-4')}>
@@ -485,7 +485,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
           </div>
           {completion !== undefined && (
             <div className="flex-shrink-0">
-              <span className={cn('text-sm font-bold tabular-nums', styles.text)}>
+              <span className="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-200">
                 {completion}%
               </span>
             </div>
@@ -496,16 +496,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         <div className="mb-3">
           <div className="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className={cn(
-                'h-full rounded-full transition-all duration-300',
-                item.status === 'onTrack'
-                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-                  : item.status === 'atRisk'
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-400'
-                    : item.status === 'late'
-                      ? 'bg-gradient-to-r from-rose-500 to-rose-400'
-                      : 'bg-gradient-to-r from-gray-400 to-gray-300',
-              )}
+              className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-gray-500 to-gray-400 dark:from-gray-400 dark:to-gray-300"
               style={{ width: `${completion ?? 0}%` }}
             />
           </div>
@@ -531,10 +522,10 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
           <span
             className={cn(
               'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
-              styles.pill,
+              statusStyles.pill,
             )}
           >
-            <span className={cn('w-2 h-2 rounded-full', styles.dot)} />
+            <span className={cn('w-2 h-2 rounded-full', statusStyles.dot)} />
             {statusLabel}
           </span>
         </div>
