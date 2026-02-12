@@ -9,14 +9,17 @@ export * from './UnifiedModel'
 // ============================================================================
 
 export type IngestionWarningKind =
-  | "PARSER_ERROR"
-  | "HEADER_MISMATCH"
-  | "ROW_SKIPPED"
-  | "LINKING_AMBIGUOUS"
-  | "LINKING_MISSING_TARGET"
-  | "UNKNOWN_FILE_TYPE"
-  | "INACTIVE_ENTITY_REFERENCE"
-  | "DUPLICATE_ENTRY"
+  | 'PARSER_ERROR'
+  | 'HEADER_MISMATCH'
+  | 'SEMANTIC_AMBIGUOUS_HEADER'
+  | 'SEMANTIC_UNMAPPED_HEADER'
+  | 'SEMANTIC_MISSING_REQUIRED_FIELD'
+  | 'ROW_SKIPPED'
+  | 'LINKING_AMBIGUOUS'
+  | 'LINKING_MISSING_TARGET'
+  | 'UNKNOWN_FILE_TYPE'
+  | 'INACTIVE_ENTITY_REFERENCE'
+  | 'DUPLICATE_ENTRY'
 
 export interface IngestionWarning {
   id: string
@@ -37,9 +40,9 @@ export type SchedulePhase = 'unspecified' | 'presim' | 'offline' | 'onsite' | 'r
 export type ScheduleStatus = 'unknown' | 'onTrack' | 'atRisk' | 'late'
 
 export interface ScheduleInfo {
-  plannedStart?: string       // ISO date string
-  plannedEnd?: string         // ISO date string
-  dueDate?: string            // ISO date string (optional hard deadline)
+  plannedStart?: string // ISO date string
+  plannedEnd?: string // ISO date string
+  dueDate?: string // ISO date string (optional hard deadline)
   phase: SchedulePhase
   status: ScheduleStatus
 }
@@ -83,23 +86,23 @@ export interface OverviewScheduleMetrics {
 // Future refactor: introduce explicit ManufacturingCell and Station types.
 // ============================================================================
 
-export type ProjectStatus = "Planning" | "Running" | "OnHold" | "Closed"
+export type ProjectStatus = 'Planning' | 'Running' | 'OnHold' | 'Closed'
 
 export interface Plant {
   id: string
-  name: string              // e.g. "STLA-S ZAR Plant"
-  location: string          // e.g. "ZAR" (South Africa)
-  projectIds: string[]      // Projects at this plant
+  name: string // e.g. "STLA-S ZAR Plant"
+  location: string // e.g. "ZAR" (South Africa)
+  projectIds: string[] // Projects at this plant
 }
 
 export interface Project {
   id: string
-  name: string              // e.g. "STLA-S"
-  jobNumber?: string        // e.g. "J11006"
-  customer: string          // OEM / program family, e.g. "STLA-S"
-  plantId?: string          // Reference to Plant
+  name: string // e.g. "STLA-S"
+  jobNumber?: string // e.g. "J11006"
+  customer: string // OEM / program family, e.g. "STLA-S"
+  plantId?: string // Reference to Plant
   programCode?: string
-  manager?: string          // e.g. "Dale"
+  manager?: string // e.g. "Dale"
   status: ProjectStatus
   startDate?: string
   sopDate?: string
@@ -109,8 +112,8 @@ export interface Project {
 export interface Area {
   id: string
   projectId: string
-  name: string              // AREA level: "FRONT UNIT", "REAR UNIT", "UNDERBODY"
-  code?: string             // Area code if applicable
+  name: string // AREA level: "FRONT UNIT", "REAR UNIT", "UNDERBODY"
+  code?: string // Area code if applicable
 }
 
 // Zone represents a sub-area within an Area (manufacturing cell)
@@ -119,17 +122,12 @@ export interface Area {
 export interface Zone {
   id: string
   projectId: string
-  areaId: string            // Parent area ("FRONT UNIT", "REAR UNIT", etc.)
-  name: string              // Zone name: "Rear Rail LH", "Front Floor ASS 1"
-  code?: string             // Zone code if applicable
+  areaId: string // Parent area ("FRONT UNIT", "REAR UNIT", etc.)
+  name: string // Zone name: "Rear Rail LH", "Front Floor ASS 1"
+  code?: string // Zone code if applicable
 }
 
-export type CellStatus =
-  | "NotStarted"
-  | "InProgress"
-  | "Blocked"
-  | "ReadyForReview"
-  | "Approved"
+export type CellStatus = 'NotStarted' | 'InProgress' | 'Blocked' | 'ReadyForReview' | 'Approved'
 
 export interface SimulationStatus {
   percentComplete: number
@@ -147,22 +145,22 @@ export interface SimulationStatus {
 export interface Cell {
   id: string
   projectId: string
-  areaId: string      // Reference to parent Area ("FRONT UNIT", "REAR UNIT")
-  zoneId?: string     // Optional reference to Zone ("Rear Rail LH", "Front Floor ASS 1")
-  name: string        // human-friendly label (station name)
-  code: string        // station number, e.g. "010", "020"
-  stationId?: string | null  // canonical station ID (area|station normalized)
+  areaId: string // Reference to parent Area ("FRONT UNIT", "REAR UNIT")
+  zoneId?: string // Optional reference to Zone ("Rear Rail LH", "Front Floor ASS 1")
+  name: string // human-friendly label (station name)
+  code: string // station number, e.g. "010", "020"
+  stationId?: string | null // canonical station ID (area|station normalized)
   oemRef?: string
   status: CellStatus
   assignedEngineer?: string
-  lineCode?: string   // "BN_B05", "BC_B04"
+  lineCode?: string // "BN_B05", "BC_B04"
   plannedStart?: string
   plannedFinish?: string
   lastUpdated?: string
   simulation?: SimulationStatus
   schedule?: ScheduleInfo
-  sourcing?: EquipmentSourcing  // sourcing status from linked assets (REUSE, NEW_BUY, etc.)
-  metadata?: Record<string, any>  // additional metadata from linked assets (Gun Force, Supplier, etc.)
+  sourcing?: EquipmentSourcing // sourcing status from linked assets (REUSE, NEW_BUY, etc.)
+  metadata?: Record<string, any> // additional metadata from linked assets (Gun Force, Supplier, etc.)
 }
 
 // ============================================================================
@@ -185,20 +183,11 @@ export interface Robot extends UnifiedAsset {
 // TOOLS (Generalized Equipment Model)
 // ============================================================================
 
-export type ToolType =
-  | "SPOT_WELD"
-  | "SEALER"
-  | "STUD_WELD"
-  | "GRIPPER"
-  | "OTHER"
+export type ToolType = 'SPOT_WELD' | 'SEALER' | 'STUD_WELD' | 'GRIPPER' | 'OTHER'
 
-export type ToolMountType =
-  | "ROBOT_MOUNTED"
-  | "STAND_MOUNTED"
-  | "HAND_TOOL"
-  | "UNKNOWN"
+export type ToolMountType = 'ROBOT_MOUNTED' | 'STAND_MOUNTED' | 'HAND_TOOL' | 'UNKNOWN'
 
-export type SpotWeldSubType = "PNEUMATIC" | "SERVO" | "UNKNOWN"
+export type SpotWeldSubType = 'PNEUMATIC' | 'SERVO' | 'UNKNOWN'
 
 export interface Tool extends UnifiedAsset {
   toolType: ToolType
@@ -210,8 +199,8 @@ export interface Tool extends UnifiedAsset {
   projectId?: string
   robotId?: string
   reuseStatus?: string
-  canonicalKey?: string  // Schema-aware canonical key for UID resolution
-  toolNo?: string        // Tool number/code from Excel
+  canonicalKey?: string // Schema-aware canonical key for UID resolution
+  toolNo?: string // Tool number/code from Excel
 }
 
 // ============================================================================
@@ -239,7 +228,7 @@ export interface SupplierRecord {
  * Generate a unique ID from components
  */
 export function generateId(...parts: (string | number)[]): string {
-  return parts.filter(p => p !== undefined && p !== null).join('-')
+  return parts.filter((p) => p !== undefined && p !== null).join('-')
 }
 
 /**
@@ -269,13 +258,10 @@ export function parsePercentage(value: unknown): number | null {
 /**
  * Determine cell status from completion percentage and issues
  */
-export function deriveCellStatus(
-  percentComplete: number,
-  hasIssues: boolean
-): CellStatus {
-  if (percentComplete === 0) return "NotStarted"
-  if (hasIssues) return "Blocked"
-  if (percentComplete === 100) return "Approved"
-  if (percentComplete >= 90) return "ReadyForReview"
-  return "InProgress"
+export function deriveCellStatus(percentComplete: number, hasIssues: boolean): CellStatus {
+  if (percentComplete === 0) return 'NotStarted'
+  if (hasIssues) return 'Blocked'
+  if (percentComplete === 100) return 'Approved'
+  if (percentComplete >= 90) return 'ReadyForReview'
+  return 'InProgress'
 }
