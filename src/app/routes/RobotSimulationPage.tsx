@@ -496,17 +496,14 @@ function RobotSimulationStationsTable({
                     {row.application ?? 'Unknown'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
-                    {row.cell.simulationStatus?.engineer?.trim() ? (
-                      <Link
-                        to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus.engineer.trim())}`}
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
-                        title={row.cell.simulationStatus.engineer.trim()}
-                      >
-                        {row.cell.simulationStatus.engineer.trim()}
-                      </Link>
-                    ) : (
-                      'UNASSIGNED'
-                    )}
+                    <Link
+                      to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      title={row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
+                    </Link>
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
@@ -548,13 +545,15 @@ function RobotSimulationPage() {
   // Only show cells that have actual simulation status data (not equipment-only entries)
   const tableCells = useMemo(() => {
     if (!hasData) return []
-    return cells.filter(c => {
+    return cells.filter((c) => {
       const sim = c.simulationStatus
       if (!sim) return false
-      return sim.firstStageCompletion != null
-        || sim.panelMilestones != null
-        || (sim.application != null && sim.application.trim() !== '')
-        || (sim.engineer != null && sim.engineer.trim() !== '')
+      return (
+        sim.firstStageCompletion != null ||
+        sim.panelMilestones != null ||
+        (sim.application != null && sim.application.trim() !== '') ||
+        (sim.engineer != null && sim.engineer.trim() !== '')
+      )
     })
   }, [cells, hasData])
   const navigate = useNavigate()
@@ -701,18 +700,12 @@ function RobotSimulationPage() {
                     <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">
                       Simulator
                     </span>
-                    {selectedRow.cell.simulationStatus?.engineer?.trim() ? (
-                      <Link
-                        to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus.engineer.trim())}`}
-                        className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        {selectedRow.cell.simulationStatus.engineer.trim()}
-                      </Link>
-                    ) : (
-                      <span className="text-sm font-medium text-gray-400 dark:text-gray-500">
-                        Unassigned
-                      </span>
-                    )}
+                    <Link
+                      to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
+                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {selectedRow.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
+                    </Link>
                   </div>
                   <div>
                     <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">
