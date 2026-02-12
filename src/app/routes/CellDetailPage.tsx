@@ -5,7 +5,7 @@ import { DataTable, Column } from '../../ui/components/DataTable'
 import { StatusPill } from '../../ui/components/StatusPill'
 import { Tag } from '../../ui/components/Tag'
 import {
-  useCellById,
+  useCells,
   useRobotsByCell,
   useToolsByCell,
   useAllEngineerMetrics,
@@ -27,9 +27,47 @@ export function CellDetailPage() {
   const { cellId } = useParams<{ cellId: string }>()
   const location = useLocation()
   const decodedCellId = cellId ? decodeURIComponent(cellId) : undefined
-  const cell = useCellById(decodedCellId)
-  const legacyRobots = useRobotsByCell(decodedCellId || '')
-  const tools = useToolsByCell(decodedCellId || '')
+
+  // Robust lookup: Try by ID first, then fall back to code/name matching
+  const allCells = useCells()
+  const cell = useMemo(() => {
+    if (!decodedCellId) return undefined
+
+    // 1. Precise match by ID
+    const matchById = allCells.find((c) => c.id === decodedCellId)
+    if (matchById) return matchById
+
+    // 2. Match by station ID (canonical)
+    const matchByStationId = allCells.find((c) => c.stationId === decodedCellId)
+    if (matchByStationId) return matchByStationId
+
+    // 3. Match by normalized code or name
+    const normalizedTarget = decodedCellId.toUpperCase().trim()
+
+    // 3a. Try exact code match
+    const matchByCode = allCells.find((c) => c.code?.toUpperCase() === normalizedTarget)
+    if (matchByCode) return matchByCode
+
+    // 3b. Try exact name match
+    const matchByName = allCells.find((c) => c.name?.toUpperCase() === normalizedTarget)
+    if (matchByName) return matchByName
+
+    // 4. Try normalized station code (e.g. "010" matching "10")
+    if (/^\d+$/.test(normalizedTarget)) {
+      // identifying simplistic numeric codes
+      const matchByNumeric = allCells.find((c) => {
+        const numericCode = c.code?.replace(/^0+/, '')
+        const numericTarget = normalizedTarget.replace(/^0+/, '')
+        return numericCode === numericTarget
+      })
+      if (matchByNumeric) return matchByNumeric
+    }
+
+    return undefined
+  }, [allCells, decodedCellId])
+
+  const legacyRobots = useRobotsByCell(cell?.id || '')
+  const tools = useToolsByCell(cell?.id || '')
   const allEngineers = useAllEngineerMetrics()
   const { pushBusy, popBusy } = useGlobalBusy()
 
