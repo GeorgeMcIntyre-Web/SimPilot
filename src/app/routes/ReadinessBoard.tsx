@@ -12,7 +12,6 @@ import {
   RefreshCw,
   ShoppingCart,
   Wrench,
-  ArrowUpRight,
 } from 'lucide-react'
 
 import { useCells, useProjects, useAreas } from '../../domain/coreStore'
@@ -452,12 +451,9 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
           : 'Unknown'
 
   return (
-    <Link
-      to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
+    <div
       className={cn(
-        'group relative block rounded-lg border transition-all duration-200',
-        'hover:-translate-y-0.5 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600',
-        'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1',
+        'relative block rounded-lg border',
         'bg-white dark:bg-gray-800/90',
         styles.border,
         isCompact ? 'text-[11px]' : 'text-xs',
@@ -472,13 +468,19 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         {/* Header row: station name + completion */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
+            <Link
+              to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
+              className="font-semibold text-blue-600 dark:text-blue-400 truncate leading-tight hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors block"
+            >
               {item.station.station}
-            </h4>
+            </Link>
             {item.areaName && (
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              <Link
+                to={`/areas/${encodeURIComponent(item.areaName)}/overview`}
+                className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate mt-0.5 block"
+              >
                 {item.areaName}
-              </p>
+              </Link>
             )}
           </div>
           {completion !== undefined && (
@@ -512,10 +514,13 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         {/* Engineer row */}
         <div className="flex items-center gap-1.5 mb-2">
           {engineer ? (
-            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 truncate">
+            <Link
+              to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
+              className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate"
+            >
               <User className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{engineer}</span>
-            </div>
+            </Link>
           ) : (
             <span className="text-gray-400 dark:text-gray-500 italic">Unassigned</span>
           )}
@@ -571,12 +576,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
           ) : null}
         </div>
       </div>
-
-      {/* Hover indicator */}
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <ArrowUpRight className="h-4 w-4 text-indigo-400" />
-      </div>
-    </Link>
+    </div>
   )
 }
 
