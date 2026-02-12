@@ -28,6 +28,7 @@ import {
   validateV801Entities,
 } from './v801ToolListSchema'
 import { normalizeSTLARow, stlaRowToToolEntities, validateSTLAEntities } from './stlaToolListSchema'
+import { buildSemanticLayerArtifact, type SemanticLayerArtifact } from '../semanticLayer'
 
 // ============================================================================
 // TYPES
@@ -37,6 +38,7 @@ export interface ToolListSchemaResult {
   entities: ToolEntity[]
   validation: ValidationReport
   projectHint: ProjectHint
+  semanticLayer: SemanticLayerArtifact
 }
 
 // ============================================================================
@@ -116,6 +118,12 @@ export async function parseToolListWithSchema(
 
   const headerRow = rows[headerRowIndex]
   const columns = headerRow.map((h, idx) => (h ? String(h).trim() : `Column_${idx}`))
+  const semanticLayer = buildSemanticLayerArtifact({
+    domain: 'toolList',
+    fileName,
+    sheetName,
+    headers: columns,
+  })
 
   // Detect project type
   const projectHint = detectProjectHint(fileName, columns)
@@ -173,7 +181,7 @@ export async function parseToolListWithSchema(
       headerRowForVacuum,
     )
     const validation = validateBMWEntities(entities, rows.length - dataStartIndex, anomalies)
-    return { entities, validation, projectHint }
+    return { entities, validation, projectHint, semanticLayer }
   }
 
   if (projectHint === 'FORD_V801') {
@@ -190,7 +198,7 @@ export async function parseToolListWithSchema(
       headerRowForVacuum,
     )
     const validation = validateV801Entities(entities, rows.length - dataStartIndex, anomalies)
-    return { entities, validation, projectHint }
+    return { entities, validation, projectHint, semanticLayer }
   }
 
   if (projectHint === 'STLA_S_ZAR') {
@@ -207,7 +215,7 @@ export async function parseToolListWithSchema(
       headerRowForVacuum,
     )
     const validation = validateSTLAEntities(entities, rows.length - dataStartIndex, anomalies)
-    return { entities, validation, projectHint }
+    return { entities, validation, projectHint, semanticLayer }
   }
 
   throw new Error(`Unsupported project hint: ${projectHint}`)
