@@ -204,9 +204,9 @@ export type StatusLabel =
  */
 export const getStatusLabel = (completion: number | null): StatusLabel => {
   if (completion === null) return 'No data'
-  if (completion >= 95) return 'Complete'
-  if (completion >= 80) return 'Nearly Complete'
-  if (completion >= 60) return 'On Track'
+  if (completion === 100) return 'Complete'
+  if (completion >= 90) return 'Nearly Complete'
+  if (completion >= 70) return 'On Track'
   if (completion >= 30) return 'In Progress'
   if (completion > 0) return 'Starting'
   return 'Not Started'

@@ -220,8 +220,8 @@ describe('dashboardUtils', () => {
         simulationStatus: makeSimStatus({ firstStageCompletion: 100 }),
       }),
       makeCell({
-        stationKey: 'ST_085',
-        simulationStatus: makeSimStatus({ firstStageCompletion: 85 }),
+        stationKey: 'ST_095',
+        simulationStatus: makeSimStatus({ firstStageCompletion: 95 }),
       }),
       makeCell({
         stationKey: 'ST_020',
@@ -243,7 +243,7 @@ describe('dashboardUtils', () => {
     it('filters to Nearly Complete', () => {
       const result = filterByStatus(cells, 'Nearly Complete')
       expect(result.length).toBe(1)
-      expect(result[0].stationKey).toBe('ST_085')
+      expect(result[0].stationKey).toBe('ST_095')
     })
 
     it('filters to No data', () => {
