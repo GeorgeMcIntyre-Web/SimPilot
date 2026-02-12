@@ -4,9 +4,14 @@ export {
   resolveHeaderMappings,
 } from './mappingRegistry'
 export { validateSemanticMappings } from './semanticValidator'
-export { buildSemanticLayerArtifact, mergeSemanticLayerArtifacts } from './artifactBuilder'
+export {
+  buildSemanticArtifactBundle,
+  buildSemanticLayerArtifact,
+  mergeSemanticLayerArtifacts,
+} from './artifactBuilder'
 export { semanticLayersToWarnings } from './warningAdapter'
 export type {
+  SemanticArtifactBundle,
   SemanticAmbiguity,
   SemanticAmbiguityKind,
   SemanticDomain,

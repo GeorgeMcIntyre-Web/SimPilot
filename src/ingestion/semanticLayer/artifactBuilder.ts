@@ -1,6 +1,7 @@
 import { resolveHeaderMappings } from './mappingRegistry'
 import { validateSemanticMappings } from './semanticValidator'
 import type {
+  SemanticArtifactBundle,
   SemanticDomain,
   SemanticEdge,
   SemanticLayerArtifact,
@@ -198,6 +199,39 @@ export function mergeSemanticLayerArtifacts(
     domain,
     fileName,
     sheetName,
+    nodes: Array.from(nodeMap.values()),
+    edges: Array.from(edgeMap.values()),
+    report: aggregateReports(reports),
+    ambiguities,
+  }
+}
+
+export function buildSemanticArtifactBundle(
+  runId: string,
+  artifacts: SemanticLayerArtifact[] | undefined,
+): SemanticArtifactBundle | undefined {
+  if (!artifacts || artifacts.length === 0) {
+    return undefined
+  }
+
+  const nodeMap = new Map<string, SemanticNode>()
+  const edgeMap = new Map<string, SemanticEdge>()
+  const reports: SemanticReport[] = []
+  const ambiguities = []
+
+  for (const artifact of artifacts) {
+    reports.push(artifact.report)
+    ambiguities.push(...artifact.ambiguities)
+    for (const node of artifact.nodes) {
+      addNode(nodeMap, node)
+    }
+    for (const edge of artifact.edges) {
+      addEdge(edgeMap, edge)
+    }
+  }
+
+  return {
+    runId,
     nodes: Array.from(nodeMap.values()),
     edges: Array.from(edgeMap.values()),
     report: aggregateReports(reports),

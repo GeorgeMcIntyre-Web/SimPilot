@@ -78,3 +78,11 @@ export interface SemanticLayerArtifact {
   report: SemanticReport
   ambiguities: SemanticAmbiguity[]
 }
+
+export interface SemanticArtifactBundle {
+  runId: string
+  nodes: SemanticNode[]
+  edges: SemanticEdge[]
+  report: SemanticReport
+  ambiguities: SemanticAmbiguity[]
+}
