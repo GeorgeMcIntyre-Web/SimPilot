@@ -464,9 +464,9 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
       <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gray-300 dark:bg-gray-600" />
 
       {/* Card content */}
-      <div className={cn('pl-4 pr-3', isCompact ? 'py-3' : 'py-4')}>
+      <div className={cn('pl-4 pr-3', isCompact ? 'py-2' : 'py-3')}>
         {/* Header row: station name + completion */}
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-start justify-between gap-3 mb-2">
           <div className="min-w-0 flex-1 space-y-0.5">
             <Link
               to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
@@ -493,8 +493,8 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         </div>
 
         {/* Progress bar */}
-        <div className="mb-3">
-          <div className="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="mb-2">
+          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={cn(
                 'h-full rounded-full transition-all duration-300',
@@ -510,7 +510,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         </div>
 
         {/* Engineer row */}
-        <div className="mb-3">
+        <div className="mb-2">
           {engineer ? (
             <Link
               to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
@@ -525,7 +525,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         </div>
 
         {/* Status badge row */}
-        <div className="mb-3">
+        <div className="mb-2">
           <span
             className={cn(
               'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
