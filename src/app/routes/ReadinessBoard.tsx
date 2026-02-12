@@ -453,38 +453,38 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
   return (
     <div
       className={cn(
-        'relative block rounded-lg border',
-        'bg-white dark:bg-gray-800/90',
+        'relative rounded-xl border shadow-sm transition-all duration-200',
+        'bg-white/85 dark:bg-gray-800',
+        'hover:shadow-md hover:-translate-y-[1px]',
         styles.border,
-        isCompact ? 'text-[11px]' : 'text-xs',
       )}
       aria-label={`Station ${item.station.station}, status ${item.status}`}
     >
       {/* Status accent bar */}
-      <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-lg', styles.dot)} />
+      <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-xl', styles.dot)} />
 
       {/* Card content */}
-      <div className={cn('pl-3.5 pr-3', isCompact ? 'py-2.5' : 'py-3')}>
+      <div className={cn('pl-4 pr-3', isCompact ? 'py-3' : 'py-4')}>
         {/* Header row: station name + completion */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0 flex-1 space-y-0.5">
             <Link
               to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
-              className="font-semibold text-blue-600 dark:text-blue-400 truncate leading-tight hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors block"
+              className="font-semibold text-sm text-blue-600 dark:text-blue-400 leading-tight hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors block truncate"
             >
               {item.station.station}
             </Link>
             {item.areaName && (
               <Link
                 to={`/areas/${encodeURIComponent(item.areaName)}/overview`}
-                className="text-[10px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate mt-0.5 block"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate block"
               >
                 {item.areaName}
               </Link>
             )}
           </div>
           {completion !== undefined && (
-            <div className="flex-shrink-0 text-right">
+            <div className="flex-shrink-0">
               <span className={cn('text-sm font-bold tabular-nums', styles.text)}>
                 {completion}%
               </span>
@@ -493,11 +493,11 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         </div>
 
         {/* Progress bar */}
-        <div className="mb-2.5">
-          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="mb-3">
+          <div className="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all duration-500',
+                'h-full rounded-full transition-all duration-300',
                 item.status === 'onTrack'
                   ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
                   : item.status === 'atRisk'
@@ -512,65 +512,65 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         </div>
 
         {/* Engineer row */}
-        <div className="flex items-center gap-1.5 mb-2">
+        <div className="mb-3">
           {engineer ? (
             <Link
               to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
-              className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate"
+              className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate max-w-full"
             >
-              <User className="h-3 w-3 flex-shrink-0" />
+              <User className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="truncate">{engineer}</span>
             </Link>
           ) : (
-            <span className="text-gray-400 dark:text-gray-500 italic">Unassigned</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 italic">Unassigned</span>
           )}
         </div>
 
         {/* Status badge row */}
-        <div className="mb-2">
+        <div className="mb-3">
           <span
             className={cn(
-              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold',
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
               styles.pill,
             )}
           >
-            <span className={cn('w-1.5 h-1.5 rounded-full', styles.dot)} />
+            <span className={cn('w-2 h-2 rounded-full', styles.dot)} />
             {statusLabel}
           </span>
         </div>
 
         {/* Meta row: sourcing + due date */}
-        <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+          <div className="flex items-center gap-3">
             {reusePct !== null && reusePct > 0 && (
-              <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                <RefreshCw className="h-3 w-3" />
-                {reusePct}%
+              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>{reusePct}%</span>
               </span>
             )}
             {newBuyPct !== null && newBuyPct > 0 && (
-              <span className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 font-medium">
-                <ShoppingCart className="h-3 w-3" />
-                {newBuyPct}%
+              <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                <ShoppingCart className="h-3.5 w-3.5" />
+                <span>{newBuyPct}%</span>
               </span>
             )}
             {totalTools > 0 && (
-              <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
-                <Wrench className="h-3 w-3" />
-                {totalTools}
+              <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                <Wrench className="h-3.5 w-3.5" />
+                <span>{totalTools}</span>
               </span>
             )}
           </div>
 
           {/* Due date info */}
           {item.daysLate && item.daysLate > 0 ? (
-            <span className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
-              <Clock className="h-3 w-3" />
+            <span className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 font-semibold">
+              <Clock className="h-3.5 w-3.5" />
               {item.daysLate}d late
             </span>
           ) : item.daysToDue !== undefined ? (
-            <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
-              <Clock className="h-3 w-3" />
+            <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <Clock className="h-3.5 w-3.5" />
               {item.daysToDue}d to due
             </span>
           ) : null}
