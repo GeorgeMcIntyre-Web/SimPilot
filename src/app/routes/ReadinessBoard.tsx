@@ -509,21 +509,23 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
           </div>
         </div>
 
-        {/* Info row: engineer + status badge */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            {engineer ? (
-              <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 truncate">
-                <User className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{engineer}</span>
-              </div>
-            ) : (
-              <span className="text-gray-400 dark:text-gray-500 italic">Unassigned</span>
-            )}
-          </div>
+        {/* Engineer row */}
+        <div className="flex items-center gap-1.5 mb-2">
+          {engineer ? (
+            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 truncate">
+              <User className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{engineer}</span>
+            </div>
+          ) : (
+            <span className="text-gray-400 dark:text-gray-500 italic">Unassigned</span>
+          )}
+        </div>
+
+        {/* Status badge row */}
+        <div className="mb-2">
           <span
             className={cn(
-              'flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold',
+              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold',
               styles.pill,
             )}
           >
