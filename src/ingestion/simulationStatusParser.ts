@@ -17,7 +17,16 @@ import { COLUMN_ALIASES, REQUIRED_HEADERS } from './simulationStatus/headerMappi
 import { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
 import { extractRobotsFromVacuumRows } from './simulationStatus/robotExtraction'
 import { buildEntities } from './simulationStatus/entityBuilder'
-import type { VacuumParsedRow, ParsedSimulationRow, SimulationStatusResult } from './simulationStatus/types'
+import type {
+  VacuumParsedRow,
+  ParsedSimulationRow,
+  SimulationStatusResult,
+} from './simulationStatus/types'
+import {
+  buildSemanticLayerArtifact,
+  mergeSemanticLayerArtifacts,
+  type SemanticLayerArtifact,
+} from './semanticLayer'
 
 // Re-export selected helpers for external consumers
 export { vacuumParseSimulationSheet } from './simulationStatus/vacuumParser'
@@ -100,6 +109,7 @@ export async function parseSimulationStatus(
 
   const allVacuumRows: VacuumParsedRow[] = []
   const allParsedRows: ParsedSimulationRow[] = []
+  const semanticArtifacts: SemanticLayerArtifact[] = []
 
   for (const sheetName of sheetsToParse) {
     if (workbook.SheetNames.includes(sheetName) === false) {
@@ -140,6 +150,17 @@ export async function parseSimulationStatus(
       )
       continue
     }
+
+    const headerRow = rows[headerRowIndex] ?? []
+    const headers = headerRow.map((cell, index) => String(cell ?? `Column_${index}`).trim())
+    semanticArtifacts.push(
+      buildSemanticLayerArtifact({
+        domain: 'simulationStatus',
+        fileName,
+        sheetName,
+        headers,
+      }),
+    )
 
     // Extract global area name from first cell (A1) or title row
     let globalAreaName: string | undefined
@@ -197,6 +218,11 @@ export async function parseSimulationStatus(
 
   const projectName = deriveProjectName(fileName)
   const customer = deriveCustomer(fileName)
+  const semanticLayer = mergeSemanticLayerArtifacts(
+    fileName,
+    semanticArtifacts,
+    'simulation-status',
+  )
 
   // Build entities
   const { project, areas, cells } = buildEntities(
@@ -233,6 +259,7 @@ export async function parseSimulationStatus(
     vacuumRows: allVacuumRows,
     robotsFromSimStatus,
     overviewSchedule,
+    semanticLayer,
   }
 }
 

@@ -6,12 +6,16 @@ export const COLUMN_ALIASES: Record<string, string[]> = {
   STATION: ['STATION NO. NEW', 'STATION', 'STATION CODE', 'STATION KEY', 'STATION NO.'],
   ROBOT: ['ROBOT', 'ROBOT CAPTION', 'ROBOT NAME'],
   APPLICATION: ['APPLICATION', 'APP'],
-  'PERSONS RESPONSIBLE': ['PERSONS RESPONSIBLE', 'PERSON RESPONSIBLE', 'ENGINEER', 'RESPONSIBLE']
+  'PERSONS RESPONSIBLE': [
+    'PERSONS RESPONSIBLE',
+    'PERSON RESPONSIBLE',
+    'PERS. RESPONSIBLE',
+    'PERS RESPONSIBLE',
+    'ENGINEER',
+    'RESPONSIBLE',
+  ],
 }
 
 // Required headers for finding the header row
 // AREA and ASSEMBLY LINE are optional - can be derived or missing
-export const REQUIRED_HEADERS = [
-  'STATION',
-  'ROBOT'
-]
+export const REQUIRED_HEADERS = ['STATION', 'ROBOT']

@@ -1,5 +1,6 @@
 import type { Project, Area, Cell, IngestionWarning } from '../../domain/core'
 import type { OverviewScheduleMetrics } from '../../domain/core'
+import type { SemanticLayerArtifact } from '../semanticLayer'
 
 export interface SimulationMetric {
   /** Exact header text (preserving typos) */
@@ -51,6 +52,7 @@ export interface SimulationStatusResult {
   vacuumRows?: VacuumParsedRow[]
   robotsFromSimStatus?: SimulationRobot[]
   overviewSchedule?: OverviewScheduleMetrics
+  semanticLayer?: SemanticLayerArtifact
 }
 
 export interface BuildEntitiesInput {
