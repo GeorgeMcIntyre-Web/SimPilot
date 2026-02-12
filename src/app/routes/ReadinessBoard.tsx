@@ -15,7 +15,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react'
 
-import { useCells, useProjects } from '../../domain/coreStore'
+import { useCells, useProjects, useAreas } from '../../domain/coreStore'
 import { SchedulePhase, ScheduleStatus } from '../../domain/core'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -86,6 +86,8 @@ interface StationReadinessItem {
   hasDueDate: boolean
   projectId?: string
   projectName?: string
+  areaId?: string
+  areaName?: string
 }
 
 // ============================================================================
@@ -96,6 +98,7 @@ export function ReadinessBoard() {
   const stations = useAllStations()
   const cells = useCells()
   const projects = useProjects()
+  const areas = useAreas()
   const cellRisks = getAllCellScheduleRisks()
   const navigate = useNavigate()
 
@@ -121,6 +124,7 @@ export function ReadinessBoard() {
       const risk = riskMap.get(station.cellId)
       const cell = cells.find((c) => c.id === station.cellId)
       const project = projects.find((p) => p.id === (risk?.projectId ?? cell?.projectId))
+      const area = areas.find((a) => a.id === cell?.areaId)
 
       const completion = risk?.completion ?? station.simulationStatus?.firstStageCompletion ?? null
       const status: ScheduleStatus = risk?.status ?? 'unknown'
@@ -136,9 +140,11 @@ export function ReadinessBoard() {
         hasDueDate: risk?.hasDueDate ?? false,
         projectId: project?.id,
         projectName: project?.name,
+        areaId: area?.id,
+        areaName: area?.name,
       }
     })
-  }, [stations, riskMap, cells, projects])
+  }, [stations, riskMap, cells, projects, areas])
 
   // Filters
   const filtered = useMemo(() => {
@@ -436,177 +442,147 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
     return Math.round((item.station.sourcingCounts.newBuy / total) * 100)
   }, [item.station.sourcingCounts])
 
+  const statusLabel =
+    item.status === 'onTrack'
+      ? 'On Track'
+      : item.status === 'atRisk'
+        ? 'At Risk'
+        : item.status === 'late'
+          ? 'Late'
+          : 'Unknown'
+
   return (
-    <div
+    <Link
+      to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
       className={cn(
-        'group relative block rounded-md border transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500',
-        'bg-white dark:bg-gray-800',
+        'group relative block rounded-lg border transition-all duration-200',
+        'hover:-translate-y-0.5 hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-600',
+        'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1',
+        'bg-white dark:bg-gray-800/90',
         styles.border,
-        styles.accent,
         isCompact ? 'text-[11px]' : 'text-xs',
       )}
-      tabIndex={0}
       aria-label={`Station ${item.station.station}, status ${item.status}`}
     >
-      {/* Header */}
-      <div className={cn('px-3 py-2 border-b', styles.border, styles.bg)}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <div className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', styles.dot)} />
-            <span
-              className={cn(
-                isCompact ? 'text-[11px]' : 'text-[12px]',
-                'font-semibold truncate',
-                styles.text,
-              )}
-            >
+      {/* Status accent bar */}
+      <div className={cn('absolute left-0 top-0 bottom-0 w-1 rounded-l-lg', styles.dot)} />
+
+      {/* Card content */}
+      <div className={cn('pl-3.5 pr-3', isCompact ? 'py-2.5' : 'py-3')}>
+        {/* Header row: station name + completion */}
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
               {item.station.station}
-            </span>
+            </h4>
+            {item.areaName && (
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                {item.areaName}
+              </p>
+            )}
           </div>
           {completion !== undefined && (
-            <span
-              className={cn(
-                isCompact ? 'text-[10px]' : 'text-[11px]',
-                'font-bold flex-shrink-0',
-                styles.text,
-              )}
-            ></span>
+            <div className="flex-shrink-0 text-right">
+              <span className={cn('text-sm font-bold tabular-nums', styles.text)}>
+                {completion}%
+              </span>
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Body */}
-      <div className={cn('px-3', isCompact ? 'py-2 space-y-1.5' : 'py-3 space-y-2.5')}>
-        {/* Project / line */}
-        {(item.projectName || item.station.line) && (
-          <div
-            className={cn(
-              isCompact ? 'text-[10px]' : 'text-[11px]',
-              'text-gray-600 dark:text-gray-400 truncate font-semibold',
-            )}
-          >
-            {item.projectName ? `${item.projectName} • ${item.station.line}` : item.station.line}
+        {/* Progress bar */}
+        <div className="mb-2.5">
+          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-500',
+                item.status === 'onTrack'
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                  : item.status === 'atRisk'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-400'
+                    : item.status === 'late'
+                      ? 'bg-gradient-to-r from-rose-500 to-rose-400'
+                      : 'bg-gradient-to-r from-gray-400 to-gray-300',
+              )}
+              style={{ width: `${completion ?? 0}%` }}
+            />
           </div>
-        )}
+        </div>
 
-        {/* Engineer */}
-        {engineer && (
-          <div
-            className={cn(
-              'flex items-center gap-1.5 text-gray-500 dark:text-gray-500',
-              isCompact ? 'text-[10px]' : 'text-[11px]',
-            )}
-          >
-            <User className="h-2.5 w-2.5 flex-shrink-0" />
-            <Link
-              to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
-              className="truncate hover:underline"
-            >
-              {engineer}
-            </Link>
-          </div>
-        )}
+        {/* Engineer row */}
+        <div className="flex items-center gap-1.5 mb-2">
+          {engineer ? (
+            <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 truncate">
+              <User className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{engineer}</span>
+            </div>
+          ) : (
+            <span className="text-gray-400 dark:text-gray-500 italic">Unassigned</span>
+          )}
+        </div>
 
-        {/* Phase + status pill */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200">
-            {PHASE_LABELS[item.phase]}
-          </span>
+        {/* Status badge row */}
+        <div className="mb-2">
           <span
             className={cn(
               'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold',
               styles.pill,
             )}
           >
-            {item.status}
+            <span className={cn('w-1.5 h-1.5 rounded-full', styles.dot)} />
+            {statusLabel}
           </span>
         </div>
 
-        {/* Progress */}
-        <CompletionBar percent={completion} />
-
-        {/* Sourcing + assets */}
-        <div className="flex items-center justify-between gap-2 text-gray-700 dark:text-gray-300">
-          <div className="flex items-center gap-2">
+        {/* Meta row: sourcing + due date */}
+        <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700/50">
+          <div className="flex items-center gap-2.5">
             {reusePct !== null && reusePct > 0 && (
-              <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                 <RefreshCw className="h-3 w-3" />
-                <span>{reusePct}%</span>
+                {reusePct}%
               </span>
             )}
             {newBuyPct !== null && newBuyPct > 0 && (
-              <span className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400">
+              <span className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 font-medium">
                 <ShoppingCart className="h-3 w-3" />
-                <span>{newBuyPct}%</span>
+                {newBuyPct}%
+              </span>
+            )}
+            {totalTools > 0 && (
+              <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
+                <Wrench className="h-3 w-3" />
+                {totalTools}
               </span>
             )}
           </div>
 
-          {totalTools > 0 && (
-            <span className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
-              <Wrench className="h-3.5 w-3.5 text-blue-500" />
-              <span className="font-medium">{totalTools}</span>
-              <span className="text-gray-500">other</span>
+          {/* Due date info */}
+          {item.daysLate && item.daysLate > 0 ? (
+            <span className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
+              <Clock className="h-3 w-3" />
+              {item.daysLate}d late
             </span>
-          )}
-        </div>
-
-        {/* Due info */}
-        {item.daysLate && item.daysLate > 0 ? (
-          <div className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400 font-semibold">
-            <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-            <span>{item.daysLate}d late</span>
-          </div>
-        ) : item.daysToDue !== undefined ? (
-          <div className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
-            <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-            <span>{item.daysToDue}d to due</span>
-          </div>
-        ) : item.hasDueDate ? (
-          <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-500">
-            <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-            <span>No due date calculated</span>
-          </div>
-        ) : null}
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-1">
-          <Link
-            to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
-            className="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-300 hover:underline"
-          >
-            View station
-            <ArrowUpRight className="h-3 w-3" />
-          </Link>
-          <span className="text-[10px] text-gray-400">{item.station.line}</span>
+          ) : item.daysToDue !== undefined ? (
+            <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
+              <Clock className="h-3 w-3" />
+              {item.daysToDue}d to due
+            </span>
+          ) : null}
         </div>
       </div>
-    </div>
+
+      {/* Hover indicator */}
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <ArrowUpRight className="h-4 w-4 text-indigo-400" />
+      </div>
+    </Link>
   )
 }
 
 // ============================================================================
 // UI FRAGMENTS
 // ============================================================================
-
-function CompletionBar({ percent }: { percent: number | undefined }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-2 flex-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-        <div
-          className={cn(
-            'h-full transition-all duration-300',
-            'bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400',
-          )}
-          style={{ width: `${percent ?? 0}%` }}
-        />
-      </div>
-      <span className="text-[11px] font-medium text-gray-700 dark:text-gray-200 min-w-[32px] text-right">
-        {percent !== undefined ? `${percent}%` : '—'}
-      </span>
-    </div>
-  )
-}
 
 function Chip({ label, onClear }: { label: string | undefined; onClear: () => void }) {
   if (!label) return null
