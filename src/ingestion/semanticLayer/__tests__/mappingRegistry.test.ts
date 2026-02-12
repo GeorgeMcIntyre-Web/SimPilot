@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveHeaderMappings } from '../mappingRegistry'
+import { resolveHeaderMappings, SEMANTIC_PROFILE_NAME_BY_DOMAIN } from '../mappingRegistry'
 import type { SemanticFieldDefinition } from '../types'
 
 describe('mappingRegistry', () => {
@@ -45,5 +45,45 @@ describe('mappingRegistry', () => {
 
     expect(resolution.mappings[0].status).toBe('ambiguous')
     expect(resolution.mappings[0].candidates).toEqual(['field.one', 'field.two'])
+  })
+
+  it('exposes semantic profile names for robot equipment and reuse list', () => {
+    expect(SEMANTIC_PROFILE_NAME_BY_DOMAIN.robotEquipmentList).toBe('ROBOT_EQUIPMENT_LIST')
+    expect(SEMANTIC_PROFILE_NAME_BY_DOMAIN.reuseList).toBe('REUSE_LIST')
+  })
+
+  it('maps robot equipment headers to required semantic fields', () => {
+    const resolution = resolveHeaderMappings(
+      ['Robo No. New', 'Station No. New', 'Area'],
+      'robotEquipmentList',
+    )
+
+    const required = new Set(resolution.requiredFields)
+    const mappedFields = new Set(
+      resolution.mappings
+        .filter((mapping) => mapping.status === 'mapped' && mapping.matchedField)
+        .map((mapping) => mapping.matchedField),
+    )
+
+    expect(required.has('robotEquipment.station')).toBe(true)
+    expect(required.has('robotEquipment.robot')).toBe(true)
+    expect(mappedFields.has('robotEquipment.station')).toBe(true)
+    expect(mappedFields.has('robotEquipment.robot')).toBe(true)
+  })
+
+  it('maps reuse list headers to required semantic fields', () => {
+    const resolution = resolveHeaderMappings(['Device Name', 'Station3', 'Area'], 'reuseList')
+
+    const required = new Set(resolution.requiredFields)
+    const mappedFields = new Set(
+      resolution.mappings
+        .filter((mapping) => mapping.status === 'mapped' && mapping.matchedField)
+        .map((mapping) => mapping.matchedField),
+    )
+
+    expect(required.has('reuse.station')).toBe(true)
+    expect(required.has('reuse.tool')).toBe(true)
+    expect(mappedFields.has('reuse.station')).toBe(true)
+    expect(mappedFields.has('reuse.tool')).toBe(true)
   })
 })

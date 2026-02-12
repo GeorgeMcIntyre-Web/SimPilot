@@ -5,6 +5,13 @@ import type {
   SemanticMappingResolution,
 } from './types'
 
+export const SEMANTIC_PROFILE_NAME_BY_DOMAIN: Record<SemanticDomain, string> = {
+  toolList: 'TOOL_LIST',
+  simulationStatus: 'SIMULATION_STATUS',
+  robotEquipmentList: 'ROBOT_EQUIPMENT_LIST',
+  reuseList: 'REUSE_LIST',
+}
+
 export const SEMANTIC_MAPPING_REGISTRY: Record<SemanticDomain, SemanticFieldDefinition[]> = {
   toolList: [
     {
@@ -41,6 +48,66 @@ export const SEMANTIC_MAPPING_REGISTRY: Record<SemanticDomain, SemanticFieldDefi
         'TOOLING NUMBER RH (OPPOSITE)',
         'TOOLING NUMBER LH (OPPOSITE)',
       ],
+      required: false,
+    },
+  ],
+  robotEquipmentList: [
+    {
+      domain: 'robotEquipmentList',
+      key: 'robotEquipment.area',
+      aliases: ['AREA', 'AREA NAME', 'INDEX', 'SUB AREA NAME', 'SHOP'],
+      required: false,
+    },
+    {
+      domain: 'robotEquipmentList',
+      key: 'robotEquipment.station',
+      aliases: ['STATION', 'STATION CODE', 'STATION NUMBER', 'STATION NO.', 'STATION NO. NEW'],
+      required: true,
+    },
+    {
+      domain: 'robotEquipmentList',
+      key: 'robotEquipment.robot',
+      aliases: [
+        'ROBOT',
+        'ROBOT ID',
+        'ROBOT CAPTION',
+        'ROBOTNUMBER',
+        'ROBOTNUMBER (E-NUMBER)',
+        'ROBOTS TOTAL',
+        'ROBO NO. NEW',
+      ],
+      required: true,
+    },
+    {
+      domain: 'robotEquipmentList',
+      key: 'robotEquipment.installStatus',
+      aliases: ['INSTALL STATUS', 'STATUS'],
+      required: false,
+    },
+  ],
+  reuseList: [
+    {
+      domain: 'reuseList',
+      key: 'reuse.area',
+      aliases: ['AREA', 'OLD AREA', 'SUB AREA NAME'],
+      required: false,
+    },
+    {
+      domain: 'reuseList',
+      key: 'reuse.station',
+      aliases: ['NEW STATION', 'NEW STATION ', 'STATION', 'STATION3', 'LOCATION'],
+      required: true,
+    },
+    {
+      domain: 'reuseList',
+      key: 'reuse.tool',
+      aliases: ['DEVICE NAME', 'TIP DRESSER', 'BRAND', 'PART NUMBER', 'SERIAL NUMBER COMPLETE WG'],
+      required: true,
+    },
+    {
+      domain: 'reuseList',
+      key: 'reuse.robot',
+      aliases: ['ROBOT', 'APPLICATION ROBOT', 'ROBOT STANDARD (CONFIRM)'],
       required: false,
     },
   ],

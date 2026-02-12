@@ -51,6 +51,7 @@ export async function routeToParser(
     return {
       robots: result.robots,
       warnings: result.warnings,
+      semanticLayer: result.semanticLayer,
     }
   }
 
