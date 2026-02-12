@@ -9,6 +9,7 @@ import type { IngestedData } from '../applyIngestedData'
 import { parseSimulationStatus } from '../simulationStatusParser'
 import { parseRobotList } from '../robotListParser'
 import { parseToolList } from '../toolListParser'
+import type { SemanticLayerArtifact } from '../semanticLayer'
 
 /**
  * Result from a parser
@@ -20,6 +21,7 @@ export interface ParserResult {
   robots?: { id: string }[]
   tools?: { id: string }[]
   warnings: IngestionWarning[]
+  semanticLayer?: SemanticLayerArtifact
 }
 
 /**
@@ -28,7 +30,7 @@ export interface ParserResult {
 export async function routeToParser(
   workbook: XLSX.WorkBook,
   fileName: string,
-  scanSummary: FileScanSummary
+  scanSummary: FileScanSummary,
 ): Promise<ParserResult> {
   const fileKind = scanSummary.fileKind
   const sheetName = scanSummary.sheetName
@@ -39,7 +41,8 @@ export async function routeToParser(
       projects: result.projects,
       areas: result.areas,
       cells: result.cells,
-      warnings: result.warnings
+      warnings: result.warnings,
+      semanticLayer: result.semanticLayer,
     }
   }
 
@@ -47,7 +50,7 @@ export async function routeToParser(
     const result = await parseRobotList(workbook, fileName, sheetName)
     return {
       robots: result.robots,
-      warnings: result.warnings
+      warnings: result.warnings,
     }
   }
 
@@ -55,7 +58,8 @@ export async function routeToParser(
     const result = await parseToolList(workbook, fileName, sheetName)
     return {
       tools: result.tools,
-      warnings: result.warnings
+      warnings: result.warnings,
+      semanticLayer: result.semanticLayer,
     }
   }
 
@@ -69,8 +73,15 @@ export async function routeToParser(
 export function mergeParserResult(
   ingestedData: IngestedData,
   result: ParserResult,
-  _category: SheetCategory
+  _category: SheetCategory,
 ): void {
+  if (result.semanticLayer) {
+    if (!ingestedData.semanticLayers) {
+      ingestedData.semanticLayers = []
+    }
+    ingestedData.semanticLayers.push(result.semanticLayer)
+  }
+
   // Simulation data
   if (result.projects && result.areas && result.cells) {
     if (ingestedData.simulation === undefined) {
@@ -78,14 +89,20 @@ export function mergeParserResult(
         projects: result.projects as NonNullable<IngestedData['simulation']>['projects'],
         areas: result.areas as NonNullable<IngestedData['simulation']>['areas'],
         cells: result.cells as NonNullable<IngestedData['simulation']>['cells'],
-        warnings: result.warnings
+        warnings: result.warnings,
       }
       return
     }
 
-    ingestedData.simulation.projects.push(...(result.projects as NonNullable<IngestedData['simulation']>['projects']))
-    ingestedData.simulation.areas.push(...(result.areas as NonNullable<IngestedData['simulation']>['areas']))
-    ingestedData.simulation.cells.push(...(result.cells as NonNullable<IngestedData['simulation']>['cells']))
+    ingestedData.simulation.projects.push(
+      ...(result.projects as NonNullable<IngestedData['simulation']>['projects']),
+    )
+    ingestedData.simulation.areas.push(
+      ...(result.areas as NonNullable<IngestedData['simulation']>['areas']),
+    )
+    ingestedData.simulation.cells.push(
+      ...(result.cells as NonNullable<IngestedData['simulation']>['cells']),
+    )
     ingestedData.simulation.warnings.push(...result.warnings)
     return
   }
@@ -95,12 +112,14 @@ export function mergeParserResult(
     if (ingestedData.robots === undefined) {
       ingestedData.robots = {
         robots: result.robots as NonNullable<IngestedData['robots']>['robots'],
-        warnings: result.warnings
+        warnings: result.warnings,
       }
       return
     }
 
-    ingestedData.robots.robots.push(...(result.robots as NonNullable<IngestedData['robots']>['robots']))
+    ingestedData.robots.robots.push(
+      ...(result.robots as NonNullable<IngestedData['robots']>['robots']),
+    )
     ingestedData.robots.warnings.push(...result.warnings)
     return
   }
@@ -110,7 +129,7 @@ export function mergeParserResult(
     if (ingestedData.tools === undefined) {
       ingestedData.tools = {
         tools: result.tools as NonNullable<IngestedData['tools']>['tools'],
-        warnings: result.warnings
+        warnings: result.warnings,
       }
       return
     }

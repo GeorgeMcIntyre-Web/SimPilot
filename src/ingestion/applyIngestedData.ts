@@ -24,6 +24,8 @@ import {
   type DuplicateDetection,
 } from './entityDeduplicator'
 import { coreStore } from '../domain/coreStore'
+import type { SemanticLayerArtifact } from './semanticLayer'
+import { semanticLayersToWarnings } from './semanticLayer'
 
 // ============================================================================
 // TYPES
@@ -33,6 +35,7 @@ export interface IngestedData {
   simulation?: SimulationStatusResult
   robots?: RobotListResult
   tools?: ToolListResult
+  semanticLayers?: SemanticLayerArtifact[]
 }
 
 export interface ApplyResult {
@@ -156,6 +159,7 @@ function buildCollisionSummary(results: DedupResults): {
  */
 export function applyIngestedData(data: IngestedData): ApplyResult {
   const warnings: IngestionWarning[] = []
+  warnings.push(...semanticLayersToWarnings(data.semanticLayers))
 
   // Collect all entities
   const projects: Project[] = []
