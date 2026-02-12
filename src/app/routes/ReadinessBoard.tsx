@@ -475,9 +475,9 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
             <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
               {item.station.station}
             </h4>
-            {item.station.line && (
+            {item.areaName && (
               <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                {item.station.line}
+                {item.areaName}
               </p>
             )}
           </div>
