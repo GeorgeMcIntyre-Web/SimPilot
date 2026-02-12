@@ -2,6 +2,7 @@
 // Low-level helpers for reading and parsing Excel files using SheetJS
 
 import * as XLSX from 'xlsx'
+import { readWorkbookModel } from '../excel/reader'
 
 export type CellValue = string | number | boolean | null
 
@@ -24,14 +25,14 @@ type ExcelInput = File | Blob
  */
 async function readWorkbookFromExcelInput(
   input: ExcelInput,
-  fileName?: string
+  fileName?: string,
 ): Promise<XLSX.WorkBook> {
   if (!input) {
     throw new Error('Excel input is required')
   }
 
   // Get file name for validation (from File object or parameter)
-  const name = input instanceof File ? input.name : (fileName || 'unknown.xlsx')
+  const name = input instanceof File ? input.name : fileName || 'unknown.xlsx'
 
   if (!name.endsWith('.xlsx') && !name.endsWith('.xlsm') && !name.endsWith('.xls')) {
     throw new Error(`Invalid file type: ${name}. Expected Excel file (.xlsx, .xlsm, or .xls)`)
@@ -45,12 +46,8 @@ async function readWorkbookFromExcelInput(
       throw new Error('File is empty or could not be read')
     }
 
-    const workbook = XLSX.read(arrayBuffer, {
-      type: 'array',
-      cellDates: false,
-      cellNF: false,
-      cellText: false,
-      cellStyles: true  // Enable style parsing for strike-through detection
+    const workbook = readWorkbookModel(arrayBuffer, {
+      cellStyles: true, // Enable style parsing for strike-through detection
     })
 
     if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
@@ -60,11 +57,12 @@ async function readWorkbookFromExcelInput(
     return workbook
   } catch (error) {
     // Re-throw our own errors as-is
-    if (error instanceof Error && (
-      error.message.includes('empty') ||
-      error.message.includes('invalid') ||
-      error.message.includes('File is empty')
-    )) {
+    if (
+      error instanceof Error &&
+      (error.message.includes('empty') ||
+        error.message.includes('invalid') ||
+        error.message.includes('File is empty'))
+    ) {
       throw error
     }
     // Wrap other errors
@@ -101,10 +99,12 @@ export async function readWorkbook(file: File): Promise<XLSX.WorkBook> {
 export function sheetToMatrix(
   workbook: XLSX.WorkBook,
   sheetName: string,
-  maxRows?: number
+  maxRows?: number,
 ): CellValue[][] {
   if (!workbook.Sheets[sheetName]) {
-    throw new Error(`Sheet "${sheetName}" not found in workbook. Available sheets: ${workbook.SheetNames.join(', ')}`)
+    throw new Error(
+      `Sheet "${sheetName}" not found in workbook. Available sheets: ${workbook.SheetNames.join(', ')}`,
+    )
   }
 
   const sheet = workbook.Sheets[sheetName]
@@ -115,7 +115,7 @@ export function sheetToMatrix(
   const opts: XLSX.Sheet2JSONOpts = {
     header: 1,
     defval: null,
-    raw: false  // Get formatted text values, not raw numbers
+    raw: false, // Get formatted text values, not raw numbers
   }
 
   // Apply row limit if specified
@@ -144,19 +144,20 @@ export function sheetToMatrix(
  * Find the first row index that contains all required tokens (case-insensitive)
  * Returns null if no row contains all tokens
  */
-export function findHeaderRow(
-  rows: CellValue[][],
-  requiredTokens: string[]
-): number | null {
+export function findHeaderRow(rows: CellValue[][], requiredTokens: string[]): number | null {
   if (requiredTokens.length === 0) return null
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i]
     if (!row) continue
 
-    const rowText = row.map(cell => String(cell || '').toLowerCase().trim())
-    const hasAllTokens = requiredTokens.every(token =>
-      rowText.some(cellText => cellText.includes(token.toLowerCase().trim()))
+    const rowText = row.map((cell) =>
+      String(cell || '')
+        .toLowerCase()
+        .trim(),
+    )
+    const hasAllTokens = requiredTokens.every((token) =>
+      rowText.some((cellText) => cellText.includes(token.toLowerCase().trim())),
     )
 
     if (hasAllTokens) return i
@@ -167,34 +168,34 @@ export function findHeaderRow(
 
 /**
  * Find the best header row using confidence-based keyword scoring.
- * 
+ *
  * This function is more resilient than strict matching - it scores each row
  * based on presence of domain-specific keywords, returning the row with the highest score.
- * 
+ *
  * **Scoring Algorithm**:
  * - Strong keyword match: +2 points (e.g., "gun", "device", "tool", "riser")
  * - Weak keyword match: +1 point (e.g., "id", "type", "area", "station")
  * - Scans first 10 rows by default
  * - Returns row with highest score, or null if no row meets minimum threshold
- * 
+ *
  * **Why This Works**:
  * - Handles varied real-world headers ("Device Name", "Gun ID", "Riser Type")
  * - Doesn't require exact 3-header combinations
  * - Tolerates typos and extra columns
- * 
+ *
  * @param rows - All rows from the Excel sheet
  * @param strongKeywords - High-value domain keywords (e.g., ["gun", "tool", "device"])
  * @param weakKeywords - Common generic keywords (e.g., ["id", "type", "area"])
  * @param minScore - Minimum score threshold (default: 2, equivalent to 1 strong OR 2 weak keywords)
  * @param maxRowsToScan - Maximum rows to check (default: 10)
  * @returns Index of the most likely header row, or null if no row meets threshold
- * 
+ *
  * @example
  * ```typescript
  * // Real-world example: GLOBAL_ZA_REUSE_LIST_TMS_WG.xlsx
  * // Row 5: ['Zone', 'Station', 'Device Name', 'Type', 'Comments']
  * // Score: device(2) + type(1) + station(1) = 4 ✅
- * 
+ *
  * const strongKW = ['gun', 'tool', 'device', 'riser']
  * const weakKW = ['id', 'type', 'area', 'station', 'zone']
  * const headerIdx = findBestHeaderRow(rows, strongKW, weakKW, 2)
@@ -206,7 +207,7 @@ export function findBestHeaderRow(
   strongKeywords: string[],
   weakKeywords: string[],
   minScore: number = 2,
-  maxRowsToScan: number = 10
+  maxRowsToScan: number = 10,
 ): number | null {
   if (!rows || rows.length === 0) return null
 
@@ -214,8 +215,8 @@ export function findBestHeaderRow(
   let bestScore = 0
 
   // Normalize keywords once (case-insensitive)
-  const strongKWLower = strongKeywords.map(kw => kw.toLowerCase().trim())
-  const weakKWLower = weakKeywords.map(kw => kw.toLowerCase().trim())
+  const strongKWLower = strongKeywords.map((kw) => kw.toLowerCase().trim())
+  const weakKWLower = weakKeywords.map((kw) => kw.toLowerCase().trim())
 
   // Scan first N rows
   const scanLimit = Math.min(maxRowsToScan, rows.length)
@@ -226,8 +227,12 @@ export function findBestHeaderRow(
 
     // Flatten row to searchable text
     const rowText = row
-      .map(cell => String(cell || '').toLowerCase().trim())
-      .filter(text => text.length > 0)
+      .map((cell) =>
+        String(cell || '')
+          .toLowerCase()
+          .trim(),
+      )
+      .filter((text) => text.length > 0)
 
     if (rowText.length === 0) continue
 
@@ -236,13 +241,13 @@ export function findBestHeaderRow(
 
     // Check strong keywords (+2 each)
     for (const keyword of strongKWLower) {
-      const hasMatch = rowText.some(cellText => cellText.includes(keyword))
+      const hasMatch = rowText.some((cellText) => cellText.includes(keyword))
       if (hasMatch) score += 2
     }
 
     // Check weak keywords (+1 each)
     for (const keyword of weakKWLower) {
-      const hasMatch = rowText.some(cellText => cellText.includes(keyword))
+      const hasMatch = rowText.some((cellText) => cellText.includes(keyword))
       if (hasMatch) score += 1
     }
 
@@ -261,7 +266,6 @@ export function findBestHeaderRow(
   return null
 }
 
-
 /**
  * Build a column map from a header row
  * Returns an object mapping expected column names to their indices
@@ -269,25 +273,25 @@ export function findBestHeaderRow(
  */
 export function buildColumnMap(
   headerRow: CellValue[],
-  expectedColumns: string[]
+  expectedColumns: string[],
 ): Record<string, number | null> {
   const map: Record<string, number | null> = {}
   const foundIndices = new Set<number>()
 
   // Normalize header row for mapping
-  const normalizedHeaders = headerRow.map(cell => 
+  const normalizedHeaders = headerRow.map((cell) =>
     String(cell || '')
       .toLowerCase()
       .replace(/[\r\n]+/g, ' ')
       .replace(/\s+/g, ' ')
-      .trim()
+      .trim(),
   )
 
   // First pass: Exact matches only
   for (const expected of expectedColumns) {
     const expectedLower = expected.toLowerCase().trim()
-    const index = normalizedHeaders.findIndex((header, idx) => 
-      !foundIndices.has(idx) && header === expectedLower
+    const index = normalizedHeaders.findIndex(
+      (header, idx) => !foundIndices.has(idx) && header === expectedLower,
     )
 
     if (index >= 0) {
@@ -301,8 +305,8 @@ export function buildColumnMap(
     if (map[expected] !== undefined) continue
 
     const expectedLower = expected.toLowerCase().trim()
-    const index = normalizedHeaders.findIndex((header, idx) => 
-      !foundIndices.has(idx) && header.includes(expectedLower)
+    const index = normalizedHeaders.findIndex(
+      (header, idx) => !foundIndices.has(idx) && header.includes(expectedLower),
     )
 
     if (index >= 0) {
@@ -322,7 +326,7 @@ export function buildColumnMap(
 export function getCell(
   row: CellValue[],
   columnMap: Record<string, number | null>,
-  columnName: string
+  columnName: string,
 ): CellValue {
   const index = columnMap[columnName]
   if (index === null || index === undefined) return null
@@ -336,7 +340,7 @@ export function getCell(
 export function getCellString(
   row: CellValue[],
   columnMap: Record<string, number | null>,
-  columnName: string
+  columnName: string,
 ): string {
   const value = getCell(row, columnMap, columnName)
   if (value === null || value === undefined) return ''
@@ -349,7 +353,7 @@ export function getCellString(
 export function getCellNumber(
   row: CellValue[],
   columnMap: Record<string, number | null>,
-  columnName: string
+  columnName: string,
 ): number | null {
   const value = getCell(row, columnMap, columnName)
   if (value === null || value === undefined) return null
@@ -366,7 +370,7 @@ export function getCellNumber(
  */
 export function isEmptyRow(row: CellValue[]): boolean {
   if (!row || row.length === 0) return true
-  return row.every(cell => {
+  return row.every((cell) => {
     // Handle null/undefined
     if (cell === null || cell === undefined) return true
     // Handle empty strings (including whitespace)
@@ -382,7 +386,7 @@ export function isEmptyRow(row: CellValue[]): boolean {
  */
 export function isEffectivelyEmptyRow(row: CellValue[], minCells: number = 2): boolean {
   if (!row || row.length === 0) return true
-  const nonEmptyCount = row.filter(cell => {
+  const nonEmptyCount = row.filter((cell) => {
     if (cell === null || cell === undefined) return false
     if (typeof cell === 'string' && cell.trim() === '') return false
     return true
@@ -395,21 +399,22 @@ export function isEffectivelyEmptyRow(row: CellValue[], minCells: number = 2): b
  */
 export function isTotalRow(row: CellValue[]): boolean {
   if (!row || row.length === 0) return false
-  const firstCell = String(row[0] || '').toLowerCase().trim()
+  const firstCell = String(row[0] || '')
+    .toLowerCase()
+    .trim()
   return firstCell === 'total' || firstCell === 'totals' || firstCell === 'sum'
 }
 
 /**
  * Find the index of a column matching any of the possible names (case-insensitive)
  */
-export function findColumnIndex(
-  headerRow: CellValue[],
-  possibleNames: string[]
-): number | null {
+export function findColumnIndex(headerRow: CellValue[], possibleNames: string[]): number | null {
   if (!headerRow || headerRow.length === 0) return null
 
   for (let i = 0; i < headerRow.length; i++) {
-    const cellText = String(headerRow[i] || '').toLowerCase().trim()
+    const cellText = String(headerRow[i] || '')
+      .toLowerCase()
+      .trim()
 
     for (const name of possibleNames) {
       const nameLower = name.toLowerCase().trim()
@@ -431,11 +436,7 @@ export function findColumnIndex(
  * @param col - Column index (zero-based)
  * @returns true if cell has strike-through formatting
  */
-export function isCellStruck(
-  sheet: XLSX.WorkSheet,
-  row: number,
-  col: number
-): boolean {
+export function isCellStruck(sheet: XLSX.WorkSheet, row: number, col: number): boolean {
   const cellAddress = XLSX.utils.encode_cell({ r: row, c: col })
   const cell = sheet[cellAddress]
 
@@ -455,21 +456,13 @@ export function isCellStruck(
  * @param columns - Column indices to check (if not provided, checks all columns)
  * @returns true if any checked cell has strike-through
  */
-export function isRowStruck(
-  sheet: XLSX.WorkSheet,
-  row: number,
-  columns?: number[]
-): boolean {
+export function isRowStruck(sheet: XLSX.WorkSheet, row: number, columns?: number[]): boolean {
   if (!sheet['!ref']) {
     return false
   }
 
   const range = XLSX.utils.decode_range(sheet['!ref'])
-  const colsToCheck = columns ?? Array.from(
-    { length: range.e.c - range.s.c + 1 },
-    (_, i) => i
-  )
+  const colsToCheck = columns ?? Array.from({ length: range.e.c - range.s.c + 1 }, (_, i) => i)
 
-  return colsToCheck.some(col => isCellStruck(sheet, row, col))
+  return colsToCheck.some((col) => isCellStruck(sheet, row, col))
 }
-

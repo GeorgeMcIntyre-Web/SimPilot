@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactElement } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   AlertCircle,
@@ -739,7 +739,7 @@ function StatPill({
   label: string
   value: number
   tone: 'stone' | 'emerald' | 'amber' | 'rose'
-  icon: JSX.Element
+  icon: ReactElement
 }) {
   const tones: Record<typeof tone, { bg: string; text: string }> = {
     stone: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-100' },
