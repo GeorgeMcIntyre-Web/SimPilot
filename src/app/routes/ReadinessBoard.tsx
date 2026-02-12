@@ -540,7 +540,7 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         </div>
 
         {/* Meta row: sourcing + due date */}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100 dark:border-gray-700/50">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             {reusePct !== null && reusePct > 0 && (
               <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
