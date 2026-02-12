@@ -4,7 +4,16 @@
 
 import * as XLSX from 'xlsx'
 import { log } from '../lib/log'
-import { Tool, ToolType, ToolMountType, SpotWeldSubType, generateId, IngestionWarning, EquipmentSourcing, AssetKind } from '../domain/core'
+import {
+  Tool,
+  ToolType,
+  ToolMountType,
+  SpotWeldSubType,
+  generateId,
+  IngestionWarning,
+  EquipmentSourcing,
+  AssetKind,
+} from '../domain/core'
 import {
   sheetToMatrix,
   findBestHeaderRow,
@@ -13,10 +22,11 @@ import {
   isEmptyRow,
   isTotalRow,
   isEffectivelyEmptyRow,
-  isCellStruck
+  isCellStruck,
 } from './excelUtils'
 import { createRowSkippedWarning, createParserErrorWarning } from './warningUtils'
 import { buildStationId, buildToolId, inferAssembliesAreaName } from './normalizers'
+import { buildSemanticLayerArtifact, type SemanticLayerArtifact } from './semanticLayer'
 
 // ============================================================================
 // TYPES
@@ -25,6 +35,7 @@ import { buildStationId, buildToolId, inferAssembliesAreaName } from './normaliz
 export interface ToolListResult {
   tools: Tool[]
   warnings: IngestionWarning[]
+  semanticLayer?: SemanticLayerArtifact
 }
 
 // ============================================================================
@@ -46,7 +57,7 @@ const STRONG_KEYWORDS = [
   'stand',
   'equipment',
   'sealer',
-  'gripper'
+  'gripper',
 ]
 
 /**
@@ -67,7 +78,7 @@ const WEAK_KEYWORDS = [
   'quantity',
   'model',
   'oem',
-  'robot'
+  'robot',
 ]
 
 // ============================================================================
@@ -89,7 +100,7 @@ const WEAK_KEYWORDS = [
 export async function parseToolList(
   workbook: XLSX.WorkBook,
   fileName: string,
-  targetSheetName?: string
+  targetSheetName?: string,
 ): Promise<ToolListResult> {
   // Route to schema-aware parser with deletion detection
   // This ensures strike-through rows are excluded and counts are deterministic
@@ -110,7 +121,7 @@ export async function parseToolList(
 export async function parseToolListLegacy(
   workbook: XLSX.WorkBook,
   fileName: string,
-  targetSheetName?: string
+  targetSheetName?: string,
 ): Promise<ToolListResult> {
   const warnings: IngestionWarning[] = []
 
@@ -122,7 +133,9 @@ export async function parseToolListLegacy(
 
   // Validate that the target sheet exists
   if (workbook.SheetNames.includes(sheetName) === false) {
-    throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+    throw new Error(
+      `Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`,
+    )
   }
 
   // Get sheet reference for strikethrough detection
@@ -131,7 +144,9 @@ export async function parseToolListLegacy(
   // Convert to matrix
   const rows = sheetToMatrix(workbook, sheetName)
   if (rows.length < 2) {
-    throw new Error(`Sheet "${sheetName}" has too few rows (${rows.length}). Expected at least 2 rows.`)
+    throw new Error(
+      `Sheet "${sheetName}" has too few rows (${rows.length}). Expected at least 2 rows.`,
+    )
   }
 
   // Find header row using confidence-based scoring
@@ -143,14 +158,14 @@ export async function parseToolListLegacy(
     rows,
     STRONG_KEYWORDS,
     WEAK_KEYWORDS,
-    2  // Minimum score: 1 strong keyword OR 2 weak keywords
+    2, // Minimum score: 1 strong keyword OR 2 weak keywords
   )
 
   if (headerRowIndex === null) {
     throw new Error(
       `Could not find header row in ${fileName}. ` +
-      `Expected at least one strong keyword (${STRONG_KEYWORDS.slice(0, 5).join(', ')}, etc.) ` +
-      `or multiple weak keywords (${WEAK_KEYWORDS.slice(0, 5).join(', ')}, etc.)`
+        `Expected at least one strong keyword (${STRONG_KEYWORDS.slice(0, 5).join(', ')}, etc.) ` +
+        `or multiple weak keywords (${WEAK_KEYWORDS.slice(0, 5).join(', ')}, etc.)`,
     )
   }
 
@@ -196,7 +211,7 @@ export async function parseToolListLegacy(
     'NOTES',
     'NOTE',
     'SUPPLY',
-    'REFRESMENT OK'
+    'REFRESMENT OK',
   ])
 
   // Detect tool type from filename
@@ -207,10 +222,16 @@ export async function parseToolListLegacy(
   const tools: Tool[] = []
 
   // Check if "EQUIPMENT NO SHOWN" column exists in the header
-  const hasEquipmentNoColumn = columnMap['EQUIPMENT NO SHOWN'] !== null || columnMap['EQUIPMENT NO'] !== null
+  const hasEquipmentNoColumn =
+    columnMap['EQUIPMENT NO SHOWN'] !== null || columnMap['EQUIPMENT NO'] !== null
 
   // Identify key columns for strikethrough detection
-  const idColumnIndex = columnMap['EQUIPMENT NO SHOWN'] ?? columnMap['EQUIPMENT NO'] ?? columnMap['GUN ID'] ?? columnMap['TOOL ID'] ?? 0
+  const idColumnIndex =
+    columnMap['EQUIPMENT NO SHOWN'] ??
+    columnMap['EQUIPMENT NO'] ??
+    columnMap['GUN ID'] ??
+    columnMap['TOOL ID'] ??
+    0
 
   for (let i = dataStartIndex; i < rows.length; i++) {
     const row = rows[i]
@@ -227,8 +248,9 @@ export async function parseToolListLegacy(
     // FILTER: Only parse rows where "Equipment No \nShown" is not empty
     // This column indicates real tool positions (excludes metadata/summary rows)
     // BUT: Only apply this filter if the column actually exists in the data
-    const equipmentNoShown = getCellString(row, columnMap, 'EQUIPMENT NO SHOWN')
-      || getCellString(row, columnMap, 'EQUIPMENT NO')
+    const equipmentNoShown =
+      getCellString(row, columnMap, 'EQUIPMENT NO SHOWN') ||
+      getCellString(row, columnMap, 'EQUIPMENT NO')
 
     if (hasEquipmentNoColumn && !equipmentNoShown) {
       // Skip rows without equipment number (not a real tool)
@@ -239,37 +261,41 @@ export async function parseToolListLegacy(
     // Extract tool identifier (try multiple column names)
     // Priority order: specific IDs first, then broader names
     // IMPORTANT: Check "EQUIPMENT NO SHOWN" before "TOOL" to avoid matching generic "Tool" column
-    const toolId = getCellString(row, columnMap, 'EQUIPMENT NO SHOWN')
-      || getCellString(row, columnMap, 'GUN ID')
-      || getCellString(row, columnMap, 'GUN NUMBER')
-      || getCellString(row, columnMap, 'TOOL ID')
-      || getCellString(row, columnMap, 'EQUIPMENT ID')
-      || getCellString(row, columnMap, 'GUN')
-      || getCellString(row, columnMap, 'TOOL')
-      || getCellString(row, columnMap, 'TOOL NAME')
-      || getCellString(row, columnMap, 'EQUIPMENT NO')
-      || getCellString(row, columnMap, 'EQUIPMENT')
-      || getCellString(row, columnMap, 'ID')
-      || getCellString(row, columnMap, 'NAME')
+    const toolId =
+      getCellString(row, columnMap, 'EQUIPMENT NO SHOWN') ||
+      getCellString(row, columnMap, 'GUN ID') ||
+      getCellString(row, columnMap, 'GUN NUMBER') ||
+      getCellString(row, columnMap, 'TOOL ID') ||
+      getCellString(row, columnMap, 'EQUIPMENT ID') ||
+      getCellString(row, columnMap, 'GUN') ||
+      getCellString(row, columnMap, 'TOOL') ||
+      getCellString(row, columnMap, 'TOOL NAME') ||
+      getCellString(row, columnMap, 'EQUIPMENT NO') ||
+      getCellString(row, columnMap, 'EQUIPMENT') ||
+      getCellString(row, columnMap, 'ID') ||
+      getCellString(row, columnMap, 'NAME')
 
     if (!toolId) {
       // Only warn if row looks like it might have been intended as data
       // Skip warnings for effectively empty rows (reduces noise)
       if (!isEffectivelyEmptyRow(row, 2)) {
-        warnings.push(createRowSkippedWarning({
-          fileName,
-          sheetName,
-          rowIndex: i + 1,
-          reason: 'No tool ID found in any expected columns'
-        }))
+        warnings.push(
+          createRowSkippedWarning({
+            fileName,
+            sheetName,
+            rowIndex: i + 1,
+            reason: 'No tool ID found in any expected columns',
+          }),
+        )
       }
       continue
     }
 
     // Extract type information
-    const typeStr = getCellString(row, columnMap, 'TYPE')
-      || getCellString(row, columnMap, 'TOOL TYPE')
-      || getCellString(row, columnMap, 'GUN TYPE')
+    const typeStr =
+      getCellString(row, columnMap, 'TYPE') ||
+      getCellString(row, columnMap, 'TOOL TYPE') ||
+      getCellString(row, columnMap, 'GUN TYPE')
 
     const subtypeStr = getCellString(row, columnMap, 'SUBTYPE')
 
@@ -278,38 +304,41 @@ export async function parseToolListLegacy(
     const subType = detectSpotWeldSubType(typeStr, subtypeStr)
 
     // Extract optional fields
-    const oemModel = getCellString(row, columnMap, 'MODEL')
-      || getCellString(row, columnMap, 'OEM MODEL')
-      || getCellString(row, columnMap, 'MANUFACTURER')
-      || getCellString(row, columnMap, 'SUPPLIER')
+    const oemModel =
+      getCellString(row, columnMap, 'MODEL') ||
+      getCellString(row, columnMap, 'OEM MODEL') ||
+      getCellString(row, columnMap, 'MANUFACTURER') ||
+      getCellString(row, columnMap, 'SUPPLIER')
 
-    let areaName: string | undefined = getCellString(row, columnMap, 'AREA')
-      || getCellString(row, columnMap, 'AREA NAME')
+    let areaName: string | undefined =
+      getCellString(row, columnMap, 'AREA') || getCellString(row, columnMap, 'AREA NAME')
 
     // Infer area from filename if not in row (similar to Assemblies Lists)
     if (!areaName) {
       areaName = inferAssembliesAreaName({ filename: fileName }) ?? undefined
     }
 
-    const lineCode = getCellString(row, columnMap, 'LINE')
-      || getCellString(row, columnMap, 'LINE CODE')
-      || getCellString(row, columnMap, 'ASSEMBLY LINE')
+    const lineCode =
+      getCellString(row, columnMap, 'LINE') ||
+      getCellString(row, columnMap, 'LINE CODE') ||
+      getCellString(row, columnMap, 'ASSEMBLY LINE')
 
-    const stationCode = getCellString(row, columnMap, 'STATION NO. NEW')
-      || getCellString(row, columnMap, 'STATION')
-      || getCellString(row, columnMap, 'STATION CODE')
-      || getCellString(row, columnMap, 'STATION NO.')
-      || getCellString(row, columnMap, 'CELL')
+    const stationCode =
+      getCellString(row, columnMap, 'STATION NO. NEW') ||
+      getCellString(row, columnMap, 'STATION') ||
+      getCellString(row, columnMap, 'STATION CODE') ||
+      getCellString(row, columnMap, 'STATION NO.') ||
+      getCellString(row, columnMap, 'CELL')
 
-    const reuseStatus = getCellString(row, columnMap, 'REUSE')
-      || getCellString(row, columnMap, 'REUSE STATUS')
-      || getCellString(row, columnMap, 'STATUS')
+    const reuseStatus =
+      getCellString(row, columnMap, 'REUSE') ||
+      getCellString(row, columnMap, 'REUSE STATUS') ||
+      getCellString(row, columnMap, 'STATUS')
 
-    const comments = getCellString(row, columnMap, 'COMMENTS')
-      || getCellString(row, columnMap, 'COMMENT')
+    const comments =
+      getCellString(row, columnMap, 'COMMENTS') || getCellString(row, columnMap, 'COMMENT')
 
-    const notes = getCellString(row, columnMap, 'NOTES')
-      || getCellString(row, columnMap, 'NOTE')
+    const notes = getCellString(row, columnMap, 'NOTES') || getCellString(row, columnMap, 'NOTE')
 
     const supply = getCellString(row, columnMap, 'SUPPLY')
     const refreshment = getCellString(row, columnMap, 'REFRESMENT OK')
@@ -334,20 +363,48 @@ export async function parseToolListLegacy(
     // Vacuum Parser: Collect all other columns into metadata
     const metadata: Record<string, string | number | boolean | null> = {}
     const consumedHeaders = [
-      'GUN', 'GUN ID', 'GUN NUMBER', 'TOOL', 'TOOL ID', 'TOOL NAME', 'EQUIPMENT ID', 'EQUIPMENT', 'ID', 'NAME',
-      'EQUIPMENT NO SHOWN', 'EQUIPMENT NO', // Add Equipment No to consumed headers
-      'TYPE', 'TOOL TYPE', 'GUN TYPE', 'SUBTYPE',
-      'MODEL', 'OEM MODEL', 'MANUFACTURER', 'SUPPLIER',
-      'AREA', 'AREA NAME',
-      'LINE', 'LINE CODE', 'ASSEMBLY LINE',
-      'STATION', 'STATION CODE', 'CELL',
-      'REUSE', 'REUSE STATUS', 'STATUS',
-      'COMMENTS', 'COMMENT', 'NOTES', 'NOTE', 'SUPPLY', 'REFRESMENT OK'
+      'GUN',
+      'GUN ID',
+      'GUN NUMBER',
+      'TOOL',
+      'TOOL ID',
+      'TOOL NAME',
+      'EQUIPMENT ID',
+      'EQUIPMENT',
+      'ID',
+      'NAME',
+      'EQUIPMENT NO SHOWN',
+      'EQUIPMENT NO', // Add Equipment No to consumed headers
+      'TYPE',
+      'TOOL TYPE',
+      'GUN TYPE',
+      'SUBTYPE',
+      'MODEL',
+      'OEM MODEL',
+      'MANUFACTURER',
+      'SUPPLIER',
+      'AREA',
+      'AREA NAME',
+      'LINE',
+      'LINE CODE',
+      'ASSEMBLY LINE',
+      'STATION',
+      'STATION CODE',
+      'CELL',
+      'REUSE',
+      'REUSE STATUS',
+      'STATUS',
+      'COMMENTS',
+      'COMMENT',
+      'NOTES',
+      'NOTE',
+      'SUPPLY',
+      'REFRESMENT OK',
     ]
 
     // Create a set of consumed indices based on the column map and consumed headers
     const consumedIndices = new Set<number>()
-    consumedHeaders.forEach(h => {
+    consumedHeaders.forEach((h) => {
       const idx = columnMap[h]
       if (idx !== null && idx !== undefined) consumedIndices.add(idx)
     })
@@ -386,29 +443,31 @@ export async function parseToolListLegacy(
         ...metadata,
         // Store lineCode and notes in metadata for reference
         ...(lineCode ? { lineCode } : {}),
-        ...(notes ? { notes } : {})
+        ...(notes ? { notes } : {}),
       },
       sourceFile: fileName,
       sheetName,
-      rowIndex: i
+      rowIndex: i,
     }
 
     tools.push(tool)
   }
 
   if (tools.length === 0) {
-    warnings.push(createParserErrorWarning({
-      fileName,
-      sheetName,
-      error: 'No valid tool rows found after parsing'
-    }))
+    warnings.push(
+      createParserErrorWarning({
+        fileName,
+        sheetName,
+        error: 'No valid tool rows found after parsing',
+      }),
+    )
   }
 
   log.info(`[Tool List Parser] ${fileName} - Parsed ${tools.length} tools`)
 
   return {
     tools,
-    warnings
+    warnings,
   }
 }
 
@@ -477,19 +536,31 @@ function detectSourcing(
   reuseStatus: string,
   comments: string,
   supply: string,
-  refreshment: string
+  refreshment: string,
 ): EquipmentSourcing {
   const combined = `${reuseStatus} ${comments} ${supply} ${refreshment}`.toLowerCase()
 
-  if (combined.includes('carry over') || combined.includes('existing') || combined.includes('retain')) {
+  if (
+    combined.includes('carry over') ||
+    combined.includes('existing') ||
+    combined.includes('retain')
+  ) {
     return 'REUSE'
   }
 
-  if (combined.includes('new') || combined.includes('new line') || combined.includes('new station')) {
+  if (
+    combined.includes('new') ||
+    combined.includes('new line') ||
+    combined.includes('new station')
+  ) {
     return 'NEW_BUY'
   }
 
-  if (combined.includes('make') || combined.includes('in-house') || combined.includes('fabricate')) {
+  if (
+    combined.includes('make') ||
+    combined.includes('in-house') ||
+    combined.includes('fabricate')
+  ) {
     return 'MAKE'
   }
 
@@ -530,12 +601,50 @@ function isCancelledTool(notes: string): boolean {
   // Patterns indicating cancelled/inactive tools
   const cancelPatterns = [
     'REMOVED FROM BOM',
-    'SIM TO SPEC'
+    'SIM TO SPEC',
     // Note: "DESIGN AND MANUFACTURE" and "DESIGN ONLY" are NOT cancelled
     // They're valid tools, just happen to have strikethrough in some cases
   ]
 
-  return cancelPatterns.some(pattern => notesUpper.includes(pattern))
+  return cancelPatterns.some((pattern) => notesUpper.includes(pattern))
+}
+
+function buildToolListSemanticLayer(
+  workbook: XLSX.WorkBook,
+  fileName: string,
+  sheetName: string,
+): SemanticLayerArtifact | undefined {
+  const rows = sheetToMatrix(workbook, sheetName)
+  if (rows.length === 0) {
+    return undefined
+  }
+
+  const maxRowsToScan = Math.min(20, rows.length)
+  let headerRowIndex = 0
+  let headerRowScore = 0
+
+  for (let i = 0; i < maxRowsToScan; i++) {
+    const candidate = rows[i]
+    const nonEmpty = candidate.filter((value) => String(value ?? '').trim() !== '').length
+    if (nonEmpty <= headerRowScore) {
+      continue
+    }
+    headerRowIndex = i
+    headerRowScore = nonEmpty
+  }
+
+  const headerRow = rows[headerRowIndex] ?? []
+  const headers = headerRow.map((cell, index) => String(cell ?? `Column_${index}`).trim())
+  if (headers.length === 0) {
+    return undefined
+  }
+
+  return buildSemanticLayerArtifact({
+    domain: 'toolList',
+    fileName,
+    sheetName,
+    headers,
+  })
 }
 
 // ============================================================================
@@ -562,7 +671,7 @@ export async function parseToolListWithSchemas(
   workbook: XLSX.WorkBook,
   fileName: string,
   targetSheetName?: string,
-  debug = false
+  debug = false,
 ): Promise<ToolListResult> {
   const warnings: IngestionWarning[] = []
 
@@ -574,38 +683,55 @@ export async function parseToolListWithSchemas(
 
   // Validate that the target sheet exists
   if (workbook.SheetNames.includes(sheetName) === false) {
-    throw new Error(`Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`)
+    throw new Error(
+      `Sheet "${sheetName}" not found in ${fileName}. Available sheets: ${workbook.SheetNames.join(', ')}`,
+    )
   }
+
+  const fallbackSemanticLayer = buildToolListSemanticLayer(workbook, fileName, sheetName)
 
   try {
     const result = await parseToolListWithSchema(workbook, fileName, sheetName, debug)
 
     // Convert ToolEntity[] to Tool[]
-    const tools = result.entities.map(entity => toolEntityToTool(entity, result.projectHint))
+    const tools = result.entities.map((entity) => toolEntityToTool(entity, result.projectHint))
 
     // Convert validation anomalies to warnings
-    result.validation.anomalies.forEach(anomaly => {
-      warnings.push(createRowSkippedWarning({
-        fileName,
-        sheetName,
-        rowIndex: anomaly.row,
-        reason: `[${anomaly.type}] ${anomaly.message}`
-      }))
+    result.validation.anomalies.forEach((anomaly) => {
+      warnings.push(
+        createRowSkippedWarning({
+          fileName,
+          sheetName,
+          rowIndex: anomaly.row,
+          reason: `[${anomaly.type}] ${anomaly.message}`,
+        }),
+      )
     })
 
     if (debug) {
-      log.info(`[Tool List Parser] ${fileName} - Parsed ${tools.length} tools using schema adapters`)
+      log.info(
+        `[Tool List Parser] ${fileName} - Parsed ${tools.length} tools using schema adapters`,
+      )
       log.info(`[Tool List Parser] Project: ${result.projectHint}`)
-      log.info(`[Tool List Parser] Validation: ${result.validation.totalEntitiesProduced} entities, ${result.validation.anomalies.length} anomalies`)
+      log.info(
+        `[Tool List Parser] Validation: ${result.validation.totalEntitiesProduced} entities, ${result.validation.anomalies.length} anomalies`,
+      )
     }
 
     return {
       tools,
-      warnings
+      warnings,
+      semanticLayer: result.semanticLayer ?? fallbackSemanticLayer,
     }
   } catch (error) {
     // Fall back to old parser if schema detection fails
-    log.warn(`[Tool List Parser] Schema adapter failed for ${fileName}, falling back to legacy parser: ${error}`)
-    return parseToolListLegacy(workbook, fileName, targetSheetName)
+    log.warn(
+      `[Tool List Parser] Schema adapter failed for ${fileName}, falling back to legacy parser: ${error}`,
+    )
+    const legacyResult = await parseToolListLegacy(workbook, fileName, targetSheetName)
+    return {
+      ...legacyResult,
+      semanticLayer: fallbackSemanticLayer,
+    }
   }
 }
