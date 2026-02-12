@@ -25,26 +25,29 @@ export function AreaOverviewCard({
   isSelected = false,
   onClick,
   onOverviewClick,
-  density = 'comfortable'
+  density = 'comfortable',
 }: AreaOverviewCardProps) {
   const { total, critical, atRisk, ok } = counts
   const healthState =
     critical > 0
       ? {
           label: 'Critical',
-          badge: 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800',
-          iconClass: 'text-rose-500'
+          badge:
+            'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800',
+          iconClass: 'text-rose-500',
         }
       : atRisk > 0
         ? {
             label: 'Watch',
-            badge: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800',
-            iconClass: 'text-amber-500'
+            badge:
+              'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800',
+            iconClass: 'text-amber-500',
           }
         : {
             label: 'Healthy',
-            badge: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
-            iconClass: 'text-emerald-500'
+            badge:
+              'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
+            iconClass: 'text-emerald-500',
           }
 
   // Calculate percentage for progress bar
@@ -60,8 +63,8 @@ export function AreaOverviewCard({
         density === 'compact' ? 'p-2.5' : 'p-3',
         'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600',
         isSelected
-          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-500 ring-2 ring-indigo-500/20'
-          : 'border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700'
+          ? 'border-indigo-500 bg-indigo-50 dark:bg-[rgb(18,24,39)] dark:border-indigo-500 ring-2 ring-indigo-500/20'
+          : 'border-gray-200 bg-white dark:bg-[rgb(18,24,39)] dark:border-gray-700',
       )}
       role="button"
       tabIndex={0}
@@ -69,18 +72,20 @@ export function AreaOverviewCard({
     >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
-        <div className={cn(
-          'p-2 rounded-lg flex items-center justify-center',
-          isSelected
-            ? 'bg-indigo-100 dark:bg-indigo-800'
-            : 'bg-gray-100 dark:bg-gray-700'
-        )}>
-          <Layers className={cn(
-            'h-4 w-4',
-            isSelected
-              ? 'text-indigo-600 dark:text-indigo-300'
-              : 'text-gray-500 dark:text-gray-400'
-          )} />
+        <div
+          className={cn(
+            'p-2 rounded-lg flex items-center justify-center',
+            isSelected ? 'bg-indigo-100 dark:bg-indigo-800' : 'bg-gray-100 dark:bg-gray-700',
+          )}
+        >
+          <Layers
+            className={cn(
+              'h-4 w-4',
+              isSelected
+                ? 'text-indigo-600 dark:text-indigo-300'
+                : 'text-gray-500 dark:text-gray-400',
+            )}
+          />
         </div>
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-start justify-between gap-2">
@@ -97,7 +102,12 @@ export function AreaOverviewCard({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold', healthState.badge)}>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold',
+                healthState.badge,
+              )}
+            >
               <AlertTriangle className={cn('h-3.5 w-3.5', healthState.iconClass)} />
               {healthState.label}
             </span>
@@ -204,7 +214,7 @@ export function AreaCardsGrid({
   selectedArea,
   onSelectArea,
   onViewOverview,
-  density = 'comfortable'
+  density = 'comfortable',
 }: AreaCardsGridProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [containerWidth, setContainerWidth] = useState<number>(0)
@@ -212,7 +222,7 @@ export function AreaCardsGrid({
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const observer = new ResizeObserver(entries => {
+    const observer = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width
       if (width) setContainerWidth(width)
     })
@@ -223,7 +233,7 @@ export function AreaCardsGrid({
   const gap = 12 // matches gap-3
   const cardHeight = density === 'compact' ? 148 : 172
   const rowHeight = cardHeight + gap
-  const maxRowsVisible = 2.85 
+  const maxRowsVisible = 2.85
   const maxGridHeight = rowHeight * maxRowsVisible
 
   const columns = useMemo(() => {
@@ -246,10 +256,7 @@ export function AreaCardsGrid({
 
   if (areas.length === 0) {
     return (
-      <EmptyState
-        title="No areas found"
-        message="Load data to see area coverage and status."
-      />
+      <EmptyState title="No areas found" message="Load data to see area coverage and status." />
     )
   }
 
@@ -308,7 +315,7 @@ export function AreaCardsGrid({
             width: itemWidth,
             height: cardHeight,
             padding: gap / 2,
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
           }
           return (
             <div style={adjustedStyle}>
