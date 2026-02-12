@@ -63,8 +63,8 @@ export function AreaOverviewCard({
         density === 'compact' ? 'p-2.5' : 'p-3',
         'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600',
         isSelected
-          ? 'border-indigo-500 bg-indigo-50 dark:bg-[rgb(18,24,39)] dark:border-indigo-500 ring-2 ring-indigo-500/20'
-          : 'border-gray-200 bg-white dark:bg-[rgb(18,24,39)] dark:border-gray-700',
+          ? 'border-indigo-500 bg-indigo-50 dark:bg-[rgb(19,24,39)] dark:border-indigo-500 ring-2 ring-indigo-500/20'
+          : 'border-gray-200 bg-white dark:bg-[rgb(19,24,39)] dark:border-gray-700',
       )}
       role="button"
       tabIndex={0}
