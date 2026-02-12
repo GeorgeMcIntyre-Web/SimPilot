@@ -4,6 +4,7 @@
 import type { IngestionWarning } from '../../domain/core'
 import type { IngestionStage, IngestionRunResult } from '../ingestionTelemetry'
 import type { DiffResult } from '../../domain/uidTypes'
+import type { SemanticArtifactBundle } from '../semanticLayer'
 
 /**
  * Input for the enhanced ingestion API.
@@ -18,6 +19,7 @@ export interface IngestFilesInputV2 {
  * Result of enhanced ingestion operation.
  */
 export interface IngestFilesResultV2 {
+  ingestionRunId: string
   runResult: IngestionRunResult
   projectsCount: number
   areasCount: number
@@ -25,5 +27,6 @@ export interface IngestFilesResultV2 {
   robotsCount: number
   toolsCount: number
   warnings: IngestionWarning[]
+  semanticArtifact?: SemanticArtifactBundle
   diffResult?: DiffResult
 }

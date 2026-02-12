@@ -24,14 +24,16 @@ import {
   type DuplicateDetection,
 } from './entityDeduplicator'
 import { coreStore } from '../domain/coreStore'
-import type { SemanticLayerArtifact } from './semanticLayer'
-import { semanticLayersToWarnings } from './semanticLayer'
+import type { SemanticArtifactBundle, SemanticLayerArtifact } from './semanticLayer'
+import { buildSemanticArtifactBundle, semanticLayersToWarnings } from './semanticLayer'
+import { generateRunId } from './ingestionTelemetry'
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface IngestedData {
+  ingestionRunId?: string
   simulation?: SimulationStatusResult
   robots?: RobotListResult
   tools?: ToolListResult
@@ -39,12 +41,14 @@ export interface IngestedData {
 }
 
 export interface ApplyResult {
+  ingestionRunId: string
   projects: Project[]
   areas: Area[]
   cells: Cell[]
   robots: Robot[]
   tools: Tool[]
   warnings: IngestionWarning[]
+  semanticArtifact?: SemanticArtifactBundle
   overviewSchedule?: OverviewScheduleMetrics
   linkStats?: {
     linkedCells: number
@@ -158,8 +162,10 @@ function buildCollisionSummary(results: DedupResults): {
  * Apply ingested data from parsers, linking entities intelligently
  */
 export function applyIngestedData(data: IngestedData): ApplyResult {
+  const ingestionRunId = data.ingestionRunId ?? generateRunId()
+  const semanticArtifact = buildSemanticArtifactBundle(ingestionRunId, data.semanticLayers)
   const warnings: IngestionWarning[] = []
-  warnings.push(...semanticLayersToWarnings(data.semanticLayers))
+  warnings.push(...semanticLayersToWarnings(data.semanticLayers, ingestionRunId))
 
   // Collect all entities
   const projects: Project[] = []
@@ -338,7 +344,16 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
         error: 'No projects found. Please load Simulation Status files first.',
       }),
     )
-    return { projects, areas, cells, robots, tools, warnings }
+    return {
+      ingestionRunId,
+      projects,
+      areas,
+      cells,
+      robots,
+      tools,
+      warnings,
+      semanticArtifact,
+    }
   }
 
   // NEW: Link assets to simulation cells (relational engine)
@@ -427,12 +442,14 @@ export function applyIngestedData(data: IngestedData): ApplyResult {
   updateCellEquipmentLinks(cells, robots, tools)
 
   return {
+    ingestionRunId,
     projects,
     areas,
     cells,
     robots,
     tools,
     warnings,
+    semanticArtifact,
     overviewSchedule,
     linkStats,
   }

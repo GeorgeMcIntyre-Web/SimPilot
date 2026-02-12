@@ -4,14 +4,15 @@
 import { coreStore } from '../../domain/coreStore'
 import { applyIngestedData, type IngestedData } from '../applyIngestedData'
 import type { ImportRun } from '../../domain/uidTypes'
-import {
-  FileIngestionResult,
-  IngestionRunResult,
-  generateRunId
-} from '../ingestionTelemetry'
+import { FileIngestionResult, IngestionRunResult, generateRunId } from '../ingestionTelemetry'
+import { buildSemanticArtifactBundle } from '../semanticLayer'
 import type { IngestFilesInputV2, IngestFilesResultV2 } from './types'
 import { telemetryToLegacyWarning, legacyToTelemetryWarning } from './warningConverters'
-import { buildDiffResultFromVersionComparison, deriveSourceType, buildVersionComparison } from './diffBuilder'
+import {
+  buildDiffResultFromVersionComparison,
+  deriveSourceType,
+  buildVersionComparison,
+} from './diffBuilder'
 import { processFileWithTelemetry } from './fileProcessor'
 import { determineDataSource, findFileForWarning } from './helpers'
 
@@ -23,9 +24,7 @@ import { determineDataSource, findFileForWarning } from './helpers'
  * - SCAN_AND_PARSE: Scan and parse, but don't apply to store
  * - APPLY_TO_STORE: Full ingestion with store update
  */
-export async function ingestFilesV2(
-  input: IngestFilesInputV2
-): Promise<IngestFilesResultV2> {
+export async function ingestFilesV2(input: IngestFilesInputV2): Promise<IngestFilesResultV2> {
   const startTime = Date.now()
   const runId = generateRunId()
   const stage = input.stage ?? 'APPLY_TO_STORE'
@@ -33,9 +32,10 @@ export async function ingestFilesV2(
 
   // Track data for later application
   const ingestedData: IngestedData = {
+    ingestionRunId: runId,
     simulation: undefined,
     robots: undefined,
-    tools: undefined
+    tools: undefined,
   }
 
   // Process each file
@@ -43,12 +43,7 @@ export async function ingestFilesV2(
     const fileStartTime = Date.now()
     const source = input.fileSources?.[file.name] ?? 'Local'
 
-    const result = await processFileWithTelemetry(
-      file,
-      source,
-      stage,
-      ingestedData
-    )
+    const result = await processFileWithTelemetry(file, source, stage, ingestedData)
 
     result.processingTimeMs = Date.now() - fileStartTime
     fileResults.push(result)
@@ -60,29 +55,34 @@ export async function ingestFilesV2(
     areas: 0,
     cells: 0,
     robots: 0,
-    tools: 0
+    tools: 0,
   }
 
   let diffResult = undefined
+  let semanticArtifact = buildSemanticArtifactBundle(runId, ingestedData.semanticLayers)
 
   // Only apply to store if we're in that stage
   if (stage === 'APPLY_TO_STORE') {
     const applyResult = applyIngestedData(ingestedData)
+    semanticArtifact = applyResult.semanticArtifact
     const versionComparison = buildVersionComparison(applyResult)
 
     // Update core store
     const source = determineDataSource(input.fileSources)
-    const allWarnings = fileResults.flatMap(r => r.warnings)
-    const warningStrings = allWarnings.map(w => w.message)
+    const allWarnings = fileResults.flatMap((r) => r.warnings)
+    const warningStrings = allWarnings.map((w) => w.message)
 
-    coreStore.setData({
-      projects: applyResult.projects,
-      areas: applyResult.areas,
-      cells: applyResult.cells,
-      robots: applyResult.robots,
-      tools: applyResult.tools,
-      warnings: warningStrings
-    }, source)
+    coreStore.setData(
+      {
+        projects: applyResult.projects,
+        areas: applyResult.areas,
+        cells: applyResult.cells,
+        robots: applyResult.robots,
+        tools: applyResult.tools,
+        warnings: warningStrings,
+      },
+      source,
+    )
 
     // Create DiffResult from version comparison (minimal but real data)
     const sourceFileName = input.files[0]?.name || 'unknown'
@@ -91,7 +91,7 @@ export async function ingestFilesV2(
       runId,
       sourceFileName,
       sourceType,
-      versionComparison
+      versionComparison,
     )
     coreStore.addDiffResult(diffResult)
 
@@ -109,8 +109,8 @@ export async function ingestFilesV2(
         updated: diffResult.summary.updated,
         deleted: diffResult.summary.deleted,
         renamed: diffResult.summary.renamed,
-        ambiguous: diffResult.summary.ambiguous
-      }
+        ambiguous: diffResult.summary.ambiguous,
+      },
     }
     coreStore.addImportRun(importRun)
 
@@ -120,8 +120,8 @@ export async function ingestFilesV2(
       projects: state.projects.length,
       areas: state.areas.length,
       cells: state.cells.length,
-      robots: state.assets.filter(a => a.kind === 'ROBOT').length,
-      tools: state.assets.filter(a => a.kind !== 'ROBOT').length
+      robots: state.assets.filter((a) => a.kind === 'ROBOT').length,
+      tools: state.assets.filter((a) => a.kind !== 'ROBOT').length,
     }
 
     // Add linking warnings
@@ -163,16 +163,17 @@ export async function ingestFilesV2(
     totalProcessingTimeMs: Date.now() - startTime,
     fileResults,
     aggregateCounts,
-    aggregateWarnings: fileResults.flatMap(r => r.warnings),
+    aggregateWarnings: fileResults.flatMap((r) => r.warnings),
     successCount,
     failureCount,
-    partialCount
+    partialCount,
   }
 
   // Convert telemetry warnings to legacy warnings for backward compat
   const legacyWarnings = runResult.aggregateWarnings.map(telemetryToLegacyWarning)
 
   return {
+    ingestionRunId: runId,
     runResult,
     projectsCount: aggregateCounts.projects,
     areasCount: aggregateCounts.areas,
@@ -180,7 +181,8 @@ export async function ingestFilesV2(
     robotsCount: aggregateCounts.robots,
     toolsCount: aggregateCounts.tools,
     warnings: legacyWarnings,
-    diffResult
+    semanticArtifact,
+    diffResult,
   }
 }
 
@@ -190,12 +192,12 @@ export async function ingestFilesV2(
  */
 export async function scanFilesOnly(
   files: File[],
-  fileSources?: Record<string, 'Local' | 'MS365'>
+  fileSources?: Record<string, 'Local' | 'MS365'>,
 ): Promise<IngestionRunResult> {
   const result = await ingestFilesV2({
     files,
     fileSources,
-    stage: 'SCAN_ONLY'
+    stage: 'SCAN_ONLY',
   })
 
   return result.runResult
@@ -207,12 +209,12 @@ export async function scanFilesOnly(
  */
 export async function scanAndParseFiles(
   files: File[],
-  fileSources?: Record<string, 'Local' | 'MS365'>
+  fileSources?: Record<string, 'Local' | 'MS365'>,
 ): Promise<IngestionRunResult> {
   const result = await ingestFilesV2({
     files,
     fileSources,
-    stage: 'SCAN_AND_PARSE'
+    stage: 'SCAN_AND_PARSE',
   })
 
   return result.runResult
