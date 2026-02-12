@@ -6,6 +6,7 @@
 
 import * as XLSX from 'xlsx'
 import * as fs from 'fs'
+import { readWorkbookModel } from '../../excel/reader'
 import {
   RobotEquipmentEntity,
   RobotEquipmentRawRow,
@@ -23,11 +24,11 @@ import {
 // ============================================================================
 
 export interface RobotEquipmentListIngestionOptions {
-  sheetName?: string         // Default: "V801N_Robot_Equipment_List 26.9"
-  headerRowIndex?: number    // Default: 1 (0-based) - Row 1 has column group headers
-  dataStartRow?: number      // Default: 4 (0-based, skip header + metadata rows)
+  sheetName?: string // Default: "V801N_Robot_Equipment_List 26.9"
+  headerRowIndex?: number // Default: 1 (0-based) - Row 1 has column group headers
+  dataStartRow?: number // Default: 4 (0-based, skip header + metadata rows)
   verbose?: boolean
-  debugLogPath?: string      // Optional path to write debug JSON of raw area/person responsible fields
+  debugLogPath?: string // Optional path to write debug JSON of raw area/person responsible fields
 }
 
 export interface RobotEquipmentListIngestionResult {
@@ -47,11 +48,11 @@ export interface RobotEquipmentListIngestionResult {
  */
 export function ingestRobotEquipmentList(
   filePath: string,
-  options: RobotEquipmentListIngestionOptions = {}
+  options: RobotEquipmentListIngestionOptions = {},
 ): RobotEquipmentListIngestionResult {
   const {
     sheetName = 'V801N_Robot_Equipment_List 26.9',
-    headerRowIndex = 1,  // Row 1 (0-indexed) contains column group headers
+    headerRowIndex = 1, // Row 1 (0-indexed) contains column group headers
     dataStartRow = 4,
     verbose = false,
   } = options
@@ -68,10 +69,12 @@ export function ingestRobotEquipmentList(
 
   // Read Excel file with cell styles to detect strikethrough
   const buffer = fs.readFileSync(filePath)
-  const workbook = XLSX.read(buffer, { type: 'buffer', cellStyles: true })
+  const workbook = readWorkbookModel(buffer, { cellStyles: true })
 
   if (!workbook.SheetNames.includes(sheetName)) {
-    throw new Error(`Sheet "${sheetName}" not found in workbook. Available: ${workbook.SheetNames.join(', ')}`)
+    throw new Error(
+      `Sheet "${sheetName}" not found in workbook. Available: ${workbook.SheetNames.join(', ')}`,
+    )
   }
 
   const sheet = workbook.Sheets[sheetName]
@@ -99,7 +102,7 @@ export function ingestRobotEquipmentList(
 
   // Also read as raw arrays to access Column 0 (area group) which has no header
   const rawArrayData: any[][] = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,  // Return arrays, not objects
+    header: 1, // Return arrays, not objects
     range: dataStartRow,
     defval: '',
   })
@@ -119,9 +122,7 @@ export function ingestRobotEquipmentList(
     rawArrayData,
     filePath,
     headerRowIndex,
-    options.debugLogPath
-      ? (info) => debugRows.push(info)
-      : undefined
+    options.debugLogPath ? (info) => debugRows.push(info) : undefined,
   )
 
   if (verbose) {
@@ -144,7 +145,7 @@ export function ingestRobotEquipmentList(
   }
 
   // Detect struck-through (removed) robots
-  const robotIdColumnIndex = 9  // "Robo No. New" is in column 9
+  const robotIdColumnIndex = 9 // "Robo No. New" is in column 9
   let removedCount = 0
 
   for (const entity of entities) {
@@ -163,11 +164,7 @@ export function ingestRobotEquipmentList(
   }
 
   // Validate
-  const validationReport = validateRobotEquipmentEntities(
-    entities,
-    totalRowsRead,
-    anomalies
-  )
+  const validationReport = validateRobotEquipmentEntities(entities, totalRowsRead, anomalies)
 
   if (verbose) {
     console.log(`Validation Complete:`)
@@ -253,8 +250,12 @@ if (isMainModule) {
     if (result.entities.length > 0) {
       console.log(`\n  Sample Robots:`)
       for (const entity of result.entities.slice(0, 5)) {
-        console.log(`    - ${entity.robotId} (${entity.station}) - ${entity.robotType} - ${entity.application}`)
-        console.log(`      Serial: ${entity.serialNumber || 'N/A'}, Status: ${entity.installStatus || 'N/A'}`)
+        console.log(
+          `    - ${entity.robotId} (${entity.station}) - ${entity.robotType} - ${entity.application}`,
+        )
+        console.log(
+          `      Serial: ${entity.serialNumber || 'N/A'}, Status: ${entity.installStatus || 'N/A'}`,
+        )
       }
     }
 

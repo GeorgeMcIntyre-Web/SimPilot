@@ -22,6 +22,7 @@
  */
 
 import * as XLSX from 'xlsx'
+import { readWorkbookFile } from '../../excel/reader'
 import type { ToolingItem, ToolingLocation } from '../../domain/toolingTypes'
 
 // ============================================================================
@@ -57,9 +58,7 @@ interface RawRow {
 /**
  * Parse a Tool List workbook from file path
  */
-export async function parseToolListWorkbook(
-  filePath: string
-): Promise<ToolingListParseResult> {
+export async function parseToolListWorkbook(filePath: string): Promise<ToolingListParseResult> {
   const warnings: string[] = []
 
   // Guard: validate file path
@@ -68,7 +67,7 @@ export async function parseToolListWorkbook(
   }
 
   try {
-    const workbook = XLSX.readFile(filePath, { cellDates: true })
+    const workbook = readWorkbookFile(filePath, { cellDates: true })
     const workbookName = filePath.split(/[/\\]/).pop() ?? 'Unknown'
 
     // Try to find the tooling sheet (common names: "Tooling", "Tools", "Tool List", "Sheet1")
@@ -88,7 +87,7 @@ export async function parseToolListWorkbook(
     // Convert to JSON rows
     const rawRows: unknown[] = XLSX.utils.sheet_to_json(worksheet, {
       defval: null,
-      raw: false
+      raw: false,
     })
 
     // Parse each row
@@ -132,19 +131,10 @@ function findToolingSheet(workbook: XLSX.WorkBook): string | null {
   const sheetNames = workbook.SheetNames
 
   // Priority list of common tooling sheet names
-  const candidates = [
-    'tooling',
-    'tools',
-    'tool list',
-    'tool_list',
-    'toollist',
-    'sheet1'
-  ]
+  const candidates = ['tooling', 'tools', 'tool list', 'tool_list', 'toollist', 'sheet1']
 
   for (const candidate of candidates) {
-    const match = sheetNames.find(
-      name => name.toLowerCase().trim() === candidate
-    )
+    const match = sheetNames.find((name) => name.toLowerCase().trim() === candidate)
     if (match !== undefined) {
       return match
     }
@@ -171,9 +161,8 @@ function normalizeRow(raw: Record<string, unknown>): RawRow {
   for (const [key, value] of Object.entries(raw)) {
     const normalizedKey = normalizeColumnName(key)
     if (normalizedKey !== null) {
-      normalized[normalizedKey] = value === null || value === undefined
-        ? null
-        : String(value).trim()
+      normalized[normalizedKey] =
+        value === null || value === undefined ? null : String(value).trim()
     }
   }
 
@@ -187,12 +176,22 @@ function normalizeColumnName(colName: string): string | null {
   const lower = colName.trim().toLowerCase()
 
   // Tooling Number
-  if (lower === 'tooling number' || lower === 'tool number' || lower === 'tool id' || lower === 'tooling id') {
+  if (
+    lower === 'tooling number' ||
+    lower === 'tool number' ||
+    lower === 'tool id' ||
+    lower === 'tooling id'
+  ) {
     return 'Tooling Number'
   }
 
   // Equipment Number
-  if (lower === 'equipment number' || lower === 'equip number' || lower === 'equip #' || lower === 'equipment #') {
+  if (
+    lower === 'equipment number' ||
+    lower === 'equip number' ||
+    lower === 'equip #' ||
+    lower === 'equipment #'
+  ) {
     return 'Equipment Number'
   }
 
@@ -277,7 +276,7 @@ function parseToolingRow(row: RawRow, rowNumber: number): ParseRowResult {
     unit: row.Unit ?? 'UNKNOWN',
     line: row.Line ?? 'UNKNOWN',
     station: station ?? 'UNKNOWN',
-    area: row.Area ?? 'UNKNOWN'
+    area: row.Area ?? 'UNKNOWN',
   }
 
   // Parse handedness
@@ -301,7 +300,7 @@ function parseToolingRow(row: RawRow, rowNumber: number): ParseRowResult {
     description: row.Description ?? undefined,
     supplier: row.Supplier ?? undefined,
     owner: row.Owner ?? undefined,
-    metadata
+    metadata,
   }
 
   return { item, warnings }
@@ -317,7 +316,9 @@ function generateToolingId(toolingNumber: string, location: ToolingLocation): st
 /**
  * Parse handedness field
  */
-function parseHandedness(value: string | null | undefined): 'LH' | 'RH' | 'PAIR' | 'NA' | undefined {
+function parseHandedness(
+  value: string | null | undefined,
+): 'LH' | 'RH' | 'PAIR' | 'NA' | undefined {
   if (value === null || value === undefined) {
     return undefined
   }
@@ -356,7 +357,7 @@ function isStandardField(fieldName: string): boolean {
     'Area',
     'Supplier',
     'Handedness',
-    'Owner'
+    'Owner',
   ]
 
   return standardFields.includes(fieldName)

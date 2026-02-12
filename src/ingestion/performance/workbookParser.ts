@@ -1,10 +1,10 @@
 /**
  * Workbook Parser Abstraction
- * 
+ *
  * Provides a unified interface for parsing Excel files with support for:
  * - Main thread parsing (default, synchronous)
  * - Web Worker parsing (for large files, non-blocking)
- * 
+ *
  * Part of the Performance Engine for Excel ingestion.
  */
 
@@ -15,7 +15,7 @@ import {
   computeBufferHash,
   getGlobalWorkbookCache,
   DEFAULT_CACHE_CONFIG,
-  type WorkbookCacheEntry
+  type WorkbookCacheEntry,
 } from './workbookCache'
 import { log } from '../../lib/log'
 
@@ -73,7 +73,7 @@ export type WorkbookParserConfig = {
 export const DEFAULT_PARSER_CONFIG: WorkbookParserConfig = {
   cache: DEFAULT_CACHE_CONFIG,
   workerThresholdBytes: 2 * 1024 * 1024, // 2 MB
-  preferWorker: true
+  preferWorker: true,
 }
 
 // ============================================================================
@@ -115,7 +115,7 @@ export class MainThreadWorkbookParser implements WorkbookParser {
           cached: true,
           parseTimeMs,
           fileSizeBytes,
-          hash
+          hash,
         }
       }
     }
@@ -131,7 +131,7 @@ export class MainThreadWorkbookParser implements WorkbookParser {
         hash,
         parsedAt: Date.now(),
         rawWorkbook: workbook,
-        fileSizeBytes
+        fileSizeBytes,
       }
       cache.set(entry)
     }
@@ -143,7 +143,7 @@ export class MainThreadWorkbookParser implements WorkbookParser {
       cached: false,
       parseTimeMs,
       fileSizeBytes,
-      hash
+      hash,
     }
   }
 
@@ -173,33 +173,38 @@ export type WorkerParseRequest = {
 /**
  * Message received from the worker.
  */
-export type WorkerParseResponse = {
-  type: 'parsed'
-  id: string
-  workbook: NormalizedWorkbook
-  parseTimeMs: number
-} | {
-  type: 'error'
-  id: string
-  error: string
-}
+export type WorkerParseResponse =
+  | {
+      type: 'parsed'
+      id: string
+      workbook: NormalizedWorkbook
+      parseTimeMs: number
+    }
+  | {
+      type: 'error'
+      id: string
+      error: string
+    }
 
 /**
  * Web Worker-based workbook parser.
  * Offloads parsing to a background thread to avoid blocking the UI.
- * 
+ *
  * NOTE: Requires excelParser.worker.ts to be bundled separately.
  */
 export class WorkerWorkbookParser implements WorkbookParser {
   private config: WorkbookParserConfig
   private worker: Worker | null = null
-  private pendingRequests: Map<string, {
-    resolve: (result: ParseResult) => void
-    reject: (error: Error) => void
-    startTime: number
-    fileSizeBytes: number
-    hash: string
-  }> = new Map()
+  private pendingRequests: Map<
+    string,
+    {
+      resolve: (result: ParseResult) => void
+      reject: (error: Error) => void
+      startTime: number
+      fileSizeBytes: number
+      hash: string
+    }
+  > = new Map()
   private requestId = 0
 
   constructor(config: Partial<WorkbookParserConfig> = {}) {
@@ -229,7 +234,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
           cached: true,
           parseTimeMs,
           fileSizeBytes,
-          hash
+          hash,
         }
       }
     }
@@ -246,14 +251,14 @@ export class WorkerWorkbookParser implements WorkbookParser {
 
     // Send to worker
     const id = `parse-${this.requestId++}`
-    
+
     return new Promise<ParseResult>((resolve, reject) => {
       this.pendingRequests.set(id, {
         resolve,
         reject,
         startTime,
         fileSizeBytes,
-        hash
+        hash,
       })
 
       // Transfer buffer to worker (no copy)
@@ -261,7 +266,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
         type: 'parse',
         id,
         buffer,
-        fileName: name
+        fileName: name,
       }
 
       this.worker!.postMessage(message, [buffer])
@@ -303,9 +308,9 @@ export class WorkerWorkbookParser implements WorkbookParser {
     const workerCode = createWorkerCode()
     const blob = new Blob([workerCode], { type: 'application/javascript' })
     const workerUrl = URL.createObjectURL(blob)
-    
+
     this.worker = new Worker(workerUrl)
-    
+
     this.worker.onmessage = (event: MessageEvent<WorkerParseResponse>) => {
       this.handleWorkerMessage(event.data)
     }
@@ -325,7 +330,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
 
   private handleWorkerMessage(response: WorkerParseResponse): void {
     const request = this.pendingRequests.get(response.id)
-    
+
     if (request === undefined) {
       log.warn('[WorkerParser] Received response for unknown request:', response.id)
       return
@@ -348,7 +353,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
         hash: request.hash,
         parsedAt: Date.now(),
         rawWorkbook: response.workbook,
-        fileSizeBytes: request.fileSizeBytes
+        fileSizeBytes: request.fileSizeBytes,
       }
       cache.set(entry)
     }
@@ -358,7 +363,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
       cached: false,
       parseTimeMs,
       fileSizeBytes: request.fileSizeBytes,
-      hash: request.hash
+      hash: request.hash,
     })
   }
 }
@@ -369,7 +374,7 @@ export class WorkerWorkbookParser implements WorkbookParser {
 
 /**
  * Generate inline worker code.
- * 
+ *
  * NOTE: In a production build, this would be a separate bundled file.
  * This inline approach works for development and small deployments.
  */
@@ -380,7 +385,7 @@ function createWorkerCode(): string {
     // Excel Parser Worker
     // Parses workbooks in a background thread
     
-    importScripts('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    importScripts('https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js');
     
     self.onmessage = async function(event) {
       const { type, id, buffer, fileName } = event.data;
@@ -486,20 +491,20 @@ export function detectEnvironment(): ParserEnvironment {
   return {
     workersAvailable: typeof Worker !== 'undefined',
     isBrowser: typeof window !== 'undefined',
-    isSecureContext: typeof isSecureContext !== 'undefined' ? isSecureContext : false
+    isSecureContext: typeof isSecureContext !== 'undefined' ? isSecureContext : false,
   }
 }
 
 /**
  * Create an appropriate parser based on environment and file size.
- * 
+ *
  * @param config - Parser configuration
  * @param fileSizeBytes - Optional file size hint for parser selection
  * @returns Appropriate parser implementation
  */
 export function createWorkbookParser(
   config: Partial<WorkbookParserConfig> = {},
-  fileSizeBytes?: number
+  fileSizeBytes?: number,
 ): WorkbookParser {
   const fullConfig = { ...DEFAULT_PARSER_CONFIG, ...config }
   const env = detectEnvironment()

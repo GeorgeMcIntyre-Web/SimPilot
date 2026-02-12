@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      xlsx: 'xlsx-patched',
+    },
+  },
   base: '/',
   server: {
     host: '0.0.0.0', // Listen on all network interfaces
@@ -16,7 +21,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          xlsx: ['xlsx'],
+          xlsx: ['xlsx-patched'],
         },
       },
     },

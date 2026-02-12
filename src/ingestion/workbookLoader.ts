@@ -2,8 +2,8 @@
 // Low-level loader that converts raw Excel files to normalized in-memory structures.
 // Handles .xlsx/.xls detection, parsing, and cell normalization.
 
-import * as XLSX from 'xlsx'
 import { log } from '../lib/log'
+import { readWorkbook } from '../excel/reader'
 
 // ============================================================================
 // TYPES
@@ -51,8 +51,8 @@ export interface LoadOptions {
 // MAGIC BYTES FOR FILE TYPE DETECTION
 // ============================================================================
 
-const XLSX_MAGIC = [0x50, 0x4B, 0x03, 0x04] // PK.. (ZIP file)
-const XLS_MAGIC = [0xD0, 0xCF, 0x11, 0xE0]  // OLE Compound Document
+const XLSX_MAGIC = [0x50, 0x4b, 0x03, 0x04] // PK.. (ZIP file)
+const XLS_MAGIC = [0xd0, 0xcf, 0x11, 0xe0] // OLE Compound Document
 
 function detectFileTypeFromBytes(buffer: ArrayBuffer): 'xlsx' | 'xls' | 'unknown' {
   const view = new Uint8Array(buffer, 0, 4)
@@ -168,15 +168,12 @@ function normalizeRow(row: unknown[]): (string | number | null)[] {
 
 /**
  * Load a workbook from an ArrayBuffer (file content).
- * 
+ *
  * @param buffer - Raw file content as ArrayBuffer
  * @param fileName - Name of the file (for error messages and extension detection)
  * @returns NormalizedWorkbook or throws an error
  */
-export function loadWorkbookFromBuffer(
-  buffer: ArrayBuffer,
-  fileName: string
-): NormalizedWorkbook {
+export function loadWorkbookFromBuffer(buffer: ArrayBuffer, fileName: string): NormalizedWorkbook {
   // Validate input
   if (!buffer || buffer.byteLength === 0) {
     log.error(`[WorkbookLoader] Empty buffer for ${fileName}`)
@@ -196,21 +193,16 @@ export function loadWorkbookFromBuffer(
   }
 
   // Parse workbook
-  let workbook: XLSX.WorkBook
+  let parsedWorkbook: ReturnType<typeof readWorkbook>
   try {
-    workbook = XLSX.read(buffer, {
-      type: 'array',
-      cellDates: false, // Keep dates as numbers
-      cellNF: false,    // Skip number formats
-      cellText: false   // Skip rich text
-    })
+    parsedWorkbook = readWorkbook(buffer)
   } catch (error) {
     log.error(`[WorkbookLoader] Failed to parse ${fileName}:`, error)
     return { fileName, sheets: [] }
   }
 
   // Validate workbook has sheets
-  if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+  if (!parsedWorkbook.sheets || parsedWorkbook.sheets.length === 0) {
     log.error(`[WorkbookLoader] No sheets found in ${fileName}`)
     return { fileName, sheets: [] }
   }
@@ -218,34 +210,23 @@ export function loadWorkbookFromBuffer(
   // Normalize each sheet
   const sheets: NormalizedSheet[] = []
 
-  for (const sheetName of workbook.SheetNames) {
-    const sheet = workbook.Sheets[sheetName]
-
-    if (!sheet) {
-      continue
-    }
-
-    // Convert sheet to array of arrays
-    const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-      header: 1,
-      defval: null,
-      raw: false  // Get formatted string values for reliable normalization
-    })
+  for (const sheet of parsedWorkbook.sheets) {
+    const rawRows = sheet.rows.map((row) => row.map((value) => (value === '' ? null : value)))
 
     // Normalize each row
-    const normalizedRows = rawRows.map(row => normalizeRow(row as unknown[]))
+    const normalizedRows = rawRows.map((row) => normalizeRow(row as unknown[]))
 
     // Remove completely empty trailing rows
     while (
       normalizedRows.length > 0 &&
-      normalizedRows[normalizedRows.length - 1].every(cell => cell === null)
+      normalizedRows[normalizedRows.length - 1].every((cell) => cell === null)
     ) {
       normalizedRows.pop()
     }
 
     sheets.push({
-      sheetName,
-      rows: normalizedRows
+      sheetName: sheet.name,
+      rows: normalizedRows,
     })
   }
 
@@ -254,14 +235,14 @@ export function loadWorkbookFromBuffer(
 
 /**
  * Load a workbook from a File or Blob.
- * 
+ *
  * @param input - File or Blob containing Excel data
  * @param fileName - Optional filename override (uses File.name if available)
  * @returns Promise<NormalizedWorkbook>
  */
 export async function loadWorkbook(
   input: File | Blob,
-  fileName?: string
+  fileName?: string,
 ): Promise<NormalizedWorkbook> {
   const name = fileName ?? (input instanceof File ? input.name : 'unknown.xlsx')
 
@@ -280,22 +261,19 @@ export async function loadWorkbook(
 
 /**
  * Detect the header row in a normalized sheet.
- * 
+ *
  * A row is a candidate if:
  * - It has at least 3 non-empty cells
  * - All non-empty cells are strings
- * 
+ *
  * Returns the row with the highest count of non-empty string cells.
  * Scans the first `maxRows` rows (default: 10).
- * 
+ *
  * @param sheet - The normalized sheet to analyze
  * @param maxRows - Maximum rows to scan (default: 10)
  * @returns Row index (0-based) or null if no valid header found
  */
-export function detectHeaderRow(
-  sheet: NormalizedSheet,
-  maxRows: number = 10
-): number | null {
+export function detectHeaderRow(sheet: NormalizedSheet, maxRows: number = 10): number | null {
   if (!sheet.rows || sheet.rows.length === 0) {
     return null
   }
@@ -348,17 +326,17 @@ export function detectHeaderRow(
 
 /**
  * Convert a NormalizedSheet to an AnalyzedSheet.
- * 
+ *
  * Uses detectHeaderRow to find the header, then splits
  * the sheet into headerValues and dataRows.
- * 
+ *
  * @param sheet - The normalized sheet to analyze
  * @param maxHeaderScanRows - Maximum rows to scan for header (default: 10)
  * @returns AnalyzedSheet or null if no valid header found
  */
 export function toAnalyzedSheet(
   sheet: NormalizedSheet,
-  maxHeaderScanRows: number = 10
+  maxHeaderScanRows: number = 10,
 ): AnalyzedSheet | null {
   const headerRowIndex = detectHeaderRow(sheet, maxHeaderScanRows)
 
@@ -369,7 +347,7 @@ export function toAnalyzedSheet(
   const headerRow = sheet.rows[headerRowIndex]
 
   // Convert header values to strings (trim but preserve typos exactly)
-  const headerValues = headerRow.map(cell => {
+  const headerValues = headerRow.map((cell) => {
     if (cell === null) {
       return ''
     }
@@ -385,10 +363,7 @@ export function toAnalyzedSheet(
   const dataRows = sheet.rows.slice(headerRowIndex + 1)
 
   // Drop trailing empty rows
-  while (
-    dataRows.length > 0 &&
-    dataRows[dataRows.length - 1].every(cell => cell === null)
-  ) {
+  while (dataRows.length > 0 && dataRows[dataRows.length - 1].every((cell) => cell === null)) {
     dataRows.pop()
   }
 
@@ -396,20 +371,20 @@ export function toAnalyzedSheet(
     sheetName: sheet.sheetName,
     headerRowIndex,
     headerValues,
-    dataRows
+    dataRows,
   }
 }
 
 /**
  * Analyze all sheets in a workbook.
- * 
+ *
  * @param workbook - The normalized workbook
  * @param maxHeaderScanRows - Maximum rows to scan for headers
  * @returns Array of AnalyzedSheet (only successfully analyzed sheets)
  */
 export function analyzeWorkbook(
   workbook: NormalizedWorkbook,
-  maxHeaderScanRows: number = 10
+  maxHeaderScanRows: number = 10,
 ): AnalyzedSheet[] {
   const analyzed: AnalyzedSheet[] = []
 
@@ -425,9 +400,3 @@ export function analyzeWorkbook(
 
   return analyzed
 }
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
-export type { XLSX }

@@ -13,6 +13,7 @@
 import * as path from 'path'
 import * as fs from 'fs/promises'
 import * as XLSX from 'xlsx'
+import { readWorkbookFile } from '../../excel/reader'
 import {
   ReuseAllocationStatus,
   type ParsedAssetRow,
@@ -213,7 +214,7 @@ async function parseWorkbook(
 
   try {
     // Load workbook
-    const workbook = XLSX.readFile(wb.fullPath)
+    const workbook = readWorkbookFile(wb.fullPath)
     const workbookConfig = buildWorkbookConfig(wb)
 
     // Get the first sheet (reuse lists typically have one main sheet)
