@@ -23,13 +23,13 @@ type SortDirection = 'asc' | 'desc'
 
 const ProgressBar = ({ value }: { value: number }) => (
   <div className="flex items-center gap-2">
-    <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+    <div className="w-24 bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
       <div
-        className="h-2 rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-emerald-500 transition-all"
+        className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
         style={{ width: `${Math.min(value, 100)}%` }}
       />
     </div>
-    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{value}%</span>
+    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{value}%</span>
   </div>
 )
 
