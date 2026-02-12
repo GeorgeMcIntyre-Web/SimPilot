@@ -496,7 +496,14 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
         <div className="mb-3">
           <div className="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-gray-500 to-gray-400 dark:from-gray-400 dark:to-gray-300"
+              className={cn(
+                'h-full rounded-full transition-all duration-300',
+                (completion ?? 0) >= 90
+                  ? 'bg-emerald-500'
+                  : (completion ?? 0) >= 50
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500',
+              )}
               style={{ width: `${completion ?? 0}%` }}
             />
           </div>
