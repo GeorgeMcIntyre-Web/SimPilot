@@ -17,6 +17,7 @@ describe('semanticLayer integration', () => {
   it('threads semantic artifacts through ingestion and emits semantic warnings', async () => {
     const simulationWorkbook = createWorkbookFromArray(MESSY_SIMULATION_SHEET, 'SIMULATION')
     const toolWorkbook = createWorkbookFromArray(MESSY_GUN_SHEET, 'ToolData')
+    const ingestionRunId = 'run-semantic-layer-test'
 
     const simulation = await parseSimulationStatus(
       simulationWorkbook,
@@ -38,6 +39,7 @@ describe('semanticLayer integration', () => {
     ].filter((layer): layer is SemanticLayerArtifact => Boolean(layer))
 
     const applyResult = applyIngestedData({
+      ingestionRunId,
       simulation,
       tools,
       semanticLayers,
@@ -46,7 +48,25 @@ describe('semanticLayer integration', () => {
     const semanticWarnings = applyResult.warnings.filter(
       (warning) => warning.details?.semanticKind !== undefined,
     )
+
+    expect(applyResult.ingestionRunId).toBe(ingestionRunId)
+    expect(applyResult.semanticArtifact).toBeDefined()
+    expect(applyResult.semanticArtifact?.runId).toBe(ingestionRunId)
+    expect(applyResult.semanticArtifact?.nodes.length).toBeGreaterThan(0)
+    expect(applyResult.semanticArtifact?.edges.length).toBeGreaterThan(0)
+    expect(applyResult.semanticArtifact?.report.totalHeaders).toBeGreaterThan(0)
+
     expect(semanticWarnings.length).toBeGreaterThan(0)
-    expect(semanticWarnings.every((warning) => warning.kind === 'HEADER_MISMATCH')).toBe(true)
+    const semanticKinds = new Set(semanticWarnings.map((warning) => warning.kind))
+    expect(semanticKinds.has('SEMANTIC_UNMAPPED_HEADER')).toBe(true)
+    expect(
+      semanticWarnings.every((warning) =>
+        [
+          'SEMANTIC_AMBIGUOUS_HEADER',
+          'SEMANTIC_UNMAPPED_HEADER',
+          'SEMANTIC_MISSING_REQUIRED_FIELD',
+        ].includes(warning.kind),
+      ),
+    ).toBe(true)
   })
 })
