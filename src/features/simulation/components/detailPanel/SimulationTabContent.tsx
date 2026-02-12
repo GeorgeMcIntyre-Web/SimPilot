@@ -1,21 +1,13 @@
-import {
-  BarChart3,
-  CheckCircle2,
-  Clock,
-  User,
-  FileSpreadsheet,
-  AlertCircle,
-  ChevronRight,
-} from 'lucide-react';
-import { MetricRow } from '../SimulationDetailPieces';
-import type { StationContext } from '../../simulationStore';
+import { BarChart3, CheckCircle2, Clock, User, FileSpreadsheet, AlertCircle } from 'lucide-react'
+import { MetricRow } from '../SimulationDetailPieces'
+import type { StationContext } from '../../simulationStore'
 
 interface SimulationTabContentProps {
-  station: StationContext;
+  station: StationContext
 }
 
 export function SimulationTabContent({ station }: SimulationTabContentProps) {
-  const simStatus = station.simulationStatus;
+  const simStatus = station.simulationStatus
 
   if (!simStatus) {
     return (
@@ -25,7 +17,7 @@ export function SimulationTabContent({ station }: SimulationTabContentProps) {
           No simulation status data available
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -38,7 +30,11 @@ export function SimulationTabContent({ station }: SimulationTabContentProps) {
         </div>
         <div className="space-y-2">
           <MetricRow label="1st Stage" value={simStatus.firstStageCompletion} threshold={80} />
-          <MetricRow label="Final Deliverables" value={simStatus.finalDeliverablesCompletion} threshold={80} />
+          <MetricRow
+            label="Final Deliverables"
+            value={simStatus.finalDeliverablesCompletion}
+            threshold={80}
+          />
         </div>
       </div>
 
@@ -89,5 +85,5 @@ export function SimulationTabContent({ station }: SimulationTabContentProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

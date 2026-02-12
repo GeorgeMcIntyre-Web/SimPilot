@@ -12,7 +12,13 @@ import type { StationContext } from '../simulationStore'
 // TYPES
 // ============================================================================
 
-type SortOption = 'line-asc' | 'line-desc' | 'stations-asc' | 'stations-desc' | 'robots-asc' | 'robots-desc'
+type SortOption =
+  | 'line-asc'
+  | 'line-desc'
+  | 'stations-asc'
+  | 'stations-desc'
+  | 'robots-asc'
+  | 'robots-desc'
 
 interface SimulationBoardGridProps {
   stations: StationContext[]
@@ -25,7 +31,6 @@ interface SimulationBoardGridProps {
 
 interface LineGroupProps {
   unit: string
-  line: string
   stations: StationContext[]
   robotCount: number
   gunCount: number
@@ -42,7 +47,6 @@ interface LineGroupProps {
 
 function LineGroup({
   unit,
-  line,
   stations,
   robotCount,
   gunCount,
@@ -50,7 +54,7 @@ function LineGroup({
   onStationClick,
   selectedStationKey,
   isExpanded,
-  onToggle
+  onToggle,
 }: LineGroupProps) {
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm">
@@ -60,7 +64,7 @@ function LineGroup({
         className={cn(
           'w-full flex flex-wrap items-center justify-between gap-3 px-4 py-3',
           'bg-slate-50 dark:bg-gray-800/70 hover:bg-slate-100 dark:hover:bg-gray-700/70',
-          'transition-colors'
+          'transition-colors',
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -80,7 +84,7 @@ function LineGroup({
               'ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-full flex-shrink-0',
               'typography-caption font-semibold',
               getCompletionTextClass(avgCompletion),
-              'bg-white text-gray-900 dark:bg-gray-900/70 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
+              'bg-white text-gray-900 dark:bg-gray-900/70 dark:text-gray-100 border border-gray-200 dark:border-gray-700',
             )}
           >
             {avgCompletion !== null ? `${avgCompletion}% complete` : 'No data'}
@@ -111,7 +115,7 @@ function LineGroup({
       {isExpanded && (
         <div className="p-4 bg-white dark:bg-gray-800/80 max-h-[560px] overflow-y-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {stations.map(station => (
+            {stations.map((station) => (
               <StationCard
                 key={station.contextKey}
                 station={station}
@@ -136,7 +140,7 @@ export function SimulationBoardGrid({
   selectedStationKey,
   sortBy,
   expandedLines,
-  onToggleLine
+  onToggleLine,
 }: SimulationBoardGridProps) {
   const lineAggregations = useLineAggregations(stations)
 
@@ -164,9 +168,7 @@ export function SimulationBoardGrid({
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8 text-center">
         <Layers className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-        <h3 className="typography-title-sm mb-1">
-          No Stations Found
-        </h3>
+        <h3 className="typography-title-sm mb-1">No Stations Found</h3>
         <p className="typography-subtitle">
           Try adjusting your filters or load data from the Data Loader.
         </p>
@@ -178,11 +180,10 @@ export function SimulationBoardGrid({
     <div className={cn('space-y-4', 'typography-body')}>
       {/* Line Groups - Max 10 visible with scroll */}
       <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
-        {sortedLines.map(aggregation => (
+        {sortedLines.map((aggregation) => (
           <LineGroup
             key={aggregation.lineKey}
             unit={aggregation.unit}
-            line={aggregation.line}
             stations={aggregation.stations}
             robotCount={aggregation.assetCounts.robots}
             gunCount={aggregation.assetCounts.guns}
