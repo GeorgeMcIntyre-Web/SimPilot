@@ -63,17 +63,13 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
         className={cn('whitespace-nowrap px-3 text-gray-700 dark:text-gray-300', rowPad, textSize)}
         title={simulator}
       >
-        {simulator === 'UNASSIGNED' ? (
-          simulator
-        ) : (
-          <Link
-            to={`/engineers?highlightEngineer=${encodeURIComponent(simulator)}`}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {simulator}
-          </Link>
-        )}
+        <Link
+          to={`/engineers?highlightEngineer=${encodeURIComponent(simulator)}`}
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {simulator}
+        </Link>
       </td>
 
       <td className={cn('whitespace-nowrap px-3', rowPad)}>

@@ -65,7 +65,7 @@ function CompletionBar({ percent }: CompletionBarProps) {
           className={cn(
             'h-full transition-all duration-300',
             'bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400',
-            getCompletionBarClass(percent)
+            getCompletionBarClass(percent),
           )}
           style={{ width: `${percent ?? 0}%` }}
         />
@@ -83,7 +83,7 @@ function CompletionBar({ percent }: CompletionBarProps) {
 
 export function StationCard({ station, onClick, isSelected = false }: StationCardProps) {
   const completion = station.simulationStatus?.firstStageCompletion
-  const engineer = station.simulationStatus?.engineer
+  const engineer = station.simulationStatus?.engineer || 'UNASSIGNED'
   const toolCount = station.assetCounts.tools
   const otherCount = station.assetCounts.other
 
@@ -98,7 +98,7 @@ export function StationCard({ station, onClick, isSelected = false }: StationCar
         'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-50 dark:focus:ring-offset-gray-900',
         isSelected
           ? 'bg-blue-50/60 dark:bg-blue-900/15 border-blue-300 dark:border-blue-600 shadow-md'
-          : 'bg-white/85 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
+          : 'bg-white/85 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm',
       )}
       data-testid={`station-card-${station.contextKey}`}
     >

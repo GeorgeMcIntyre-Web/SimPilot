@@ -94,8 +94,7 @@ export function EngineersPage() {
   const engineerCellsMap = useMemo(() => {
     const map = new Map<string, Cell[]>()
     allCells.forEach((cell) => {
-      const name = cell.assignedEngineer?.trim()
-      if (!name) return
+      const name = cell.assignedEngineer?.trim() || 'UNASSIGNED'
       const list = map.get(name) || []
       list.push(cell)
       map.set(name, list)
@@ -233,7 +232,7 @@ export function EngineersPage() {
 
   // Selected Engineer Details
   const selectedEngineerCells = selectedEngineerName
-    ? allCells.filter((c) => (c.assignedEngineer?.trim() || '') === selectedEngineerName)
+    ? allCells.filter((c) => (c.assignedEngineer?.trim() || 'UNASSIGNED') === selectedEngineerName)
     : []
   const highlightedEngineer = searchParams.get('highlightEngineer')?.trim()
   const hasAppliedHighlight = useRef(false)
