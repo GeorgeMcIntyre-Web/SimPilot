@@ -428,7 +428,7 @@ function RobotSimulationStationsTable({
 
       {/* Table */}
       <div className="flex-1 min-h-0 max-h-[535px] overflow-auto custom-scrollbar">
-        <table className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[rgb(31,41,55)] text-sm">
+        <table className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
