@@ -900,10 +900,10 @@ function RobotSimulationPage() {
                 <Bot className="h-12 w-12 opacity-20" />
               </div>
               <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">
-                Select physical unit
+                Select Robot
               </h3>
               <p className="text-[10px] font-bold text-gray-500 max-w-[200px] mt-2">
-                Pick a robot from the registry to view its digital twin synchronization status.
+                Pick a robot from the registry to view its simulation status.
               </p>
             </div>
           )}
