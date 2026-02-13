@@ -269,6 +269,23 @@ export function EngineersPage() {
       ),
     },
     { header: 'Station', accessor: (c) => c.code || '-' },
+    {
+      header: 'Area',
+      accessor: (c) => {
+        const areaId = c.areaId || '-'
+        if (c.projectId) {
+          return (
+            <Link
+              to={`/projects/${c.projectId}`}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {areaId}
+            </Link>
+          )
+        }
+        return areaId
+      },
+    },
     { header: 'Line', accessor: (c) => c.lineCode || '-' },
     { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },
     {

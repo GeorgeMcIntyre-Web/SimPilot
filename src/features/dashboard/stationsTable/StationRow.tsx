@@ -49,7 +49,11 @@ export function StationRow({ cell, onClick, density }: StationRowProps) {
       <td className={cn('whitespace-nowrap px-3', rowPad, textSize)}>
         {cell.areaKey ? (
           <Link
-            to={`/areas/${encodeURIComponent(cell.areaKey)}/overview`}
+            to={
+              cell.projectId
+                ? `/projects/${cell.projectId}`
+                : `/areas/${encodeURIComponent(cell.areaKey)}/overview`
+            }
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors"
             onClick={(e) => e.stopPropagation()}
           >

@@ -490,7 +490,17 @@ function RobotSimulationStationsTable({
                     )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
-                    {row.cell.areaKey ?? 'Unknown'}
+                    {row.cell.projectId ? (
+                      <Link
+                        to={`/projects/${row.cell.projectId}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {row.cell.areaKey ?? 'Unknown'}
+                      </Link>
+                    ) : (
+                      (row.cell.areaKey ?? 'Unknown')
+                    )}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
                     {row.application ?? 'Unknown'}
@@ -682,9 +692,18 @@ function RobotSimulationPage() {
                     </p>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-1.5">
-                    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 ring-1 ring-inset ring-blue-200 dark:ring-blue-700">
-                      {selectedRow.cell.areaKey ?? 'Unknown'}
-                    </span>
+                    {selectedRow.cell.projectId ? (
+                      <Link
+                        to={`/projects/${selectedRow.cell.projectId}`}
+                        className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 ring-1 ring-inset ring-blue-200 dark:ring-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                      >
+                        {selectedRow.cell.areaKey ?? 'Unknown'}
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 ring-1 ring-inset ring-blue-200 dark:ring-blue-700">
+                        {selectedRow.cell.areaKey ?? 'Unknown'}
+                      </span>
+                    )}
                     <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-inset ring-amber-200 dark:ring-amber-700">
                       {selectedRow.cell.simulationStatus?.application ?? 'Unknown'}
                     </span>

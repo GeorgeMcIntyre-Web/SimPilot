@@ -39,6 +39,7 @@ export interface SimulationStatusSnapshot {
   panelMilestones?: PanelMilestones
   /** Optional per-robot panel milestones keyed by robot caption */
   robotPanelMilestones?: Record<string, PanelMilestones>
+  projectId?: string
   raw: ParsedSimulationRow | Cell | Record<string, unknown>
 }
 
@@ -155,6 +156,7 @@ export interface CellSnapshot {
   gunForces: GunForceSnapshot[]
   risers: RiserSnapshot[]
   flags: CrossRefFlag[]
+  projectId?: string
 }
 
 // ============================================================================

@@ -302,6 +302,7 @@ export function buildCrossRefInputFromApplyResult(
       engineer: cell.assignedEngineer,
       panelMilestones,
       robotPanelMilestones,
+      projectId: cell.projectId,
       raw: cell,
     }
   })

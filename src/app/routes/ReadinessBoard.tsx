@@ -476,7 +476,11 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
             </Link>
             {item.areaName && (
               <Link
-                to={`/areas/${encodeURIComponent(item.areaName)}/overview`}
+                to={
+                  item.projectId
+                    ? `/projects/${item.projectId}`
+                    : `/areas/${encodeURIComponent(item.areaName)}/overview`
+                }
                 className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate block"
               >
                 {item.areaName}

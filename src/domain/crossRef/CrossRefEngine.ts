@@ -14,7 +14,7 @@ import {
   ToolSnapshot,
   RobotSnapshot,
   WeldGunSnapshot,
-  RiserSnapshot
+  RiserSnapshot,
 } from './CrossRefTypes'
 import { normalizeStationId, normalizeGunKey } from './CrossRefUtils'
 import { buildCellHealthSummaries } from './CellHealthSummary'
@@ -32,7 +32,7 @@ const READINESS_KEYS = [
   'LAYOUT',
   '1st STAGE SIM COMPLETION',
   'VC READY',
-  'FINAL DELIVERABLES COMPLETION'
+  'FINAL DELIVERABLES COMPLETION',
 ]
 
 // ============================================================================
@@ -50,12 +50,12 @@ interface Indices {
 
 /**
  * Build a cross-reference result from ingested data
- * 
+ *
  * This function:
  * 1. Indexes all stations from all input sources
  * 2. Populates each station with its related data
  * 3. Validates and flags discrepancies
- * 
+ *
  * @param input - The ingested data from all Excel files
  * @returns CrossRefResult with unified cells and validation flags
  */
@@ -98,7 +98,11 @@ const buildIndices = (input: CrossRefInput): Indices => {
   return { stations, gunForcesByGun }
 }
 
-const pickDisplayCode = (current: string | undefined, rawStation: string | undefined, key: StationKey): string => {
+const pickDisplayCode = (
+  current: string | undefined,
+  rawStation: string | undefined,
+  key: StationKey,
+): string => {
   const trimmedRaw = rawStation?.trim()
   if (!current && trimmedRaw) {
     return trimmedRaw
@@ -137,7 +141,8 @@ const getOrCreateCell = (
   stations: Map<StationKey, CellSnapshot>,
   rawStation: string | undefined,
   rawArea: string | undefined,
-  lineCode?: string
+  lineCode?: string,
+  projectId?: string,
 ): CellSnapshot | null => {
   const key = normalizeStationId(rawStation)
   if (!key) return null
@@ -149,14 +154,20 @@ const getOrCreateCell = (
     const shouldUpdateArea = rawArea && rawArea !== existing.areaKey
     const shouldUpdateLine = lineCode && lineCode !== existing.lineCode
     const shouldUpdateDisplay = proposedDisplayCode !== existing.displayCode
-    const needsUpdate = (!existing.areaKey && rawArea) || (!existing.lineCode && lineCode) || shouldUpdateArea || shouldUpdateLine || shouldUpdateDisplay
+    const needsUpdate =
+      (!existing.areaKey && rawArea) ||
+      (!existing.lineCode && lineCode) ||
+      shouldUpdateArea ||
+      shouldUpdateLine ||
+      shouldUpdateDisplay
 
     if (needsUpdate) {
       const updated: CellSnapshot = {
         ...existing,
         displayCode: shouldUpdateDisplay ? proposedDisplayCode : existing.displayCode,
         areaKey: shouldUpdateArea ? rawArea : existing.areaKey || rawArea,
-        lineCode: shouldUpdateLine ? lineCode : existing.lineCode || lineCode
+        lineCode: shouldUpdateLine ? lineCode : existing.lineCode || lineCode,
+        projectId: existing.projectId || projectId,
       }
       stations.set(key, updated)
       return updated
@@ -174,7 +185,8 @@ const getOrCreateCell = (
     weldGuns: [],
     gunForces: [],
     risers: [],
-    flags: []
+    flags: [],
+    projectId,
   }
 
   stations.set(key, newCell)
@@ -186,12 +198,12 @@ const getOrCreateCell = (
  */
 const seedStations = (
   rows: SimulationStatusSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
+  stations: Map<StationKey, CellSnapshot>,
 ): void => {
   if (rows.length === 0) return
 
   for (const row of rows) {
-    getOrCreateCell(stations, row.stationKey, row.areaKey, row.lineCode)
+    getOrCreateCell(stations, row.stationKey, row.areaKey, row.lineCode, row.projectId)
   }
 }
 
@@ -200,7 +212,7 @@ const seedStations = (
  */
 const seedStationsFromTools = (
   rows: ToolSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
+  stations: Map<StationKey, CellSnapshot>,
 ): void => {
   if (rows.length === 0) return
 
@@ -214,7 +226,7 @@ const seedStationsFromTools = (
  */
 const seedStationsFromRobots = (
   rows: RobotSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
+  stations: Map<StationKey, CellSnapshot>,
 ): void => {
   if (rows.length === 0) return
 
@@ -228,7 +240,7 @@ const seedStationsFromRobots = (
  */
 const seedStationsFromGuns = (
   rows: WeldGunSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
+  stations: Map<StationKey, CellSnapshot>,
 ): void => {
   if (rows.length === 0) return
 
@@ -242,7 +254,7 @@ const seedStationsFromGuns = (
  */
 const seedStationsFromRisers = (
   rows: RiserSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
+  stations: Map<StationKey, CellSnapshot>,
 ): void => {
   if (rows.length === 0) return
 
@@ -254,10 +266,7 @@ const seedStationsFromRisers = (
 /**
  * Index gun forces by gun key for fast lookup
  */
-const indexGunForces = (
-  rows: GunForceSnapshot[],
-  index: Map<GunKey, GunForceSnapshot[]>
-): void => {
+const indexGunForces = (rows: GunForceSnapshot[], index: Map<GunKey, GunForceSnapshot[]>): void => {
   if (rows.length === 0) return
 
   for (const row of rows) {
@@ -290,7 +299,7 @@ const populateCells = (input: CrossRefInput, indices: Indices): void => {
  */
 const attachSimulationStatus = (
   rows: SimulationStatusSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
+  stations: Map<StationKey, CellSnapshot>,
 ): void => {
   if (rows.length === 0) return
 
@@ -302,16 +311,16 @@ const attachSimulationStatus = (
     if (!cell) continue
 
     cell.simulationStatus = row
+    if (row.projectId) {
+      cell.projectId = row.projectId
+    }
   }
 }
 
 /**
  * Attach tools to cells
  */
-const attachTools = (
-  rows: ToolSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
-): void => {
+const attachTools = (rows: ToolSnapshot[], stations: Map<StationKey, CellSnapshot>): void => {
   if (rows.length === 0) return
 
   for (const row of rows) {
@@ -328,10 +337,7 @@ const attachTools = (
 /**
  * Attach robots to cells
  */
-const attachRobots = (
-  rows: RobotSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
-): void => {
+const attachRobots = (rows: RobotSnapshot[], stations: Map<StationKey, CellSnapshot>): void => {
   if (rows.length === 0) return
 
   for (const row of rows) {
@@ -351,7 +357,7 @@ const attachRobots = (
 const attachWeldGuns = (
   rows: WeldGunSnapshot[],
   stations: Map<StationKey, CellSnapshot>,
-  gunForcesIndex: Map<GunKey, GunForceSnapshot[]>
+  gunForcesIndex: Map<GunKey, GunForceSnapshot[]>,
 ): void => {
   if (rows.length === 0) return
 
@@ -376,7 +382,7 @@ const attachWeldGuns = (
         stationKey,
         gunKey,
         message: `Weld Gun ${gunKey} has no corresponding force data record`,
-        severity: 'WARNING'
+        severity: 'WARNING',
       })
       continue
     }
@@ -387,7 +393,7 @@ const attachWeldGuns = (
         stationKey,
         gunKey,
         message: `Weld Gun ${gunKey} matches ${forces.length} records in force list`,
-        severity: 'WARNING'
+        severity: 'WARNING',
       })
     }
 
@@ -400,10 +406,7 @@ const attachWeldGuns = (
 /**
  * Attach risers to cells
  */
-const attachRisers = (
-  rows: RiserSnapshot[],
-  stations: Map<StationKey, CellSnapshot>
-): void => {
+const attachRisers = (rows: RiserSnapshot[], stations: Map<StationKey, CellSnapshot>): void => {
   if (rows.length === 0) return
 
   for (const row of rows) {
@@ -421,7 +424,9 @@ const attachRisers = (
 // PHASE 3: AGGREGATION
 // ============================================================================
 
-const aggregateAreaMetrics = (cells: CellSnapshot[]): Record<StationKey, Record<string, number | null>> => {
+const aggregateAreaMetrics = (
+  cells: CellSnapshot[],
+): Record<StationKey, Record<string, number | null>> => {
   const accum: Record<string, Record<string, { sum: number; count: number }>> = {}
   const result: Record<string, Record<string, number | null>> = {}
 
@@ -484,7 +489,7 @@ const validateCell = (cell: CellSnapshot): void => {
       type: 'STATION_WITHOUT_SIMULATION_STATUS',
       stationKey: cell.stationKey,
       message: `Station ${cell.stationKey} found in asset lists but missing from Simulation Status`,
-      severity: 'WARNING'
+      severity: 'WARNING',
     })
   }
 
@@ -496,7 +501,7 @@ const validateCell = (cell: CellSnapshot): void => {
         stationKey: cell.stationKey,
         robotKey: robot.robotKey,
         message: `Robot ${robot.robotKey} is missing Dress Pack / Order Code info`,
-        severity: 'WARNING'
+        severity: 'WARNING',
       })
     }
   }
@@ -509,7 +514,7 @@ const validateCell = (cell: CellSnapshot): void => {
         type: 'TOOL_WITHOUT_OWNER',
         stationKey: cell.stationKey,
         message: `Tool record in ${cell.stationKey} has no Sim Leader or Team Leader assigned`,
-        severity: 'WARNING'
+        severity: 'WARNING',
       })
     }
   }
@@ -524,7 +529,7 @@ const validateCell = (cell: CellSnapshot): void => {
  */
 const calculateStats = (
   cells: CellSnapshot[],
-  globalFlags: CrossRefFlag[]
+  globalFlags: CrossRefFlag[],
 ): CrossRefResult['stats'] => {
   let totalFlags = globalFlags.length
   let cellsWithRisks = 0
@@ -553,6 +558,6 @@ const calculateStats = (
     robotCount,
     toolCount,
     weldGunCount,
-    riserCount
+    riserCount,
   }
 }

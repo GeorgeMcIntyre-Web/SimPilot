@@ -155,7 +155,22 @@ export function createAssetsTableColumns(
           extractMetadata<string>(asset, 'Area') ||
           (asset as any).areaName ||
           null
-        return area || '—'
+
+        if (!area) return '—'
+
+        if (asset.projectId) {
+          return (
+            <Link
+              to={`/projects/${asset.projectId}`}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {area}
+            </Link>
+          )
+        }
+
+        return area
       },
     },
     {

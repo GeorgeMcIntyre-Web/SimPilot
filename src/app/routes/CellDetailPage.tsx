@@ -326,11 +326,19 @@ export function CellDetailPage() {
                 <StatusPill status={cell.status} />
               </div>
               <div className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400 flex-wrap mt-2">
-                {cell.areaId && (
-                  <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    Area {cell.areaId}
-                  </span>
-                )}
+                {cell.areaId &&
+                  (cell.projectId ? (
+                    <Link
+                      to={`/projects/${cell.projectId}`}
+                      className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5 hover:bg-white dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Area {cell.areaId}
+                    </Link>
+                  ) : (
+                    <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
+                      Area {cell.areaId}
+                    </span>
+                  ))}
                 {cell.lineCode && (
                   <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
                     Line {cell.lineCode}
