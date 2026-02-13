@@ -1,8 +1,6 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useMemo, useState, useEffect } from 'react'
 import { ArrowUpDown, ArrowUp, ArrowDown, X, Bot } from 'lucide-react'
-import { PageHeader } from '../../ui/components/PageHeader'
-import { PageHint } from '../../ui/components/PageHint'
 import { EmptyState } from '../../ui/components/EmptyState'
 import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { CellSnapshot } from '../../domain/crossRef/CrossRefTypes'
@@ -12,6 +10,8 @@ import {
   PanelMilestones,
   calculateOverallCompletion,
 } from '../../ingestion/simulationStatus/simulationStatusTypes'
+import { StatCard } from '../../ui/components/StatCard'
+import { Activity, Layers, Target, ChevronRight } from 'lucide-react'
 
 const formatRobotLabel = (cell: CellSnapshot): string => {
   const robotCaptions = (cell.robots || []).map((r) => r.caption || r.robotKey).filter(Boolean)
@@ -420,12 +420,12 @@ function RobotSimulationStationsTable({
       </div>
 
       {/* Table */}
-      <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+      <div className="flex-1 min-h-0 max-h-[600px] overflow-auto custom-scrollbar">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
-                className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-full py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('robot')}
               >
                 Robot <SortIcon column="robot" />
@@ -437,13 +437,13 @@ function RobotSimulationStationsTable({
                 Area <SortIcon column="area" />
               </th>
               <th
-                className="py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-1 whitespace-nowrap py-3 px-1.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('application')}
               >
                 Application <SortIcon column="application" />
               </th>
               <th
-                className="py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-1 whitespace-nowrap py-3 px-1.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('simulator')}
               >
                 Simulator <SortIcon column="simulator" />
@@ -502,10 +502,10 @@ function RobotSimulationStationsTable({
                       (row.cell.areaKey ?? 'Unknown')
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                  <td className="w-1 whitespace-nowrap px-1.5 py-3 text-gray-500 dark:text-gray-400">
                     {row.application ?? 'Unknown'}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-gray-700 dark:text-gray-300">
+                  <td className="w-1 whitespace-nowrap px-1.5 py-3 text-gray-700 dark:text-gray-300">
                     <Link
                       to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
@@ -638,16 +638,27 @@ function RobotSimulationPage() {
 
   if (!loading && tableCells.length === 0) {
     return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Robot Status"
-          subtitle={
-            <PageHint
-              standardText="Track robot-by-robot simulation progress"
-              flowerText="Your robots are waiting for their assignments"
-            />
-          }
-        />
+      <div className="space-y-8 pb-12">
+        <div className="flex flex-col gap-4">
+          <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+              Dashboard
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-900 dark:text-gray-200">Robot Status</span>
+          </nav>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-1">
+              <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+                Simulation Integrity
+              </h2>
+              <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+                Robot <span className="text-indigo-600 dark:text-indigo-400">Status</span>
+              </h1>
+            </div>
+          </div>
+        </div>
+
         <EmptyState
           title="No Robot Data"
           message="Load simulation data from the Data Loader to see robot status here."
@@ -659,9 +670,91 @@ function RobotSimulationPage() {
     )
   }
 
+  const avgCompletion =
+    tableCells.length > 0
+      ? Math.round(
+          tableCells.reduce((acc, c) => acc + (c.simulationStatus?.firstStageCompletion || 0), 0) /
+            tableCells.length,
+        )
+      : 0
+
   return (
-    <div className="h-full flex flex-col gap-6">
-      <PageHeader title="Robot Status" />
+    <div className="space-y-8 pb-12">
+      {/* Premium Header / Breadcrumbs */}
+      <div className="flex flex-col gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+            Dashboard
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">Robot Status</span>
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+              Simulation Integrity
+            </h2>
+            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              Robot <span className="text-indigo-600 dark:text-indigo-400">Status</span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div>
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
+                  Sync Status
+                </div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
+                  Active Connection
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <StatCard
+            title="Total Units"
+            value={tableCells.length}
+            icon={<Bot className="h-6 w-6" />}
+            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <StatCard
+            title="Work Nodes"
+            value={new Set(tableCells.map((c) => c.stationKey)).size}
+            icon={<Target className="h-6 w-6" />}
+            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-rose-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <StatCard
+            title="Avg Sync"
+            value={`${avgCompletion}%`}
+            icon={<Activity className="h-6 w-6" />}
+            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <StatCard
+            title="Project Areas"
+            value={new Set(tableCells.map((c) => c.areaKey)).size}
+            icon={<Layers className="h-6 w-6" />}
+            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+          />
+        </div>
+      </div>
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
         <section className="flex-1 lg:flex-none lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0">
@@ -737,7 +830,7 @@ function RobotSimulationPage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 flex flex-col overflow-y-auto">
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 max-h-[600px] flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
                   {PANEL_CONFIGS.map(({ title, panelType, slug }) => {
                     const completion = getRowPanelMilestones(selectedRow, panelType)
