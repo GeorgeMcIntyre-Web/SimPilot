@@ -13,7 +13,14 @@ import {
 import { coreStore, useCoreStore } from '../../domain/coreStore'
 import { Tool } from '../../domain/core'
 import { createCellEngineerAssignmentChange } from '../../domain/changeLog'
-import { AlertTriangle, Check, X, MonitorPlay } from 'lucide-react'
+import {
+  AlertTriangle,
+  Check,
+  MonitorPlay,
+  ArrowRight,
+  Package,
+  FileSpreadsheet,
+} from 'lucide-react'
 import { InfoPill } from '../../ui/components/InfoPill'
 import { CellChaosHint } from '../../ui/components/CellChaosHint'
 import { simBridgeClient } from '../../integrations/simbridge/SimBridgeClient'
@@ -100,17 +107,32 @@ export function CellDetailPage() {
     return text
   }
 
-  // Use robots from the equipment list only (not simulation status) and align link target to matching asset number
+  // Build combined robot list (Legacy + Cross-Ref fallback)
   const robots = useMemo(() => {
+    // 1. Start with explicitly linked robots from CoreStore
+    let baseRobots: RobotDisplay[] = legacyRobots.map((r) => ({ ...r }))
+
+    // 2. If legacy list is empty, try mapping from Cross-Ref snapshots
+    if (baseRobots.length === 0 && crossRefCell?.robots) {
+      baseRobots = crossRefCell.robots.map((snap) => ({
+        id: snap.robotKey,
+        name: snap.caption || snap.robotKey,
+        oemModel: snap.oemModel,
+        metadata: (snap.raw as any)?.metadata || {},
+        stationCode: snap.stationKey,
+      }))
+    }
+
     const normalizedStation = normalizeRobotNumber(cell?.code)
 
-    return legacyRobots.map((r) => {
+    // 3. Enrich and link to unified assets
+    return baseRobots.map((r) => {
       const displayNumberCandidate =
         r.metadata?.['Robo No. New'] ??
         r.metadata?.['ROBO NO. NEW'] ??
         r.metadata?.robotNumber ??
         r.name
-      const displayNumber = coerceRobotLabel(displayNumberCandidate, r.name)
+      const displayNumber = coerceRobotLabel(displayNumberCandidate, r.name || 'Unknown Robot')
       const normalizedDisplay = normalizeRobotNumber(displayNumber)
 
       const matchedAsset = assets.find((a) => {
@@ -138,7 +160,21 @@ export function CellDetailPage() {
         linkAssetId: matchedAsset?.id ?? r.id,
       }
     })
-  }, [legacyRobots, assets, cell?.code])
+  }, [legacyRobots, crossRefCell?.robots, assets, cell?.code])
+
+  // Build combined tool list
+  const mergedTools = useMemo(() => {
+    if (tools.length > 0) return tools
+
+    // Fallback to cross-ref tool snapshots
+    return (crossRefCell?.tools || []).map((snap) => ({
+      id: snap.toolId || `tr-${snap.stationKey}`,
+      name: snap.toolId || 'Unknown Tool',
+      toolType: (snap.toolType as any) || 'OTHER',
+      mountType: 'UNKNOWN' as const,
+      raw: snap.raw,
+    }))
+  }, [tools, crossRefCell?.tools])
 
   const [isEditingEngineer, setIsEditingEngineer] = useState(false)
   const [selectedEngineer, setSelectedEngineer] = useState<string>('')
@@ -284,94 +320,138 @@ export function CellDetailPage() {
   ]
 
   return (
-    <div className="space-y-4" data-testid="cell-detail-root">
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-        <Link to={breadcrumbRootHref} className="hover:text-blue-600 dark:hover:text-blue-400">
-          {breadcrumbRootLabel}
-        </Link>
-        <span>/</span>
-        {cell.projectId && (
+    <div className="space-y-6" data-testid="cell-detail-root">
+      {/* Navigation & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
           <Link
-            to={`/projects/${cell.projectId}`}
-            className="hover:text-blue-600 dark:hover:text-blue-400"
+            to={breadcrumbRootHref}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
-            Project
+            {breadcrumbRootLabel}
           </Link>
-        )}
-        <span>/</span>
-        <span className="text-gray-900 dark:text-white font-medium">{cell.name}</span>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
+          {cell.projectId && (
+            <>
+              <Link
+                to={`/projects/${cell.projectId}`}
+                className="hover:text-blue-600 dark:hover:text-blue-400"
+              >
+                Project
+              </Link>
+              <span className="text-gray-300 dark:text-gray-700">/</span>
+            </>
+          )}
+          <span className="text-gray-900 dark:text-gray-300">{cell.name || 'Station'}</span>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          {isAtRisk && (
+            <span className="inline-flex items-center gap-1.5 rounded bg-rose-50 dark:bg-rose-950/30 px-2.5 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 uppercase">
+              <AlertTriangle className="h-3 w-3" />
+              At Risk
+            </span>
+          )}
+          <StatusPill status={cell.status} />
+        </div>
       </div>
 
-      {/* Header Card */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 border-b border-blue-200 dark:border-blue-800 px-4 py-3">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                  Station {cell.code || '-'}
-                </p>
-                {isAtRisk && (
-                  <span className="inline-flex items-center gap-1 rounded border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:text-rose-200">
-                    <AlertTriangle className="h-3 w-3" />
-                    At Risk
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
-                  {cell.name}
+      {/* Main Header Card */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+        <div className="p-6 md:p-8 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="space-y-4 max-w-3xl">
+              <div>
+                <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-1">
+                  Station Node {cell.code || '—'}
+                </div>
+                <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
+                  {cell.name || 'Unnamed Station'}
                 </h1>
-                <StatusPill status={cell.status} />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium max-w-xl">
+                  {cell.oemRef ? `OEM Reference ${cell.oemRef} • ` : ''}
+                  Resource mapping and simulation status for this production node.
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400 flex-wrap mt-2">
-                {cell.areaId &&
-                  (cell.projectId ? (
-                    <Link
-                      to={`/projects/${cell.projectId}`}
-                      className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5 hover:bg-white dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Area {cell.areaId}
-                    </Link>
-                  ) : (
-                    <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                      Area {cell.areaId}
-                    </span>
-                  ))}
-                {cell.lineCode && (
-                  <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    Line {cell.lineCode}
-                  </span>
-                )}
-                {cell.oemRef && (
-                  <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    OEM: {cell.oemRef}
-                  </span>
-                )}
-                {cell.simulation?.sourceFile && (
-                  <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5 truncate">
-                    Src: {cell.simulation.sourceFile}
-                  </span>
-                )}
+
+              <div className="flex flex-wrap items-center gap-y-3 gap-x-8 pt-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                    <MonitorPlay className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Target Area
+                    </p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-200">
+                      {cell.areaId || '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-10 w-px bg-gray-100 dark:bg-gray-700 hidden sm:block" />
+
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Assembly Line
+                    </p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-200">
+                      {cell.lineCode || '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-10 w-px bg-gray-100 dark:bg-gray-700 hidden sm:block" />
+
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
+                    <ArrowRight className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      OEM Partner
+                    </p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-200">
+                      {cell.oemRef || 'Standard'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-            {cell.simulation?.studyPath && (
-              <button
-                onClick={handleOpenSimulation}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                <MonitorPlay className="h-4 w-4" />
-                Open Simulation
-              </button>
-            )}
+
+            <div className="flex flex-col items-start md:items-end gap-3">
+              {cell.simulation?.studyPath && (
+                <button
+                  onClick={handleOpenSimulation}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5"
+                >
+                  <MonitorPlay className="h-4 w-4" />
+                  Launch Project
+                </button>
+              )}
+              <div className="text-right">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                  Station Priority
+                </div>
+                <div
+                  className={`text-xs font-bold px-3 py-1 rounded-full border ${isAtRisk ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800' : 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800'}`}
+                >
+                  {isAtRisk ? 'CRITICAL PATH' : 'DEVELOPMENT'}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="p-4 space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {/* Essential Metrics Bar */}
+        <div className="bg-gray-50/50 dark:bg-gray-900/20 px-4 md:px-8 py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             <InfoPill
-              label="Engineer"
+              label="Lead Engineer"
               value={isEditingEngineer ? undefined : cell.assignedEngineer || 'Unassigned'}
               onEdit={isEditingEngineer ? undefined : handleEditEngineer}
               editing={isEditingEngineer}
@@ -383,7 +463,7 @@ export function CellDetailPage() {
                     value={selectedEngineer}
                     onChange={(e) => setSelectedEngineer(e.target.value)}
                     className="w-full border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Enter engineer name..."
+                    placeholder="Search engineer..."
                   />
                   <datalist id="engineers-list">
                     {allEngineers.map((e) => (
@@ -393,104 +473,178 @@ export function CellDetailPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handleSaveEngineer}
-                      className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[11px] font-semibold hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800"
-                      title="Save"
-                      data-testid="save-engineer-button"
+                      className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold hover:bg-emerald-700 transition-colors uppercase tracking-tight"
                     >
-                      <Check className="h-3 w-3" />
-                      Save
+                      Apply
                     </button>
                     <button
                       onClick={() => setIsEditingEngineer(false)}
-                      className="px-2 py-1.5 bg-gray-100 text-gray-700 border border-gray-200 rounded text-[11px] hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
-                      title="Cancel"
+                      className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-[10px] font-bold hover:bg-gray-300 transition-colors uppercase tracking-tight"
                     >
-                      <X className="h-3 w-3" />
+                      Discard
                     </button>
                   </div>
                 </div>
               }
             />
             <InfoPill
-              label="Completion"
-              value={cell.simulation ? `${cell.simulation.percentComplete}%` : 'No data'}
+              label="Simulation Progress"
+              value={cell.simulation ? `${cell.simulation.percentComplete}%` : '0%'}
+              tone={cell.simulation?.percentComplete === 100 ? 'ok' : undefined}
             />
             <InfoPill
-              label="Issues"
+              label="Integrity Check"
               value={
-                cell.simulation ? (cell.simulation.hasIssues ? 'Flagged' : 'Clear') : 'Not linked'
+                cell.simulation
+                  ? cell.simulation.hasIssues
+                    ? 'Issues Found'
+                    : 'Validation Clear'
+                  : 'Link Pending'
               }
               tone={cell.simulation?.hasIssues ? 'warn' : cell.simulation ? 'ok' : 'muted'}
             />
             <InfoPill
-              label="Updated"
+              label="Last Activity"
               value={
                 cell.lastUpdated
                   ? new Date(cell.lastUpdated).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
+                      year: 'numeric',
                     })
-                  : 'Unknown'
+                  : '—'
               }
             />
           </div>
-          <CellChaosHint cell={cell} />
+          <div className="mt-2">
+            <CellChaosHint cell={cell} />
+          </div>
         </div>
       </div>
 
-      {/* Tools and Robots side by side with matched heights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
-                Robots ({robots.length})
+      {/* Secondary Data Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Assets & Hardware Column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Robots section */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm flex flex-col overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+                <Package className="h-4 w-4 text-blue-500" />
+                Robot Assets ({robots.length})
               </h3>
-              <div className="text-[10px] text-gray-500 dark:text-gray-400">Station assets</div>
             </div>
-          </div>
-          <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
-            <DataTable
-              data={robots}
-              columns={robotColumns}
-              emptyMessage="No robots assigned to this cell."
-            />
-          </div>
+            <div className="p-2 overflow-x-auto">
+              <DataTable
+                data={robots}
+                columns={robotColumns}
+                emptyMessage="No robots assigned to this production node."
+              />
+            </div>
+          </section>
+
+          {/* Tools section */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm flex flex-col overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+                <MonitorPlay className="h-4 w-4 text-indigo-500" />
+                Integrated Tooling ({tools.length})
+              </h3>
+            </div>
+            <div className="p-2 overflow-x-auto">
+              <DataTable
+                data={mergedTools as any}
+                columns={toolColumns}
+                emptyMessage="No specialized tooling detected for this station."
+              />
+            </div>
+          </section>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
-                Tools ({tools.length})
+        {/* Intelligence & Quality Column */}
+        <div className="space-y-6">
+          {/* Active Issues / Flags */}
+          <section className="bg-white dark:bg-gray-800 border border-rose-200 dark:border-rose-900/40 rounded-lg shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-rose-100 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-900/10 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
+              <h3 className="text-sm font-bold text-rose-800 dark:text-rose-400 uppercase tracking-tight">
+                Integrity Flags ({crossRefFlags.length})
               </h3>
-              <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                Guns, grippers, others
+            </div>
+            <div className="p-5 max-h-[480px] overflow-y-auto custom-scrollbar">
+              <FlagsList flags={crossRefFlags} compact />
+              {crossRefFlags.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-6 text-center">
+                  <div className="h-10 w-10 flex items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 mb-3">
+                    <Check className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100 italic">
+                    No flags reported
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Cross-reference validation is clear.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Data Provenance Card */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                Data Traceability
+              </h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="space-y-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">
+                    Primary Manifest
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400 truncate break-all">
+                    {cell.simulation?.sourceFile || 'N/A'}
+                  </span>
+                </div>
+                {cell.simulation?.studyPath && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">
+                      Simulation Path
+                    </span>
+                    <span className="text-[10px] font-mono text-gray-600 dark:text-gray-400 line-clamp-2 italic">
+                      {cell.simulation.studyPath}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-gray-50 dark:border-gray-700/50">
+                <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
+                  <span>System Objects</span>
+                  <span className="text-gray-300">/</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-100 dark:border-gray-800">
+                    <span className="block text-[8px] text-gray-400 uppercase font-black mb-0.5">
+                      Static ID
+                    </span>
+                    <span className="text-[10px] font-mono font-bold dark:text-gray-300">
+                      {cell.id.slice(0, 8)}...
+                    </span>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 p-2 rounded border border-gray-100 dark:border-gray-800">
+                    <span className="block text-[8px] text-gray-400 uppercase font-black mb-0.5">
+                      Project
+                    </span>
+                    <span className="text-[10px] font-bold dark:text-gray-300 truncate">
+                      {cell.projectId || 'Global'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="p-3 flex-1 overflow-y-auto custom-scrollbar">
-            <DataTable
-              data={tools}
-              columns={toolColumns}
-              emptyMessage="No tools assigned to this cell."
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Issues */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
-            Issues ({crossRefFlags.length})
-          </h3>
-          <div className="text-[10px] text-gray-500 dark:text-gray-400">
-            Flags from cross-reference checks
-          </div>
-        </div>
-        <div className="p-3">
-          <FlagsList flags={crossRefFlags} />
+          </section>
         </div>
       </div>
     </div>

@@ -145,7 +145,7 @@ interface FlagsListProps {
   className?: string
 }
 
-export function FlagsList({ flags, compact: _compact = false, className }: FlagsListProps) {
+export function FlagsList({ flags, compact = false, className }: FlagsListProps) {
   if (flags.length === 0) {
     return (
       <div className={cn('text-center py-4 text-gray-500 dark:text-gray-400 text-sm', className)}>
@@ -156,12 +156,25 @@ export function FlagsList({ flags, compact: _compact = false, className }: Flags
   }
 
   // Group flags by severity
-  const errorFlags = flags.filter((f) => f.severity === 'ERROR')
-  const warningFlags = flags.filter((f) => f.severity === 'WARNING')
+  const sortedFlags = [...flags].sort((a, b) => {
+    if (a.severity === 'ERROR' && b.severity !== 'ERROR') return -1
+    if (a.severity !== 'ERROR' && b.severity === 'ERROR') return 1
+    return 0
+  })
+
+  if (compact) {
+    return (
+      <div className={cn('space-y-3', className)}>
+        {sortedFlags.map((flag, idx) => (
+          <FlagBadge key={idx} flag={flag} />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className={cn(className)}>
-      <FlagsTable flags={[...errorFlags, ...warningFlags]} />
+      <FlagsTable flags={sortedFlags} />
     </div>
   )
 }
