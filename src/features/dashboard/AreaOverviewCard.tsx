@@ -2,7 +2,7 @@
 // Card showing station health breakdown for an area
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Layers, AlertTriangle, ArrowUpRight } from 'lucide-react'
+import { Layers, ArrowUpRight, ShieldCheck, Activity, Zap } from 'lucide-react'
 import { cn } from '../../ui/lib/utils'
 import { AreaCounts } from './dashboardUtils'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -33,24 +33,26 @@ export function AreaOverviewCard({
       ? {
           label: 'Critical',
           badge:
-            'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800',
-          iconClass: 'text-rose-500',
+            'bg-rose-50/50 text-rose-700 border border-rose-200/50 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800/50',
+          icon: <Zap className="h-3.5 w-3.5 text-rose-500" />,
+          glow: 'group-hover:shadow-[0_0_20px_rgba(244,63,94,0.15)]',
         }
       : atRisk > 0
         ? {
             label: 'Watch',
             badge:
-              'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800',
-            iconClass: 'text-amber-500',
+              'bg-amber-50/50 text-amber-700 border border-amber-200/50 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800/50',
+            icon: <Activity className="h-3.5 w-3.5 text-amber-500" />,
+            glow: 'group-hover:shadow-[0_0_20px_rgba(245,158,11,0.15)]',
           }
         : {
-            label: 'Healthy',
+            label: 'Stable',
             badge:
-              'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
-            iconClass: 'text-emerald-500',
+              'bg-emerald-50/50 text-emerald-700 border border-emerald-200/50 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800/50',
+            icon: <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />,
+            glow: 'group-hover:shadow-[0_0_20px_rgba(16,185,129,0.15)]',
           }
 
-  // Calculate percentage for progress bar
   const okPercent = total > 0 ? (ok / total) * 100 : 0
   const atRiskPercent = total > 0 ? (atRisk / total) * 100 : 0
   const criticalPercent = total > 0 ? (critical / total) * 100 : 0
@@ -59,56 +61,53 @@ export function AreaOverviewCard({
     <div
       onClick={onClick}
       className={cn(
-        'rounded-xl border transition-all duration-200 cursor-pointer',
-        density === 'compact' ? 'p-2.5' : 'p-3',
-        'hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-600',
+        'group relative rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden',
+        density === 'compact' ? 'p-3' : 'p-4',
         isSelected
-          ? 'border-indigo-500 bg-indigo-50 dark:bg-[rgb(19,24,39)] dark:border-indigo-500 ring-2 ring-indigo-500/20'
-          : 'border-gray-200 bg-white dark:bg-[rgb(19,24,39)] dark:border-gray-700',
+          ? 'border-indigo-500 bg-white dark:bg-[rgb(31,41,55)] shadow-xl shadow-indigo-500/10 ring-1 ring-indigo-500/20'
+          : 'border-gray-200 bg-white dark:bg-[rgb(31,41,55)] dark:border-white/10 hover:border-indigo-300 dark:hover:border-indigo-500/40',
+        healthState.glow,
       )}
       role="button"
       tabIndex={0}
-      title={areaKey}
     >
+      {/* Dynamic Background Blur */}
+      <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full blur-2xl opacity-40" />
+
       {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
+      <div className="flex items-start gap-4 mb-4 relative z-10">
         <div
           className={cn(
-            'p-2 rounded-lg flex items-center justify-center',
-            isSelected ? 'bg-indigo-100 dark:bg-indigo-800' : 'bg-gray-100 dark:bg-gray-700',
+            'p-2.5 rounded-xl flex items-center justify-center transition-colors duration-300',
+            isSelected
+              ? 'bg-indigo-600 text-white'
+              : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 group-hover:text-indigo-600 dark:group-hover:text-indigo-400',
           )}
         >
-          <Layers
-            className={cn(
-              'h-4 w-4',
-              isSelected
-                ? 'text-indigo-600 dark:text-indigo-300'
-                : 'text-gray-500 dark:text-gray-400',
-            )}
-          />
+          <Layers className="h-4 w-4" />
         </div>
-        <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3
-                className="typography-title-sm leading-tight whitespace-normal line-clamp-2"
+                className="text-sm font-black text-gray-900 dark:text-white leading-tight tracking-tight whitespace-normal line-clamp-1"
                 title={displayTitle || areaKey}
               >
                 {displayTitle || areaKey}
               </h3>
-              <p className="typography-caption truncate">
-                {ok} healthy · {atRisk} risk · {critical} critical
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">
+                {total} Stations
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold',
+                'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-300',
                 healthState.badge,
               )}
             >
-              <AlertTriangle className={cn('h-3.5 w-3.5', healthState.iconClass)} />
+              {healthState.icon}
               {healthState.label}
             </span>
           </div>
@@ -116,79 +115,64 @@ export function AreaOverviewCard({
       </div>
 
       {/* Progress bar */}
-      <div className="h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden flex">
+      <div className="h-1.5 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden flex shadow-inner relative z-10">
         {okPercent > 0 && (
           <div
-            className="bg-emerald-500 transition-all duration-300"
+            className="bg-emerald-500 relative overflow-hidden"
             style={{ width: `${okPercent}%` }}
-          />
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+          </div>
         )}
         {atRiskPercent > 0 && (
           <div
-            className="bg-amber-500 transition-all duration-300"
+            className="bg-amber-500 relative overflow-hidden"
             style={{ width: `${atRiskPercent}%` }}
-          />
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+          </div>
         )}
         {criticalPercent > 0 && (
           <div
-            className="bg-rose-500 transition-all duration-300"
+            className="bg-rose-500 relative overflow-hidden"
             style={{ width: `${criticalPercent}%` }}
-          />
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+          </div>
         )}
       </div>
 
-      {/* Legend */}
-      {density === 'comfortable' ? (
-        <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+      {/* Legend & Actions */}
+      <div className="mt-4 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-3 text-[10px] font-bold text-gray-400">
           <div className="flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-            <span className="text-gray-700 dark:text-gray-300 font-semibold">{ok}</span>
-            <span className="text-gray-500 dark:text-gray-400">OK</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span>{ok}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-            <span className="text-gray-700 dark:text-gray-300 font-semibold">{atRisk}</span>
-            <span className="text-gray-500 dark:text-gray-400">Risk</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span>{atRisk}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
-            <span className="text-gray-700 dark:text-gray-300 font-semibold">{critical}</span>
-            <span className="text-gray-500 dark:text-gray-400">Crit</span>
+            <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+            <span>{critical}</span>
           </div>
         </div>
-      ) : (
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-600 dark:text-gray-400">
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="font-semibold text-gray-700 dark:text-gray-200">{ok}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            <span className="font-semibold text-gray-700 dark:text-gray-200">{atRisk}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="h-2 w-2 rounded-full bg-rose-500" />
-            <span className="font-semibold text-gray-700 dark:text-gray-200">{critical}</span>
-          </div>
-        </div>
-      )}
 
-      {onOverviewClick && (
-        <div className="mt-3">
+        {onOverviewClick && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation()
               onOverviewClick(areaKey)
             }}
-            className="inline-flex w-full items-center justify-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 px-3 py-2 text-[11px] font-semibold text-gray-700 dark:text-gray-100 hover:border-indigo-300 hover:text-indigo-700 dark:hover:border-indigo-400 shadow-sm transition-colors"
-            title="Open area overview"
+            className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 transition-all duration-200 border border-transparent"
           >
-            Overview
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            Insights
+            <ArrowUpRight className="h-3 w-3" />
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

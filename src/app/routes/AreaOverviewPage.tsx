@@ -1,18 +1,20 @@
-import { ReactNode } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
-    ChevronRight,
-    LayoutDashboard,
-    CalendarDays,
-    CalendarClock,
-    Play,
-    Monitor,
-    PackageCheck,
-    DatabaseZap,
-    ClipboardCheck
+  ChevronRight,
+  CalendarDays,
+  CalendarClock,
+  Play,
+  Monitor,
+  PackageCheck,
+  DatabaseZap,
+  ClipboardCheck,
+  TrendingUp,
+  Target,
+  ArrowRight,
+  Layers,
+  Sparkles,
+  AlertTriangle,
 } from 'lucide-react'
-import { PageHeader } from '../../ui/components/PageHeader'
-import { PageHint } from '../../ui/components/PageHint'
 import { StatCard } from '../../ui/components/StatCard'
 import { EmptyState } from '../../ui/components/EmptyState'
 import { useOverviewSchedule } from '../../domain/coreStore'
@@ -20,306 +22,370 @@ import { useCrossRefData } from '../../hooks/useCrossRefData'
 import { cn } from '../../ui/lib/utils'
 
 export function AreaOverviewPage() {
-    const { areaKey } = useParams<{ areaKey: string }>()
-    const navigate = useNavigate()
-    const title = areaKey ? decodeURIComponent(areaKey) : 'Area'
-    const overview = useOverviewSchedule()
-    const { areaMetrics } = useCrossRefData()
-    const areaKeyDecoded = areaKey ? decodeURIComponent(areaKey) : ''
-    const areaValues = areaKeyDecoded ? areaMetrics[areaKeyDecoded] : undefined
+  const { areaKey } = useParams<{ areaKey: string }>()
+  const navigate = useNavigate()
+  const title = areaKey ? decodeURIComponent(areaKey) : 'Area'
+  const overview = useOverviewSchedule()
+  const { areaMetrics } = useCrossRefData()
+  const areaKeyDecoded = areaKey ? decodeURIComponent(areaKey) : ''
+  const areaValues = areaKeyDecoded ? areaMetrics[areaKeyDecoded] : undefined
 
-    const formatWeek = (value?: number) => {
-        if (value === undefined || value === null || Number.isNaN(value)) return '—'
-        return `CW ${value}`
-    }
+  const formatWeek = (value?: number) => {
+    if (value === undefined || value === null || Number.isNaN(value)) return '—'
+    return `CW ${value}`
+  }
 
-    const formatNumber = (value?: number, suffix = '') => {
-        if (value === undefined || value === null || Number.isNaN(value)) return '—'
-        return `${value}${suffix}`
-    }
+  const formatNumber = (value?: number, suffix = '') => {
+    if (value === undefined || value === null || Number.isNaN(value)) return '—'
+    return `${value}${suffix}`
+  }
 
-    const formatPercent = (value?: number | null) => {
-        if (value === undefined || value === null || Number.isNaN(value)) return '—'
-        const pct = value > 1 ? value : value * 100
-        return `${pct.toFixed(1)}%`
-    }
+  const formatPercent = (value?: number | null) => {
+    if (value === undefined || value === null || Number.isNaN(value)) return '—'
+    const pct = value > 1 ? value : value * 100
+    return `${pct.toFixed(1)}%`
+  }
 
-    const ProgressBar = ({ value }: { value?: number | null }) => {
-        const pct = value === undefined || value === null || Number.isNaN(value)
-            ? 0
-            : (value > 1 ? value : value * 100)
-        const clamped = Math.max(0, Math.min(100, pct))
-        const empty = value === undefined || value === null || Number.isNaN(value)
-
-        return (
-            <div className="w-full h-2.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                {!empty && (
-                    <div
-                        className="h-full rounded-full bg-emerald-500 transition-all"
-                        style={{ width: `${clamped}%` }}
-                    />
-                )}
-            </div>
-        )
-    }
-
-    const getVariant = (value?: number): 'default' | 'success' | 'warning' | 'danger' => {
-        if (value === undefined || value === null || Number.isNaN(value)) return 'default'
-        const pct = value > 1 ? value : value * 100
-        if (pct >= 90) return 'success'
-        if (pct >= 50) return 'warning'
-        return 'danger'
-    }
-
-    const sections: Array<{
-        title: string
-        icon: ReactNode
-        accent: string
-        items: { label: string; value: string }[]
-    }> = [
-        {
-            title: 'Timeline',
-            icon: <CalendarDays className="h-4 w-4" />,
-            accent: 'border-l-indigo-500 dark:border-l-indigo-400',
-            items: [
-                { label: 'Current Week', value: formatWeek(overview?.currentWeek) },
-                { label: 'Current Job Duration', value: formatNumber(overview?.currentJobDuration, ' wks') },
-                { label: 'Job Start', value: formatWeek(overview?.jobStartWeek) },
-                { label: 'Job End', value: formatWeek(overview?.jobEndWeek) },
-                { label: 'Complete Job Duration', value: formatNumber(overview?.completeJobDuration, ' wks') }
-            ]
-        },
-        {
-            title: '1st Stage Simulation',
-            icon: <Play className="h-4 w-4" />,
-            accent: 'border-l-emerald-500 dark:border-l-emerald-400',
-            items: [
-                { label: 'Complete', value: formatWeek(overview?.firstStageSimComplete) },
-                { label: 'Duration', value: formatNumber(overview?.firstStageSimDuration, ' wks') },
-                { label: '% Complete per Week', value: formatPercent(overview?.firstStageSimPerWeek) },
-                { label: '% Complete Required', value: formatPercent(overview?.firstStageSimRequired) }
-            ]
-        },
-        {
-            title: 'Virtual Commissioning',
-            icon: <Monitor className="h-4 w-4" />,
-            accent: 'border-l-amber-500 dark:border-l-amber-400',
-            items: [
-                { label: 'VC Start', value: formatWeek(overview?.vcStartWeek) },
-                { label: 'Job Duration to VC Start', value: formatNumber(overview?.jobDurationToVcStart, ' wks') },
-                { label: '% VC Ready per Week', value: formatPercent(overview?.vcReadyPerWeek) },
-                { label: 'VC Ready Required', value: formatPercent(overview?.vcReadyRequired) }
-            ]
-        },
-        {
-            title: 'Final Deliverables',
-            icon: <PackageCheck className="h-4 w-4" />,
-            accent: 'border-l-blue-500 dark:border-l-blue-400',
-            items: [
-                { label: 'Complete End', value: formatWeek(overview?.finalDeliverablesEndWeek) },
-                { label: 'Job Duration', value: formatNumber(overview?.finalDeliverablesDuration, ' wks') },
-                { label: '% Complete per Week', value: formatPercent(overview?.finalDeliverablesPerWeek) },
-                { label: '% Complete Required', value: formatPercent(overview?.finalDeliverablesRequired) }
-            ]
-        }
-    ]
-
-    const hasData = overview !== undefined
-    const hasAreaMetrics = areaValues !== undefined
-
-    const readinessMetrics = [
-        { label: 'ROBOT SIMULATION', value: areaValues?.['ROBOT SIMULATION'] },
-        { label: 'JOINING', value: areaValues?.['JOINING'] },
-        { label: 'GRIPPER', value: areaValues?.['GRIPPER'] },
-        { label: 'FIXTURE', value: areaValues?.['FIXTURE'] },
-        { label: 'DOCUMENTATION', value: areaValues?.['DOCUMENTATION'] },
-        { label: 'MRS', value: areaValues?.['MRS'] },
-        { label: 'OLP', value: areaValues?.['OLP'] },
-        { label: 'SAFETY', value: areaValues?.['SAFETY'] },
-        { label: 'CABLE & HOSE LENGTH', value: areaValues?.['CABLE & HOSE LENGTH'] },
-        { label: 'LAYOUT', value: areaValues?.['LAYOUT'] },
-        { label: '1st STAGE SIM COMPLETION', value: areaValues?.['1st STAGE SIM COMPLETION'] },
-        { label: 'VC READY', value: areaValues?.['VC READY'] },
-        { label: 'FINAL DELIVERABLES COMPLETION', value: areaValues?.['FINAL DELIVERABLES COMPLETION'] }
-    ]
+  const ProgressBar = ({ value, label }: { value?: number | null; label?: string }) => {
+    const pct =
+      value === undefined || value === null || Number.isNaN(value)
+        ? 0
+        : value > 1
+          ? value
+          : value * 100
+    const clamped = Math.max(0, Math.min(100, pct))
+    const empty = value === undefined || value === null || Number.isNaN(value)
 
     return (
-        <div className="space-y-6">
-            {/* Breadcrumb Navigation */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm">
-                <Link
-                    to="/dashboard"
-                    className="inline-flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span>Dashboard</span>
-                </Link>
-                <ChevronRight className="h-3.5 w-3.5 text-gray-400 dark:text-gray-500" />
-                <span className="font-medium text-gray-900 dark:text-white">{title}</span>
-            </nav>
-
-            <PageHeader
-                title={`Area Overview — ${title}`}
-                subtitle={
-                    <PageHint
-                        standardText="Timeline, simulation milestones, and discipline readiness for this area."
-                        flowerText="Context at a glance."
-                    />
-                }
-            />
-
-            {/* Empty State */}
-            {!hasData && !hasAreaMetrics && (
-                <EmptyState
-                    title="No Overview Data"
-                    message="No metrics found for this area. Load or reload your simulation file in the Data Loader to populate overview data."
-                    icon={<DatabaseZap className="h-7 w-7" />}
-                    ctaLabel="Go to Data Loader"
-                    onCtaClick={() => navigate('/data-loader')}
-                />
+      <div className="space-y-1.5 flex-1">
+        <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+          <span className="text-gray-500 dark:text-gray-400">{label}</span>
+          <span
+            className={cn(
+              clamped >= 90
+                ? 'text-emerald-500'
+                : clamped >= 50
+                  ? 'text-amber-500'
+                  : 'text-rose-500',
             )}
-
-            {/* Hero Summary Strip */}
-            {(hasData || hasAreaMetrics) && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard
-                        title="Current Week"
-                        value={formatWeek(overview?.currentWeek)}
-                        subtitle={`Job: ${formatWeek(overview?.jobStartWeek)} → ${formatWeek(overview?.jobEndWeek)}`}
-                        icon={<CalendarClock className="h-5 w-5" />}
-                    />
-                    <StatCard
-                        title="1st Stage Sim"
-                        value={formatPercent(overview?.firstStageSimRequired)}
-                        subtitle={`Complete by ${formatWeek(overview?.firstStageSimComplete)}`}
-                        icon={<Play className="h-5 w-5" />}
-                        variant={getVariant(overview?.firstStageSimRequired)}
-                    />
-                    <StatCard
-                        title="VC Readiness"
-                        value={formatPercent(overview?.vcReadyRequired)}
-                        subtitle={`Start ${formatWeek(overview?.vcStartWeek)}`}
-                        icon={<Monitor className="h-5 w-5" />}
-                        variant={getVariant(overview?.vcReadyRequired)}
-                    />
-                    <StatCard
-                        title="Final Deliverables"
-                        value={formatPercent(overview?.finalDeliverablesRequired)}
-                        subtitle={`End ${formatWeek(overview?.finalDeliverablesEndWeek)}`}
-                        icon={<PackageCheck className="h-5 w-5" />}
-                        variant={getVariant(overview?.finalDeliverablesRequired)}
-                    />
-                </div>
-            )}
-
-            {/* Schedule Details Section */}
-            {(hasData || hasAreaMetrics) && (
-                <>
-                    <div className="flex items-center gap-2 pt-2">
-                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
-                            Schedule Details
-                        </h2>
-                        <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {sections.map(section => (
-                            <div
-                                key={section.title}
-                                className={cn(
-                                    'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm',
-                                    'border-l-4',
-                                    section.accent
-                                )}
-                            >
-                                <div className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2.5">
-                                    <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400">
-                                        {section.icon}
-                                    </div>
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {section.title}
-                                    </h3>
-                                </div>
-                                <div className="px-5 py-2">
-                                    {section.items.map((item, idx) => (
-                                        <div
-                                            key={item.label}
-                                            className={cn(
-                                                'flex items-center justify-between py-2.5',
-                                                idx < section.items.length - 1 && 'border-b border-gray-100 dark:border-gray-700/30'
-                                            )}
-                                        >
-                                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                                {item.label}
-                                            </span>
-                                            <span className={cn(
-                                                'text-sm font-semibold tabular-nums',
-                                                item.value === '—'
-                                                    ? 'text-gray-300 dark:text-gray-600'
-                                                    : 'text-gray-900 dark:text-white'
-                                            )}>
-                                                {item.value}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </>
-            )}
-
-            {/* Readiness Measurements Section Heading */}
-            {(hasData || hasAreaMetrics) && (
-                <div className="flex items-center gap-2 pt-2">
-                    <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
-                        Readiness Measurements
-                    </h2>
-                    <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                </div>
-            )}
-
-            {/* Readiness Measurements */}
-            {(hasData || hasAreaMetrics) && (
-                <div className={cn(
-                    'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm',
-                    'border-l-4 border-l-emerald-500 dark:border-l-emerald-400'
-                )}>
-                    <div className="px-5 py-3.5 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2.5">
-                        <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400">
-                            <ClipboardCheck className="h-4 w-4" />
-                        </div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Readiness Measurements</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
-                        {readinessMetrics.map((metric, idx) => (
-                            <div
-                                key={metric.label}
-                                className={cn(
-                                    'px-5 py-3 space-y-2',
-                                    idx < readinessMetrics.length - 2 && 'border-b border-gray-100 dark:border-gray-700/30',
-                                    idx % 2 === 0 && 'md:border-r md:border-r-gray-100 md:dark:border-r-gray-700/30'
-                                )}
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">{metric.label}</span>
-                                    <span className={cn(
-                                        "text-sm font-semibold tabular-nums",
-                                        metric.value === undefined || metric.value === null
-                                            ? 'text-gray-300 dark:text-gray-600'
-                                            : 'text-gray-900 dark:text-white'
-                                    )}>
-                                        {formatPercent(metric.value)}
-                                    </span>
-                                </div>
-                                <ProgressBar value={metric.value} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+          >
+            {empty ? '—' : `${clamped.toFixed(1)}%`}
+          </span>
         </div>
+        <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-800/50 overflow-hidden relative shadow-inner">
+          {!empty && (
+            <div
+              className={cn(
+                'h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden',
+                clamped >= 90
+                  ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                  : clamped >= 50
+                    ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                    : 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.3)]',
+              )}
+              style={{ width: `${clamped}%` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+            </div>
+          )}
+        </div>
+      </div>
     )
+  }
+
+  const getVariant = (value?: number): 'default' | 'success' | 'warning' | 'danger' => {
+    if (value === undefined || value === null || Number.isNaN(value)) return 'default'
+    const pct = value > 1 ? value : value * 100
+    if (pct >= 90) return 'success'
+    if (pct >= 50) return 'warning'
+    return 'danger'
+  }
+
+  const hasData = overview !== undefined
+  const hasAreaMetrics = areaValues !== undefined
+
+  const milestoneGroups = [
+    {
+      id: 'timeline',
+      title: 'Global Timeline',
+      icon: <CalendarDays className="h-5 w-5" />,
+      gradient: 'from-indigo-500/10 to-blue-500/5',
+      accent: 'indigo',
+      items: [
+        { label: 'Current Week', value: formatWeek(overview?.currentWeek) },
+        { label: 'Start Week', value: formatWeek(overview?.jobStartWeek) },
+        { label: 'End Week', value: formatWeek(overview?.jobEndWeek) },
+        { label: 'Total Duration', value: formatNumber(overview?.completeJobDuration, ' weeks') },
+      ],
+    },
+    {
+      id: 'sim',
+      title: 'First Stage Sim',
+      icon: <Play className="h-5 w-5" />,
+      gradient: 'from-emerald-500/10 to-teal-500/5',
+      accent: 'emerald',
+      items: [
+        { label: 'Target Completion', value: formatWeek(overview?.firstStageSimComplete) },
+        {
+          label: 'Planned Duration',
+          value: formatNumber(overview?.firstStageSimDuration, ' weeks'),
+        },
+        { label: 'Progress Goal', value: formatPercent(overview?.firstStageSimRequired) },
+        { label: 'Actual per Week', value: formatPercent(overview?.firstStageSimPerWeek) },
+      ],
+    },
+    {
+      id: 'vc',
+      title: 'VC Readiness',
+      icon: <Monitor className="h-5 w-5" />,
+      gradient: 'from-amber-500/10 to-orange-500/5',
+      accent: 'amber',
+      items: [
+        { label: 'Commissioning Start', value: formatWeek(overview?.vcStartWeek) },
+        {
+          label: 'Duration to Start',
+          value: formatNumber(overview?.jobDurationToVcStart, ' weeks'),
+        },
+        { label: 'Readiness Goal', value: formatPercent(overview?.vcReadyRequired) },
+        { label: 'Readiness Actual', value: formatPercent(overview?.vcReadyPerWeek) },
+      ],
+    },
+    {
+      id: 'final',
+      title: 'Final Deliverables',
+      icon: <PackageCheck className="h-5 w-5" />,
+      gradient: 'from-blue-500/10 to-cyan-500/5',
+      accent: 'blue',
+      items: [
+        { label: 'Project Handover', value: formatWeek(overview?.finalDeliverablesEndWeek) },
+        {
+          label: 'Final Phase',
+          value: formatNumber(overview?.finalDeliverablesDuration, ' weeks'),
+        },
+        { label: 'Phase Goal', value: formatPercent(overview?.finalDeliverablesRequired) },
+        { label: 'Actual Output', value: formatPercent(overview?.finalDeliverablesPerWeek) },
+      ],
+    },
+  ]
+
+  const readinessMetrics = [
+    {
+      label: 'Robot Simulation',
+      value: areaValues?.['ROBOT SIMULATION'],
+      icon: <Sparkles className="h-3 w-3" />,
+    },
+    { label: 'Joining', value: areaValues?.['JOINING'], icon: <Target className="h-3 w-3" /> },
+    { label: 'Gripper', value: areaValues?.['GRIPPER'], icon: <Layers className="h-3 w-3" /> },
+    { label: 'Fixture', value: areaValues?.['FIXTURE'], icon: <DatabaseZap className="h-3 w-3" /> },
+    {
+      label: 'Documentation',
+      value: areaValues?.['DOCUMENTATION'],
+      icon: <ArrowRight className="h-3 w-3" />,
+    },
+    { label: 'MRS', value: areaValues?.['MRS'], icon: <ClipboardCheck className="h-3 w-3" /> },
+    { label: 'OLP/Download', value: areaValues?.['OLP'], icon: <Monitor className="h-3 w-3" /> },
+    { label: 'Safety', value: areaValues?.['SAFETY'], icon: <ChevronRight className="h-3 w-3" /> },
+  ]
+
+  return (
+    <div className="space-y-8 pb-12">
+      {/* Premium Header / Breadcrumbs */}
+      <div className="flex flex-col gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+            Dashboard
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">{title}</span>
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
+              Area <span className="text-indigo-600 dark:text-indigo-400">Overview</span>
+            </h1>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl">
+              Performance metrics, schedule integrity, and discipline readiness for project node{' '}
+              <span className="text-gray-900 dark:text-white font-bold underline decoration-indigo-500/30 underline-offset-4">
+                {title}
+              </span>
+              .
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div>
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                  Master Clock
+                </div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white">
+                  {formatWeek(overview?.currentWeek)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Empty State */}
+      {!hasData && !hasAreaMetrics && (
+        <EmptyState
+          title="No Data Traceable"
+          message="No performance metrics found for this area. Ensure your simulation status files are loaded correctly."
+          icon={<AlertTriangle className="h-8 w-8 text-amber-500" />}
+          ctaLabel="Consult Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+        />
+      )}
+
+      {(hasData || hasAreaMetrics) && (
+        <>
+          {/* Key Indicators Overlay */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="relative group cursor-default">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl blur opacity-10 group-hover:opacity-25 transition duration-1000 group-hover:duration-200" />
+              <StatCard
+                title="Simulation Sync"
+                value={formatPercent(overview?.firstStageSimRequired)}
+                subtitle={`Target: ${formatWeek(overview?.firstStageSimComplete)}`}
+                icon={<Play className="h-6 w-6" />}
+                variant={getVariant(overview?.firstStageSimRequired)}
+                className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+              />
+            </div>
+            <div className="relative group cursor-default">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-10 group-hover:opacity-25 transition duration-1000 group-hover:duration-200" />
+              <StatCard
+                title="VC Readiness"
+                value={formatPercent(overview?.vcReadyRequired)}
+                subtitle={`Start: ${formatWeek(overview?.vcStartWeek)}`}
+                icon={<Monitor className="h-6 w-6" />}
+                variant={getVariant(overview?.vcReadyRequired)}
+                className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+              />
+            </div>
+            <div className="relative group cursor-default">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur opacity-10 group-hover:opacity-25 transition duration-1000 group-hover:duration-200" />
+              <StatCard
+                title="Final Output"
+                value={formatPercent(overview?.finalDeliverablesRequired)}
+                subtitle={`End: ${formatWeek(overview?.finalDeliverablesEndWeek)}`}
+                icon={<PackageCheck className="h-6 w-6" />}
+                variant={getVariant(overview?.finalDeliverablesRequired)}
+                className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+              />
+            </div>
+            <div className="relative group cursor-default">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-500 to-slate-500 rounded-2xl blur opacity-10 group-hover:opacity-25 transition duration-1000 group-hover:duration-200" />
+              <StatCard
+                title="Project Window"
+                value={formatNumber(overview?.completeJobDuration, ' Weeks')}
+                subtitle={`${formatWeek(overview?.jobStartWeek)} → ${formatWeek(overview?.jobEndWeek)}`}
+                icon={<TrendingUp className="h-6 w-6" />}
+                className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Detailed Milestones Section */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <CalendarClock className="h-4 w-4" />
+                  Milestone Details
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {milestoneGroups.map((group) => (
+                  <div
+                    key={group.id}
+                    className={cn(
+                      'group relative overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] p-5 transition-all duration-300',
+                      'hover:shadow-xl hover:border-gray-300 dark:hover:border-indigo-500/50',
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'absolute top-0 right-0 w-32 h-32 bg-gradient-to-br -mr-16 -mt-16 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500',
+                        group.gradient,
+                      )}
+                    />
+
+                    <div className="relative z-10 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            'flex items-center justify-center h-10 w-10 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors',
+                            `group-hover:bg-${group.accent}-500/10 group-hover:text-${group.accent}-500`,
+                          )}
+                        >
+                          {group.icon}
+                        </div>
+                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                          {group.title}
+                        </h3>
+                      </div>
+
+                      <div className="space-y-3">
+                        {group.items.map((item) => (
+                          <div
+                            key={item.label}
+                            className="flex justify-between items-center text-[11px]"
+                          >
+                            <span className="font-bold text-gray-400 uppercase tracking-tighter">
+                              {item.label}
+                            </span>
+                            <span
+                              className={cn(
+                                'font-black tabular-nums',
+                                item.value === '—'
+                                  ? 'text-gray-300 dark:text-gray-700'
+                                  : 'text-gray-900 dark:text-gray-100',
+                              )}
+                            >
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Discipline Readiness Column */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Discipline Health
+                </h2>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm overflow-hidden divide-y divide-gray-100 dark:divide-white/10">
+                {readinessMetrics.map((metric) => (
+                  <div
+                    key={metric.label}
+                    className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors flex items-center gap-4"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                      {metric.icon}
+                    </div>
+                    <ProgressBar value={metric.value} label={metric.label} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 export default AreaOverviewPage

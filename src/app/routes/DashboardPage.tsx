@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ArrowUpDown } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -184,68 +184,55 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Area Overview Cards */}
-      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
-          <div>
-            <h3 className="typography-title-sm">Areas Overview</h3>
-            <p className="typography-caption">
-              {filteredAreas.length} {filteredAreas.length === 1 ? 'area' : 'areas'}
-            </p>
+      {/* Area Overview Cards Section */}
+      <section className="space-y-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight uppercase">
+              Areas <span className="text-indigo-600 dark:text-indigo-400">Overview</span>
+            </h2>
           </div>
-        </div>
 
-        {hasAreas && (
-          <div className="px-4 pb-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex items-center gap-2 w-full md:flex-1 min-w-0">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          {hasAreas && (
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative group w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
                 <input
                   value={areaSearch}
                   onChange={(e) => setAreaSearch(e.target.value)}
-                  placeholder="Search areas..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                  placeholder="Filter areas..."
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
                 />
               </div>
-              {areaSearch && (
-                <button
-                  onClick={() => setAreaSearch('')}
-                  className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
               <div className="flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4 text-gray-400" />
                 <select
                   value={areaSort}
                   onChange={(e) => setAreaSort(e.target.value as AreaSort)}
-                  className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
                 >
-                  <option value="total-desc">Sort by Total</option>
-                  <option value="risk-desc">Sort by Risk</option>
-                  <option value="alpha">Sort A → Z</option>
+                  <option value="total-desc">By Volume</option>
+                  <option value="risk-desc">By Risk</option>
+                  <option value="alpha">A-Z Name</option>
+                </select>
+
+                <select
+                  value={areaFilter}
+                  onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
+                >
+                  <option value="all">All Status</option>
+                  <option value="with-risk">At Risk</option>
+                  <option value="critical-only">Critical</option>
+                  <option value="healthy-only">Stable</option>
                 </select>
               </div>
-
-              <select
-                value={areaFilter}
-                onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="all">All Areas</option>
-                <option value="with-risk">With Risk</option>
-                <option value="critical-only">Critical Only</option>
-                <option value="healthy-only">Healthy Only</option>
-              </select>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="px-4 pb-4">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-gray-950 pointer-events-none z-10 h-12 bottom-0 hidden md:block" />
           <AreaCardsGrid
             areas={filteredAreas}
             selectedArea={selectedArea}
@@ -257,18 +244,18 @@ export function DashboardPage() {
       </section>
 
       {/* Stations Table */}
-      <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
-        <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+      <section className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden transition-all duration-300">
+        <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-2 relative z-10">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {selectedArea ? `Stations in ${selectedArea}` : 'All Stations'}
+            <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
+              {selectedArea ? `Nodes in ${selectedArea}` : 'All Project Nodes'}
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {visibleCells.length} {visibleCells.length === 1 ? 'station' : 'stations'}
+            <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">
+              {visibleCells.length} Active Deployments
             </p>
           </div>
         </div>
-        <div className="px-4 pb-4">
+        <div className="px-6 pb-6 relative z-10">
           <StationsTable
             variant="plain"
             cells={visibleCells}

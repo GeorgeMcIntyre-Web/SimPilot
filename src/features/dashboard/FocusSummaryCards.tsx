@@ -2,15 +2,15 @@ import { cn } from '../../ui/lib/utils'
 import { FocusItem } from './dashboardUtils'
 
 const severityAccent: Record<FocusItem['severity'], string> = {
-  info: 'text-blue-600 dark:text-blue-400',
+  info: 'text-indigo-600 dark:text-indigo-400',
   warning: 'text-amber-600 dark:text-amber-400',
-  danger: 'text-rose-600 dark:text-rose-400'
+  danger: 'text-rose-600 dark:text-rose-400',
 }
 
-const gradient: Record<FocusItem['severity'], string> = {
-  info: 'from-blue-200 via-blue-100 to-sky-200 dark:from-blue-900/40 dark:via-blue-800/40 dark:to-sky-900/40',
-  warning: 'from-amber-200 via-amber-100 to-yellow-200 dark:from-amber-900/40 dark:via-amber-800/40 dark:to-yellow-900/40',
-  danger: 'from-rose-200 via-rose-100 to-red-200 dark:from-rose-900/40 dark:via-rose-800/40 dark:to-red-900/40'
+const severityGlow: Record<FocusItem['severity'], string> = {
+  info: 'bg-indigo-500/10',
+  warning: 'bg-amber-500/10',
+  danger: 'bg-rose-500/10',
 }
 
 interface FocusSummaryCardsProps {
@@ -22,32 +22,48 @@ export function FocusSummaryCards({ items, className }: FocusSummaryCardsProps) 
   if (items.length === 0) return null
 
   return (
-    <div
-      className={cn(
-        "flex flex-wrap gap-3 w-full",
-        className
-      )}
-    >
-      {items.map(item => (
+    <div className={cn('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full', className)}>
+      {items.slice(0, 4).map((item) => (
         <div
           key={item.id}
-          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 shadow-sm flex items-center justify-between gap-3 flex-1 min-w-[200px]"
+          className="group relative bg-white dark:bg-[rgb(31,41,55)] rounded-2xl border border-gray-200 dark:border-white/10 p-4 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-gray-300 dark:hover:border-indigo-500/20 overflow-hidden"
         >
-          <div className="space-y-0.5 leading-tight">
-            <div className={cn('typography-metric', severityAccent[item.severity])}>
-              {item.count}
-            </div>
-            <div className="typography-body-strong">
-              {item.title}
-            </div>
-            <div className="typography-caption line-clamp-2">
-              {item.description}
-            </div>
-          </div>
+          {/* Accent Glow */}
           <div
             className={cn(
-              'h-12 w-1 rounded-full bg-gradient-to-b',
-              gradient[item.severity]
+              'absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500',
+              severityGlow[item.severity],
+            )}
+          />
+
+          <div className="relative z-10 flex flex-col gap-1">
+            <span
+              className={cn(
+                'text-2xl font-black tabular-nums tracking-tighter leading-none',
+                severityAccent[item.severity],
+              )}
+            >
+              {item.count}
+            </span>
+
+            <div className="space-y-1 mt-1">
+              <h3 className="text-xs font-black text-gray-900 dark:text-gray-100 uppercase tracking-tight">
+                {item.title}
+              </h3>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-relaxed line-clamp-2">
+                {item.description}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              'absolute left-0 top-0 bottom-0 w-1 rounded-r-full transition-all duration-300 opacity-0 group-hover:opacity-100',
+              item.severity === 'info'
+                ? 'bg-indigo-500'
+                : item.severity === 'warning'
+                  ? 'bg-amber-500'
+                  : 'bg-rose-500',
             )}
           />
         </div>
