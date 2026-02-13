@@ -1,393 +1,457 @@
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { PageHeader } from '../../ui/components/PageHeader';
-import { useAllProjectMetrics } from '../../ui/hooks/useDomainData';
-import { ArrowUpDown, Building2, Users, AlertTriangle, TrendingUp, Grid, List, ArrowRight, Layers } from 'lucide-react';
-import { cn } from '../../ui/lib/utils';
-import { PageHint } from '../../ui/components/PageHint';
-import { EmptyState } from '../../ui/components/EmptyState';
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAllProjectMetrics } from '../../ui/hooks/useDomainData'
+import {
+  Building2,
+  AlertTriangle,
+  Grid,
+  List,
+  ArrowRight,
+  Layers,
+  ChevronRight,
+  Activity,
+  Target,
+  Search,
+  ChevronDown,
+} from 'lucide-react'
+import { cn } from '../../ui/lib/utils'
+import { EmptyState } from '../../ui/components/EmptyState'
+import { StatCard } from '../../ui/components/StatCard'
 
-type SortKey = 'name' | 'avgCompletion' | 'atRiskCellsCount' | 'cellCount';
-type SortDirection = 'asc' | 'desc';
-type ViewMode = 'grid' | 'list';
+type SortKey = 'name' | 'avgCompletion' | 'atRiskCellsCount' | 'cellCount'
+type SortDirection = 'asc' | 'desc'
+type ViewMode = 'grid' | 'list'
 
 export function ProjectsPage() {
-    const projects = useAllProjectMetrics();
-    const [sortKey, setSortKey] = useState<SortKey>('name');
-    const [sortDir, setSortDir] = useState<SortDirection>('asc');
-    const [viewMode, setViewMode] = useState<ViewMode>('grid');
-    const navigate = useNavigate();
+  const projects = useAllProjectMetrics()
+  const [sortKey, setSortKey] = useState<SortKey>('name')
+  const sortDir: SortDirection = 'asc'
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [searchQuery, setSearchQuery] = useState('')
+  const navigate = useNavigate()
 
-    const totals = useMemo(() => {
-        const totalProjects = projects.length;
-        const totalStations = projects.reduce((sum, p) => sum + p.cellCount, 0);
-        const totalAtRisk = projects.reduce((sum, p) => sum + p.atRiskCellsCount, 0);
-        const weightedCompletionDenominator = projects.reduce((sum, p) => sum + p.cellCount, 0);
-        const weightedCompletionNumerator = projects.reduce((sum, p) => sum + (p.avgCompletion * p.cellCount), 0);
-        const avgCompletion = weightedCompletionDenominator > 0
-            ? Math.round(weightedCompletionNumerator / weightedCompletionDenominator)
-            : 0;
-        return { totalProjects, totalStations, totalAtRisk, avgCompletion };
-    }, [projects]);
+  const totals = useMemo(() => {
+    const totalProjects = projects.length
+    const totalStations = projects.reduce((sum, p) => sum + p.cellCount, 0)
+    const totalAtRisk = projects.reduce((sum, p) => sum + p.atRiskCellsCount, 0)
+    const weightedCompletionDenominator = projects.reduce((sum, p) => sum + p.cellCount, 0)
+    const weightedCompletionNumerator = projects.reduce(
+      (sum, p) => sum + p.avgCompletion * p.cellCount,
+      0,
+    )
+    const avgCompletion =
+      weightedCompletionDenominator > 0
+        ? Math.round(weightedCompletionNumerator / weightedCompletionDenominator)
+        : 0
+    return { totalProjects, totalStations, totalAtRisk, avgCompletion }
+  }, [projects])
 
-    if (projects.length === 0) {
-        return (
-            <div className="space-y-4">
-                <PageHeader
-                    title="Projects"
-                    subtitle={
-                        <PageHint
-                            standardText="Manage all simulation projects"
-                            flowerText="Where manufacturing dreams take shape."
-                        />
-                    }
-                />
-                <EmptyState
-                    title="No Projects Found"
-                    message="Please go to the Data Loader to import your simulation files."
-                    ctaLabel="Go to Data Loader"
-                    onCtaClick={() => navigate('/data-loader')}
-                    icon={<Building2 className="h-7 w-7" />}
-                />
+  if (projects.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4">
+          <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+              Dashboard
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-900 dark:text-gray-200">Projects Portfolio</span>
+          </nav>
+
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-1">
+              <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+                Simulation <span className="text-indigo-600 dark:text-indigo-400">Projects</span>
+              </h1>
+              <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+                Infrastructure Portfolio
+              </h2>
             </div>
-        );
+          </div>
+        </div>
+        <EmptyState
+          title="No Projects Found"
+          message="Please go to the Data Loader to import your simulation files."
+          ctaLabel="Go to Data Loader"
+          onCtaClick={() => navigate('/data-loader')}
+          icon={<Building2 className="h-7 w-7" />}
+        />
+      </div>
+    )
+  }
+
+  type ProjectWithMetrics = (typeof projects)[0]
+
+  const getSortedProjects = () => {
+    let filtered = [...projects]
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || (p.customer && p.customer.toLowerCase().includes(q)),
+      )
     }
 
-    type ProjectWithMetrics = typeof projects[0];
+    return filtered.sort((a, b) => {
+      const getValue = (project: ProjectWithMetrics, key: SortKey): any => {
+        if (key === 'name') return project.name
+        if (key === 'avgCompletion') return project.avgCompletion
+        if (key === 'atRiskCellsCount') return project.atRiskCellsCount
+        if (key === 'cellCount') return project.cellCount
+        return ''
+      }
 
-    const getSortedProjects = () => {
-        return [...projects].sort((a, b) => {
-            const getValue = (project: ProjectWithMetrics, key: SortKey): any => {
-                if (key === 'name') return project.name;
-                if (key === 'avgCompletion') return project.avgCompletion;
-                if (key === 'atRiskCellsCount') return project.atRiskCellsCount;
-                if (key === 'cellCount') return project.cellCount;
-                return '';
-            };
+      const valA = getValue(a, sortKey)
+      const valB = getValue(b, sortKey)
 
-            const valA = getValue(a, sortKey);
-            const valB = getValue(b, sortKey);
+      if (valA < valB) return sortDir === 'asc' ? -1 : 1
+      if (valA > valB) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+  }
 
-            if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-            return 0;
-        });
-    };
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Running':
+        return 'Active'
+      case 'OnHold':
+        return 'On Hold'
+      case 'Closed':
+        return 'Closed'
+      case 'Planning':
+        return 'Planning'
+      default:
+        return status
+    }
+  }
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'active':
-                return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800';
-            case 'onHold':
-                return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800';
-            case 'completed':
-                return 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800';
-            default:
-                return 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800/30 dark:text-gray-400 dark:border-gray-700';
-        }
-    };
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+            Dashboard
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">Projects Portfolio</span>
+        </nav>
 
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'active': return 'Active';
-            case 'onHold': return 'On Hold';
-            case 'completed': return 'Completed';
-            default: return status;
-        }
-    };
-
-    const SummaryCard = ({
-        label,
-        value,
-        icon,
-        description,
-        accent,
-    }: {
-        label: string;
-        value: string | number;
-        icon: React.ReactNode;
-        description?: string;
-        accent?: string;
-    }) => (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 h-full shadow-sm flex items-center justify-between gap-3">
-            <div className="space-y-0.5">
-                <div className={cn("typography-metric text-gray-900 dark:text-white", accent)}>{value}</div>
-                <div className="typography-label text-gray-700 dark:text-gray-200">{label}</div>
-                {description && (
-                    <div className="typography-caption text-gray-500 dark:text-gray-400">{description}</div>
-                )}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              Simulation <span className="text-indigo-600 dark:text-indigo-400">Projects</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div>
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
+                  Status
+                </div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
+                  Live Feed
+                </div>
+              </div>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700">
-                {icon}
-            </div>
+          </div>
         </div>
-    );
+      </div>
 
-    return (
-        <div className="space-y-4">
-            <PageHeader
-                title="Projects"
-                subtitle={
-                    <PageHint
-                        standardText="Manage all simulation projects"
-                        flowerText="Where manufacturing dreams take shape."
-                    />
-                }
+      {/* Summary Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Total Projects"
+            value={totals.totalProjects}
+            icon={<Layers className="h-6 w-6 text-indigo-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-indigo-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Active Stations"
+            value={totals.totalStations}
+            icon={<Target className="h-6 w-6 text-emerald-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-emerald-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Global Sync"
+            value={`${totals.avgCompletion}%`}
+            icon={<Activity className="h-6 w-6 text-amber-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-amber-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="At Risk"
+            value={totals.totalAtRisk}
+            icon={<AlertTriangle className="h-6 w-6 text-rose-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-rose-500/50 transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Controls Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex-1 flex items-center gap-3">
+          <div className="relative group w-full max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter projects by name or customer..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all"
             />
-
-            {/* Top summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <SummaryCard
-                    label="Projects"
-                    value={totals.totalProjects}
-                    icon={<Layers className="h-4 w-4 text-sky-600" />}
-                    accent="text-sky-700"
-                    description="Active portfolios"
-                />
-                <SummaryCard
-                    label="Stations"
-                    value={totals.totalStations}
-                    icon={<Users className="h-4 w-4 text-purple-600" />}
-                    accent="text-purple-700"
-                    description="Total stations across projects"
-                />
-                <SummaryCard
-                    label="Avg Completion"
-                    value={`${totals.avgCompletion}%`}
-                    icon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
-                    accent="text-emerald-700"
-                    description="Weighted by station count"
-                />
-                <SummaryCard
-                    label="At Risk"
-                    value={totals.totalAtRisk}
-                    icon={<AlertTriangle className="h-4 w-4 text-amber-600" />}
-                    accent="text-amber-700"
-                    description="Stations needing attention"
-                />
-            </div>
-
-            {/* Controls Bar */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <span className="typography-caption text-gray-500 dark:text-gray-400">
-                            {projects.length} {projects.length === 1 ? 'project' : 'projects'}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        {/* Sort Dropdown */}
-                        <select
-                            value={sortKey}
-                            onChange={(e) => {
-                                setSortKey(e.target.value as SortKey);
-                                setSortDir('asc');
-                            }}
-                            className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 typography-caption bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="name">Sort by Name</option>
-                            <option value="cellCount">Sort by Station Count</option>
-                            <option value="avgCompletion">Sort by Completion</option>
-                            <option value="atRiskCellsCount">Sort by At Risk</option>
-                        </select>
-
-                        <button
-                            onClick={() => setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')}
-                            className="p-1.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                            title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
-                        >
-                            <ArrowUpDown className={cn("h-4 w-4 text-gray-600 dark:text-gray-300 transition-transform", sortDir === 'desc' && 'rotate-180')} />
-                        </button>
-
-                        {/* View Toggle */}
-                        <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={cn(
-                                    "p-1.5 transition-colors",
-                                    viewMode === 'grid'
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-                                )}
-                                title="Grid View"
-                            >
-                                <Grid className="h-4 w-4" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={cn(
-                                    "p-1.5 transition-colors border-l border-gray-300 dark:border-gray-600",
-                                    viewMode === 'list'
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-                                )}
-                                title="List View"
-                            >
-                                <List className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Projects Grid/List */}
-            {viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getSortedProjects().map((project) => (
-                        <Link
-                            key={project.id}
-                            to={`/projects/${project.id}`}
-                            className="group block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200"
-                        >
-                            <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-start gap-2 min-w-0 flex-1">
-                                        <Building2 className="h-4 w-4 text-gray-600 dark:text-gray-400 flex-shrink-0 mt-0.5" />
-                                        <div className="min-w-0 flex-1">
-                                            <h3 className="typography-body-strong text-gray-900 dark:text-white truncate">
-                                                {project.name}
-                                            </h3>
-                                            {project.customer && (
-                                                <p className="typography-caption text-gray-600 dark:text-gray-400 truncate mt-0.5">
-                                                    {project.customer}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded border whitespace-nowrap", getStatusColor(project.status))}>
-                                        {getStatusLabel(project.status)}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="p-4 space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-2">
-                                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-1">
-                                            <Users className="h-3 w-3" />
-                                            <span className="typography-label">Stations</span>
-                                        </div>
-                                        <div className="typography-title-sm text-gray-900 dark:text-white">
-                                            {project.cellCount}
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-md p-2">
-                                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-1">
-                                            <TrendingUp className="h-3 w-3" />
-                                            <span className="typography-label">Completion</span>
-                                        </div>
-                                        <div className="typography-title-sm text-gray-900 dark:text-white">
-                                            {project.avgCompletion}%
-                                        </div>
-                                        <div className="mt-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                                            <div
-                                                className={cn(
-                                                    "h-full rounded-full transition-all",
-                                                    project.avgCompletion >= 80
-                                                        ? "bg-emerald-500"
-                                                        : project.avgCompletion >= 50
-                                                            ? "bg-amber-500"
-                                                            : "bg-rose-500"
-                                                )}
-                                                style={{ width: `${Math.min(project.avgCompletion, 100)}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div
-                                    className={cn(
-                                        "flex items-center gap-1.5 px-2 py-1.5 rounded-md border",
-                                        project.atRiskCellsCount > 0
-                                            ? "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800"
-                                            : "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
-                                    )}
-                                >
-                                    <AlertTriangle
-                                        className={cn(
-                                            "h-3 w-3 flex-shrink-0",
-                                            project.atRiskCellsCount > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
-                                        )}
-                                    />
-                                    <span
-                                        className={cn(
-                                            "typography-label",
-                                            project.atRiskCellsCount > 0 ? "text-rose-700 dark:text-rose-400" : "text-emerald-700 dark:text-emerald-300"
-                                        )}
-                                    >
-                                        {project.atRiskCellsCount > 0
-                                            ? `${project.atRiskCellsCount} ${project.atRiskCellsCount === 1 ? 'station' : 'stations'} at risk`
-                                            : 'All stations on track'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40">
-                                <div className="text-xs text-gray-600 dark:text-gray-300">
-                                    View project details
-                                </div>
-                                <ArrowRight className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400 group-hover:translate-x-1 transition-all duration-200" />
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            ) : (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    {getSortedProjects().map((project, idx) => (
-                        <Link
-                            key={project.id}
-                            to={`/projects/${project.id}`}
-                            className={cn(
-                                "flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors",
-                                idx !== projects.length - 1 && "border-b border-gray-200 dark:border-gray-700"
-                            )}
-                        >
-                            <Building2 className="h-5 w-5 text-gray-600 dark:text-gray-400 flex-shrink-0" />
-
-                            <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                    <h3 className="typography-body-strong text-gray-900 dark:text-white truncate">
-                                        {project.name}
-                                    </h3>
-                                    <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap", getStatusColor(project.status))}>
-                                        {getStatusLabel(project.status)}
-                                    </span>
-                                </div>
-                                {project.customer && (
-                                    <p className="typography-caption text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                        {project.customer}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-4 flex-shrink-0">
-                                <div className="text-right">
-                                    <div className="typography-caption text-gray-500 dark:text-gray-400">Stations</div>
-                                    <div className="typography-body-strong text-gray-900 dark:text-white">{project.cellCount}</div>
-                                </div>
-
-                                <div className="text-right">
-                                    <div className="typography-caption text-gray-500 dark:text-gray-400">Complete</div>
-                                    <div className="typography-body-strong text-gray-900 dark:text-white">{project.avgCompletion}%</div>
-                                </div>
-
-                                {project.atRiskCellsCount > 0 && (
-                                    <div className="flex items-center gap-1 px-2 py-1 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded">
-                                        <AlertTriangle className="h-3 w-3 text-rose-600 dark:text-rose-400" />
-                                        <span className="typography-label text-rose-700 dark:text-rose-400 whitespace-nowrap">
-                                            {project.atRiskCellsCount} at risk
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            )}
+          </div>
+          <div className="hidden lg:flex items-center gap-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+              {getSortedProjects().length} Results
+            </span>
+          </div>
         </div>
-    );
+
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              className="appearance-none pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer shadow-sm hover:border-indigo-500/50 transition-all"
+            >
+              <option value="name">Sort: Alpha</option>
+              <option value="cellCount">Sort: Volume</option>
+              <option value="avgCompletion">Sort: Progress</option>
+              <option value="atRiskCellsCount">Sort: Risk</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
+          </div>
+
+          <div className="flex items-center bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                'p-2 rounded-lg transition-all',
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-white/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+              )}
+            >
+              <Grid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'p-2 rounded-lg transition-all',
+                viewMode === 'list'
+                  ? 'bg-white dark:bg-white/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+              )}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Projects Grid/List */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {getSortedProjects().map((project) => (
+            <Link
+              key={project.id}
+              to={`/projects/${project.id}`}
+              className="group relative bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 p-5"
+            >
+              {/* Accent Glow */}
+              <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-transparent rounded-full blur-2xl opacity-40 group-hover:opacity-80 transition-opacity" />
+
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gray-50 dark:bg-white/5 text-gray-500 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black text-gray-900 dark:text-white leading-tight tracking-tight truncate">
+                      {project.name}
+                    </h3>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">
+                      {project.customer || 'Internal Project'}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border',
+                    project.status === 'Running'
+                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      : project.status === 'OnHold'
+                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                        : 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+                  )}
+                >
+                  {getStatusLabel(project.status)}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="space-y-1">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Stations
+                  </div>
+                  <div className="text-lg font-black text-gray-900 dark:text-white">
+                    {project.cellCount}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">
+                    Sync
+                  </div>
+                  <div className="text-lg font-black text-gray-900 dark:text-white text-right">
+                    {project.avgCompletion}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-1.5 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mb-6">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all duration-1000',
+                    project.avgCompletion >= 90
+                      ? 'bg-emerald-500'
+                      : project.avgCompletion >= 50
+                        ? 'bg-indigo-500'
+                        : 'bg-rose-500',
+                  )}
+                  style={{ width: `${project.avgCompletion}%` }}
+                />
+              </div>
+
+              <div
+                className={cn(
+                  'flex items-center justify-between p-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-colors',
+                  project.atRiskCellsCount > 0
+                    ? 'bg-rose-500/5 border-rose-500/20 text-rose-500'
+                    : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-500',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>
+                    {project.atRiskCellsCount > 0
+                      ? `${project.atRiskCellsCount} Risks Identified`
+                      : 'Environment Stable'}
+                  </span>
+                </div>
+                <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Project
+                </th>
+                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Units
+                </th>
+                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Progress
+                </th>
+                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                  Risk Level
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {getSortedProjects().map((project) => (
+                <tr
+                  key={project.id}
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                  className="group hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      {project.name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                    {project.customer || '--'}
+                  </td>
+                  <td className="px-6 py-4 text-center text-sm font-black text-gray-900 dark:text-white tabular-nums">
+                    {project.cellCount}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all',
+                            project.avgCompletion >= 90
+                              ? 'bg-emerald-500'
+                              : project.avgCompletion >= 50
+                                ? 'bg-indigo-500'
+                                : 'bg-rose-500',
+                          )}
+                          style={{ width: `${project.avgCompletion}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-black text-gray-700 dark:text-gray-300 tabular-nums w-8">
+                        {project.avgCompletion}%
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span
+                      className={cn(
+                        'inline-flex px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest border',
+                        project.status === 'Running'
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                          : project.status === 'OnHold'
+                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                            : 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+                      )}
+                    >
+                      {getStatusLabel(project.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {project.atRiskCellsCount > 0 ? (
+                      <div className="inline-flex items-center gap-1.5 text-rose-500">
+                        <AlertTriangle className="h-3 w-3" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                          {project.atRiskCellsCount} AT RISK
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                        STABLE
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default ProjectsPage
