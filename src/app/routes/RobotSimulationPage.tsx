@@ -329,70 +329,77 @@ function RobotSimulationStationsTable({
   return (
     <div className="h-full flex flex-col">
       {/* Search + reset */}
-      <div className="flex items-center gap-2 pb-3">
+      <div className="flex items-center gap-2 pb-4">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search robot, area, simulator, application..."
-          className="flex-1 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Search units..."
+          className="flex-1 text-xs font-bold uppercase tracking-widest rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] px-4 py-3 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all shadow-sm"
         />
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
-            className="inline-flex items-center gap-1 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2.5 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] px-4 py-3 text-gray-500 dark:text-gray-400 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition-all shadow-sm"
             title="Clear all filters"
           >
             <X className="h-3.5 w-3.5" />
-            Reset
+            Clear
           </button>
         )}
       </div>
 
       {/* Filter dropdowns */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pb-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pb-6">
+        {[
+          { value: areaFilter, setter: setAreaFilter, options: areaOptions, label: 'Area' },
+          {
+            value: applicationFilter,
+            setter: setApplicationFilter,
+            options: applicationOptions,
+            label: 'Application',
+          },
+          {
+            value: simulatorFilter,
+            setter: setSimulatorFilter,
+            options: simulatorOptions,
+            label: 'Simulator',
+          },
+        ].map((filter, idx) => (
+          <select
+            key={idx}
+            className="text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] px-4 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer hover:border-indigo-500 transition-all shadow-sm"
+            value={filter.value}
+            onChange={(e) => filter.setter(e.target.value)}
+          >
+            {filter.options.map((opt) => (
+              <option
+                key={opt}
+                value={opt}
+                className="bg-white dark:bg-[rgb(31,41,55)] text-gray-900 dark:text-white"
+              >
+                {opt === 'ALL' ? `All ${filter.label}s` : opt}
+              </option>
+            ))}
+          </select>
+        ))}
         <select
-          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
-          value={areaFilter}
-          onChange={(e) => setAreaFilter(e.target.value)}
-        >
-          {areaOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt === 'ALL' ? 'All Areas' : opt}
-            </option>
-          ))}
-        </select>
-        <select
-          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
-          value={applicationFilter}
-          onChange={(e) => setApplicationFilter(e.target.value)}
-        >
-          {applicationOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt === 'ALL' ? 'All Applications' : opt}
-            </option>
-          ))}
-        </select>
-        <select
-          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
-          value={simulatorFilter}
-          onChange={(e) => setSimulatorFilter(e.target.value)}
-        >
-          {simulatorOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt === 'ALL' ? 'All Simulators' : opt}
-            </option>
-          ))}
-        </select>
-        <select
-          className="text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2"
+          className="text-[10px] font-black uppercase tracking-widest rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] px-4 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer hover:border-indigo-500 transition-all shadow-sm"
           value={completionFilter}
           onChange={(e) => setCompletionFilter(e.target.value as any)}
         >
-          <option value="ALL">All Completion</option>
-          <option value="NOT_STARTED">Not Started (0%)</option>
-          <option value="IN_PROGRESS">In Progress (1-99%)</option>
-          <option value="COMPLETE">Complete (100%)</option>
+          <option value="ALL" className="bg-white dark:bg-[rgb(31,41,55)]">
+            All Sync Status
+          </option>
+          <option value="NOT_STARTED" className="bg-white dark:bg-[rgb(31,41,55)]">
+            Pending (0%)
+          </option>
+          <option value="IN_PROGRESS" className="bg-white dark:bg-[rgb(31,41,55)]">
+            Syncing (1-99%)
+          </option>
+          <option value="COMPLETE" className="bg-white dark:bg-[rgb(31,41,55)]">
+            Complete (100%)
+          </option>
         </select>
       </div>
 
@@ -421,8 +428,8 @@ function RobotSimulationStationsTable({
 
       {/* Table */}
       <div className="flex-1 min-h-0 max-h-[535px] overflow-auto custom-scrollbar">
-        <table className="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-[rgb(18,24,39)] text-sm">
-          <thead className="bg-gray-50 dark:bg-[rgb(18,24,39)] sticky top-0 z-10">
+        <table className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[rgb(31,41,55)] text-sm">
+          <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
                 className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
@@ -456,7 +463,7 @@ function RobotSimulationStationsTable({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-white/5 text-gray-800 dark:text-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
             {filteredAndSorted.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">
@@ -521,18 +528,18 @@ function RobotSimulationStationsTable({
                         <div className="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              row.cell.simulationStatus.firstStageCompletion >= 100
-                                ? 'bg-green-500'
+                              row.cell.simulationStatus.firstStageCompletion >= 90
+                                ? 'bg-emerald-500'
                                 : row.cell.simulationStatus.firstStageCompletion >= 50
-                                  ? 'bg-blue-500'
-                                  : 'bg-amber-400'
+                                  ? 'bg-amber-500'
+                                  : 'bg-rose-500'
                             }`}
                             style={{
                               width: `${Math.min(100, Math.max(0, row.cell.simulationStatus.firstStageCompletion))}%`,
                             }}
                           />
                         </div>
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        <span className="text-gray-700 dark:text-gray-300 font-medium">
                           {Math.round(row.cell.simulationStatus.firstStageCompletion)}%
                         </span>
                       </div>
@@ -719,45 +726,45 @@ function RobotSimulationPage() {
       {/* Statistics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="relative group cursor-default">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
             title="Total Units"
             value={tableCells.length}
-            icon={<Bot className="h-6 w-6" />}
-            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+            icon={<Bot className="h-6 w-6 text-indigo-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-indigo-500/50 transition-colors"
           />
         </div>
         <div className="relative group cursor-default">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
             title="Work Nodes"
             value={new Set(tableCells.map((c) => c.stationKey)).size}
-            icon={<Target className="h-6 w-6" />}
-            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+            icon={<Target className="h-6 w-6 text-emerald-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-emerald-500/50 transition-colors"
           />
         </div>
         <div className="relative group cursor-default">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-rose-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
             title="Avg Sync"
             value={`${avgCompletion}%`}
-            icon={<Activity className="h-6 w-6" />}
-            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+            icon={<Activity className="h-6 w-6 text-amber-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-amber-500/50 transition-colors"
           />
         </div>
         <div className="relative group cursor-default">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl blur opacity-5 group-hover:opacity-15 transition duration-1000" />
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
             title="Project Areas"
             value={new Set(tableCells.map((c) => c.areaKey)).size}
-            icon={<Layers className="h-6 w-6" />}
-            className="relative border-none bg-white dark:bg-[rgb(31,41,55)] shadow-md"
+            icon={<Layers className="h-6 w-6 text-purple-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-purple-500/50 transition-colors"
           />
         </div>
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
-        <section className="lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-[rgb(18,24,39)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col h-fit">
+        <section className="lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col h-fit">
           <div className="overflow-hidden min-h-0">
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
@@ -770,7 +777,7 @@ function RobotSimulationPage() {
           </div>
         </section>
 
-        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-[rgb(18,24,39)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col min-h-0 h-full overflow-hidden">
+        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col min-h-0 h-full overflow-hidden">
           {selectedRow ? (
             <div className="space-y-4 flex-1 min-h-0 h-full">
               <div className="rounded-2xl border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 p-4 transition-all">
@@ -780,7 +787,7 @@ function RobotSimulationPage() {
                       {selectedRow.label}
                     </h2>
                     <div className="mt-1 flex items-center gap-2">
-                      <div className="p-1 rounded-md bg-blue-500/10 text-blue-500">
+                      <div className="p-1 rounded-md bg-indigo-500/10 text-indigo-500">
                         <Target className="h-3 w-3" />
                       </div>
                       <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
@@ -797,7 +804,7 @@ function RobotSimulationPage() {
                             completion >= 100
                               ? 'bg-green-500'
                               : completion >= 50
-                                ? 'bg-blue-500'
+                                ? 'bg-indigo-500'
                                 : completion > 0
                                   ? 'bg-amber-400'
                                   : 'bg-gray-400'
@@ -822,7 +829,7 @@ function RobotSimulationPage() {
                     </span>
                     <Link
                       to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
-                      className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tight hover:underline flex items-center gap-1.5"
+                      className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tight hover:underline flex items-center gap-1.5"
                     >
                       {selectedRow.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
                     </Link>
@@ -859,7 +866,7 @@ function RobotSimulationPage() {
                         className="w-full text-left rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/5 p-4 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-white/10 transition-all group"
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                             {title}
                           </span>
                           <span
@@ -879,7 +886,7 @@ function RobotSimulationPage() {
                                 ? completion >= 100
                                   ? 'bg-green-500'
                                   : completion >= 50
-                                    ? 'bg-blue-500'
+                                    ? 'bg-indigo-500'
                                     : completion > 0
                                       ? 'bg-amber-400'
                                       : 'bg-gray-300 dark:bg-gray-600'
