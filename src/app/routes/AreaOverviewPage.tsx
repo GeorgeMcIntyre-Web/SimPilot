@@ -204,7 +204,7 @@ export function AreaOverviewPage() {
             <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
               Area Overview
             </h2>
-            <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               {title}
             </h1>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed pt-2">
