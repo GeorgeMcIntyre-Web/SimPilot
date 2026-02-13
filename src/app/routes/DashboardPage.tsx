@@ -3,8 +3,8 @@
 // Shows Today s Overview strip, Area overview cards, and Stations table
 
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { Search, ChevronRight } from 'lucide-react'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { PageHint } from '../../ui/components/PageHint'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -171,17 +171,40 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8 relative" data-testid="dashboard-root">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <PageHeader
-          title={'Dashboard'}
-          subtitle={
-            <PageHint
-              standardText="Overview of simulation progress"
-              flowerText="Your daily mission control for station health and focus areas."
-            />
-          }
-        />
+      {/* Premium Header / Breadcrumbs */}
+      <div className="flex flex-col gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="text-gray-400 hover:text-indigo-600 transition-colors">
+            SimPilot
+          </Link>
+          <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-700" />
+          <span className="text-gray-900 dark:text-gray-200">Dashboard</span>
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              Projects <span className="text-indigo-600 dark:text-indigo-400">Dashboard</span>
+            </h1>
+            <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+              Operations Intelligence
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
+              <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+              <div>
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
+                  System Load
+                </div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
+                  Optimal Performance
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Area Overview Cards Section */}

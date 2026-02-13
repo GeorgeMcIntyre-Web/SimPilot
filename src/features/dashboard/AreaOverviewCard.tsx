@@ -168,7 +168,7 @@ export function AreaOverviewCard({
             }}
             className="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-white/5 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 transition-all duration-200 border border-transparent"
           >
-            Insights
+            View
             <ArrowUpRight className="h-3 w-3" />
           </button>
         )}
