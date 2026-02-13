@@ -207,13 +207,6 @@ export function AreaOverviewPage() {
             <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               {title}
             </h1>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed pt-2">
-              Performance metrics, schedule integrity, and discipline readiness for project node{' '}
-              <span className="text-gray-900 dark:text-white font-bold border-b-2 border-indigo-500/50">
-                {title}
-              </span>
-              .
-            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -366,7 +359,7 @@ export function AreaOverviewPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  Discipline Health
+                  Simulation Stages
                 </h2>
               </div>
 
