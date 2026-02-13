@@ -232,7 +232,6 @@ export function DashboardPage() {
         </div>
 
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-gray-950 pointer-events-none z-10 h-12 bottom-0 hidden md:block" />
           <AreaCardsGrid
             areas={filteredAreas}
             selectedArea={selectedArea}
