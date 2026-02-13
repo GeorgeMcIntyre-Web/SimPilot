@@ -437,7 +437,7 @@ export function TimelineView() {
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
             <AlertCircle className="h-4 w-4 mr-2 text-orange-500" />
-            Cells Without Schedule Data ({cellsWithoutData.length})
+            Stations Without Schedule Data ({cellsWithoutData.length})
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {cellsWithoutData.map((cell) => (
