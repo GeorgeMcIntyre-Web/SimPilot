@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../ui/components/PageHeader'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { StatusPill } from '../../ui/components/StatusPill'
@@ -11,8 +11,35 @@ export function ProjectDetailPage() {
   const project = useProjectById(projectId || '')
   const areas = useAreas(projectId)
   const cells = useCells(projectId)
-  const [selectedAreaId, setSelectedAreaId] = useState<string>('ALL')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // Directly derive selectedAreaId from URL, defaulting to 'ALL'
+  const selectedAreaId = useMemo(() => {
+    const fromUrl = searchParams.get('areaId')
+    if (!fromUrl || fromUrl.trim() === '') return 'ALL'
+    return fromUrl.trim()
+  }, [searchParams])
+
   const [areaSearch, setAreaSearch] = useState('')
+
+  // Sidebar area search filter
+  const normalizedAreaSearch = areaSearch.trim().toLowerCase()
+  const visibleAreas = useMemo(() => {
+    return normalizedAreaSearch
+      ? areas.filter((a: Area) => a.name.toLowerCase().includes(normalizedAreaSearch))
+      : areas
+  }, [areas, normalizedAreaSearch])
+
+  // Filter cells based on the selected area ID from the URL
+  const filteredCells = useMemo(() => {
+    const normalizedSelected = selectedAreaId.toUpperCase()
+    if (normalizedSelected === 'ALL' || normalizedSelected === '') return cells
+
+    return cells.filter((c: Cell) => {
+      if (!c.areaId) return false
+      return c.areaId.trim() === selectedAreaId
+    })
+  }, [cells, selectedAreaId])
 
   if (!project) {
     return (
@@ -22,15 +49,6 @@ export function ProjectDetailPage() {
       </div>
     )
   }
-
-  // Filter cells by area
-  const normalizedSearch = areaSearch.trim().toLowerCase()
-  const visibleAreas = normalizedSearch
-    ? areas.filter((a: Area) => a.name.toLowerCase().includes(normalizedSearch))
-    : areas
-
-  const filteredCells =
-    selectedAreaId === 'ALL' ? cells : cells.filter((c: Cell) => c.areaId === selectedAreaId)
 
   const getStationLabel = (c: Cell): string => {
     if (c.code) return c.code
@@ -61,17 +79,18 @@ export function ProjectDetailPage() {
       header: 'Area',
       accessor: (c) => {
         const areaName = areas.find((a: Area) => a.id === c.areaId)?.name || '-'
-        if (c.projectId) {
-          return (
-            <Link
-              to={`/projects/${c.projectId}`}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              {areaName}
-            </Link>
-          )
-        }
-        return areaName
+        return (
+          <button
+            onClick={() => {
+              if (c.areaId) {
+                setSearchParams({ areaId: c.areaId })
+              }
+            }}
+            className="text-left text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            {areaName}
+          </button>
+        )
       },
       sortValue: (c) => areas.find((a: Area) => a.id === c.areaId)?.name || '',
     },
@@ -171,9 +190,9 @@ export function ProjectDetailPage() {
             <div className="overflow-y-auto flex-1 p-4 custom-scrollbar">
               <div className="space-y-1">
                 <button
-                  onClick={() => setSelectedAreaId('ALL')}
+                  onClick={() => setSearchParams({ areaId: 'ALL' })}
                   className={`w-full text-left px-3 py-2 rounded-md text-sm ${
-                    selectedAreaId === 'ALL'
+                    selectedAreaId.toUpperCase() === 'ALL'
                       ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
@@ -183,7 +202,7 @@ export function ProjectDetailPage() {
                 {visibleAreas.map((area: Area) => (
                   <button
                     key={area.id}
-                    onClick={() => setSelectedAreaId(area.id)}
+                    onClick={() => setSearchParams({ areaId: area.id })}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm ${
                       selectedAreaId === area.id
                         ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
@@ -213,6 +232,7 @@ export function ProjectDetailPage() {
             </div>
             <div className="flex-1 overflow-hidden">
               <DataTable
+                key={selectedAreaId}
                 data={filteredCells}
                 columns={columns}
                 enableSorting
