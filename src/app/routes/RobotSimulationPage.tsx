@@ -420,43 +420,43 @@ function RobotSimulationStationsTable({
       </div>
 
       {/* Table */}
-      <div className="flex-1 min-h-0 max-h-[600px] overflow-auto custom-scrollbar">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
+      <div className="flex-1 min-h-0 max-h-[535px] overflow-auto custom-scrollbar">
+        <table className="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-[rgb(18,24,39)] text-sm">
+          <thead className="bg-gray-50 dark:bg-[rgb(18,24,39)] sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
-                className="w-full py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('robot')}
               >
                 Robot <SortIcon column="robot" />
               </th>
               <th
-                className="py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-1 py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('area')}
               >
                 Area <SortIcon column="area" />
               </th>
               <th
-                className="w-1 whitespace-nowrap py-3 px-1.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-1 whitespace-nowrap py-3 px-0.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('application')}
               >
                 Application <SortIcon column="application" />
               </th>
               <th
-                className="w-1 whitespace-nowrap py-3 px-1.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-1 whitespace-nowrap py-3 px-0.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('simulator')}
               >
                 Simulator <SortIcon column="simulator" />
               </th>
               <th
-                className="py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="w-1 whitespace-nowrap py-3 px-0.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('completion')}
               >
-                Completion <SortIcon column="completion" />
+                Sync <SortIcon column="completion" />
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-white/5 text-gray-800 dark:text-gray-200">
             {filteredAndSorted.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">
@@ -489,7 +489,7 @@ function RobotSimulationStationsTable({
                       </span>
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                  <td className="w-1 whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
                     {row.cell.projectId ? (
                       <Link
                         to={`/projects/${row.cell.projectId}`}
@@ -502,10 +502,10 @@ function RobotSimulationStationsTable({
                       (row.cell.areaKey ?? 'Unknown')
                     )}
                   </td>
-                  <td className="w-1 whitespace-nowrap px-1.5 py-3 text-gray-500 dark:text-gray-400">
+                  <td className="w-1 whitespace-nowrap px-0.5 py-3 text-gray-500 dark:text-gray-400">
                     {row.application ?? 'Unknown'}
                   </td>
-                  <td className="w-1 whitespace-nowrap px-1.5 py-3 text-gray-700 dark:text-gray-300">
+                  <td className="w-1 whitespace-nowrap px-0.5 py-3 text-gray-700 dark:text-gray-300">
                     <Link
                       to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
@@ -515,10 +515,10 @@ function RobotSimulationStationsTable({
                       {row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
                     </Link>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">
+                  <td className="w-1 whitespace-nowrap px-0.5 py-3">
                     {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div className="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               row.cell.simulationStatus.firstStageCompletion >= 100
@@ -638,7 +638,7 @@ function RobotSimulationPage() {
 
   if (!loading && tableCells.length === 0) {
     return (
-      <div className="space-y-8 pb-12">
+      <div className="space-y-8 pb-4">
         <div className="flex flex-col gap-4">
           <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
             <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
@@ -679,7 +679,7 @@ function RobotSimulationPage() {
       : 0
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-4">
       {/* Premium Header / Breadcrumbs */}
       <div className="flex flex-col gap-4">
         <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
@@ -757,8 +757,8 @@ function RobotSimulationPage() {
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6">
-        <section className="flex-1 lg:flex-none lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0">
-          <div className="flex-1 overflow-hidden min-h-0">
+        <section className="lg:basis-[65%] lg:max-w-[65%] bg-white dark:bg-[rgb(18,24,39)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col h-fit">
+          <div className="overflow-hidden min-h-0">
             {loading ? (
               <div className="text-sm text-gray-500 dark:text-gray-400">Loading stations...</div>
             ) : (
@@ -770,68 +770,80 @@ function RobotSimulationPage() {
           </div>
         </section>
 
-        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col min-h-0 h-full overflow-hidden">
+        <section className="flex-1 lg:flex-none lg:basis-[35%] lg:max-w-[35%] bg-white dark:bg-[rgb(18,24,39)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col min-h-0 h-full overflow-hidden">
           {selectedRow ? (
-            <div className="space-y-3 flex-1 min-h-0 h-full">
-              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 shadow-sm">
-                {/* Top row: Robot name + badges */}
-                <div className="flex items-start justify-between gap-3">
+            <div className="space-y-4 flex-1 min-h-0 h-full">
+              <div className="rounded-2xl border border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5 p-4 transition-all">
+                <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <h2 className="text-base font-bold text-gray-900 dark:text-white tracking-tight truncate">
+                    <h2 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
                       {selectedRow.label}
                     </h2>
-                    <p className="mt-0.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                      Station {selectedRow.cell.stationKey}
-                    </p>
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-1.5">
-                    {selectedRow.cell.projectId ? (
-                      <Link
-                        to={`/projects/${selectedRow.cell.projectId}`}
-                        className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 ring-1 ring-inset ring-blue-200 dark:ring-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                      >
-                        {selectedRow.cell.areaKey ?? 'Unknown'}
-                      </Link>
-                    ) : (
-                      <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 ring-1 ring-inset ring-blue-200 dark:ring-blue-700">
-                        {selectedRow.cell.areaKey ?? 'Unknown'}
+                    <div className="mt-1 flex items-center gap-2">
+                      <div className="p-1 rounded-md bg-blue-500/10 text-blue-500">
+                        <Target className="h-3 w-3" />
+                      </div>
+                      <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">
+                        Station {selectedRow.cell.stationKey}
                       </span>
-                    )}
-                    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 ring-1 ring-inset ring-amber-200 dark:ring-amber-700">
-                      {selectedRow.cell.simulationStatus?.application ?? 'Unknown'}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 text-right">
+                    {(() => {
+                      const completion = parseFloat(getRowOverallCompletion(selectedRow)) || 0
+                      return (
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-white text-[9px] font-black uppercase tracking-widest whitespace-nowrap ${
+                            completion >= 100
+                              ? 'bg-green-500'
+                              : completion >= 50
+                                ? 'bg-blue-500'
+                                : completion > 0
+                                  ? 'bg-amber-400'
+                                  : 'bg-gray-400'
+                          }`}
+                        >
+                          {getRowOverallCompletion(selectedRow)}
+                        </span>
+                      )
+                    })()}
+                    <span className="text-[8px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Overall Sync
                     </span>
                   </div>
                 </div>
 
-                {/* Divider */}
-                <div className="my-3 border-t border-gray-200 dark:border-gray-700" />
+                <div className="my-4 border-t border-gray-200 dark:border-white/5" />
 
-                {/* Metadata row */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
                       Simulator
                     </span>
                     <Link
                       to={`/engineers?highlightEngineer=${encodeURIComponent(selectedRow.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
-                      className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-tight hover:underline flex items-center gap-1.5"
                     >
                       {selectedRow.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
                     </Link>
                   </div>
                   <div>
-                    <span className="block text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-0.5">
-                      Completion
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-2">
+                      Application
                     </span>
-                    <span className="text-sm font-bold text-gray-900 dark:text-white">
-                      {getRowOverallCompletion(selectedRow)}
+                    <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tight">
+                      {selectedRow.cell.simulationStatus?.application ?? 'Unknown'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex-1 min-h-0 max-h-[600px] flex flex-col overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1">
+              <div className="space-y-4 flex-1 min-h-0 max-h-[535px] overflow-y-auto custom-scrollbar pr-2">
+                <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.3em] flex items-center gap-2 mb-4">
+                  <Activity className="h-3 w-3" />
+                  Technical Aspects
+                </h4>
+                <div className="grid grid-cols-1 gap-3">
                   {PANEL_CONFIGS.map(({ title, panelType, slug }) => {
                     const completion = getRowPanelMilestones(selectedRow, panelType)
                     const hasData = completion !== null
@@ -844,29 +856,33 @@ function RobotSimulationPage() {
                             `/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}&station=${encodeURIComponent(selectedRow.cell.stationKey)}`,
                           )
                         }
-                        className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 hover:border-blue-300 dark:hover:border-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full text-left rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/5 p-4 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-white/10 transition-all group"
                       >
-                        <div className="flex items-start justify-between text-sm font-semibold text-gray-900 dark:text-white gap-2">
-                          <span className="whitespace-normal leading-tight">{title}</span>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {title}
+                          </span>
                           <span
                             className={
                               hasData
-                                ? 'text-gray-700 dark:text-gray-200'
-                                : 'text-gray-400 dark:text-gray-500'
+                                ? 'text-xs font-black tabular-nums text-gray-900 dark:text-white'
+                                : 'text-xs font-black tabular-nums text-gray-400'
                             }
                           >
                             {hasData ? `${completion}%` : 'N/A'}
                           </span>
                         </div>
-                        <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div className="h-1 rounded-full bg-gray-200 dark:bg-white/5 overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${
+                            className={`h-full transition-all duration-500 ${
                               hasData
-                                ? completion === 100
+                                ? completion >= 100
                                   ? 'bg-green-500'
-                                  : completion > 0
+                                  : completion >= 50
                                     ? 'bg-blue-500'
-                                    : 'bg-gray-300 dark:bg-gray-600'
+                                    : completion > 0
+                                      ? 'bg-amber-400'
+                                      : 'bg-gray-300 dark:bg-gray-600'
                                 : 'bg-gray-300 dark:bg-gray-600'
                             }`}
                             style={{ width: hasData ? `${completion}%` : '0%' }}
@@ -879,9 +895,17 @@ function RobotSimulationPage() {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Select a station to see details here.
-            </p>
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="p-4 rounded-full bg-gray-50 dark:bg-white/5 text-gray-300 mb-4">
+                <Bot className="h-12 w-12 opacity-20" />
+              </div>
+              <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest">
+                Select physical unit
+              </h3>
+              <p className="text-[10px] font-bold text-gray-500 max-w-[200px] mt-2">
+                Pick a robot from the registry to view its digital twin synchronization status.
+              </p>
+            </div>
           )}
         </section>
       </div>
