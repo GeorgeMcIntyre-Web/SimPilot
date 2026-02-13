@@ -200,13 +200,16 @@ export function AreaOverviewPage() {
         </nav>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
-              Area <span className="text-indigo-600 dark:text-indigo-400">Overview</span>
+          <div className="space-y-1">
+            <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+              Area Overview
+            </h2>
+            <h1 className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              {title}
             </h1>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed pt-2">
               Performance metrics, schedule integrity, and discipline readiness for project node{' '}
-              <span className="text-gray-900 dark:text-white font-bold underline decoration-indigo-500/30 underline-offset-4">
+              <span className="text-gray-900 dark:text-white font-bold border-b-2 border-indigo-500/50">
                 {title}
               </span>
               .
