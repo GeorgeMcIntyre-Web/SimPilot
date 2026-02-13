@@ -173,6 +173,8 @@ export async function parseRobotList(
     'ROBO NO. OLD',
     // Install status for Ford Robot Equipment List
     'INSTALL STATUS',
+    'APPLICATION',
+    'APP',
   ])
 
   // Parse data rows
@@ -301,6 +303,10 @@ export async function parseRobotList(
       getCellString(row, columnMap, 'ROBOT TYPE CONFIRMED') ||
       undefined
 
+    // Extract Application (Functional role)
+    const application =
+      getCellString(row, columnMap, 'APPLICATION') || getCellString(row, columnMap, 'APP')
+
     // Extract optional fields
     const oemModel =
       getCellString(row, columnMap, 'OEM MODEL') ||
@@ -315,6 +321,7 @@ export async function parseRobotList(
       ...(eNumber ? { serialNumber: eNumber } : {}),
       robotNumber: robotNumber,
       ...(roboNoNew ? { 'Robo No. New': roboNoNew } : {}),
+      ...(application ? { application } : {}),
     }
     const consumedHeaders = [
       'ROBOT',

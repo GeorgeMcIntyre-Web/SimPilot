@@ -283,7 +283,43 @@ export function CellDetailPage() {
       },
     },
     { header: 'Model', accessor: (r) => r.oemModel || '-' },
-    { header: 'Station', accessor: (r) => r.stationCode || '-' },
+    {
+      header: 'Application',
+      accessor: (r) => {
+        const rawApp =
+          (r.metadata?.application as string) ||
+          (r.metadata?.['Robot Function'] as string) ||
+          (r.metadata?.['Application'] as string) ||
+          (r.metadata?.robotType as string) ||
+          (r.metadata?.['Robot Type'] as string) ||
+          '—'
+
+        const appMap: Record<string, string> = {
+          'SELF PIERCE RIVET': 'SPR',
+          'SELF PIERCE RIVETING': 'SPR',
+          'SPOT WELD': 'SW',
+          'SPOT WELDING': 'SW',
+          'MATERIAL HANDLING': 'MH',
+          'STUD WELDING': 'STUD',
+          'STUD WELD': 'STUD',
+          'ARC WELDING': 'AW',
+          SEALER: 'SEA',
+          SEALING: 'SEA',
+          ADHESIVE: 'ADH',
+          'FLOW DRILL SCREW': 'FDS',
+          PROCESS: 'PROC',
+        }
+
+        const normalized = rawApp.toUpperCase().trim()
+        const app = appMap[normalized] || rawApp
+
+        return (
+          <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 text-[10px] font-bold uppercase tracking-wider">
+            {app}
+          </span>
+        )
+      },
+    },
     {
       header: 'Comment',
       accessor: (r) => {

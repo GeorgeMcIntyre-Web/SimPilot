@@ -263,6 +263,36 @@ function normalizeToolCode(raw: string | null | undefined): string | null {
   return trimmed.toUpperCase()
 }
 
+/**
+ * Normalize robot application names to standard abbreviations
+ * Examples:
+ *   "SPOT WELDING" → "SW"
+ *   "SELF PIERCE RIVET" → "SPR"
+ *   "MATERIAL HANDLING" → "MH"
+ */
+export function normalizeRobotApplication(raw: string | null | undefined): string {
+  if (!raw) return '—'
+
+  const appMap: Record<string, string> = {
+    'SELF PIERCE RIVET': 'SPR',
+    'SELF PIERCE RIVETING': 'SPR',
+    'SPOT WELD': 'SW',
+    'SPOT WELDING': 'SW',
+    'MATERIAL HANDLING': 'MH',
+    'STUD WELDING': 'STUD',
+    'STUD WELD': 'STUD',
+    'ARC WELDING': 'AW',
+    SEALER: 'SEA',
+    SEALING: 'SEA',
+    ADHESIVE: 'ADH',
+    'FLOW DRILL SCREW': 'FDS',
+    PROCESS: 'PROC',
+  }
+
+  const normalized = String(raw).toUpperCase().trim().replace(/\s+/g, ' ')
+  return appMap[normalized] || String(raw).trim()
+}
+
 // ============================================================================
 // AREA INFERENCE (for Assemblies Lists and Tool Lists)
 // ============================================================================
