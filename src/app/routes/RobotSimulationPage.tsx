@@ -703,7 +703,7 @@ function RobotSimulationPage() {
               Robot <span className="text-indigo-600 dark:text-indigo-400">Status</span>
             </h1>
             <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
-              Simulation Integritys
+              Simulation Integrity
             </h2>
           </div>
 

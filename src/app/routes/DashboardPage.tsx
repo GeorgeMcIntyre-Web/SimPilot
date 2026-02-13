@@ -247,10 +247,10 @@ export function DashboardPage() {
         <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-2 relative z-10">
           <div>
             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
-              {selectedArea ? `Nodes in ${selectedArea}` : 'All Project Nodes'}
+              {selectedArea ? `Nodes in ${selectedArea}` : 'Project Stations'}
             </h3>
             <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">
-              {visibleCells.length} Active Deployments
+              {visibleCells.length} Active Stations
             </p>
           </div>
         </div>
