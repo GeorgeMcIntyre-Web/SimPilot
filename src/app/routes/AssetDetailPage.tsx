@@ -13,9 +13,7 @@ import {
   ArrowRight,
   Shield,
   Info,
-  LayoutGrid,
   Package,
-  Building2,
   MessageSquare,
   AlertTriangle,
 } from 'lucide-react'
@@ -28,12 +26,7 @@ function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefine
   return getMetadataValue<T>(asset, key)
 }
 
-// Use consistent blue gradient matching CellDetailPage
-const HEADER_GRADIENT = {
-  light: 'from-blue-50 to-blue-100',
-  dark: 'dark:from-blue-950/30 dark:to-blue-900/30',
-  border: 'border-blue-200 dark:border-blue-800',
-}
+// Use consistent styling matching the app theme
 
 // ============================================================================
 // DETAIL ITEM COMPONENT
@@ -141,7 +134,6 @@ export function AssetDetailPage() {
     sourceWorkbookIdsJson !== undefined ? JSON.parse(sourceWorkbookIdsJson) : []
 
   // Additional metadata fields
-  const simulationSourceKind = extractMetadata<string>(asset, 'simulationSourceKind')
   const siteLocation = extractMetadata<string>(asset, 'siteLocation')
   const robotType =
     extractMetadata<string>(asset, 'robotType') ?? extractMetadata<string>(asset, 'Robot Type')
@@ -177,345 +169,322 @@ export function AssetDetailPage() {
     extractMetadata<string>(asset, 'Robot Application')
 
   return (
-    <div className="space-y-4" data-testid="asset-detail-root">
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
-        <Link to={breadcrumbRootHref} className="hover:text-blue-600 dark:hover:text-blue-400">
-          {breadcrumbRootLabel}
-        </Link>
-        <span>/</span>
-        <span className="text-gray-900 dark:text-white font-medium">{asset.name || 'Asset'}</span>
+    <div className="space-y-6" data-testid="asset-detail-root">
+      {/* Navigation & Actions */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+          <Link
+            to={breadcrumbRootHref}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            {breadcrumbRootLabel}
+          </Link>
+          <span className="text-gray-300 dark:text-gray-700">/</span>
+          <span className="text-gray-900 dark:text-gray-300">{asset.name || 'Asset'}</span>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          {isActive === false && (
+            <span className="inline-flex items-center gap-1 rounded bg-rose-50 dark:bg-rose-950/30 px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 uppercase">
+              <Shield className="h-3 w-3" />
+              Inactive
+            </span>
+          )}
+          <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
+          <SourcingBadge sourcing={asset.sourcing} />
+          {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
+        </div>
       </div>
 
-      {/* Header Card */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div
-          className={`bg-gradient-to-r ${HEADER_GRADIENT.light} ${HEADER_GRADIENT.dark} border-b ${HEADER_GRADIENT.border} px-4 py-3`}
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-gray-600 dark:text-gray-400">
-                  {asset.kind} Asset
-                </p>
-                {isActive === false && (
-                  <span className="inline-flex items-center gap-1 rounded border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-200">
-                    <Shield className="h-3 w-3" />
-                    Inactive
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+      {/* Main Header Card */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+        <div className="p-6 md:p-8 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="space-y-4 max-w-3xl">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                   {asset.name || 'Unnamed Asset'}
                 </h1>
-                <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
-                <SourcingBadge sourcing={asset.sourcing} />
-                {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                  {detailedKind || asset.kind} • {model || 'Generic Model'}
+                </p>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400 flex-wrap mt-2">
-                {assemblyLine && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    <MapPin className="h-3 w-3" />
-                    Line {assemblyLine}
-                  </span>
-                )}
-                {station && (
-                  <span className="rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    Station {station}
-                  </span>
-                )}
-                {projectCode && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/50 dark:bg-gray-800/50 px-2 py-0.5">
-                    <LayoutGrid className="h-3 w-3" />
-                    {projectCode}
-                  </span>
-                )}
+
+              <div className="flex flex-wrap items-center gap-y-3 gap-x-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
+                      Assembly Line
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">
+                      {assemblyLine || '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="h-8 w-px bg-gray-100 dark:bg-gray-700 hidden sm:block" />
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
+                    <Info className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
+                      Station
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">
+                      {station || '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="h-8 w-px bg-gray-100 dark:bg-gray-700 hidden sm:block" />
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
+                    <Package className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
+                      Assignment
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">
+                      {projectCode || 'No Project'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-2 text-right">
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Serial Number
+              </div>
+              <div className="text-lg font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 px-3 py-1 rounded border border-gray-100 dark:border-gray-700">
+                {serialNumber || 'UNKNOWN'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Key Metrics Grid */}
-        <div className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {/* Essential Info Banner */}
+        <div className="bg-gray-50/50 dark:bg-gray-900/20 px-6 py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <InfoPill label="Original Supplier" value={supplier || 'Not Specified'} />
+            <InfoPill label="Asset Group" value={detailedKind || 'Standard'} />
             <InfoPill
-              label="Model"
-              value={model || 'Unknown'}
-              icon={<Package className="h-3 w-3" />}
-            />
-            <InfoPill
-              label="Supplier"
-              value={supplier || 'Unknown'}
-              icon={<Building2 className="h-3 w-3" />}
-            />
-            <InfoPill
-              label="Sourcing"
+              label="Sourcing Path"
               value={asset.sourcing}
               tone={asset.sourcing === 'REUSE' ? 'ok' : undefined}
-              icon={<Recycle className="h-3 w-3" />}
             />
-            <InfoPill
-              label="Status"
-              value={isActive ? 'Active' : 'Inactive'}
-              tone={isActive ? 'ok' : 'warn'}
-              icon={<Shield className="h-3 w-3" />}
-            />
+            <InfoPill label="Primary Function" value={robotFunction || 'General'} />
           </div>
         </div>
       </div>
 
-      {/* Overview and Context Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Asset Overview */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5 text-gray-400" />
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                Asset Overview
-              </h3>
+      {/* Data Grid Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Primary Details & Specs */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Main Specifications Card */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+                <Package className="h-4 w-4 text-blue-500" />
+                Technical Specifications
+              </h2>
             </div>
-          </div>
-          <div className="p-3">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <DetailItem label="Kind" value={asset.kind} />
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-6">
+              <DetailItem label="Asset Kind" value={asset.kind} />
               <DetailItem label="Detailed Kind" value={detailedKind} />
-              <DetailItem label="Sourcing" value={asset.sourcing} />
-              <DetailItem label="Model" value={model} />
-              <DetailItem label="Supplier" value={supplier} />
-              <DetailItem label="Reference #" value={referenceNumber} />
-              <DetailItem label="Payload Class" value={payloadClass} />
-              <DetailItem label="Stand #" value={standNumber} />
+              <DetailItem label="Manufacturer" value={supplier} />
+              <DetailItem label="OEM Model" value={model} />
               <DetailItem
-                label="Source Type"
-                value={
-                  simulationSourceKind
-                    ? simulationSourceKind === 'InternalSimulation'
-                      ? 'Internal'
-                      : 'Outsource'
-                    : undefined
-                }
+                label="Payload Capability"
+                value={payloadKg !== undefined ? `${payloadKg} kg` : undefined}
               />
+              <DetailItem
+                label="Max Reach"
+                value={reachMm !== undefined ? `${reachMm} mm` : undefined}
+              />
+              <DetailItem label="Robot Type" value={robotType} />
+              <DetailItem label="Order Code" value={robotOrderCode} />
+              <DetailItem
+                label="Max Force"
+                value={maxForce !== undefined ? `${maxForce} kN` : undefined}
+              />
+              <DetailItem
+                label="Track Used"
+                value={trackUsed !== undefined ? (trackUsed ? 'Yes' : 'No') : undefined}
+              />
+              <DetailItem label="Payload Class" value={payloadClass} />
+              <DetailItem label="Stand Reference" value={standNumber} />
+            </div>
+
+            {/* Extended Attributes Footer */}
+            <div className="px-6 py-4 bg-gray-50/50 dark:bg-gray-800/20 border-t border-gray-100 dark:border-gray-700/50 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <DetailItem label="Reference #" value={referenceNumber} />
+              <DetailItem label="Sourcing" value={asset.sourcing} />
               <DetailItem
                 label="Site Location"
-                value={siteLocation && siteLocation !== 'Unknown' ? siteLocation : undefined}
-              />
-              <DetailItem
-                label="Last Updated"
                 value={
-                  lastUpdated
-                    ? new Date(lastUpdated).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    : undefined
+                  siteLocation && siteLocation !== 'Unknown' ? siteLocation : 'Default Factory'
                 }
               />
-            </dl>
-          </div>
-        </div>
-
-        {/* Simulation Context */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-gray-400" />
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                Simulation Context
-              </h3>
+              <DetailItem
+                label="Updated"
+                value={lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '—'}
+              />
             </div>
-          </div>
-          <div className="p-3">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
-              <DetailItem label="Program/Project" value={projectCode} />
-              <DetailItem label="Area" value={asset.areaName} />
-              <DetailItem label="Line" value={assemblyLine} />
-              <DetailItem label="Station" value={station} />
-              <DetailItem label="Robot #" value={robotNumber} />
-              <DetailItem label="Gun ID" value={gunId} />
-              <DetailItem label="Gun Number" value={gunNumber} />
-              <DetailItem label="Function" value={robotFunction} />
-              <DetailItem label="Application Code" value={applicationCode} />
-              <DetailItem label="Technology" value={technologyCode} />
-              <DetailItem label="Install Status" value={installStatus} />
-              <DetailItem label="Serial #" value={serialNumber} />
-            </dl>
-          </div>
-        </div>
-      </div>
+          </section>
 
-      {/* Technical Specifications */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-          <div className="flex items-center gap-1.5">
-            <Package className="h-3.5 w-3.5 text-gray-400" />
-            <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-              Technical Specifications
-            </h3>
-          </div>
-        </div>
-        <div className="p-3">
-          <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-3">
-            <DetailItem label="Type" value={robotType} />
-            <DetailItem label="Order Code" value={robotOrderCode} />
-            <DetailItem
-              label="Payload"
-              value={payloadKg !== undefined ? `${payloadKg} kg` : undefined}
-            />
-            <DetailItem label="Reach" value={reachMm !== undefined ? `${reachMm} mm` : undefined} />
-            <DetailItem
-              label="Track Used"
-              value={trackUsed !== undefined ? (trackUsed ? 'Yes' : 'No') : undefined}
-            />
-            <DetailItem
-              label="Max Force"
-              value={maxForce !== undefined ? `${maxForce} kN` : undefined}
-            />
-          </dl>
-        </div>
-      </div>
-
-      {/* Description */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-          <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-            Description
-          </h3>
-        </div>
-        <div className="p-3">
-          <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
-            {description || '—'}
-          </p>
-        </div>
-      </div>
-
-      {/* Comment and Application Concern Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Comment */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              <MessageSquare className="h-3.5 w-3.5 text-gray-400" />
-              <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-                Comment
-              </h3>
-            </div>
-          </div>
-          <div className="p-3">
-            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-              {comment || '—'}
-            </p>
-          </div>
-        </div>
-
-        {/* Application Concern */}
-        <div className="bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-800/60 rounded-lg overflow-hidden">
-          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/60 px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-              <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
-                Robot Application Concern
-              </h3>
-            </div>
-          </div>
-          <div className="p-3">
-            <p className="text-sm text-amber-900 dark:text-amber-100 leading-relaxed whitespace-pre-wrap">
-              {applicationConcern || '—'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Reuse Information */}
-      <div className="bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-lg overflow-hidden">
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-800/60 px-3 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Recycle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-200 uppercase tracking-wide">
-                Reuse Allocation
-              </h3>
-            </div>
-            {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="md" />}
-          </div>
-        </div>
-        <div className="p-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 p-3">
-              <div className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide mb-2">
-                Original Location
+          {/* Description & Intelligence */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                <Info className="h-3.5 w-3.5" />
+                Product Description
               </div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <DetailItem label="Project" value={oldProject} />
-                <DetailItem label="Area" value={oldArea} />
-                <DetailItem label="Line" value={oldLine} />
-                <DetailItem label="Station" value={oldStation} />
-              </dl>
-            </div>
-
-            <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-900/20 p-3">
-              <div className="text-[10px] font-semibold text-blue-700 dark:text-blue-200 uppercase tracking-wide mb-2">
-                Target Location
+              <div className="p-5 text-sm text-gray-700 dark:text-gray-300 leading-relaxed min-h-[100px]">
+                {description ||
+                  'No detailed description provided for this specific asset configuration.'}
               </div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <DetailItem label="Project" value={targetProject} />
-                <DetailItem label="Sector" value={targetSector} />
-                <DetailItem label="Line" value={targetLine} />
-                <DetailItem label="Station" value={targetStation} />
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
+            </section>
 
-      {/* Provenance */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700 px-3 py-2">
-          <div className="flex items-center gap-1.5">
-            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-            <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-              Provenance
-            </h3>
+            <section className="bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900/40 rounded-lg shadow-sm">
+              <div className="px-5 py-3 border-b border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Deployment Concerns
+              </div>
+              <div className="p-5 text-sm text-amber-900/80 dark:text-amber-200/80 leading-relaxed min-h-[100px]">
+                {applicationConcern ||
+                  'No standing deployment or safety concerns reported for this asset.'}
+              </div>
+            </section>
           </div>
+
+          {/* Comments Section */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              <MessageSquare className="h-3.5 w-3.5" />
+              Engineering Notes
+            </div>
+            <div className="p-5 text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed">
+              {comment ||
+                'No supplementary comments or notes have been logged for this asset record.'}
+            </div>
+          </section>
         </div>
-        <div className="p-3 space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
-            <span className="font-medium text-gray-700 dark:text-gray-300">Primary Workbook:</span>
-            <span className="font-mono text-xs text-gray-600 dark:text-gray-400">
-              {primaryWorkbookId || '—'}
-            </span>
-          </div>
-          <div className="flex items-start gap-2 text-sm">
-            <ArrowRight className="w-3.5 h-3.5 text-gray-400 mt-0.5" />
-            <div>
-              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Sources</div>
-              {sourceWorkbookIds.length > 0 ? (
-                <ul className="list-disc list-inside space-y-0.5">
-                  {sourceWorkbookIds.map((id) => (
-                    <li key={id} className="font-mono text-xs text-gray-600 dark:text-gray-400">
-                      {id}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <span className="text-sm text-gray-500 dark:text-gray-400">—</span>
+
+        {/* Right Column: Context & History */}
+        <div className="space-y-6">
+          {/* Operational Context */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
+                <MapPin className="h-4 w-4 text-blue-500" />
+                Placement Context
+              </h2>
+            </div>
+            <div className="p-5 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <DetailItem label="Area" value={asset.areaName} />
+                <DetailItem label="Line" value={assemblyLine} />
+                <DetailItem label="Station" value={station} />
+                <DetailItem label="Robot #" value={robotNumber} />
+                <DetailItem label="Function" value={robotFunction} />
+                <DetailItem label="Technology" value={technologyCode} />
+              </div>
+
+              <div className="pt-4 border-t border-gray-50 dark:border-gray-700/50">
+                <div className="grid grid-cols-2 gap-4">
+                  <DetailItem label="Gun ID" value={gunId} />
+                  <DetailItem label="Gun #" value={gunNumber} />
+                  <DetailItem label="App Code" value={applicationCode} />
+                  <DetailItem label="Install" value={installStatus} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Reuse Allocation */}
+          <section className="bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-900/40 rounded-lg shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-900/10 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-2 uppercase tracking-tight">
+                <Recycle className="h-4 w-4" />
+                Reuse Lifecycle
+              </h2>
+              {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
+            </div>
+            <div className="p-5 space-y-5">
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  Origin Point
+                </h4>
+                <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-md border border-gray-100 dark:border-gray-800">
+                  <DetailItem label="Project" value={oldProject} />
+                  <DetailItem label="Area" value={oldArea} />
+                  <DetailItem label="Line" value={oldLine} />
+                  <DetailItem label="Station" value={oldStation} />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest">
+                  Target Objective
+                </h4>
+                <div className="grid grid-cols-2 gap-3 bg-emerald-50/30 dark:bg-emerald-900/10 p-3 rounded-md border border-emerald-100/50 dark:border-emerald-900/50">
+                  <DetailItem label="Project" value={targetProject} />
+                  <DetailItem label="Sector" value={targetSector} />
+                  <DetailItem label="Line" value={targetLine} />
+                  <DetailItem label="Station" value={targetStation} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Provenance and traceability */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2 text-sm font-bold uppercase tracking-tight text-gray-900 dark:text-white">
+              <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+              Traceability
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="space-y-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                    Primary Data Source
+                  </span>
+                  <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 truncate">
+                    {primaryWorkbookId || asset.sourceFile || 'MANUAL_ENTRY'}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                    Location in Source
+                  </span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                    {asset.sheetName ? `${asset.sheetName} / Row ${asset.rowIndex ?? '—'}` : 'N/A'}
+                  </span>
+                </div>
+              </div>
+              {sourceWorkbookIds.length > 0 && (
+                <div className="pt-4 border-t border-gray-50 dark:border-gray-700/50">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 block">
+                    Secondary References
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {sourceWorkbookIds.map((id, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] font-mono bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400"
+                      >
+                        {id}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <DetailItem label="Source File" value={asset.sourceFile} />
-            <DetailItem
-              label="Sheet / Row"
-              value={`${asset.sheetName ?? '—'}${asset.rowIndex !== undefined ? ` / ${asset.rowIndex}` : ''}`}
-            />
-            <DetailItem label="Station ID" value={asset.stationId} />
-            <DetailItem label="Robot ID" value={asset.robotId} />
-            <DetailItem label="Tool ID" value={asset.toolId} />
-            <DetailItem label="Notes" value={asset.notes} className="col-span-2 md:col-span-3" />
-          </div>
+          </section>
         </div>
       </div>
     </div>
