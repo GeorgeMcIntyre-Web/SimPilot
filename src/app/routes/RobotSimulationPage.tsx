@@ -496,7 +496,7 @@ function RobotSimulationStationsTable({
                       </span>
                     )}
                   </td>
-                  <td className="w-1 whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                  <td className="whitespace-nowrap px-0 py-0 text-gray-500 dark:text-gray-400">
                     {row.cell.projectId ? (
                       <Link
                         to={`/projects/${row.cell.projectId}`}
