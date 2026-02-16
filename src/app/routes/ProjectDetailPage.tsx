@@ -139,7 +139,7 @@ export function ProjectDetailPage() {
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               {project.name.split(' ')[0]}{' '}
               <span className="text-indigo-600 dark:text-indigo-400">
-                {project.name.split(' ').slice(1).join(' ') || 'Node'}
+                {project.name.split(' ').slice(1).join(' ') || 'Project'}
               </span>
             </h1>
           </div>
