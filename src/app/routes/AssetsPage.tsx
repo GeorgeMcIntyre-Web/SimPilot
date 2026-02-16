@@ -268,7 +268,7 @@ export function AssetsPage() {
           <div className="flex items-center gap-2">
             <ChevronRight className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
             <span className="text-[10px] font-black uppercase tracking-widest text-indigo-900 dark:text-indigo-100">
-              Linked from Simulation: {linkedContextLabel}
+              Linked from Simulation
             </span>
           </div>
           <button

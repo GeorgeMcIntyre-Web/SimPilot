@@ -581,7 +581,7 @@ export function CellDetailPage() {
             <div className="px-5 py-4 border-b border-rose-100 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-900/10 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-rose-500" />
               <h3 className="text-sm font-bold text-rose-800 dark:text-rose-400 uppercase tracking-tight">
-                Integrity Flags ({crossRefFlags.length})
+                Issues of concern ({crossRefFlags.length})
               </h3>
             </div>
             <div className="p-5 max-h-[480px] overflow-y-auto custom-scrollbar">
