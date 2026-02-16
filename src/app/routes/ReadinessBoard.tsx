@@ -71,7 +71,7 @@ export function ReadinessBoard() {
   >([])
   const [searchTerm, setSearchTerm] = useState('')
   const [sortMode, setSortMode] = useState<'risk' | 'due'>('risk')
-  const [density, setDensity] = useState<'compact' | 'comfortable'>('compact')
+  //const [density, setDensity] = useState<'compact' | 'comfortable'>('compact')
 
   // Map cell risks for quick lookup
   const riskMap = useMemo(() => {
@@ -313,7 +313,6 @@ export function ReadinessBoard() {
               <div className="h-6 w-px bg-gray-200 dark:bg-white/10 mx-1" />
 
               <SortToggle sortMode={sortMode} onChange={setSortMode} />
-              <DensityToggle density={density} onChange={setDensity} />
             </div>
           </div>
 
@@ -374,7 +373,7 @@ export function ReadinessBoard() {
                     <StationReadinessCard
                       key={item.station.contextKey}
                       item={item}
-                      density={density}
+                      density={'compact'}
                     />
                   ))}
                 </div>
@@ -642,41 +641,6 @@ function SortToggle({
         )}
       >
         DUE
-      </button>
-    </div>
-  )
-}
-
-function DensityToggle({
-  density,
-  onChange,
-}: {
-  density: 'compact' | 'comfortable'
-  onChange: (d: 'compact' | 'comfortable') => void
-}) {
-  return (
-    <div className="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-white/10 px-1 py-1 bg-white dark:bg-black/20 shadow-sm">
-      <button
-        onClick={() => onChange('compact')}
-        className={cn(
-          'px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
-          density === 'compact'
-            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
-        )}
-      >
-        GRID
-      </button>
-      <button
-        onClick={() => onChange('comfortable')}
-        className={cn(
-          'px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
-          density === 'comfortable'
-            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
-            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
-        )}
-      >
-        COZY
       </button>
     </div>
   )
