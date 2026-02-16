@@ -4,7 +4,11 @@
 
 import { AlertCircle, AlertTriangle, Info, ChevronRight, Sparkles } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
-import { useStationsNeedingAttention, type StationAttentionItem, getCompletionBarClass } from '../simulationSelectors'
+import {
+  useStationsNeedingAttention,
+  type StationAttentionItem,
+  getCompletionBarClass,
+} from '../simulationSelectors'
 import type { StationContext } from '../simulationStore'
 
 // ============================================================================
@@ -47,7 +51,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
       className={cn(
         'w-full flex items-start gap-3 px-3 py-2 rounded-lg text-left transition-colors',
         'hover:bg-gray-100 dark:hover:bg-gray-700/50',
-        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset'
+        'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset',
       )}
       data-testid={`attention-item-${item.station.contextKey}`}
     >
@@ -64,9 +68,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
           <span className="text-gray-500 dark:text-gray-400 truncate">{station.unit}</span>
         </div>
         <div className="flex items-start justify-between gap-2">
-          <div className="text-[11px] text-gray-600 dark:text-gray-400 truncate">
-            {item.reason}
-          </div>
+          <div className="text-[11px] text-gray-600 dark:text-gray-400 truncate">{item.reason}</div>
           <div className="flex items-center gap-2 text-[10px] shrink-0">
             <div className="flex items-center gap-1 w-24">
               <div className="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -74,7 +76,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
                   className={cn(
                     'h-full transition-all duration-300',
                     'bg-gradient-to-r from-blue-500 via-blue-400 to-emerald-400',
-                    getCompletionBarClass(completion)
+                    getCompletionBarClass(completion),
                   )}
                   style={{ width: `${completion ?? 0}%` }}
                 />
@@ -99,10 +101,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function DaleTodayPanel({
-  onStationClick,
-  maxItems
-}: DaleTodayPanelProps) {
+export function DaleTodayPanel({ onStationClick, maxItems }: DaleTodayPanelProps) {
   const allAttentionItems = useStationsNeedingAttention()
   const attentionItems = maxItems ? allAttentionItems.slice(0, maxItems) : allAttentionItems
 
@@ -117,9 +116,7 @@ export function DaleTodayPanel({
             <Sparkles className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">
-              All clear
-            </h3>
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">All clear</h3>
             <p className="text-[13px] text-gray-600 dark:text-gray-300 truncate">
               No stations need attention right now.
             </p>
@@ -129,8 +126,8 @@ export function DaleTodayPanel({
     )
   }
 
-  const errorCount = attentionItems.filter(i => i.severity === 'error').length
-  const warningCount = attentionItems.filter(i => i.severity === 'warning').length
+  const errorCount = attentionItems.filter((i) => i.severity === 'error').length
+  const warningCount = attentionItems.filter((i) => i.severity === 'warning').length
 
   return (
     <div
@@ -148,9 +145,6 @@ export function DaleTodayPanel({
               <h3 className="font-semibold text-sm text-gray-900 dark:text-white leading-tight">
                 Today's Focus
               </h3>
-              <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-tight">
-                Stations needing immediate attention
-              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5">
@@ -176,7 +170,7 @@ export function DaleTodayPanel({
         className="divide-y divide-gray-100 dark:divide-gray-700 overflow-y-auto max-h-64 custom-scrollbar"
         aria-label="Today's focus station list"
       >
-        {attentionItems.map(item => (
+        {attentionItems.map((item) => (
           <AttentionItemRow
             key={item.station.contextKey}
             item={item}
