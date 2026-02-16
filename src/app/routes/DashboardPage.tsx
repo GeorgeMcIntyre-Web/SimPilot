@@ -197,7 +197,6 @@ export function DashboardPage() {
               Areas <span className="text-indigo-600 dark:text-indigo-400">Overview</span>
             </h2>
           </div>
-
           {hasAreas && (
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative group w-full sm:w-64">
