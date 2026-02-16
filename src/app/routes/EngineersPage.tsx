@@ -372,7 +372,7 @@ export function EngineersPage() {
         <div className="relative group cursor-default">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
-            title="Total Engineers"
+            title="Total Simulation Engineers"
             value={metrics.length}
             icon={<Users className="h-6 w-6 text-indigo-500" />}
             className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-indigo-500/50 transition-colors"
@@ -381,7 +381,7 @@ export function EngineersPage() {
         <div className="relative group cursor-default">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
-            title="With At-Risk Cells"
+            title="At-Risk Cells"
             value={atRiskEngineers}
             icon={<AlertTriangle className="h-6 w-6 text-amber-500" />}
             className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-amber-500/50 transition-colors"

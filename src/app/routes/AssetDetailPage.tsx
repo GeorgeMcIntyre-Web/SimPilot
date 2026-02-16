@@ -190,7 +190,6 @@ export function AssetDetailPage() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 dark:text-gray-200">{asset.name || 'Asset'}</span>
         </nav>
-
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
@@ -198,7 +197,6 @@ export function AssetDetailPage() {
             </h1>
             <p className="text-xs text-gray-600 dark:text-gray-400">{detailedKind || asset.kind}</p>
           </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             {isActive === false && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20">
