@@ -602,7 +602,7 @@ export function EngineersPage() {
             </div>
             <button
               onClick={() => setSelectedEngineerName(null)}
-              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              className="text-[15px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             >
               Close
             </button>
