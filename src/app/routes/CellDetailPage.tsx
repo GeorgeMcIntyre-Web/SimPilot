@@ -412,10 +412,10 @@ export function CellDetailPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                      Assembly Line
+                      Area
                     </p>
                     <p className="text-sm font-bold text-gray-900 dark:text-gray-200">
-                      {cell.lineCode || '—'}
+                      {cell.name || '—'}
                     </p>
                   </div>
                 </div>
