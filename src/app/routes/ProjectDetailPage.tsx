@@ -142,9 +142,6 @@ export function ProjectDetailPage() {
                 {project.name.split(' ').slice(1).join(' ') || 'Node'}
               </span>
             </h1>
-            <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
-              Project Intelligence
-            </h2>
           </div>
 
           <div className="flex items-center gap-3">
