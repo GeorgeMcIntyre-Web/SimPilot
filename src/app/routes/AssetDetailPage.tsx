@@ -228,20 +228,6 @@ export function AssetDetailPage() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                    Assembly Line
-                  </p>
-                  <p className="text-sm font-black text-gray-900 dark:text-gray-200 uppercase tracking-tight">
-                    {assemblyLine || '—'}
-                  </p>
-                </div>
-              </div>
-              <div className="h-8 w-px bg-gray-200 dark:bg-white/10 hidden sm:block" />
-              <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                   <Info className="h-4 w-4" />
                 </div>
