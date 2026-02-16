@@ -220,29 +220,6 @@ export function ReadinessBoard() {
               Readiness <span className="text-indigo-600 dark:text-indigo-400">Board</span>
             </h1>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
-              <div
-                className={cn(
-                  'h-2 w-2 rounded-full animate-pulse',
-                  stats.late > 0
-                    ? 'bg-rose-500'
-                    : stats.atRisk > 0
-                      ? 'bg-amber-500'
-                      : 'bg-emerald-500',
-                )}
-              />
-              <div>
-                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
-                  Global Readiness
-                </div>
-                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
-                  {stats.late > 5 ? 'Intervention Required' : 'Operational Stable'}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -532,7 +509,7 @@ function StationReadinessCard({ item }: StationReadinessCardProps) {
             </div>
           ) : (
             <span className="text-[9px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest">
-              No Lead
+              UNASSIGNED
             </span>
           )}
 
