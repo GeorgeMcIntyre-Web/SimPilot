@@ -303,16 +303,16 @@ export function ProjectDetailPage() {
                 <thead className="bg-gray-50/50 dark:bg-gray-900/50 sticky top-0 z-10 backdrop-blur-md">
                   <tr>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Station Node
+                      Station
                     </th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Area Sector
+                      Area
                     </th>
                     <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Lead Engineer
+                      Simulator
                     </th>
                     <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Sync Status
+                      Status
                     </th>
                     <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
                       State
