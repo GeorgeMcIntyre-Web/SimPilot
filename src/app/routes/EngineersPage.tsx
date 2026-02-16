@@ -593,7 +593,7 @@ export function EngineersPage() {
         >
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+              <p className="text-[15px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                 Cell Assignments
               </p>
               <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mt-1">
