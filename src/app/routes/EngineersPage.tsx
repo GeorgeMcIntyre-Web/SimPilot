@@ -557,10 +557,10 @@ export function EngineersPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <p className="text-[15px] font-black uppercase tracking-widest text-gray-400">
               Simulator Roster
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
