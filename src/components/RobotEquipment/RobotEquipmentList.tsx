@@ -11,7 +11,10 @@ import {
   useRobotEquipmentAreas,
   useRobotEquipmentRobotTypes,
 } from '../../domain/robotEquipmentStore'
-import { RobotEquipmentEntity, RobotApplicationType } from '../../ingestion/robotEquipmentList/robotEquipmentListTypes'
+import {
+  RobotEquipmentEntity,
+  RobotApplicationType,
+} from '../../ingestion/robotEquipmentList/robotEquipmentListTypes'
 import './RobotEquipmentList.css'
 
 // ============================================================================
@@ -26,7 +29,7 @@ interface RobotEquipmentFilters {
   showNotDelivered: boolean
   showDelivered: boolean
   showESOWConcerns: boolean
-  showRemoved: boolean          // Show struck-through (removed/cancelled) robots
+  showRemoved: boolean // Show struck-through (removed/cancelled) robots
   installStatus: string | null
 }
 
@@ -48,16 +51,18 @@ export const RobotEquipmentList: React.FC = () => {
     showNotDelivered: true,
     showDelivered: true,
     showESOWConcerns: false,
-    showRemoved: false,       // Hide removed robots by default
+    showRemoved: false, // Hide removed robots by default
     installStatus: null,
   })
 
-  const [groupBy, setGroupBy] = useState<'none' | 'area' | 'station' | 'application' | 'robotType' | 'status'>('area')
+  const [groupBy, setGroupBy] = useState<
+    'none' | 'area' | 'station' | 'application' | 'robotType' | 'status'
+  >('area')
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   // Filter entities
   const filteredEntities = useMemo(() => {
-    return entities.filter(entity => {
+    return entities.filter((entity) => {
       // Search term
       if (filters.searchTerm) {
         const term = filters.searchTerm.toLowerCase()
@@ -69,7 +74,9 @@ export const RobotEquipmentList: React.FC = () => {
           entity.application,
           entity.serialNumber,
           entity.personResponsible,
-        ].join(' ').toLowerCase()
+        ]
+          .join(' ')
+          .toLowerCase()
 
         if (!searchableText.includes(term)) return false
       }
@@ -80,12 +87,18 @@ export const RobotEquipmentList: React.FC = () => {
       }
 
       // Robot type filter
-      if (filters.selectedRobotTypes.size > 0 && !filters.selectedRobotTypes.has(entity.robotType)) {
+      if (
+        filters.selectedRobotTypes.size > 0 &&
+        !filters.selectedRobotTypes.has(entity.robotType)
+      ) {
         return false
       }
 
       // Application filter
-      if (filters.selectedApplications.size > 0 && !filters.selectedApplications.has(entity.application)) {
+      if (
+        filters.selectedApplications.size > 0 &&
+        !filters.selectedApplications.has(entity.application)
+      ) {
         return false
       }
 
@@ -96,9 +109,8 @@ export const RobotEquipmentList: React.FC = () => {
 
       // ESOW concerns filter
       if (filters.showESOWConcerns) {
-        const hasConcern = entity.differsFromESOW ||
-                          entity.applicationConcern !== null ||
-                          !entity.ftfApprovedESOW
+        const hasConcern =
+          entity.differsFromESOW || entity.applicationConcern !== null || !entity.ftfApprovedESOW
         if (!hasConcern) return false
       }
 
@@ -239,7 +251,7 @@ export const RobotEquipmentList: React.FC = () => {
           <div className="filter-group">
             <label className="filter-label">Areas:</label>
             <div className="filter-chips">
-              {areas.map(area => (
+              {areas.map((area) => (
                 <button
                   key={area}
                   className={`filter-chip ${filters.selectedAreas.has(area) ? 'active' : ''}`}
@@ -256,7 +268,7 @@ export const RobotEquipmentList: React.FC = () => {
           <div className="filter-group">
             <label className="filter-label">Robot Types:</label>
             <div className="filter-chips">
-              {robotTypes.slice(0, 10).map(type => (
+              {robotTypes.slice(0, 10).map((type) => (
                 <button
                   key={type}
                   className={`filter-chip ${filters.selectedRobotTypes.has(type) ? 'active' : ''}`}
@@ -326,8 +338,12 @@ export const RobotEquipmentList: React.FC = () => {
 
           {groupBy !== 'none' && (
             <div className="expand-collapse-buttons">
-              <button onClick={expandAll} className="btn-expand">Expand All</button>
-              <button onClick={collapseAll} className="btn-collapse">Collapse All</button>
+              <button onClick={expandAll} className="btn-expand">
+                Expand All
+              </button>
+              <button onClick={collapseAll} className="btn-collapse">
+                Collapse All
+              </button>
             </div>
           )}
         </div>
@@ -338,13 +354,8 @@ export const RobotEquipmentList: React.FC = () => {
         {Array.from(groupedEntities.entries()).map(([groupKey, robots]) => (
           <div key={groupKey} className="robot-group">
             {groupBy !== 'none' && (
-              <div
-                className="robot-group-header"
-                onClick={() => toggleGroup(groupKey)}
-              >
-                <span className="group-toggle">
-                  {expandedGroups.has(groupKey) ? '▼' : '▶'}
-                </span>
+              <div className="robot-group-header" onClick={() => toggleGroup(groupKey)}>
+                <span className="group-toggle">{expandedGroups.has(groupKey) ? '▼' : '▶'}</span>
                 <span className="group-title">{groupKey}</span>
                 <span className="group-count">({robots.length})</span>
               </div>
@@ -352,7 +363,7 @@ export const RobotEquipmentList: React.FC = () => {
 
             {(groupBy === 'none' || expandedGroups.has(groupKey)) && (
               <div className="robot-cards">
-                {robots.map(robot => (
+                {robots.map((robot) => (
                   <RobotEquipmentCard key={robot.canonicalKey} robot={robot} />
                 ))}
               </div>
@@ -385,7 +396,9 @@ const RobotEquipmentCard: React.FC<RobotEquipmentCardProps> = ({ robot }) => {
   const hasESOWConcern = robot.differsFromESOW || robot.applicationConcern !== null
 
   return (
-    <div className={`robot-card ${!isDelivered ? 'not-delivered' : ''} ${hasESOWConcern ? 'esow-concern' : ''} ${robot.isRemoved ? 'removed' : ''}`}>
+    <div
+      className={`robot-card ${!isDelivered ? 'not-delivered' : ''} ${hasESOWConcern ? 'esow-concern' : ''} ${robot.isRemoved ? 'removed' : ''}`}
+    >
       <div className="robot-card-header" onClick={() => setExpanded(!expanded)}>
         <div className="robot-card-title">
           <span className="robot-id">{robot.robotId}</span>
@@ -437,7 +450,8 @@ const RobotEquipmentCard: React.FC<RobotEquipmentCardProps> = ({ robot }) => {
                   <div className="detail-item">
                     <span className="detail-label">Weldguns:</span>
                     <span className="detail-value">
-                      {robot.weldguns.numberOfGuns} × {robot.weldguns.gunType} ({robot.weldguns.gunSize})
+                      {robot.weldguns.numberOfGuns} × {robot.weldguns.gunType} (
+                      {robot.weldguns.gunSize})
                     </span>
                   </div>
                 )}
@@ -460,7 +474,9 @@ const RobotEquipmentCard: React.FC<RobotEquipmentCardProps> = ({ robot }) => {
                 {robot.bases && (
                   <div className="detail-item">
                     <span className="detail-label">Base:</span>
-                    <span className="detail-value">{robot.bases.baseCode || robot.bases.height}</span>
+                    <span className="detail-value">
+                      {robot.bases.baseCode || robot.bases.height}
+                    </span>
                   </div>
                 )}
               </div>
