@@ -3,16 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { StatusPill } from '../../ui/components/StatusPill'
 import { useAllEngineerMetrics, useCells, useProjects } from '../../ui/hooks/useDomainData'
-import {
-  Search,
-  Copy,
-  Check,
-  AlertTriangle,
-  Users,
-  Gauge,
-  ChevronRight,
-  Activity,
-} from 'lucide-react'
+import { Search, AlertTriangle, Users, Gauge, ChevronRight, Activity } from 'lucide-react'
 import { Cell, SchedulePhase } from '../../domain/core'
 import { EmptyState } from '../../ui/components/EmptyState'
 import { StatCard } from '../../ui/components/StatCard'
@@ -57,7 +48,7 @@ export function EngineersPage() {
   const projects = useProjects()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEngineerName, setSelectedEngineerName] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+
   const [atRiskOnly, setAtRiskOnly] = useState(false)
   const [projectFilter, setProjectFilter] = useState<string>('all')
   const [completionBand, setCompletionBand] = useState<'all' | 'low' | 'mid' | 'high' | 'no-data'>(
@@ -147,18 +138,6 @@ export function EngineersPage() {
       return a.name.localeCompare(b.name)
     })
   }, [filteredMetrics])
-
-  const handleCopy = async () => {
-    const summary = `Engineers Summary\n\nTotal: ${metrics.length}\nWith At-Risk Cells: ${atRiskEngineers}\nAvg Completion: ${avgCompletion}%\n\n${sortedMetrics
-      .map(
-        (m) =>
-          `${m.name} | Cells: ${m.cellCount} | At Risk: ${m.atRiskCellsCount} | Completion: ${m.avgCompletion}%`,
-      )
-      .join('\n')}`
-    await navigator.clipboard.writeText(summary)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   const columns: Column<(typeof metrics)[0]>[] = [
     {
@@ -385,23 +364,6 @@ export function EngineersPage() {
               Simulation <span className="text-indigo-600 dark:text-indigo-400">Engineers</span>
             </h1>
           </div>
-
-          <button
-            onClick={handleCopy}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white hover:border-indigo-500/50 transition-all shadow-sm"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                Copy Summary
-              </>
-            )}
-          </button>
         </div>
       </div>
 
