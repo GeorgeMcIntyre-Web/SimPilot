@@ -168,13 +168,6 @@ export function AssetDetailPage() {
     extractMetadata<string>(asset, 'Install status') ||
     extractMetadata<string>(asset, 'install status')
 
-  const serialNumber =
-    extractMetadata<string>(asset, 'serialNumber') ||
-    extractMetadata<string>(asset, 'Serial #') ||
-    extractMetadata<string>(asset, 'Serial') ||
-    extractMetadata<string>(asset, 'serial') ||
-    extractMetadata<string>(asset, 'eNumber')
-
   const robotFunction =
     extractMetadata<string>(asset, 'function') ||
     extractMetadata<string>(asset, 'Function') ||
@@ -203,9 +196,7 @@ export function AssetDetailPage() {
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               {asset.name || 'Unnamed Asset'}
             </h1>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {detailedKind || asset.kind} • {model || 'Generic Model'}
-            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">{detailedKind || asset.kind}</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -253,15 +244,6 @@ export function AssetDetailPage() {
                     {projectCode || 'No Project'}
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                Serial Number
-              </div>
-              <div className="text-base font-mono font-black text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-black/20 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10">
-                {serialNumber || 'UNKNOWN'}
               </div>
             </div>
           </div>
