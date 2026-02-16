@@ -811,9 +811,6 @@ function RobotSimulationPage() {
                         </span>
                       )
                     })()}
-                    <span className="text-[8px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                      Overall Sync
-                    </span>
                   </div>
                 </div>
 
@@ -843,10 +840,6 @@ function RobotSimulationPage() {
               </div>
 
               <div className="space-y-4 flex-1 min-h-0 max-h-[535px] overflow-y-auto custom-scrollbar pr-2">
-                <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.3em] flex items-center gap-2 mb-4">
-                  <Activity className="h-3 w-3" />
-                  Technical Aspects
-                </h4>
                 <div className="grid grid-cols-1 gap-3">
                   {PANEL_CONFIGS.map(({ title, panelType, slug }) => {
                     const completion = getRowPanelMilestones(selectedRow, panelType)
