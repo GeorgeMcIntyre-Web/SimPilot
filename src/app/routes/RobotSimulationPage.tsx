@@ -477,7 +477,7 @@ function RobotSimulationStationsTable({
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                   onClick={() => onSelect(row)}
                 >
-                  <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+                  <td className="whitespace-nowrap py-4 pl-2 sm:pl-6">
                     {row.assetId ? (
                       <Link
                         to={`/assets/${encodeURIComponent(row.assetId)}`}
