@@ -22,7 +22,6 @@ import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { KpiTile } from '../../ui/components/KpiTile'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { Cell } from '../../domain/core'
-
 import { EmptyState } from '../../ui/components/EmptyState'
 import { FlowerAccent } from '../../ui/components/FlowerAccent'
 import { useTheme } from '../../ui/ThemeContext'
@@ -33,7 +32,7 @@ import { getUserPreference, setUserPreference } from '../../utils/prefsStorage'
 import { useDaleSummary } from '../../ui/hooks/useDaleSummary'
 import { ZenFocusHeader } from '../../ui/components/ZenFocusHeader'
 
-export function DaleConsole() {
+export function UserConsole() {
   const metrics = useGlobalSimulationMetrics()
   const engineerMetrics = useAllEngineerMetrics()
   const cells = useCells()
@@ -442,4 +441,4 @@ export function DaleConsole() {
   )
 }
 
-export default DaleConsole
+export default UserConsole

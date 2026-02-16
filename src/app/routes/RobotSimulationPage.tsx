@@ -428,7 +428,7 @@ function RobotSimulationStationsTable({
 
       {/* Table */}
       <div className="flex-1 min-h-0 max-h-[535px] overflow-auto custom-scrollbar">
-        <table className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
+        <table className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm w-full">
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
@@ -438,7 +438,7 @@ function RobotSimulationStationsTable({
                 Robot <SortIcon column="robot" />
               </th>
               <th
-                className="w-1 py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('area')}
               >
                 Area <SortIcon column="area" />
@@ -477,11 +477,11 @@ function RobotSimulationStationsTable({
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                   onClick={() => onSelect(row)}
                 >
-                  <td className="whitespace-nowrap py-3 pl-4 pr-3 sm:pl-6">
+                  <td className="whitespace-nowrap py-4 pl-2 sm:pl-3">
                     {row.assetId ? (
                       <Link
                         to={`/assets/${encodeURIComponent(row.assetId)}`}
-                        className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px] hover:underline"
+                        className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[200px] hover:underline"
                         title={`Open asset ${row.assetId}`}
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -496,7 +496,7 @@ function RobotSimulationStationsTable({
                       </span>
                     )}
                   </td>
-                  <td className="w-1 whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">
+                  <td className="whitespace-nowrap px-0 py-0 text-gray-500 dark:text-gray-400">
                     {row.cell.projectId ? (
                       <Link
                         to={`/projects/${row.cell.projectId}`}
@@ -525,7 +525,7 @@ function RobotSimulationStationsTable({
                   <td className="w-1 whitespace-nowrap px-0.5 py-3">
                     {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div className="w-24 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               row.cell.simulationStatus.firstStageCompletion >= 90

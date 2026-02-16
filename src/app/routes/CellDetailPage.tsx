@@ -412,10 +412,10 @@ export function CellDetailPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-                      Assembly Line
+                      Area
                     </p>
                     <p className="text-sm font-bold text-gray-900 dark:text-gray-200">
-                      {cell.lineCode || '—'}
+                      {cell.name || '—'}
                     </p>
                   </div>
                 </div>
@@ -448,13 +448,6 @@ export function CellDetailPage() {
                   Launch Project
                 </button>
               )}
-              <div className="text-right">
-                <div
-                  className={`text-xs font-bold px-3 py-1 rounded-full border ${isAtRisk ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/20 dark:border-rose-800' : 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800'}`}
-                >
-                  {isAtRisk ? 'CRITICAL PATH' : 'DEVELOPMENT'}
-                </div>
-              </div>
             </div>
           </div>
         </div>

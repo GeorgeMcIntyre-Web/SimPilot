@@ -168,13 +168,6 @@ export function AssetDetailPage() {
     extractMetadata<string>(asset, 'Install status') ||
     extractMetadata<string>(asset, 'install status')
 
-  const serialNumber =
-    extractMetadata<string>(asset, 'serialNumber') ||
-    extractMetadata<string>(asset, 'Serial #') ||
-    extractMetadata<string>(asset, 'Serial') ||
-    extractMetadata<string>(asset, 'serial') ||
-    extractMetadata<string>(asset, 'eNumber')
-
   const robotFunction =
     extractMetadata<string>(asset, 'function') ||
     extractMetadata<string>(asset, 'Function') ||
@@ -197,17 +190,13 @@ export function AssetDetailPage() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 dark:text-gray-200">{asset.name || 'Asset'}</span>
         </nav>
-
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               {asset.name || 'Unnamed Asset'}
             </h1>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {detailedKind || asset.kind} • {model || 'Generic Model'}
-            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400">{detailedKind || asset.kind}</p>
           </div>
-
           <div className="flex items-center gap-2 flex-wrap">
             {isActive === false && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20">
@@ -253,15 +242,6 @@ export function AssetDetailPage() {
                     {projectCode || 'No Project'}
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
-                Serial Number
-              </div>
-              <div className="text-base font-mono font-black text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-black/20 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10">
-                {serialNumber || 'UNKNOWN'}
               </div>
             </div>
           </div>
