@@ -179,7 +179,7 @@ export function ProjectDetailPage() {
         <div className="relative group cursor-default">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
           <StatCard
-            title="Avg Completion"
+            title="Average Completion"
             value={`${projectMetrics.avgCompletion}%`}
             icon={<Activity className="h-6 w-6 text-emerald-500" />}
             className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-emerald-500/50 transition-colors"

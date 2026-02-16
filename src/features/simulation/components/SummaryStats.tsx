@@ -11,7 +11,7 @@ export function SummaryStats({
   totalRobots,
   totalGuns,
   totalReuse,
-  avgCompletion
+  avgCompletion,
 }: SummaryStatsProps) {
   const renderCard = (stat: { label: string; value: number | string; accent: string }) => (
     <div
@@ -31,7 +31,11 @@ export function SummaryStats({
     { label: 'Robots', value: totalRobots, accent: 'text-purple-600 dark:text-purple-400' },
     { label: 'Weld Guns', value: totalGuns, accent: 'text-amber-600 dark:text-amber-400' },
     { label: 'Reuse Items', value: totalReuse, accent: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Avg Completion', value: avgCompletion !== null ? `${avgCompletion}%` : '—', accent: 'text-blue-600 dark:text-blue-400' }
+    {
+      label: 'Average Completion',
+      value: avgCompletion !== null ? `${avgCompletion}%` : '—',
+      accent: 'text-blue-600 dark:text-blue-400',
+    },
   ]
 
   return (
