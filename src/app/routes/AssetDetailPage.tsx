@@ -10,12 +10,13 @@ import {
   MapPin,
   FileSpreadsheet,
   Recycle,
-  ArrowRight,
+  ArrowLeft,
   Shield,
   Info,
   Package,
   MessageSquare,
   AlertTriangle,
+  ChevronRight,
 } from 'lucide-react'
 
 // ============================================================================
@@ -25,8 +26,6 @@ import {
 function extractMetadata<T>(asset: AssetWithMetadata, key: string): T | undefined {
   return getMetadataValue<T>(asset, key)
 }
-
-// Use consistent styling matching the app theme
 
 // ============================================================================
 // DETAIL ITEM COMPONENT
@@ -41,10 +40,10 @@ type DetailItemProps = {
 function DetailItem({ label, value, className }: DetailItemProps) {
   return (
     <div className={className}>
-      <dt className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+      <dt className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
         {label}
       </dt>
-      <dd className="mt-0.5 text-sm text-gray-900 dark:text-gray-100">{value || '—'}</dd>
+      <dd className="mt-1 text-xs font-bold text-gray-900 dark:text-gray-100">{value || '—'}</dd>
     </div>
   )
 }
@@ -72,17 +71,32 @@ export function AssetDetailPage() {
 
   if (!asset) {
     return (
-      <div className="space-y-4" data-testid="asset-detail-root">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Asset Not Found</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <div className="space-y-8" data-testid="asset-detail-root">
+        <div className="flex flex-col gap-4">
+          <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+              SimPilot
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <Link to={breadcrumbRootHref} className="hover:text-indigo-600 transition-colors">
+              {breadcrumbRootLabel}
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-900 dark:text-gray-200">Not Found</span>
+          </nav>
+        </div>
+        <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl p-8 shadow-sm">
+          <h1 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight mb-2">
+            Asset Not Found
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             The requested asset could not be located.
           </p>
           <Link
             to={breadcrumbRootHref}
-            className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white hover:border-indigo-500/50 transition-all shadow-sm"
           >
-            <ArrowRight className="h-4 w-4 rotate-180" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             Back to {breadcrumbRootLabel}
           </Link>
         </div>
@@ -169,97 +183,98 @@ export function AssetDetailPage() {
     extractMetadata<string>(asset, 'Robot Application')
 
   return (
-    <div className="space-y-6" data-testid="asset-detail-root">
-      {/* Navigation & Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          <Link
-            to={breadcrumbRootHref}
-            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
+    <div className="space-y-8" data-testid="asset-detail-root">
+      {/* Navigation & Header */}
+      <div className="flex flex-col gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+            SimPilot
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link to={breadcrumbRootHref} className="hover:text-indigo-600 transition-colors">
             {breadcrumbRootLabel}
           </Link>
-          <span className="text-gray-300 dark:text-gray-700">/</span>
-          <span className="text-gray-900 dark:text-gray-300">{asset.name || 'Asset'}</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">{asset.name || 'Asset'}</span>
         </nav>
 
-        <div className="flex items-center gap-2">
-          {isActive === false && (
-            <span className="inline-flex items-center gap-1 rounded bg-rose-50 dark:bg-rose-950/30 px-2 py-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 uppercase">
-              <Shield className="h-3 w-3" />
-              Inactive
-            </span>
-          )}
-          <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
-          <SourcingBadge sourcing={asset.sourcing} />
-          {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              {asset.name || 'Unnamed Asset'}
+            </h1>
+            <p className="text-xs text-gray-600 dark:text-gray-400">
+              {detailedKind || asset.kind} • {model || 'Generic Model'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {isActive === false && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                <Shield className="h-2.5 w-2.5" />
+                Inactive
+              </span>
+            )}
+            <AssetKindBadge kind={asset.kind} detailedKind={detailedKind} />
+            <SourcingBadge sourcing={asset.sourcing} />
+            {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
+          </div>
         </div>
       </div>
 
       {/* Main Header Card */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-        <div className="p-6 md:p-8 border-b border-gray-100 dark:border-gray-700/50">
+      <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 md:p-8 border-b border-gray-100 dark:border-white/5">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="space-y-4 max-w-3xl">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                  {asset.name || 'Unnamed Asset'}
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                  {detailedKind || asset.kind} • {model || 'Generic Model'}
-                </p>
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                    Assembly Line
+                  </p>
+                  <p className="text-sm font-black text-gray-900 dark:text-gray-200 uppercase tracking-tight">
+                    {assemblyLine || '—'}
+                  </p>
+                </div>
               </div>
-
-              <div className="flex flex-wrap items-center gap-y-3 gap-x-6">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
-                      Assembly Line
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">
-                      {assemblyLine || '—'}
-                    </p>
-                  </div>
+              <div className="h-8 w-px bg-gray-200 dark:bg-white/10 hidden sm:block" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Info className="h-4 w-4" />
                 </div>
-                <div className="h-8 w-px bg-gray-100 dark:bg-gray-700 hidden sm:block" />
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400">
-                    <Info className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
-                      Station
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">
-                      {station || '—'}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                    Station
+                  </p>
+                  <p className="text-sm font-black text-gray-900 dark:text-gray-200 uppercase tracking-tight">
+                    {station || '—'}
+                  </p>
                 </div>
-                <div className="h-8 w-px bg-gray-100 dark:bg-gray-700 hidden sm:block" />
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
-                    <Package className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
-                      Assignment
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-200">
-                      {projectCode || 'No Project'}
-                    </p>
-                  </div>
+              </div>
+              <div className="h-8 w-px bg-gray-200 dark:bg-white/10 hidden sm:block" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <Package className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                    Assignment
+                  </p>
+                  <p className="text-sm font-black text-gray-900 dark:text-gray-200 uppercase tracking-tight">
+                    {projectCode || 'No Project'}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-2 text-right">
-              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <div className="flex flex-col items-end gap-2">
+              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                 Serial Number
               </div>
-              <div className="text-lg font-mono font-bold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 px-3 py-1 rounded border border-gray-100 dark:border-gray-700">
+              <div className="text-base font-mono font-black text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-black/20 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10">
                 {serialNumber || 'UNKNOWN'}
               </div>
             </div>
@@ -267,7 +282,7 @@ export function AssetDetailPage() {
         </div>
 
         {/* Essential Info Banner */}
-        <div className="bg-gray-50/50 dark:bg-gray-900/20 px-6 py-4">
+        <div className="bg-gray-50/50 dark:bg-black/20 px-6 py-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             <InfoPill label="Original Supplier" value={supplier || 'Not Specified'} />
             <InfoPill label="Asset Group" value={detailedKind || 'Standard'} />
@@ -286,10 +301,10 @@ export function AssetDetailPage() {
         {/* Left Column: Primary Details & Specs */}
         <div className="lg:col-span-2 space-y-6">
           {/* Main Specifications Card */}
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col shadow-sm">
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 bg-gray-50/30 dark:bg-transparent flex items-center justify-between">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
-                <Package className="h-4 w-4 text-blue-500" />
+          <section className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-black/20">
+              <h2 className="text-[10px] font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-widest">
+                <Package className="h-3.5 w-3.5 text-indigo-500" />
                 Technical Specifications
               </h2>
             </div>
@@ -321,7 +336,7 @@ export function AssetDetailPage() {
             </div>
 
             {/* Extended Attributes Footer */}
-            <div className="px-6 py-4 bg-gray-50/50 dark:bg-gray-800/20 border-t border-gray-100 dark:border-gray-700/50 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="px-6 py-4 bg-gray-50/50 dark:bg-black/20 border-t border-gray-100 dark:border-white/5 grid grid-cols-2 md:grid-cols-4 gap-4">
               <DetailItem label="Reference #" value={referenceNumber} />
               <DetailItem label="Sourcing" value={asset.sourcing} />
               <DetailItem
@@ -339,23 +354,23 @@ export function AssetDetailPage() {
 
           {/* Description & Intelligence */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-              <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                <Info className="h-3.5 w-3.5" />
+            <section className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 dark:border-white/5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                <Info className="h-3 w-3" />
                 Product Description
               </div>
-              <div className="p-5 text-sm text-gray-700 dark:text-gray-300 leading-relaxed min-h-[100px]">
+              <div className="p-5 text-xs text-gray-700 dark:text-gray-300 leading-relaxed min-h-[100px]">
                 {description ||
                   'No detailed description provided for this specific asset configuration.'}
               </div>
             </section>
 
-            <section className="bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900/40 rounded-lg shadow-sm">
-              <div className="px-5 py-3 border-b border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                <AlertTriangle className="h-3.5 w-3.5" />
+            <section className="bg-white dark:bg-[rgb(31,41,55)] border border-amber-500/30 dark:border-amber-500/20 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-amber-100 dark:border-amber-900/40 bg-amber-50/30 dark:bg-amber-900/10 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400">
+                <AlertTriangle className="h-3 w-3" />
                 Deployment Concerns
               </div>
-              <div className="p-5 text-sm text-amber-900/80 dark:text-amber-200/80 leading-relaxed min-h-[100px]">
+              <div className="p-5 text-xs text-amber-900/80 dark:text-amber-200/80 leading-relaxed min-h-[100px]">
                 {applicationConcern ||
                   'No standing deployment or safety concerns reported for this asset.'}
               </div>
@@ -363,12 +378,12 @@ export function AssetDetailPage() {
           </div>
 
           {/* Comments Section */}
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              <MessageSquare className="h-3.5 w-3.5" />
+          <section className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-white/5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400">
+              <MessageSquare className="h-3 w-3" />
               Engineering Notes
             </div>
-            <div className="p-5 text-sm text-gray-600 dark:text-gray-400 italic leading-relaxed">
+            <div className="p-5 text-xs text-gray-600 dark:text-gray-400 italic leading-relaxed">
               {comment ||
                 'No supplementary comments or notes have been logged for this asset record.'}
             </div>
@@ -378,10 +393,10 @@ export function AssetDetailPage() {
         {/* Right Column: Context & History */}
         <div className="space-y-6">
           {/* Operational Context */}
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-tight">
-                <MapPin className="h-4 w-4 text-blue-500" />
+          <section className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
+              <h2 className="text-[10px] font-black text-gray-900 dark:text-white flex items-center gap-2 uppercase tracking-widest">
+                <MapPin className="h-3.5 w-3.5 text-indigo-500" />
                 Placement Context
               </h2>
             </div>
@@ -395,7 +410,7 @@ export function AssetDetailPage() {
                 <DetailItem label="Technology" value={technologyCode} />
               </div>
 
-              <div className="pt-4 border-t border-gray-50 dark:border-gray-700/50">
+              <div className="pt-4 border-t border-gray-50 dark:border-white/5">
                 <div className="grid grid-cols-2 gap-4">
                   <DetailItem label="Gun ID" value={gunId} />
                   <DetailItem label="Gun #" value={gunNumber} />
@@ -407,20 +422,20 @@ export function AssetDetailPage() {
           </section>
 
           {/* Reuse Allocation */}
-          <section className="bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-900/40 rounded-lg shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-900/10 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-emerald-800 dark:text-emerald-400 flex items-center gap-2 uppercase tracking-tight">
-                <Recycle className="h-4 w-4" />
+          <section className="bg-white dark:bg-[rgb(31,41,55)] border border-emerald-500/30 dark:border-emerald-500/20 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-emerald-100 dark:border-emerald-900/40 bg-emerald-50/30 dark:bg-emerald-900/10 flex items-center justify-between">
+              <h2 className="text-[10px] font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-2 uppercase tracking-widest">
+                <Recycle className="h-3.5 w-3.5" />
                 Reuse Lifecycle
               </h2>
               {reuseStatus && <ReuseStatusBadge status={reuseStatus} size="sm" />}
             </div>
             <div className="p-5 space-y-5">
               <div className="space-y-3">
-                <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                <h4 className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                   Origin Point
                 </h4>
-                <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-md border border-gray-100 dark:border-gray-800">
+                <div className="grid grid-cols-2 gap-3 bg-gray-50 dark:bg-black/20 p-3 rounded-xl border border-gray-100 dark:border-white/5">
                   <DetailItem label="Project" value={oldProject} />
                   <DetailItem label="Area" value={oldArea} />
                   <DetailItem label="Line" value={oldLine} />
@@ -428,10 +443,10 @@ export function AssetDetailPage() {
                 </div>
               </div>
               <div className="space-y-3">
-                <h4 className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest">
+                <h4 className="text-[9px] font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest">
                   Target Objective
                 </h4>
-                <div className="grid grid-cols-2 gap-3 bg-emerald-50/30 dark:bg-emerald-900/10 p-3 rounded-md border border-emerald-100/50 dark:border-emerald-900/50">
+                <div className="grid grid-cols-2 gap-3 bg-emerald-50/30 dark:bg-emerald-900/10 p-3 rounded-xl border border-emerald-100/50 dark:border-emerald-900/50">
                   <DetailItem label="Project" value={targetProject} />
                   <DetailItem label="Sector" value={targetSector} />
                   <DetailItem label="Line" value={targetLine} />
@@ -442,23 +457,23 @@ export function AssetDetailPage() {
           </section>
 
           {/* Provenance and traceability */}
-          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/50 flex items-center gap-2 text-sm font-bold uppercase tracking-tight text-gray-900 dark:text-white">
-              <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+          <section className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white">
+              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
               Traceability
             </div>
             <div className="p-5 space-y-4">
               <div className="space-y-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                     Primary Data Source
                   </span>
-                  <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 truncate">
+                  <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 truncate">
                     {primaryWorkbookId || asset.sourceFile || 'MANUAL_ENTRY'}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                  <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                     Location in Source
                   </span>
                   <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
@@ -467,15 +482,15 @@ export function AssetDetailPage() {
                 </div>
               </div>
               {sourceWorkbookIds.length > 0 && (
-                <div className="pt-4 border-t border-gray-50 dark:border-gray-700/50">
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 block">
+                <div className="pt-4 border-t border-gray-50 dark:border-white/5">
+                  <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 block">
                     Secondary References
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {sourceWorkbookIds.map((id, idx) => (
                       <span
                         key={idx}
-                        className="text-[10px] font-mono bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400"
+                        className="text-[9px] font-mono bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 px-2 py-1 rounded-lg text-gray-500 dark:text-gray-400"
                       >
                         {id}
                       </span>
