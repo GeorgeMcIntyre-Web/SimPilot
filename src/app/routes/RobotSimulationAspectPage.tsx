@@ -15,7 +15,7 @@ const friendlyTitle = (aspect?: string): string => {
   if (!aspect) return 'Aspect'
   return aspect
     .split('-')
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
 }
 
@@ -72,13 +72,13 @@ function RobotSimulationAspectPage() {
     if (!panelType || !hasData) {
       // Return milestone definitions with null values
       const definitions = panelType ? PANEL_MILESTONE_DEFINITIONS[panelType] : {}
-      result.fields = Object.values(definitions).map(label => ({ label, percent: null }))
+      result.fields = Object.values(definitions).map((label) => ({ label, percent: null }))
       result.totalCount = result.fields.length
       return result
     }
 
     // Find the cell by station key
-    const cell = cells.find(c => c.stationKey === stationKey)
+    const cell = cells.find((c) => c.stationKey === stationKey)
 
     // Try per-robot panel milestones first
     const robotPanels = cell?.simulationStatus?.robotPanelMilestones
@@ -86,7 +86,9 @@ function RobotSimulationAspectPage() {
           const direct = cell.simulationStatus.robotPanelMilestones[robot]
           if (direct) return direct
           const upper = robot.toUpperCase()
-          const matchKey = Object.keys(cell.simulationStatus.robotPanelMilestones).find(k => k.toUpperCase() === upper)
+          const matchKey = Object.keys(cell.simulationStatus.robotPanelMilestones).find(
+            (k) => k.toUpperCase() === upper,
+          )
           return matchKey ? cell.simulationStatus.robotPanelMilestones[matchKey] : undefined
         })()
       : undefined
@@ -99,7 +101,7 @@ function RobotSimulationAspectPage() {
           : cell?.simulationStatus?.panelMilestones?.[panelType] // fallback only if per-robot data absent entirely
     if (!panelGroup) {
       const definitions = PANEL_MILESTONE_DEFINITIONS[panelType]
-      result.fields = Object.values(definitions).map(label => ({ label, percent: null }))
+      result.fields = Object.values(definitions).map((label) => ({ label, percent: null }))
       result.totalCount = result.fields.length
       return result
     }
@@ -109,14 +111,14 @@ function RobotSimulationAspectPage() {
     const milestoneLabels = Object.values(definitions)
 
     // Build fields with actual values
-    result.fields = milestoneLabels.map(label => {
+    result.fields = milestoneLabels.map((label) => {
       const percent = panelGroup.milestones[label] ?? null
       return { label, percent }
     })
 
     result.totalCount = result.fields.length
-    result.completedCount = result.fields.filter(f => f.percent === 100).length
-    const hasNumeric = result.fields.some(f => typeof f.percent === 'number')
+    result.completedCount = result.fields.filter((f) => f.percent === 100).length
+    const hasNumeric = result.fields.some((f) => typeof f.percent === 'number')
     result.panelCompletion = hasNumeric ? panelGroup.completion : null
 
     return result
@@ -128,21 +130,18 @@ function RobotSimulationAspectPage() {
       <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Robot
-            </div>
-            <div className="text-xl font-semibold text-gray-900 dark:text-white">
-              {robot}
-            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">Robot</div>
+            <div className="text-xl font-semibold text-gray-900 dark:text-white">{robot}</div>
           </div>
           {panelCompletion !== null && (
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-sm text-gray-500 dark:text-gray-400">Panel Completion</div>
                 {panelCompletion === null ? (
                   <div className="text-2xl font-bold text-gray-400 dark:text-gray-500">N/A</div>
                 ) : (
-                  <div className={`text-2xl font-bold ${panelCompletion === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                  <div
+                    className={`text-2xl font-bold ${panelCompletion === 100 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`}
+                  >
                     {panelCompletion}%
                   </div>
                 )}
@@ -150,7 +149,7 @@ function RobotSimulationAspectPage() {
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 {panelCompletion === null
                   ? 'No applicable milestones'
-                  : `(${completedCount}/${totalCount} milestones)`}
+                  : `(${completedCount}/${totalCount} active milestones)`}
               </div>
             </div>
           )}
@@ -164,7 +163,9 @@ function RobotSimulationAspectPage() {
                 className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm"
               >
                 <div className="flex items-center justify-between text-sm font-semibold text-gray-900 dark:text-white gap-2">
-                  <span className="truncate pr-3" title={label}>{label}</span>
+                  <span className="truncate pr-3" title={label}>
+                    {label}
+                  </span>
                   <span className={`flex-shrink-0 ${getTextColorClass(percent)}`}>
                     {typeof percent === 'number' ? `${percent}%` : '—'}
                   </span>
