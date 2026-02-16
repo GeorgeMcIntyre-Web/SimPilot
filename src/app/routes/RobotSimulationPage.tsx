@@ -700,7 +700,6 @@ function RobotSimulationPage() {
               Robot <span className="text-indigo-600 dark:text-indigo-400">Status</span>
             </h1>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
