@@ -236,7 +236,7 @@ export function EngineersPage() {
     {
       header: (
         <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
-          Cell Name
+          Station Name
         </span>
       ),
       accessor: (c) => (
@@ -561,7 +561,7 @@ export function EngineersPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-              Engineer Roster
+              Simulator Roster
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
               Click a row to view assignments
