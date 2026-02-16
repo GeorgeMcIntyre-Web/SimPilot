@@ -135,25 +135,11 @@ export function ProjectsPage() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 dark:text-gray-200">Projects Portfolio</span>
         </nav>
-
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               Simulation <span className="text-indigo-600 dark:text-indigo-400">Projects</span>
             </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <div>
-                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
-                  Status
-                </div>
-                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
-                  Live Feed
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
