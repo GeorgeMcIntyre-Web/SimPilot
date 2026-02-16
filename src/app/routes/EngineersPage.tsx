@@ -1,69 +1,54 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { PageHeader } from '../../ui/components/PageHeader'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { StatusPill } from '../../ui/components/StatusPill'
 import { useAllEngineerMetrics, useCells, useProjects } from '../../ui/hooks/useDomainData'
 import {
   Search,
-  ArrowUpDown,
   Copy,
   Check,
   AlertTriangle,
-  ShieldCheck,
   Users,
   Gauge,
+  ChevronRight,
+  Activity,
 } from 'lucide-react'
 import { Cell, SchedulePhase } from '../../domain/core'
 import { EmptyState } from '../../ui/components/EmptyState'
-import { log } from '../../lib/log'
-
-type SortKey = 'name' | 'cellCount' | 'atRiskCellsCount' | 'avgCompletion'
-type SortDirection = 'asc' | 'desc'
+import { StatCard } from '../../ui/components/StatCard'
+import { cn } from '../../ui/lib/utils'
 
 const ProgressBar = ({ value }: { value: number }) => (
   <div className="flex items-center gap-2">
-    <div className="w-24 bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+    <div className="w-24 bg-gray-100 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
       <div
-        className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-300"
+        className={cn(
+          'h-full rounded-full transition-all duration-1000',
+          value >= 90 ? 'bg-emerald-500' : value >= 50 ? 'bg-indigo-500' : 'bg-rose-500',
+        )}
         style={{ width: `${Math.min(value, 100)}%` }}
       />
     </div>
-    <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{value}%</span>
+    <span className="text-[9px] font-black text-gray-900 dark:text-white tabular-nums">
+      {value}%
+    </span>
   </div>
 )
 
 const EngineerCell = ({ name, projects }: { name: string; projects: string }) => (
   <div className="flex items-center gap-3 min-w-0">
-    <div className="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200 flex items-center justify-center text-sm font-bold shrink-0">
+    <div className="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] font-black shrink-0 border border-indigo-500/20">
       {name.slice(0, 2).toUpperCase()}
     </div>
     <div className="min-w-0">
-      <div className="font-semibold text-gray-900 dark:text-white truncate">{name}</div>
-      <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{projects || '—'}</div>
+      <div className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+        {name}
+      </div>
+      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
+        {projects || '—'}
+      </div>
     </div>
   </div>
-)
-
-const SortHeader = ({
-  label,
-  sortKey,
-  onSort,
-}: {
-  label: string
-  sortKey: SortKey
-  onSort: (key: SortKey) => void
-}) => (
-  <button
-    onClick={(e) => {
-      e.stopPropagation()
-      onSort(sortKey)
-    }}
-    className="flex items-center space-x-1 hover:text-indigo-600 text-sm font-semibold text-gray-700 dark:text-gray-200"
-  >
-    <span>{label}</span>
-    <ArrowUpDown className="h-3 w-3" />
-  </button>
 )
 
 export function EngineersPage() {
@@ -71,8 +56,6 @@ export function EngineersPage() {
   const allCells = useCells()
   const projects = useProjects()
   const [searchTerm, setSearchTerm] = useState('')
-  const [sortKey, setSortKey] = useState<SortKey>('atRiskCellsCount')
-  const [sortDir, setSortDir] = useState<SortDirection>('desc')
   const [selectedEngineerName, setSelectedEngineerName] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [atRiskOnly, setAtRiskOnly] = useState(false)
@@ -157,75 +140,69 @@ export function EngineersPage() {
 
   const sortedMetrics = useMemo(() => {
     return [...filteredMetrics].sort((a, b) => {
-      const valA = a[sortKey]
-      const valB = b[sortKey]
-
-      if (valA < valB) return sortDir === 'asc' ? -1 : 1
-      if (valA > valB) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-  }, [filteredMetrics, sortKey, sortDir])
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir('asc') // Default to asc for new key, though desc might be better for numbers. Let's stick to simple toggle.
-      if (key === 'atRiskCellsCount' || key === 'cellCount' || key === 'avgCompletion') {
-        setSortDir('desc') // Actually, numbers usually better desc
+      // Sort by at-risk count (descending), then by name (ascending)
+      if (b.atRiskCellsCount !== a.atRiskCellsCount) {
+        return b.atRiskCellsCount - a.atRiskCellsCount
       }
-    }
-  }
+      return a.name.localeCompare(b.name)
+    })
+  }, [filteredMetrics])
 
   const handleCopy = async () => {
-    if (!navigator.clipboard) return
-
-    const summary = sortedMetrics
+    const summary = `Engineers Summary\n\nTotal: ${metrics.length}\nWith At-Risk Cells: ${atRiskEngineers}\nAvg Completion: ${avgCompletion}%\n\n${sortedMetrics
       .map(
         (m) =>
-          `Engineer: ${m.name}\nCells: ${m.cellCount} (${m.atRiskCellsCount} at risk)\nProjects: ${m.projectNames}`,
+          `${m.name} | Cells: ${m.cellCount} | At Risk: ${m.atRiskCellsCount} | Completion: ${m.avgCompletion}%`,
       )
-      .join('\n\n')
-
-    try {
-      await navigator.clipboard.writeText(summary)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      log.error('Failed to copy', err)
-    }
+      .join('\n')}`
+    await navigator.clipboard.writeText(summary)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const columns: Column<(typeof metrics)[0]>[] = [
     {
-      header: <SortHeader label="Engineer" sortKey="name" onSort={handleSort} />,
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Engineer
+        </span>
+      ),
       accessor: (m) => <EngineerCell name={m.name} projects={m.projectNames} />,
     },
     {
-      header: 'Projects',
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Cells
+        </span>
+      ),
       accessor: (m) => (
-        <span className="text-xs text-gray-600 dark:text-gray-400">{m.projectNames}</span>
+        <span className="text-[11px] font-black text-gray-900 dark:text-white tabular-nums">
+          {m.cellCount}
+        </span>
       ),
     },
     {
-      header: <SortHeader label="Cells" sortKey="cellCount" onSort={handleSort} />,
-      accessor: (m) => m.cellCount,
-    },
-    {
-      header: <SortHeader label="At Risk" sortKey="atRiskCellsCount" onSort={handleSort} />,
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          At Risk
+        </span>
+      ),
       accessor: (m) =>
         m.atRiskCellsCount > 0 ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-100 dark:border-amber-800">
-            <AlertTriangle className="h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <AlertTriangle className="h-2.5 w-2.5" />
             {m.atRiskCellsCount}
           </span>
         ) : (
-          <span className="text-xs text-gray-400">0</span>
+          <span className="text-[9px] font-black text-gray-400 tabular-nums">0</span>
         ),
     },
     {
-      header: <SortHeader label="Avg % Complete" sortKey="avgCompletion" onSort={handleSort} />,
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Completion
+        </span>
+      ),
       accessor: (m) => <ProgressBar value={m.avgCompletion} />,
     },
   ]
@@ -238,7 +215,6 @@ export function EngineersPage() {
   const hasAppliedHighlight = useRef(false)
 
   useEffect(() => {
-    // Apply highlighted engineer only once per distinct query param to avoid overriding manual clicks
     if (!highlightedEngineer) {
       hasAppliedHighlight.current = false
       return
@@ -258,44 +234,104 @@ export function EngineersPage() {
 
   const cellColumns: Column<Cell>[] = [
     {
-      header: 'Cell Name',
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Cell Name
+        </span>
+      ),
       accessor: (c) => (
         <Link
           to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`}
-          className="font-medium text-blue-600 dark:text-blue-400 hover:underline hover:text-blue-700 dark:hover:text-blue-300"
+          className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-tight"
         >
           {c.name}
         </Link>
       ),
     },
-    { header: 'Station', accessor: (c) => c.code || '-' },
     {
-      header: 'Area',
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Station
+        </span>
+      ),
+      accessor: (c) => (
+        <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+          {c.code || '-'}
+        </span>
+      ),
+    },
+    {
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Area
+        </span>
+      ),
       accessor: (c) => {
         const areaId = c.areaId || '-'
         if (c.projectId) {
           return (
             <Link
               to={`/projects/${c.projectId}`}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-widest"
             >
               {areaId}
             </Link>
           )
         }
-        return areaId
+        return (
+          <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+            {areaId}
+          </span>
+        )
       },
     },
-    { header: 'Line', accessor: (c) => c.lineCode || '-' },
-    { header: 'Status', accessor: (c) => <StatusPill status={c.status} /> },
     {
-      header: '% Complete',
-      accessor: (c) => (c.simulation ? `${c.simulation.percentComplete}%` : '-'),
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Line
+        </span>
+      ),
+      accessor: (c) => (
+        <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+          {c.lineCode || '-'}
+        </span>
+      ),
     },
     {
-      header: 'Issues',
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Status
+        </span>
+      ),
+      accessor: (c) => <StatusPill status={c.status} />,
+    },
+    {
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Complete
+        </span>
+      ),
       accessor: (c) =>
-        c.simulation?.hasIssues ? <AlertTriangle className="h-4 w-4 text-red-500" /> : '-',
+        c.simulation ? (
+          <span className="text-[9px] font-black text-gray-900 dark:text-white tabular-nums">
+            {c.simulation.percentComplete}%
+          </span>
+        ) : (
+          <span className="text-[9px] font-black text-gray-400">-</span>
+        ),
+    },
+    {
+      header: (
+        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+          Issues
+        </span>
+      ),
+      accessor: (c) =>
+        c.simulation?.hasIssues ? (
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
+        ) : (
+          <span className="text-[9px] font-black text-gray-400">-</span>
+        ),
     },
   ]
 
@@ -304,12 +340,28 @@ export function EngineersPage() {
   if (metrics.length === 0) {
     return (
       <div className="space-y-8">
-        <PageHeader title="Engineers" subtitle="Workload & risk overview" />
+        <div className="flex flex-col gap-4">
+          <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+              SimPilot
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-900 dark:text-gray-200">Engineers</span>
+          </nav>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-1">
+              <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+                Simulation <span className="text-indigo-600 dark:text-indigo-400">Engineers</span>
+              </h1>
+            </div>
+          </div>
+        </div>
         <EmptyState
           title="No Engineers Found"
           message="Ensure 'PERSONS RESPONSIBLE' is filled in the Simulation Status Excel files."
           ctaLabel="Go to Data Loader"
           onCtaClick={() => navigate('/data-loader')}
+          icon={<Users className="h-7 w-7" />}
         />
       </div>
     )
@@ -317,158 +369,202 @@ export function EngineersPage() {
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <PageHeader title="Engineers" subtitle="Workload & risk overview" />
+        <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+            SimPilot
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">Engineers</span>
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              Simulation <span className="text-indigo-600 dark:text-indigo-400">Engineers</span>
+            </h1>
+          </div>
+
           <button
             onClick={handleCopy}
-            className="inline-flex items-center px-3 py-2 border border-gray-200 dark:border-gray-700 shadow-sm text-sm font-semibold rounded-lg text-gray-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white hover:border-indigo-500/50 transition-all shadow-sm"
           >
             {copied ? (
-              <Check className="h-4 w-4 mr-2 text-emerald-500" />
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                Copied
+              </>
             ) : (
-              <Copy className="h-4 w-4 mr-2" />
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                Copy Summary
+              </>
             )}
-            {copied ? 'Copied' : 'Copy Summary'}
           </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm">
-            <div className="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-200">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400 font-semibold">
-                Total Engineers
-              </p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{metrics.length}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm">
-            <div className="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-200">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400 font-semibold">
-                With At-Risk Cells
-              </p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{atRiskEngineers}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm">
-            <div className="h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-200">
-              <Gauge className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400 font-semibold">
-                Avg Completion
-              </p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{avgCompletion}%</p>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 flex-1 min-w-[260px] md:max-w-xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Total Engineers"
+            value={metrics.length}
+            icon={<Users className="h-6 w-6 text-indigo-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-indigo-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="With At-Risk Cells"
+            value={atRiskEngineers}
+            icon={<AlertTriangle className="h-6 w-6 text-amber-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-amber-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Avg Completion"
+            value={`${avgCompletion}%`}
+            icon={<Gauge className="h-6 w-6 text-emerald-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-emerald-500/50 transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col xl:flex-row xl:items-center gap-4">
+            {/* Search */}
+            <div className="relative group flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="text"
-                className="w-full h-10 pl-10 pr-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                placeholder="Search engineers by name..."
+                placeholder="SEARCH ENGINEERS BY NAME..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all"
               />
             </div>
-            {searchTerm && (
+
+            <div className="flex items-center gap-2 flex-wrap">
               <button
-                onClick={() => setSearchTerm('')}
-                className="inline-flex items-center justify-center h-10 px-3 text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800"
+                onClick={() => setAtRiskOnly((prev) => !prev)}
+                className={cn(
+                  'px-3 py-2 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all shadow-sm',
+                  atRiskOnly
+                    ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-600/20'
+                    : 'bg-white dark:bg-black/20 text-gray-400 border-gray-200 dark:border-white/10 hover:border-amber-500/50',
+                )}
               >
-                Clear
+                <AlertTriangle className="h-3 w-3 inline mr-1" />
+                At-Risk Only
               </button>
-            )}
+
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer shadow-sm"
+              >
+                <option value="all">All Projects</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={phaseFilter}
+                onChange={(e) => setPhaseFilter(e.target.value as SchedulePhase | 'all')}
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer shadow-sm"
+              >
+                <option value="all">All Phases</option>
+                <option value="presim">Pre-Simulation</option>
+                <option value="offline">Offline Programming</option>
+                <option value="onsite">On-Site</option>
+                <option value="rampup">Ramp-Up</option>
+                <option value="handover">Handover</option>
+                <option value="unspecified">Unspecified</option>
+              </select>
+
+              <select
+                value={completionBand}
+                onChange={(e) => setCompletionBand(e.target.value as typeof completionBand)}
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer shadow-sm"
+              >
+                <option value="all">All Completion</option>
+                <option value="low">&lt; 50%</option>
+                <option value="mid">50–79%</option>
+                <option value="high">80–100%</option>
+                <option value="no-data">No Data</option>
+              </select>
+
+              <select
+                value={loadFilter}
+                onChange={(e) => setLoadFilter(e.target.value as typeof loadFilter)}
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer shadow-sm"
+              >
+                <option value="all">All Loads</option>
+                <option value="light">0–3 Cells</option>
+                <option value="medium">4–6 Cells</option>
+                <option value="heavy">7+ Cells</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center flex-wrap gap-2">
-            <button
-              onClick={() => setAtRiskOnly((prev) => !prev)}
-              className={`inline-flex items-center gap-1 px-3 h-10 rounded-lg text-xs font-semibold border ${
-                atRiskOnly
-                  ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200'
-                  : 'border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              <AlertTriangle className="h-3.5 w-3.5" />
-              At-risk only
-            </button>
-
-            <select
-              value={projectFilter}
-              onChange={(e) => setProjectFilter(e.target.value)}
-              className="h-10 border border-gray-200 dark:border-gray-700 rounded-lg px-3 text-xs font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="all">All projects</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={phaseFilter}
-              onChange={(e) => setPhaseFilter(e.target.value as SchedulePhase | 'all')}
-              className="h-10 border border-gray-200 dark:border-gray-700 rounded-lg px-3 text-xs font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="all">All phases</option>
-              <option value="presim">Pre-sim</option>
-              <option value="offline">Offline</option>
-              <option value="onsite">On-site</option>
-              <option value="rampup">Ramp-up</option>
-              <option value="handover">Handover</option>
-              <option value="unspecified">Unspecified</option>
-            </select>
-
-            <select
-              value={completionBand}
-              onChange={(e) => setCompletionBand(e.target.value as typeof completionBand)}
-              className="h-10 border border-gray-200 dark:border-gray-700 rounded-lg px-3 text-xs font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="all">All completion</option>
-              <option value="low">&lt; 50%</option>
-              <option value="mid">50–79%</option>
-              <option value="high">80–100%</option>
-              <option value="no-data">No data</option>
-            </select>
-
-            <select
-              value={loadFilter}
-              onChange={(e) => setLoadFilter(e.target.value as typeof loadFilter)}
-              className="h-10 border border-gray-200 dark:border-gray-700 rounded-lg px-3 text-xs font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="all">All loads</option>
-              <option value="light">0–3 cells</option>
-              <option value="medium">4–6 cells</option>
-              <option value="heavy">7+ cells</option>
-            </select>
-          </div>
+          {/* Active Filters */}
+          {(searchTerm ||
+            atRiskOnly ||
+            projectFilter !== 'all' ||
+            phaseFilter !== 'all' ||
+            completionBand !== 'all' ||
+            loadFilter !== 'all') && (
+            <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t border-gray-100 dark:border-white/5">
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                Active Filters:
+              </span>
+              {searchTerm && (
+                <Chip label={`SEARCH: ${searchTerm}`} onClear={() => setSearchTerm('')} />
+              )}
+              {atRiskOnly && <Chip label="AT-RISK ONLY" onClear={() => setAtRiskOnly(false)} />}
+              {projectFilter !== 'all' && (
+                <Chip
+                  label={`PROJECT: ${projects.find((p) => p.id === projectFilter)?.name}`}
+                  onClear={() => setProjectFilter('all')}
+                />
+              )}
+              {phaseFilter !== 'all' && (
+                <Chip label={`PHASE: ${phaseFilter}`} onClear={() => setPhaseFilter('all')} />
+              )}
+              {completionBand !== 'all' && (
+                <Chip
+                  label={`COMPLETION: ${completionBand}`}
+                  onClear={() => setCompletionBand('all')}
+                />
+              )}
+              {loadFilter !== 'all' && (
+                <Chip label={`LOAD: ${loadFilter}`} onClear={() => setLoadFilter('all')} />
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Table */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-3">
+      <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400 font-semibold">
-              Roster
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              Engineer Roster
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Click a row to see assignments
+            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+              Click a row to view assignments
             </p>
           </div>
         </div>
@@ -478,7 +574,7 @@ export function EngineersPage() {
           emptyMessage="No engineers match your filter."
           density="compact"
           onRowClick={(row) => {
-            hasAppliedHighlight.current = true // user took control; stop auto-highlight overriding
+            hasAppliedHighlight.current = true
             setSelectedEngineerName(row.name === selectedEngineerName ? null : row.name)
           }}
           rowClassName={(row) =>
@@ -493,20 +589,20 @@ export function EngineersPage() {
       {selectedEngineerName && (
         <div
           ref={detailRef}
-          className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-indigo-200 dark:border-indigo-700 p-6 animate-fade-in"
+          className="bg-white dark:bg-[rgb(31,41,55)] border border-indigo-500/50 dark:border-indigo-500/30 rounded-2xl p-6 shadow-xl shadow-indigo-500/5 animate-fade-in"
         >
           <div className="flex justify-between items-start mb-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-indigo-500 font-semibold">
-                Assignments
+              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                Cell Assignments
               </p>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mt-1">
                 {selectedEngineerName}
               </h3>
             </div>
             <button
               onClick={() => setSelectedEngineerName(null)}
-              className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
             >
               Close
             </button>
@@ -520,6 +616,21 @@ export function EngineersPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function Chip({ label, onClear }: { label: string | undefined; onClear: () => void }) {
+  if (!label) return null
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-widest">
+      {label}
+      <button
+        onClick={onClear}
+        className="hover:text-indigo-900 dark:hover:text-white transition-colors"
+      >
+        <Activity className="h-2.5 w-2.5" />
+      </button>
+    </span>
   )
 }
 
