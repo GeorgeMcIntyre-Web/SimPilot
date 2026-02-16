@@ -224,18 +224,15 @@ export function DashboardPage() {
                   className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
                 />
               </div>
-
               <div className="flex items-center gap-2">
                 <select
                   value={areaSort}
                   onChange={(e) => setAreaSort(e.target.value as AreaSort)}
                   className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
                 >
-                  <option value="total-desc">By Volume</option>
                   <option value="risk-desc">By Risk</option>
                   <option value="alpha">A-Z Name</option>
                 </select>
-
                 <select
                   value={areaFilter}
                   onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
@@ -267,7 +264,7 @@ export function DashboardPage() {
         <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-2 relative z-10">
           <div>
             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
-              {selectedArea ? `Nodes in ${selectedArea}` : 'Project Stations'}
+              {selectedArea ? `Stations in ${selectedArea}` : 'Project Stations'}
             </h3>
             <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-0.5">
               {visibleCells.length} Active Stations
