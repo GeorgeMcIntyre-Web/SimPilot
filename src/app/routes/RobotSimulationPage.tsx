@@ -525,7 +525,7 @@ function RobotSimulationStationsTable({
                   <td className="w-1 whitespace-nowrap px-0.5 py-3">
                     {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div className="w-24 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               row.cell.simulationStatus.firstStageCompletion >= 90
