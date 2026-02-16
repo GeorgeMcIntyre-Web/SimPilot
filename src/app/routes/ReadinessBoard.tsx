@@ -392,7 +392,6 @@ export function ReadinessBoard() {
                     {items.length}
                   </span>
                 </div>
-
                 <div className="p-3 space-y-3 overflow-y-auto custom-scrollbar flex-1 max-h-[70vh]">
                   {items.map((item) => (
                     <StationReadinessCard
