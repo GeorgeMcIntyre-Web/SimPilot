@@ -105,7 +105,7 @@ export function DataTable<T>({
                   key={idx}
                   scope="col"
                   className={cn(
-                    `${paddingClasses.head} pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6`,
+                    `${paddingClasses.head} pl-4 pr-3 text-left text-lg font-semibold text-gray-900 dark:text-white sm:pl-6`,
                     col.className,
                   )}
                 >
