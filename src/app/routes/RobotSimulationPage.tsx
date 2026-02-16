@@ -477,11 +477,11 @@ function RobotSimulationStationsTable({
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                   onClick={() => onSelect(row)}
                 >
-                  <td className="whitespace-nowrap py-4 pl-2 sm:pl-6">
+                  <td className="whitespace-nowrap py-4 pl-2 sm:pl-3">
                     {row.assetId ? (
                       <Link
                         to={`/assets/${encodeURIComponent(row.assetId)}`}
-                        className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[240px] hover:underline"
+                        className="font-medium text-blue-600 dark:text-blue-400 block truncate max-w-[200px] hover:underline"
                         title={`Open asset ${row.assetId}`}
                         onClick={(e) => e.stopPropagation()}
                       >
