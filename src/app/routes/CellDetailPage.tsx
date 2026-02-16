@@ -284,7 +284,7 @@ export function CellDetailPage() {
     },
     { header: 'Model', accessor: (r) => r.oemModel || '-' },
     {
-      header: 'Application',
+      header: 'Application Code',
       accessor: (r) => {
         const rawApp =
           (r.metadata?.application as string) ||
