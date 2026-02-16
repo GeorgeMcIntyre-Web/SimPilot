@@ -224,7 +224,6 @@ export function CellDetailPage() {
 
   const handleOpenSimulation = async () => {
     if (!cell.simulation?.studyPath) return
-
     pushBusy('Opening simulation in Tecnomatix...')
     try {
       const connected = await simBridgeClient.connect()
