@@ -1,25 +1,23 @@
-import { useMemo, useState, type ReactElement } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   AlertCircle,
   Calendar,
   CheckCircle2,
   Clock,
-  Filter,
   Search,
-  SlidersHorizontal,
   User,
-  RefreshCw,
-  ShoppingCart,
   Wrench,
+  ChevronRight,
+  Activity,
+  Target,
 } from 'lucide-react'
 
+import { StatCard } from '../../ui/components/StatCard'
 import { useCells, useProjects, useAreas } from '../../domain/coreStore'
 import { SchedulePhase, ScheduleStatus } from '../../domain/core'
 import { getAllCellScheduleRisks } from '../../domain/scheduleMetrics'
 import { EmptyState } from '../../ui/components/EmptyState'
-import { PageHeader } from '../../ui/components/PageHeader'
-import { PageHint } from '../../ui/components/PageHint'
 import { cn } from '../../ui/lib/utils'
 import { useAllStations, type StationContext } from '../../features/simulation/simulationStore'
 
@@ -34,41 +32,6 @@ const PHASE_LABELS: Record<SchedulePhase, string> = {
   onsite: 'On-Site',
   rampup: 'Ramp-Up',
   handover: 'Handover',
-}
-
-const STATUS_TOKENS = {
-  onTrack: {
-    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    border: 'border-emerald-200 dark:border-emerald-800',
-    dot: 'bg-emerald-500',
-    accent: 'border-l-4 border-l-emerald-500/70',
-    pill: 'bg-emerald-100/70 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200',
-  },
-  atRisk: {
-    bg: 'bg-amber-50 dark:bg-amber-950/30',
-    text: 'text-amber-800 dark:text-amber-300',
-    border: 'border-amber-200 dark:border-amber-800',
-    dot: 'bg-amber-500',
-    accent: 'border-l-4 border-l-amber-500/70',
-    pill: 'bg-amber-100/80 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200',
-  },
-  late: {
-    bg: 'bg-rose-50 dark:bg-rose-950/30',
-    text: 'text-rose-800 dark:text-rose-300',
-    border: 'border-rose-200 dark:border-rose-800',
-    dot: 'bg-rose-500',
-    accent: 'border-l-4 border-l-rose-500/70',
-    pill: 'bg-rose-100/80 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200',
-  },
-  unknown: {
-    bg: 'bg-gray-50 dark:bg-gray-800/30',
-    text: 'text-gray-600 dark:text-gray-300',
-    border: 'border-gray-200 dark:border-gray-700',
-    dot: 'bg-gray-400',
-    accent: 'border-l-4 border-l-gray-400/70',
-    pill: 'bg-gray-100 text-gray-700 dark:bg-gray-800/40 dark:text-gray-200',
-  },
 }
 
 // ============================================================================
@@ -208,16 +171,28 @@ export function ReadinessBoard() {
 
   if (stationReadiness.length === 0) {
     return (
-      <div className="space-y-4">
-        <PageHeader
-          title="Readiness Board"
-          subtitle={
-            <PageHint
-              standardText="Track stations by schedule phase and status"
-              flowerText="Stations moving from presim to handover, at a glance."
-            />
-          }
-        />
+      <div className="space-y-8">
+        <div className="flex flex-col gap-4">
+          <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+            <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+              SimPilot
+            </Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-900 dark:text-gray-200">Intelligence</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-gray-900 dark:text-gray-200">Readiness Board</span>
+          </nav>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="space-y-1">
+              <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+                Readiness <span className="text-indigo-600 dark:text-indigo-400">Board</span>
+              </h1>
+              <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+                Project Deployment Intelligence
+              </h2>
+            </div>
+          </div>
+        </div>
         <EmptyState
           title="No Stations Found"
           message="Load simulation data to see readiness by station."
@@ -230,70 +205,115 @@ export function ReadinessBoard() {
   }
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Readiness Board"
-        subtitle={
-          <PageHint
-            standardText="Track stations by schedule phase and status"
-            flowerText="Stations moving from presim to handover, at a glance."
-          />
-        }
-      />
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <nav className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
+          <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+            SimPilot
+          </Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">Intelligence</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-900 dark:text-gray-200">Readiness Board</span>
+        </nav>
 
-      {/* Statistics strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatPill
-          label="Total"
-          value={stats.total}
-          tone="stone"
-          icon={<Calendar className="h-4 w-4" />}
-        />
-        <StatPill
-          label="On Track"
-          value={stats.onTrack}
-          tone="emerald"
-          icon={<CheckCircle2 className="h-4 w-4" />}
-        />
-        <StatPill
-          label="At Risk"
-          value={stats.atRisk}
-          tone="amber"
-          icon={<AlertCircle className="h-4 w-4" />}
-        />
-        <StatPill
-          label="Late"
-          value={stats.late}
-          tone="rose"
-          icon={<Clock className="h-4 w-4" />}
-        />
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              Readiness <span className="text-indigo-600 dark:text-indigo-400">Board</span>
+            </h1>
+            <h2 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] mb-1">
+              Project Deployment Intelligence
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
+              <div
+                className={cn(
+                  'h-2 w-2 rounded-full animate-pulse',
+                  stats.late > 0
+                    ? 'bg-rose-500'
+                    : stats.atRisk > 0
+                      ? 'bg-amber-500'
+                      : 'bg-emerald-500',
+                )}
+              />
+              <div>
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
+                  Global Readiness
+                </div>
+                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
+                  {stats.late > 5 ? 'Intervention Required' : 'Operational Stable'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Total Stations"
+            value={stats.total}
+            icon={<Target className="h-6 w-6 text-indigo-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-indigo-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="On Track"
+            value={stats.onTrack}
+            icon={<CheckCircle2 className="h-6 w-6 text-emerald-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-emerald-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="At Risk"
+            value={stats.atRisk}
+            icon={<AlertCircle className="h-6 w-6 text-amber-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-amber-500/50 transition-colors"
+          />
+        </div>
+        <div className="relative group cursor-default">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-rose-500/20 to-pink-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <StatCard
+            title="Late"
+            value={stats.late}
+            icon={<Clock className="h-6 w-6 text-rose-500" />}
+            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-rose-500/50 transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col xl:flex-row xl:items-center gap-4">
             {/* Search */}
-            <div className="flex-1 max-w-xl">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search stations, engineers, lines, or projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                />
-              </div>
+            <div className="relative group flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="SEARCH STATIONS, ENGINEERS, LINES..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all"
+              />
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="h-4 w-4 text-gray-400 flex-shrink-0" />
-
               <select
                 value={filterPhase}
                 onChange={(e) => setFilterPhase(e.target.value as SchedulePhase | 'all')}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer shadow-sm"
               >
                 <option value="all">All Phases</option>
                 {phases.map((p) => (
@@ -306,7 +326,7 @@ export function ReadinessBoard() {
               <select
                 value={filterProject}
                 onChange={(e) => setFilterProject(e.target.value)}
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-2.5 py-1.5 text-xs font-medium bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all cursor-pointer shadow-sm"
               >
                 <option value="all">All Projects</option>
                 {projects.map((p) => (
@@ -316,13 +336,14 @@ export function ReadinessBoard() {
                 ))}
               </select>
 
+              <div className="h-6 w-px bg-gray-200 dark:bg-white/10 mx-1" />
+
               <StatusMultiSelect selected={filterStatus} onChange={setFilterStatus} />
+
+              <div className="h-6 w-px bg-gray-200 dark:bg-white/10 mx-1" />
+
               <SortToggle sortMode={sortMode} onChange={setSortMode} />
               <DensityToggle density={density} onChange={setDensity} />
-
-              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                {filtered.length} {filtered.length === 1 ? 'station' : 'stations'}
-              </div>
             </div>
           </div>
 
@@ -331,28 +352,30 @@ export function ReadinessBoard() {
             filterProject !== 'all' ||
             filterStatus.length > 0 ||
             searchTerm) && (
-            <div className="mt-1 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-500">Active filters:</span>
+            <div className="flex items-center gap-2 flex-wrap mt-2 pt-2 border-t border-gray-100 dark:border-white/5">
+              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                Active Intelligence Filters:
+              </span>
               {filterPhase !== 'all' && (
                 <Chip
-                  label={`Phase: ${PHASE_LABELS[filterPhase]}`}
+                  label={`PHASE: ${PHASE_LABELS[filterPhase]}`}
                   onClear={() => setFilterPhase('all')}
                 />
               )}
               {filterProject !== 'all' && (
                 <Chip
-                  label={`Project: ${projects.find((p) => p.id === filterProject)?.name}`}
+                  label={`PROJECT: ${projects.find((p) => p.id === filterProject)?.name}`}
                   onClear={() => setFilterProject('all')}
                 />
               )}
               {filterStatus.length > 0 && (
                 <Chip
-                  label={`Status: ${filterStatus.join(', ')}`}
+                  label={`STATUS: ${filterStatus.join(', ')}`}
                   onClear={() => setFilterStatus([])}
                 />
               )}
               {searchTerm && (
-                <Chip label={`Search: ${searchTerm}`} onClear={() => setSearchTerm('')} />
+                <Chip label={`SEARCH: ${searchTerm}`} onClear={() => setSearchTerm('')} />
               )}
             </div>
           )}
@@ -361,25 +384,23 @@ export function ReadinessBoard() {
 
       {/* Board */}
       {sorted.length > 0 ? (
-        <div className="max-h-[900px] overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="max-h-[1200px] overflow-x-auto pb-4 custom-scrollbar">
+          <div className="flex gap-4 min-w-max h-full">
             {grouped.map(({ phase, items }) => (
               <div
                 key={phase}
-                className="relative bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden flex flex-col shadow-sm backdrop-blur-sm"
+                className="w-80 flex-shrink-0 flex flex-col bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm"
               >
-                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-2 flex-shrink-0">
-                  <div className="flex items-center justify-between gap-2 h-6">
-                    <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wide">
-                      {PHASE_LABELS[phase]}
-                    </h3>
-                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded">
-                      {items.length}
-                    </span>
-                  </div>
+                <div className="px-4 py-3 bg-gray-50/50 dark:bg-black/20 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
+                  <h3 className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-[0.2em] truncate pr-2">
+                    {PHASE_LABELS[phase]}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-[9px] font-black tabular-nums text-indigo-600 dark:text-indigo-400">
+                    {items.length}
+                  </span>
                 </div>
 
-                <div className="p-2.5 space-y-2.5 overflow-y-auto custom-scrollbar max-h-[70vh]">
+                <div className="p-3 space-y-3 overflow-y-auto custom-scrollbar flex-1 max-h-[70vh]">
                   {items.map((item) => (
                     <StationReadinessCard
                       key={item.station.contextKey}
@@ -393,12 +414,14 @@ export function ReadinessBoard() {
           </div>
         </div>
       ) : (
-        <div className="text-center py-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <Calendar className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">No Stations Found</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Adjust your filters to see more stations.
-          </p>
+        <div className="flex flex-col items-center justify-center py-24 bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl">
+          <div className="p-4 rounded-full bg-gray-50 dark:bg-white/5 mb-4">
+            <Target className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+          </div>
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            No Stations Nodes Found
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">Adjust filters to monitor deployment</p>
         </div>
       )}
     </div>
@@ -414,170 +437,150 @@ interface StationReadinessCardProps {
   density: 'compact' | 'comfortable'
 }
 
-function StationReadinessCard({ item, density }: StationReadinessCardProps) {
-  const statusStyles = STATUS_TOKENS[item.status]
-  const isCompact = density === 'compact'
+function StationReadinessCard({ item }: StationReadinessCardProps) {
   const engineer = item.station.simulationStatus?.engineer
   const completion = item.completion ?? undefined
   const totalTools = item.station.assetCounts.tools + item.station.assetCounts.other
-  const reusePct = useMemo(() => {
-    const total =
-      item.station.sourcingCounts.reuse +
-      item.station.sourcingCounts.freeIssue +
-      item.station.sourcingCounts.newBuy +
-      item.station.sourcingCounts.unknown
-    if (total === 0) return null
-    return Math.round(
-      ((item.station.sourcingCounts.reuse + item.station.sourcingCounts.freeIssue) / total) * 100,
-    )
-  }, [item.station.sourcingCounts])
-  const newBuyPct = useMemo(() => {
-    const total =
-      item.station.sourcingCounts.reuse +
-      item.station.sourcingCounts.freeIssue +
-      item.station.sourcingCounts.newBuy +
-      item.station.sourcingCounts.unknown
-    if (total === 0) return null
-    return Math.round((item.station.sourcingCounts.newBuy / total) * 100)
-  }, [item.station.sourcingCounts])
+  const navigate = useNavigate()
 
   const statusLabel =
     item.status === 'onTrack'
-      ? 'On Track'
+      ? 'Active'
       : item.status === 'atRisk'
         ? 'At Risk'
         : item.status === 'late'
-          ? 'Late'
-          : 'Unknown'
+          ? 'Delayed'
+          : 'Pending'
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'onTrack':
+        return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 dot-emerald-500'
+      case 'atRisk':
+        return 'bg-amber-500/10 text-amber-500 border-amber-500/20 dot-amber-500'
+      case 'late':
+        return 'bg-rose-500/10 text-rose-500 border-rose-500/20 dot-rose-500'
+      default:
+        return 'bg-gray-500/10 text-gray-500 border-gray-500/20 dot-gray-400'
+    }
+  }
+
+  const styles = getStatusStyle(item.status)
 
   return (
     <div
+      onClick={() =>
+        navigate(
+          `/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`,
+        )
+      }
       className={cn(
-        'relative rounded-xl border shadow-sm transition-all duration-200',
-        'bg-white dark:bg-gray-800',
-        'border-gray-200 dark:border-gray-700',
-        'hover:shadow-md hover:-translate-y-[1px]',
+        'group relative rounded-2xl border p-4 transition-all cursor-pointer overflow-hidden',
+        'bg-white dark:bg-white/5',
+        'border-gray-100 dark:border-white/5',
+        'hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1',
       )}
-      aria-label={`Station ${item.station.station}, status ${item.status}`}
     >
-      {/* Neutral accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl bg-gray-300 dark:bg-gray-600" />
+      {/* Decorative pulse for late items */}
+      {item.status === 'late' && (
+        <div className="absolute top-0 right-0 p-1">
+          <div className="h-1 w-1 rounded-full bg-rose-500 animate-ping" />
+        </div>
+      )}
 
-      {/* Card content */}
-      <div className={cn('pl-4 pr-3', isCompact ? 'py-2' : 'py-3')}>
-        {/* Header row: station name + completion */}
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="min-w-0 flex-1 space-y-0.5">
-            <Link
-              to={`/projects/${item.projectId ?? ''}/cells/${encodeURIComponent(item.station.cellId)}`}
-              className="font-semibold text-sm text-blue-600 dark:text-blue-400 leading-tight hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors block truncate"
-            >
-              {item.station.station}
-            </Link>
-            {item.areaName && (
-              <Link
-                to={
-                  item.projectId
-                    ? `/projects/${item.projectId}`
-                    : `/areas/${encodeURIComponent(item.areaName)}/overview`
-                }
-                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate block"
-              >
-                {item.areaName}
-              </Link>
-            )}
+      {/* Header: Station & Progress */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-lg bg-gray-50 dark:bg-black/20 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+            <Target className="h-3 w-3" />
           </div>
-          {completion !== undefined && (
-            <div className="flex-shrink-0">
-              <span className="text-sm font-bold tabular-nums text-gray-700 dark:text-gray-200">
-                {completion}%
+          <div className="min-w-0">
+            <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {item.station.station}
+            </h4>
+            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
+              {item.projectName || 'Unassigned Node'}
+            </div>
+          </div>
+        </div>
+
+        {completion !== undefined && (
+          <div className="flex flex-col items-end">
+            <span className="text-xs font-black text-gray-900 dark:text-white tabular-nums">
+              {completion}%
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Progress Bar */}
+      <div className="h-1.5 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden mb-4">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all duration-1000',
+            (completion ?? 0) >= 90
+              ? 'bg-emerald-500'
+              : (completion ?? 0) >= 50
+                ? 'bg-indigo-500'
+                : 'bg-rose-500',
+          )}
+          style={{ width: `${completion ?? 0}%` }}
+        />
+      </div>
+
+      {/* Metadata Strip */}
+      <div className="flex items-center justify-between gap-2 border-t border-gray-100 dark:border-white/5 pt-3">
+        <div className="flex items-center gap-3">
+          {engineer ? (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <User className="h-3 w-3 text-gray-400" />
+              <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-tight truncate">
+                {engineer}
+              </span>
+            </div>
+          ) : (
+            <span className="text-[9px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest">
+              No Lead
+            </span>
+          )}
+
+          {totalTools > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Wrench className="h-3 w-3 text-indigo-500/50" />
+              <span className="text-[9px] font-black text-gray-900 dark:text-white tabular-nums">
+                {totalTools}
               </span>
             </div>
           )}
         </div>
 
-        {/* Progress bar */}
-        <div className="mb-2">
-          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className={cn(
-                'h-full rounded-full transition-all duration-300',
-                (completion ?? 0) >= 90
-                  ? 'bg-emerald-500'
-                  : (completion ?? 0) >= 50
-                    ? 'bg-amber-500'
-                    : 'bg-rose-500',
-              )}
-              style={{ width: `${completion ?? 0}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Engineer row */}
-        <div className="mb-2">
-          {engineer ? (
-            <Link
-              to={`/engineers?highlightEngineer=${encodeURIComponent(engineer)}`}
-              className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors truncate max-w-full"
-            >
-              <User className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="truncate">{engineer}</span>
-            </Link>
-          ) : (
-            <span className="text-xs text-gray-400 dark:text-gray-500 italic">Unassigned</span>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border',
+            styles,
           )}
-        </div>
+        >
+          <div className={cn('h-1 w-1 rounded-full', styles.split('dot-')[1])} />
+          {statusLabel}
+        </span>
+      </div>
 
-        {/* Status badge row */}
-        <div className="mb-2">
-          <span
-            className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
-              statusStyles.pill,
-            )}
-          >
-            <span className={cn('w-2 h-2 rounded-full', statusStyles.dot)} />
-            {statusLabel}
-          </span>
-        </div>
-
-        {/* Meta row: sourcing + due date */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            {reusePct !== null && reusePct > 0 && (
-              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                <RefreshCw className="h-3.5 w-3.5" />
-                <span>{reusePct}%</span>
-              </span>
-            )}
-            {newBuyPct !== null && newBuyPct > 0 && (
-              <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                <ShoppingCart className="h-3.5 w-3.5" />
-                <span>{newBuyPct}%</span>
-              </span>
-            )}
-            {totalTools > 0 && (
-              <span className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-                <Wrench className="h-3.5 w-3.5" />
-                <span>{totalTools}</span>
-              </span>
-            )}
-          </div>
-
-          {/* Due date info */}
+      {/* Footer: Date Alert */}
+      {(item.daysLate !== undefined && item.daysLate > 0) || item.daysToDue !== undefined ? (
+        <div className="mt-3 flex items-center justify-end">
           {item.daysLate && item.daysLate > 0 ? (
-            <span className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 font-semibold">
-              <Clock className="h-3.5 w-3.5" />
-              {item.daysLate}d late
-            </span>
+            <div className="flex items-center gap-1 py-1 px-2 rounded-md bg-rose-500/10 text-rose-500 text-[8px] font-black uppercase tracking-widest border border-rose-500/20">
+              <Clock className="h-2.5 w-2.5" />
+              Critical: {item.daysLate}d Overdue
+            </div>
           ) : item.daysToDue !== undefined ? (
-            <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <Clock className="h-3.5 w-3.5" />
-              {item.daysToDue}d to due
-            </span>
+            <div className="flex items-center gap-1 text-[8px] font-black text-gray-400 uppercase tracking-widest">
+              <Calendar className="h-2.5 w-2.5" />
+              Due in {item.daysToDue}d
+            </div>
           ) : null}
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }
@@ -589,10 +592,13 @@ function StationReadinessCard({ item, density }: StationReadinessCardProps) {
 function Chip({ label, onClear }: { label: string | undefined; onClear: () => void }) {
   if (!label) return null
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-widest">
       {label}
-      <button onClick={onClear} className="hover:text-indigo-900 dark:hover:text-indigo-100">
-        ×
+      <button
+        onClick={onClear}
+        className="hover:text-indigo-900 dark:hover:text-white transition-colors"
+      >
+        <Activity className="h-2.5 w-2.5" />
       </button>
     </span>
   )
@@ -606,10 +612,10 @@ function StatusMultiSelect({
   onChange: (val: Array<'onTrack' | 'atRisk' | 'late' | 'unknown'>) => void
 }) {
   const options: Array<{ value: 'onTrack' | 'atRisk' | 'late' | 'unknown'; label: string }> = [
-    { value: 'onTrack', label: 'On Track' },
-    { value: 'atRisk', label: 'At Risk' },
-    { value: 'late', label: 'Late' },
-    { value: 'unknown', label: 'Unknown' },
+    { value: 'onTrack', label: 'ACTIVE' },
+    { value: 'atRisk', label: 'AT RISK' },
+    { value: 'late', label: 'DELAYED' },
+    { value: 'unknown', label: 'PENDING' },
   ]
 
   const toggle = (value: (typeof options)[number]['value']) => {
@@ -618,16 +624,16 @@ function StatusMultiSelect({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5 flex-wrap">
       {options.map((opt) => (
         <button
           key={opt.value}
           onClick={() => toggle(opt.value)}
           className={cn(
-            'px-2 py-1 rounded-md border text-xs font-semibold transition-all',
+            'px-2.5 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all',
             selected.includes(opt.value)
-              ? 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-700'
-              : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600',
+              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20'
+              : 'bg-white dark:bg-black/20 text-gray-400 border-gray-200 dark:border-white/10 hover:border-indigo-500/50',
           )}
         >
           {opt.label}
@@ -645,29 +651,28 @@ function SortToggle({
   onChange: (mode: 'risk' | 'due') => void
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 px-1 py-1 text-xs text-gray-600 dark:text-gray-300">
-      <SlidersHorizontal className="h-4 w-4 text-gray-400" />
+    <div className="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-white/10 px-1 py-1 bg-white dark:bg-black/20 shadow-sm">
       <button
         onClick={() => onChange('risk')}
         className={cn(
-          'px-2 py-1 rounded',
+          'px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
           sortMode === 'risk'
-            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700',
+            ? 'bg-white dark:bg-white/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
         )}
       >
-        Risk
+        RISK
       </button>
       <button
         onClick={() => onChange('due')}
         className={cn(
-          'px-2 py-1 rounded',
+          'px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
           sortMode === 'due'
-            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700',
+            ? 'bg-white dark:bg-white/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
+            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
         )}
       >
-        Due
+        DUE
       </button>
     </div>
   )
@@ -681,65 +686,29 @@ function DensityToggle({
   onChange: (d: 'compact' | 'comfortable') => void
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-md border border-gray-200 dark:border-gray-700 px-1 py-1 text-xs text-gray-600 dark:text-gray-300">
+    <div className="flex items-center gap-1 rounded-xl border border-gray-200 dark:border-white/10 px-1 py-1 bg-white dark:bg-black/20 shadow-sm">
       <button
         onClick={() => onChange('compact')}
         className={cn(
-          'px-2 py-1 rounded',
+          'px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
           density === 'compact'
-            ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700',
+            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
+            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
         )}
       >
-        Compact
+        GRID
       </button>
       <button
         onClick={() => onChange('comfortable')}
         className={cn(
-          'px-2 py-1 rounded',
+          'px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all',
           density === 'comfortable'
-            ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100'
-            : 'hover:bg-gray-100 dark:hover:bg-gray-700',
+            ? 'bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm'
+            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200',
         )}
       >
-        Cozy
+        COZY
       </button>
-    </div>
-  )
-}
-
-function StatPill({
-  label,
-  value,
-  tone,
-  icon,
-}: {
-  label: string
-  value: number
-  tone: 'stone' | 'emerald' | 'amber' | 'rose'
-  icon: ReactElement
-}) {
-  const tones: Record<typeof tone, { bg: string; text: string }> = {
-    stone: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-800 dark:text-gray-100' },
-    emerald: {
-      bg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      text: 'text-emerald-800 dark:text-emerald-200',
-    },
-    amber: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-800 dark:text-amber-200' },
-    rose: { bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-800 dark:text-rose-200' },
-  }
-
-  const style = tones[tone]
-
-  return (
-    <div
-      className={cn('flex items-center gap-2 rounded-lg px-3 py-2 shadow-sm', style.bg, style.text)}
-    >
-      {icon}
-      <div className="flex flex-col leading-tight">
-        <span className="text-[11px] font-semibold uppercase tracking-wide">{label}</span>
-        <span className="text-lg font-bold">{value}</span>
-      </div>
     </div>
   )
 }
