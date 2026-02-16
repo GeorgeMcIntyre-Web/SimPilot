@@ -186,20 +186,6 @@ export function DashboardPage() {
               Projects <span className="text-indigo-600 dark:text-indigo-400">Dashboard</span>
             </h1>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-              <div>
-                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
-                  System Load
-                </div>
-                <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
-                  Optimal Performance
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
