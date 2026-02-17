@@ -176,7 +176,6 @@ export function ProjectDetailPage() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 dark:text-gray-200">{project.name}</span>
         </nav>
-
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
@@ -186,7 +185,6 @@ export function ProjectDetailPage() {
               </span>
             </h1>
           </div>
-
           <div className="flex items-center gap-3">
             <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
               <div
@@ -268,7 +266,6 @@ export function ProjectDetailPage() {
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-bold uppercase tracking-widest text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all"
                 />
               </div>
-
               <div className="space-y-1 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
                 <button
                   onClick={() => setSearchParams({ areaId: 'ALL' })}
