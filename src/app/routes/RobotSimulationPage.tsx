@@ -432,31 +432,31 @@ function RobotSimulationStationsTable({
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
-                className="py-3 pl-4 pr-3 sm:pl-2 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 px-3 pl-4 sm:pl-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors text-sm font-semibold"
                 onClick={() => toggleSort('robot')}
               >
                 Robot <SortIcon column="robot" />
               </th>
               <th
-                className="cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 px-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors text-sm font-semibold"
                 onClick={() => toggleSort('area')}
               >
                 Area <SortIcon column="area" />
               </th>
               <th
-                className="w-1 whitespace-nowrap py-3 px-0.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 px-3 whitespace-nowrap w-44 max-w-[180px] cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors text-sm font-semibold"
                 onClick={() => toggleSort('application')}
               >
                 Application <SortIcon column="application" />
               </th>
               <th
-                className="w-1 whitespace-nowrap py-3 px-0.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 px-3 whitespace-nowrap cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors text-sm font-semibold"
                 onClick={() => toggleSort('simulator')}
               >
                 Simulator <SortIcon column="simulator" />
               </th>
               <th
-                className="w-1 whitespace-nowrap py-3 px-0.5 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 px-3 whitespace-nowrap cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors text-sm font-semibold"
                 onClick={() => toggleSort('completion')}
               >
                 Sync <SortIcon column="completion" />
@@ -477,7 +477,7 @@ function RobotSimulationStationsTable({
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                   onClick={() => onSelect(row)}
                 >
-                  <td className="whitespace-nowrap py-4 pl-2 sm:pl-3">
+                  <td className="whitespace-nowrap py-3 px-3 pl-3 sm:pl-3">
                     {row.assetId ? (
                       <Link
                         to={`/assets/${encodeURIComponent(row.assetId)}`}
@@ -496,7 +496,7 @@ function RobotSimulationStationsTable({
                       </span>
                     )}
                   </td>
-                  <td className="whitespace-nowrap px-0 py-0 text-gray-500 dark:text-gray-400">
+                  <td className="whitespace-nowrap py-3 px-3 text-gray-500 dark:text-gray-400">
                     {row.cell.projectId ? (
                       <Link
                         to={`/projects/${row.cell.projectId}`}
@@ -509,10 +509,12 @@ function RobotSimulationStationsTable({
                       (row.cell.areaKey ?? 'Unknown')
                     )}
                   </td>
-                  <td className="w-1 whitespace-nowrap px-0.5 py-3 text-gray-500 dark:text-gray-400">
-                    {row.application ?? 'Unknown'}
+                  <td className="whitespace-nowrap py-3 px-3 text-gray-500 dark:text-gray-400 w-44 max-w-[180px]">
+                    <span className="block truncate" title={row.application ?? 'Unknown'}>
+                      {row.application ?? 'Unknown'}
+                    </span>
                   </td>
-                  <td className="w-1 whitespace-nowrap px-0.5 py-3 text-gray-700 dark:text-gray-300">
+                  <td className="whitespace-nowrap py-3 px-3 text-gray-700 dark:text-gray-300">
                     <Link
                       to={`/engineers?highlightEngineer=${encodeURIComponent(row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED')}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
@@ -522,7 +524,7 @@ function RobotSimulationStationsTable({
                       {row.cell.simulationStatus?.engineer?.trim() || 'UNASSIGNED'}
                     </Link>
                   </td>
-                  <td className="w-1 whitespace-nowrap px-0.5 py-3">
+                  <td className="whitespace-nowrap py-3 px-3">
                     {typeof row.cell.simulationStatus?.firstStageCompletion === 'number' ? (
                       <div className="flex items-center gap-2">
                         <div className="w-24 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
