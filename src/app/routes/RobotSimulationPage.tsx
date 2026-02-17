@@ -875,23 +875,23 @@ function RobotSimulationPage() {
                             `/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}&station=${encodeURIComponent(selectedRow.cell.stationKey)}`,
                           )
                         }
-                        className="w-full text-left rounded-xl border border-gray-100 dark:border-white/5 bg-gray-60/30 dark:bg-white/5 p-4 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-white/10 transition-all group"
+                        className="w-full text-left rounded-xl border border-gray-500/70 bg-[rgb(32,41,55)] p-4 hover:border-gray-400 hover:bg-[rgb(38,49,65)] transition-all group"
                       >
                         <div className="flex items-center justify-between mb-3">
-                          <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                          <span className="text-[11px] font-black text-gray-200 uppercase tracking-tight group-hover:text-indigo-300 transition-colors">
                             {title}
                           </span>
                           <span
                             className={
                               hasData
-                                ? 'text-xs font-black tabular-nums text-gray-900 dark:text-white'
-                                : 'text-xs font-black tabular-nums text-gray-400'
+                                ? 'text-xs font-black tabular-nums text-gray-100'
+                                : 'text-xs font-black tabular-nums text-gray-500'
                             }
                           >
                             {hasData ? `${completion}%` : 'N/A'}
                           </span>
                         </div>
-                        <div className="h-1 rounded-full bg-gray-200 dark:bg-white/5 overflow-hidden">
+                        <div className="h-1 rounded-full bg-gray-700 overflow-hidden">
                           <div
                             className={`h-full transition-all duration-500 ${
                               hasData
