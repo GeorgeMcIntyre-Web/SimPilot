@@ -4,8 +4,6 @@ import { useAllProjectMetrics } from '../../ui/hooks/useDomainData'
 import {
   Building2,
   AlertTriangle,
-  Grid,
-  List,
   ArrowRight,
   Layers,
   ChevronRight,
@@ -20,14 +18,12 @@ import { StatCard } from '../../ui/components/StatCard'
 
 type SortKey = 'name' | 'avgCompletion' | 'atRiskCellsCount' | 'cellCount'
 type SortDirection = 'asc' | 'desc'
-type ViewMode = 'grid' | 'list'
-
 export function ProjectsPage() {
   const projects = useAllProjectMetrics()
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const sortDir: SortDirection = 'asc'
-  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [searchQuery, setSearchQuery] = useState('')
+  const viewMode = 'grid' as const
   const navigate = useNavigate()
 
   const totals = useMemo(() => {
@@ -210,42 +206,15 @@ export function ProjectsPage() {
               onChange={(e) => setSortKey(e.target.value as SortKey)}
               className="appearance-none pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer shadow-sm hover:border-indigo-500/50 transition-all"
             >
-              <option value="name">Sort: Alpha</option>
-              <option value="cellCount">Sort: Volume</option>
+              <option value="cellCount">Sort: Station Count</option>
               <option value="avgCompletion">Sort: Progress</option>
-              <option value="atRiskCellsCount">Sort: Risk</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400 pointer-events-none" />
-          </div>
-
-          <div className="flex items-center bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={cn(
-                'p-2 rounded-lg transition-all',
-                viewMode === 'grid'
-                  ? 'bg-white dark:bg-white/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
-              )}
-            >
-              <Grid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'p-2 rounded-lg transition-all',
-                viewMode === 'list'
-                  ? 'bg-white dark:bg-white/10 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
-              )}
-            >
-              <List className="h-4 w-4" />
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Projects Grid/List */}
+      {/* Projects Grid / Table */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {getSortedProjects().map((project) => (
