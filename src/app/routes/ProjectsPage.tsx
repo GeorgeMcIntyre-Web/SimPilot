@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Layers,
   ChevronRight,
-  Activity,
   Target,
   Search,
   ChevronDown,
@@ -158,15 +157,6 @@ export function ProjectsPage() {
             value={totals.totalStations}
             icon={<Target className="h-6 w-6 text-emerald-500" />}
             className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-emerald-500/50 transition-colors"
-          />
-        </div>
-        <div className="relative group cursor-default">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl blur opacity-10 group-hover:opacity-30 transition duration-1000" />
-          <StatCard
-            title="Global Sync"
-            value={`${totals.avgCompletion}%`}
-            icon={<Activity className="h-6 w-6 text-amber-500" />}
-            className="relative border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] shadow-sm group-hover:border-amber-500/50 transition-colors"
           />
         </div>
         <div className="relative group cursor-default">
