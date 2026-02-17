@@ -142,7 +142,7 @@ export function EngineersPage() {
   const columns: Column<(typeof metrics)[0]>[] = [
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Engineer
         </span>
       ),
@@ -150,19 +150,19 @@ export function EngineersPage() {
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Cells
         </span>
       ),
       accessor: (m) => (
-        <span className="text-[11px] font-black text-gray-900 dark:text-white tabular-nums">
+        <span className="text-[13px] font-black text-gray-900 dark:text-white tabular-nums">
           {m.cellCount}
         </span>
       ),
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           At Risk
         </span>
       ),
@@ -173,12 +173,12 @@ export function EngineersPage() {
             {m.atRiskCellsCount}
           </span>
         ) : (
-          <span className="text-[9px] font-black text-gray-400 tabular-nums">0</span>
+          <span className="text-[13px] font-black text-gray-400 tabular-nums">0</span>
         ),
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Completion
         </span>
       ),
