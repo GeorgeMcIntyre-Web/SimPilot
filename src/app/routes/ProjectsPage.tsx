@@ -26,7 +26,7 @@ export function ProjectsPage() {
   const projects = useAllProjectMetrics()
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const sortDir: SortDirection = 'asc'
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
 
@@ -340,9 +340,15 @@ export function ProjectsPage() {
           ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
+        <div
+          className="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm"
+          style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+        >
+          <table
+            className="min-w-full divide-y divide-gray-700 text-sm"
+            style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+          >
+            <thead className="sticky top-0 z-10" style={{ backgroundColor: 'rgb(18, 24, 39)' }}>
               <tr className="text-left text-gray-500 dark:text-gray-400">
                 <th className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold">Project</th>
                 <th className="py-3 px-3 text-sm font-semibold">Customer</th>
@@ -358,12 +364,15 @@ export function ProjectsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
+            <tbody
+              className="divide-y divide-gray-700 text-gray-200"
+              style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+            >
               {getSortedProjects().map((project) => (
                 <tr
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                  className="group hover:bg-gray-800/60 transition-colors cursor-pointer"
                 >
                   <td className="whitespace-nowrap py-3 px-3 pl-4 sm:pl-4">
                     <Link

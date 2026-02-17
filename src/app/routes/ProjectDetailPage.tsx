@@ -297,29 +297,30 @@ export function ProjectDetailPage() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl">
-            <div className="overflow-x-auto max-h-[800px] overflow-y-auto custom-scrollbar">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50/50 dark:bg-gray-900/50 sticky top-0 z-10 backdrop-blur-md">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Station
-                    </th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Area
-                    </th>
-                    <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Simulator
-                    </th>
-                    <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <div
+            className="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl"
+            style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+          >
+            <div className="overflow-x-auto max-h-[520px] overflow-y-auto custom-scrollbar">
+              <table
+                className="min-w-full divide-y divide-gray-700 text-sm"
+                style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+              >
+                <thead className="sticky top-0 z-10" style={{ backgroundColor: 'rgb(18, 24, 39)' }}>
+                  <tr className="text-left text-gray-400">
+                    <th className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold">Station</th>
+                    <th className="py-3 px-3 text-sm font-semibold">Area</th>
+                    <th className="py-3 px-3 text-sm font-semibold">Simulator</th>
+                    <th className="py-3 px-3 text-sm font-semibold text-center">Status</th>
+                    <th className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap">
                       State
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-[rgb(31,41,55)]">
+                <tbody
+                  className="divide-y divide-gray-700 text-gray-200"
+                  style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+                >
                   {filteredCells.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-6 py-12 text-center">
@@ -341,40 +342,40 @@ export function ProjectDetailPage() {
                         <tr
                           key={cell.id}
                           onClick={() => navigate(`/cells/${encodeURIComponent(cell.id)}`)}
-                          className="group hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                          className="group hover:bg-gray-800/60 transition-colors cursor-pointer"
                         >
-                          <td className="px-6 py-5 whitespace-nowrap">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-gray-50 dark:bg-white/5 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                                <Target className="h-3 w-3" />
-                              </div>
-                              <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                {stationLabel || '--'}
-                              </div>
-                            </div>
+                          <td className="py-4 px-3 pl-4 sm:pl-4 whitespace-nowrap">
+                            <Link
+                              to={`/cells/${encodeURIComponent(cell.id)}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="font-medium text-blue-400 hover:underline block truncate max-w-[220px]"
+                            >
+                              {stationLabel || '--'}
+                            </Link>
                           </td>
-                          <td className="px-6 py-5 whitespace-nowrap">
-                            <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                          <td className="py-4 px-3 whitespace-nowrap">
+                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                               {areaName}
                             </div>
                           </td>
-                          <td className="px-6 py-5 whitespace-nowrap">
+                          <td className="py-4 px-3 whitespace-nowrap">
                             {cell.assignedEngineer ? (
-                              <div className="flex items-center gap-2">
-                                <Activity className="h-3 w-3 text-indigo-500/50" />
-                                <span className="text-xs font-black text-gray-700 dark:text-gray-300 uppercase tracking-tight">
-                                  {cell.assignedEngineer}
-                                </span>
-                              </div>
+                              <Link
+                                to={`/engineers?highlightEngineer=${encodeURIComponent(cell.assignedEngineer)}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-xs font-semibold text-blue-400 hover:underline uppercase tracking-tight"
+                              >
+                                {cell.assignedEngineer}
+                              </Link>
                             ) : (
-                              <span className="text-[9px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-widest">
+                              <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
                                 Unassigned
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-5 whitespace-nowrap">
+                          <td className="py-4 px-3 whitespace-nowrap">
                             <div className="flex items-center justify-center gap-3">
-                              <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden">
+                              <div className="w-24 h-1.5 rounded-full bg-gray-800 overflow-hidden">
                                 <div
                                   className={cn(
                                     'h-full rounded-full transition-all duration-1000',
@@ -387,12 +388,12 @@ export function ProjectDetailPage() {
                                   style={{ width: `${percent}%` }}
                                 />
                               </div>
-                              <span className="text-[10px] font-black text-gray-900 dark:text-white tabular-nums w-8">
+                              <span className="text-xs font-black text-gray-200 tabular-nums w-10 text-right">
                                 {percent}%
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-5 whitespace-nowrap text-center">
+                          <td className="py-4 px-3 whitespace-nowrap text-center">
                             <span
                               className={cn(
                                 'inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border',
