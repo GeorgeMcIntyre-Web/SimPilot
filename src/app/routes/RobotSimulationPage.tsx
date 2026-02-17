@@ -720,7 +720,6 @@ function RobotSimulationPage() {
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 dark:text-gray-200">Robot Status</span>
         </nav>
-
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
