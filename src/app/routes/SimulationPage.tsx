@@ -13,7 +13,7 @@ import {
   DaleTodayPanel,
   SimulationDetailPanel,
   SimulationDetailDrawer,
-  SummaryStats
+  SummaryStats,
 } from '../../features/simulation'
 import { useSimulationPageState } from './useSimulationPageState'
 
@@ -58,13 +58,11 @@ function ErrorBanner({ errors, onDismiss }: ErrorBannerProps) {
             {errors.length === 1 ? 'Error' : `${errors.length} Errors`}
           </h4>
           <ul className="mt-1 text-sm text-red-700 dark:text-red-300 space-y-1">
-            {errors.slice(0, 3).map(error => (
+            {errors.slice(0, 3).map((error) => (
               <li key={error}>• {error}</li>
             ))}
             {errors.length > 3 && (
-              <li className="text-red-500 dark:text-red-400">
-                ... and {errors.length - 3} more
-              </li>
+              <li className="text-red-500 dark:text-red-400">... and {errors.length - 3} more</li>
             )}
           </ul>
         </div>
@@ -95,7 +93,12 @@ export function SimulationPage() {
       <div className="space-y-8">
         <PageHeader
           title="Simulation Board"
-          subtitle={<PageHint standardText="Manage simulations across all programs" flowerText="Loading your simulation data..." />}
+          subtitle={
+            <PageHint
+              standardText="Manage simulations across all programs"
+              flowerText="Loading your simulation data..."
+            />
+          }
         />
         <LoadingState />
       </div>
@@ -108,7 +111,12 @@ export function SimulationPage() {
       <div className="space-y-8">
         <PageHeader
           title="Simulation Board"
-          subtitle={<PageHint standardText="Manage simulations across all programs" flowerText="Plant some data to see your simulation garden" />}
+          subtitle={
+            <PageHint
+              standardText="Manage simulations across all programs"
+              flowerText="Plant some data to see your simulation garden"
+            />
+          }
         />
         <EmptyState
           title="No Simulation Data"
@@ -131,12 +139,7 @@ export function SimulationPage() {
               Simulation Board
             </span>
           }
-          subtitle={
-            <PageHint
-              standardText="Manage simulations across all programs"
-              flowerText="Dale's mission control for simulation tracking"
-            />
-          }
+          subtitle={<PageHint standardText="" flowerText="" />}
         />
       </div>
 
