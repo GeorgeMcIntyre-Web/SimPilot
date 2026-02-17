@@ -128,7 +128,13 @@ const PANEL_CONFIGS: { title: string; panelType: PanelType; slug: string }[] = [
   { title: 'Safety', panelType: 'safety', slug: 'safety' },
 ]
 
-type StationRow = { cell: CellSnapshot; label: string; application: string; assetId?: string }
+type StationRow = {
+  cell: CellSnapshot
+  label: string
+  application: string
+  applicationFull?: string
+  assetId?: string
+}
 
 /**
  * Station table is defined outside the page component to avoid remounting on parent state changes,
@@ -175,7 +181,7 @@ function RobotSimulationStationsTable({
         for (const robot of cell.robots) {
           const label = formatRobotLabel({ ...cell, robots: [robot] })
           const assetId = robot.robotKey || robot.caption
-          const application =
+          const applicationShort =
             // Prefer abbreviated value from simulation status sheet
             cell.simulationStatus?.application ??
             // Next, use code from equipment list metadata if present
@@ -186,13 +192,26 @@ function RobotSimulationStationsTable({
             // Finally, any raw application on the robot asset
             (robot.raw as any)?.application ??
             'Unknown'
-          rows.push({ cell, label, assetId, application })
+          const applicationFull =
+            (robot.raw as any)?.metadata?.application ??
+            (robot.raw as any)?.metadata?.function ??
+            (robot.raw as any)?.application ??
+            cell.simulationStatus?.application ??
+            applicationShort
+
+          rows.push({ cell, label, assetId, application: applicationShort, applicationFull })
         }
       } else {
         const label = formatRobotLabel(cell)
         const assetId = cell.simulationStatus?.robotKey
-        const application = cell.simulationStatus?.application ?? 'Unknown'
-        rows.push({ cell, label, assetId, application })
+        const applicationShort = cell.simulationStatus?.application ?? 'Unknown'
+        rows.push({
+          cell,
+          label,
+          assetId,
+          application: applicationShort,
+          applicationFull: applicationShort,
+        })
       }
     }
     return rows
@@ -513,7 +532,10 @@ function RobotSimulationStationsTable({
                     )}
                   </td>
                   <td className="whitespace-nowrap py-3 px-3 text-gray-500 dark:text-gray-400 w-44 max-w-[180px]">
-                    <span className="block truncate" title={row.application ?? 'Unknown'}>
+                    <span
+                      className="block truncate"
+                      title={row.applicationFull ?? row.application ?? 'Unknown'}
+                    >
                       {row.application ?? 'Unknown'}
                     </span>
                   </td>
