@@ -290,7 +290,7 @@ export function ProjectsPage() {
                   <span>
                     {project.atRiskCellsCount > 0
                       ? `${project.atRiskCellsCount} Risks Identified`
-                      : 'Project Stable'}
+                      : 'Project Complete'}
                   </span>
                 </div>
                 <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
