@@ -214,7 +214,7 @@ export function AreaOverviewPage() {
               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <div>
                 <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                  Master Clock
+                  Current Week
                 </div>
                 <div className="text-xs font-bold text-gray-900 dark:text-white">
                   {formatWeek(overview?.currentWeek)}
