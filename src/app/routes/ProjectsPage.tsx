@@ -296,7 +296,7 @@ export function ProjectsPage() {
                 </div>
                 <div className="space-y-1">
                   <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">
-                    Sync
+                    Progress Status
                   </div>
                   <div className="text-lg font-black text-gray-900 dark:text-white text-right">
                     {project.avgCompletion}%
