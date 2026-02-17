@@ -2,7 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { DataTable, Column } from '../../ui/components/DataTable'
 import { StatusPill } from '../../ui/components/StatusPill'
-import { useAllEngineerMetrics, useCells, useProjects } from '../../ui/hooks/useDomainData'
+import {
+  useAllEngineerMetrics,
+  useAreas,
+  useCells,
+  useProjects,
+} from '../../ui/hooks/useDomainData'
 import { Search, AlertTriangle, Users, Gauge, ChevronRight, Activity } from 'lucide-react'
 import { Cell, SchedulePhase } from '../../domain/core'
 import { EmptyState } from '../../ui/components/EmptyState'
@@ -44,6 +49,7 @@ const EngineerCell = ({ name, projects }: { name: string; projects: string }) =>
 
 export function EngineersPage() {
   const metrics = useAllEngineerMetrics()
+  const areas = useAreas()
   const allCells = useCells()
   const projects = useProjects()
   const [searchTerm, setSearchTerm] = useState('')
@@ -75,6 +81,14 @@ export function EngineersPage() {
     })
     return map
   }, [allCells])
+
+  const areaNameLookup = useMemo(() => {
+    const map = new Map<string, string>()
+    areas.forEach((a) => {
+      map.set(a.id, a.name || a.code || a.id)
+    })
+    return map
+  }, [areas])
 
   const getCompletionBand = (value: number) => {
     if (value === null || Number.isNaN(value)) return 'no-data'
@@ -247,13 +261,13 @@ export function EngineersPage() {
               onClick={(e) => e.stopPropagation()}
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
-              {areaId}
+              {areaNameLookup.get(areaId) ?? areaId}
             </Link>
           )
         }
         return (
           <span className="text-sm font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
-            {areaId}
+            {areaNameLookup.get(areaId) ?? areaId}
           </span>
         )
       },
