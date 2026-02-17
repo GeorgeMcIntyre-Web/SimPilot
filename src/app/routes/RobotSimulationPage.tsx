@@ -432,7 +432,7 @@ function RobotSimulationStationsTable({
           <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
             <tr className="text-left text-gray-500 dark:text-gray-400">
               <th
-                className="py-3 pl-4 pr-3 sm:pl-6 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                className="py-3 pl-4 pr-3 sm:pl-2 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                 onClick={() => toggleSort('robot')}
               >
                 Robot <SortIcon column="robot" />
