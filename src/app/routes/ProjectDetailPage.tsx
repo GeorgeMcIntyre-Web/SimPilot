@@ -327,7 +327,10 @@ export function ProjectDetailPage() {
             </h2>
           </div>
 
-          <div style={{ backgroundColor: 'rgb(32, 41, 55)' }} className="p-3 space-y-3 rounded-3xl">
+          <div
+            style={{ backgroundColor: 'rgb(32, 41, 55)' }}
+            className="p-3 space-y-3 rounded-3xl -mt-4"
+          >
             <div className="flex justify-end">
               <div className="relative group w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
