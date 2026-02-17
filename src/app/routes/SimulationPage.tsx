@@ -147,30 +147,18 @@ export function SimulationPage() {
       <ErrorBanner errors={state.errors} />
 
       {/* Themed Wrapper */}
-      <div style={{ backgroundColor: 'rgb(32, 41, 55)' }} className="p-4 rounded-3xl space-y-4">
-        <div
-          className="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl"
-          style={{ backgroundColor: 'rgb(18, 24, 39)' }}
-        >
-          <div className="p-4 space-y-6">
-            {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
-            <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
-              <div className="col-span-3">
-                <DaleTodayPanel onStationClick={state.handleStationClick} />
-              </div>
-              <div className="col-span-2 max-h-64 overflow-y-auto">
-                <SummaryStats
-                  totalStations={state.summary.totalStations}
-                  totalRobots={state.summary.totalRobots}
-                  totalGuns={state.summary.totalGuns}
-                  totalReuse={state.summary.totalReuse}
-                  avgCompletion={state.summary.avgCompletion}
-                />
-              </div>
-            </div>
 
-            {/* Mobile - Stacked Layout */}
-            <div className="lg:hidden space-y-6">
+      <div
+        className="rounded-2xl overflow-hidden shadow-xl"
+        style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+      >
+        <div className="p-4 space-y-6">
+          {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
+          <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
+            <div className="col-span-3">
+              <DaleTodayPanel onStationClick={state.handleStationClick} />
+            </div>
+            <div className="col-span-2 max-h-64 overflow-y-auto">
               <SummaryStats
                 totalStations={state.summary.totalStations}
                 totalRobots={state.summary.totalRobots}
@@ -179,7 +167,19 @@ export function SimulationPage() {
                 avgCompletion={state.summary.avgCompletion}
               />
             </div>
+          </div>
 
+          {/* Mobile - Stacked Layout */}
+          <div className="lg:hidden space-y-6">
+            <SummaryStats
+              totalStations={state.summary.totalStations}
+              totalRobots={state.summary.totalRobots}
+              totalGuns={state.summary.totalGuns}
+              totalReuse={state.summary.totalReuse}
+              avgCompletion={state.summary.avgCompletion}
+            />
+          </div>
+          <div style={{ backgroundColor: 'rgb(32, 41, 55)' }} className="p-4 rounded-3xl space-y-4">
             {/* Filters */}
             <SimulationFiltersBar
               filters={state.filters}
