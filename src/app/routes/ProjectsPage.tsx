@@ -341,50 +341,48 @@ export function ProjectsPage() {
         </div>
       ) : (
         <div className="bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Project
-                </th>
-                <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Customer
-                </th>
-                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900 text-sm">
+            <thead className="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
+              <tr className="text-left text-gray-500 dark:text-gray-400">
+                <th className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold">Project</th>
+                <th className="py-3 px-3 text-sm font-semibold">Customer</th>
+                <th className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap">
                   Units
                 </th>
-                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <th className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap">
                   Progress
                 </th>
-                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">
-                  Risk Level
+                <th className="py-3 px-3 text-sm font-semibold text-center">Status</th>
+                <th className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap">
+                  Risk
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-900">
               {getSortedProjects().map((project) => (
                 <tr
                   key={project.id}
                   onClick={() => navigate(`/projects/${project.id}`)}
-                  className="group hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                 >
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  <td className="whitespace-nowrap py-3 px-3 pl-4 sm:pl-4">
+                    <Link
+                      to={`/projects/${project.id}`}
+                      className="font-medium text-blue-600 dark:text-blue-400 hover:underline block truncate max-w-[220px]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {project.name}
-                    </div>
+                    </Link>
                   </td>
-                  <td className="px-6 py-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                  <td className="whitespace-nowrap py-3 px-3 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
                     {project.customer || '--'}
                   </td>
-                  <td className="px-6 py-4 text-center text-sm font-black text-gray-900 dark:text-white tabular-nums">
+                  <td className="whitespace-nowrap py-3 px-3 text-center text-sm font-black text-gray-900 dark:text-white tabular-nums">
                     {project.cellCount}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="whitespace-nowrap py-3 px-3">
                     <div className="flex items-center justify-center gap-3">
-                      <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden">
+                      <div className="w-24 h-1.5 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden">
                         <div
                           className={cn(
                             'h-full rounded-full transition-all',
@@ -397,12 +395,12 @@ export function ProjectsPage() {
                           style={{ width: `${project.avgCompletion}%` }}
                         />
                       </div>
-                      <span className="text-xs font-black text-gray-700 dark:text-gray-300 tabular-nums w-8">
+                      <span className="text-xs font-black text-gray-700 dark:text-gray-300 tabular-nums w-10 text-right">
                         {project.avgCompletion}%
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="whitespace-nowrap py-3 px-3 text-center">
                     <span
                       className={cn(
                         'inline-flex px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-widest border',
@@ -416,7 +414,7 @@ export function ProjectsPage() {
                       {getStatusLabel(project.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="whitespace-nowrap py-3 px-3 text-center">
                     {project.atRiskCellsCount > 0 ? (
                       <div className="inline-flex items-center gap-1.5 text-rose-500">
                         <AlertTriangle className="h-3 w-3" />
