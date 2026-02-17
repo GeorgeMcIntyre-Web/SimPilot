@@ -265,7 +265,7 @@ export function EngineersPage() {
         )
       },
     },
-    {
+    /*{
       header: (
         <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Line
@@ -276,7 +276,7 @@ export function EngineersPage() {
           {c.lineCode || '-'}
         </span>
       ),
-    },
+    },*/
     {
       header: (
         <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
