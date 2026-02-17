@@ -212,7 +212,8 @@ export function EngineersPage() {
   }, [selectedEngineerName])
 
   const cellColumns: Column<Cell>[] = [
-    {
+    /* 
+   {
       header: (
         <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Station Name
@@ -226,7 +227,7 @@ export function EngineersPage() {
           {c.name}
         </Link>
       ),
-    },
+    }, */
     {
       header: (
         <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
