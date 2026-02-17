@@ -32,10 +32,10 @@ const EngineerCell = ({ name, projects }: { name: string; projects: string }) =>
       {name.slice(0, 2).toUpperCase()}
     </div>
     <div className="min-w-0">
-      <div className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
+      <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
         {name}
       </div>
-      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
+      <div className="text-xs font-black text-gray-400 uppercase tracking-widest truncate">
         {projects || '—'}
       </div>
     </div>
@@ -142,7 +142,7 @@ export function EngineersPage() {
   const columns: Column<(typeof metrics)[0]>[] = [
     {
       header: (
-        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Engineer
         </span>
       ),
@@ -150,35 +150,35 @@ export function EngineersPage() {
     },
     {
       header: (
-        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Cells
         </span>
       ),
       accessor: (m) => (
-        <span className="text-[13px] font-black text-gray-900 dark:text-white tabular-nums">
+        <span className="text-sm font-black text-gray-900 dark:text-white tabular-nums">
           {m.cellCount}
         </span>
       ),
     },
     {
       header: (
-        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           At Risk
         </span>
       ),
       accessor: (m) =>
         m.atRiskCellsCount > 0 ? (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
             <AlertTriangle className="h-2.5 w-2.5" />
             {m.atRiskCellsCount}
           </span>
         ) : (
-          <span className="text-[13px] font-black text-gray-400 tabular-nums">0</span>
+          <span className="text-sm font-black text-gray-400 tabular-nums">0</span>
         ),
     },
     {
       header: (
-        <span className="text-[13px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Completion
         </span>
       ),
@@ -214,19 +214,27 @@ export function EngineersPage() {
   const cellColumns: Column<Cell>[] = [
     {
       header: (
-        <span className="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Station
         </span>
       ),
       accessor: (c) => (
-        <span className="text-[12px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+        <Link
+          to={
+            c.projectId
+              ? `/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`
+              : `/cells/${encodeURIComponent(c.id)}`
+          }
+          onClick={(e) => e.stopPropagation()}
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+        >
           {c.code || '-'}
-        </span>
+        </Link>
       ),
     },
     {
       header: (
-        <span className="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Area
         </span>
       ),
@@ -236,14 +244,15 @@ export function EngineersPage() {
           return (
             <Link
               to={`/projects/${c.projectId}`}
-              className="text-[12px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-widest"
+              onClick={(e) => e.stopPropagation()}
+              className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               {areaId}
             </Link>
           )
         }
         return (
-          <span className="text-[12px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+          <span className="text-sm font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
             {areaId}
           </span>
         )
@@ -251,7 +260,7 @@ export function EngineersPage() {
     },
     {
       header: (
-        <span className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Status
         </span>
       ),
@@ -259,22 +268,22 @@ export function EngineersPage() {
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Complete
         </span>
       ),
       accessor: (c) =>
         c.simulation ? (
-          <span className="text-[9px] font-black text-gray-900 dark:text-white tabular-nums">
+          <span className="text-sm font-black text-gray-900 dark:text-white tabular-nums">
             {c.simulation.percentComplete}%
           </span>
         ) : (
-          <span className="text-[9px] font-black text-gray-400">-</span>
+          <span className="text-sm font-black text-gray-400">-</span>
         ),
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Issues
         </span>
       ),
@@ -282,7 +291,7 @@ export function EngineersPage() {
         c.simulation?.hasIssues ? (
           <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
         ) : (
-          <span className="text-[9px] font-black text-gray-400">-</span>
+          <span className="text-sm font-black text-gray-400">-</span>
         ),
     },
   ]
