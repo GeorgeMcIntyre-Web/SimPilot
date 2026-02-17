@@ -146,95 +146,93 @@ export function SimulationPage() {
       {/* Error Banner */}
       <ErrorBanner errors={state.errors} />
 
-      {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
-      <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
-        {/* Dale's Today Panel - Takes 3 columns, full height */}
-        <div className="col-span-3">
-          <DaleTodayPanel onStationClick={state.handleStationClick} />
-        </div>
+      {/* Themed Wrapper */}
+      <div style={{ backgroundColor: 'rgb(32, 41, 55)' }} className="p-4 rounded-3xl space-y-4">
+        <div
+          className="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl"
+          style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+        >
+          <div className="p-4 space-y-6">
+            {/* Top Section - Stats and Today's Focus Side by Side (Desktop) */}
+            <div className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
+              <div className="col-span-3">
+                <DaleTodayPanel onStationClick={state.handleStationClick} />
+              </div>
+              <div className="col-span-2 max-h-64 overflow-y-auto">
+                <SummaryStats
+                  totalStations={state.summary.totalStations}
+                  totalRobots={state.summary.totalRobots}
+                  totalGuns={state.summary.totalGuns}
+                  totalReuse={state.summary.totalReuse}
+                  avgCompletion={state.summary.avgCompletion}
+                />
+              </div>
+            </div>
 
-        {/* Summary Stats - Takes 2 columns, full height */}
-        <div className="col-span-2 max-h-64 overflow-y-auto">
-          <SummaryStats
-            totalStations={state.summary.totalStations}
-            totalRobots={state.summary.totalRobots}
-            totalGuns={state.summary.totalGuns}
-            totalReuse={state.summary.totalReuse}
-            avgCompletion={state.summary.avgCompletion}
-          />
-        </div>
-      </div>
+            {/* Mobile - Stacked Layout */}
+            <div className="lg:hidden space-y-6">
+              <SummaryStats
+                totalStations={state.summary.totalStations}
+                totalRobots={state.summary.totalRobots}
+                totalGuns={state.summary.totalGuns}
+                totalReuse={state.summary.totalReuse}
+                avgCompletion={state.summary.avgCompletion}
+              />
+            </div>
 
-      {/* Mobile - Stacked Layout */}
-      <div className="lg:hidden space-y-6">
-        <SummaryStats
-          totalStations={state.summary.totalStations}
-          totalRobots={state.summary.totalRobots}
-          totalGuns={state.summary.totalGuns}
-          totalReuse={state.summary.totalReuse}
-          avgCompletion={state.summary.avgCompletion}
-        />
-      </div>
-
-      {/* Filters */}
-      <SimulationFiltersBar
-        filters={state.filters}
-        onFiltersChange={state.setFilters}
-        sortBy={state.sortBy}
-        onSortChange={state.setSortBy}
-        onExpandAll={state.handleExpandAll}
-        onCollapseAll={state.handleCollapseAll}
-        allExpanded={state.allExpanded}
-        allCollapsed={state.allCollapsed}
-      />
-
-      {/* Split View Layout - Desktop */}
-      <div className="hidden lg:flex lg:flex-row gap-6">
-        {/* Left Side - Station List (Master) */}
-        <div className="flex-1 lg:max-w-[60%] space-y-6">
-          <SimulationBoardGrid
-            stations={state.stations}
-            onStationClick={state.handleStationClick}
-            selectedStationKey={state.selectedStation?.contextKey}
-            sortBy={state.sortBy}
-            expandedLines={state.expandedLines}
-            onToggleLine={state.handleToggleLine}
-          />
-        </div>
-
-        {/* Right Side - Detail Panel (Detail) */}
-        <div className="lg:w-[40%]">
-          <div className="sticky top-4">
-            {/* Station Detail Panel */}
-            <SimulationDetailPanel
-              station={state.selectedStation}
-              onClose={state.clearSelectedStation}
+            {/* Filters */}
+            <SimulationFiltersBar
+              filters={state.filters}
+              onFiltersChange={state.setFilters}
+              sortBy={state.sortBy}
+              onSortChange={state.setSortBy}
+              onExpandAll={state.handleExpandAll}
+              onCollapseAll={state.handleCollapseAll}
+              allExpanded={state.allExpanded}
+              allCollapsed={state.allCollapsed}
             />
+
+            {/* Split View Layout - Desktop */}
+            <div className="hidden lg:flex lg:flex-row gap-6">
+              <div className="flex-1 lg:max-w-[60%] space-y-6">
+                <SimulationBoardGrid
+                  stations={state.stations}
+                  onStationClick={state.handleStationClick}
+                  selectedStationKey={state.selectedStation?.contextKey}
+                  sortBy={state.sortBy}
+                  expandedLines={state.expandedLines}
+                  onToggleLine={state.handleToggleLine}
+                />
+              </div>
+              <div className="lg:w-[40%]">
+                <div className="sticky top-4">
+                  <SimulationDetailPanel
+                    station={state.selectedStation}
+                    onClose={state.clearSelectedStation}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Layout - Drawer */}
+            <div className="lg:hidden space-y-6">
+              <DaleTodayPanel onStationClick={state.handleStationClick} />
+              <SimulationBoardGrid
+                stations={state.stations}
+                onStationClick={state.handleStationClick}
+                selectedStationKey={state.selectedStation?.contextKey}
+                sortBy={state.sortBy}
+                expandedLines={state.expandedLines}
+                onToggleLine={state.handleToggleLine}
+              />
+              <SimulationDetailDrawer
+                station={state.selectedStation}
+                isOpen={state.selectedStation !== null}
+                onClose={state.clearSelectedStation}
+              />
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Mobile Layout - Drawer */}
-      <div className="lg:hidden space-y-6">
-        {/* Dale's Today Panel */}
-        <DaleTodayPanel onStationClick={state.handleStationClick} />
-
-        {/* Station List */}
-        <SimulationBoardGrid
-          stations={state.stations}
-          onStationClick={state.handleStationClick}
-          selectedStationKey={state.selectedStation?.contextKey}
-          sortBy={state.sortBy}
-          expandedLines={state.expandedLines}
-          onToggleLine={state.handleToggleLine}
-        />
-
-        {/* Detail Drawer for Mobile */}
-        <SimulationDetailDrawer
-          station={state.selectedStation}
-          isOpen={state.selectedStation !== null}
-          onClose={state.clearSelectedStation}
-        />
       </div>
     </div>
   )
