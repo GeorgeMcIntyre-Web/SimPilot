@@ -265,18 +265,6 @@ export function EngineersPage() {
         )
       },
     },
-    /*{
-      header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
-          Line
-        </span>
-      ),
-      accessor: (c) => (
-        <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
-          {c.lineCode || '-'}
-        </span>
-      ),
-    },*/
     {
       header: (
         <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
