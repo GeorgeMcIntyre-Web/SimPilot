@@ -176,12 +176,15 @@ function RobotSimulationStationsTable({
           const label = formatRobotLabel({ ...cell, robots: [robot] })
           const assetId = robot.robotKey || robot.caption
           const application =
-            // Prefer metadata from robot asset
+            // Prefer abbreviated value from simulation status sheet
+            cell.simulationStatus?.application ??
+            // Next, use code from equipment list metadata if present
+            (robot.raw as any)?.metadata?.applicationCode ??
+            // Then fall back to longer metadata/function values
             (robot.raw as any)?.metadata?.application ??
             (robot.raw as any)?.metadata?.function ??
-            // Simulation-status robots keep application at root, not metadata
+            // Finally, any raw application on the robot asset
             (robot.raw as any)?.application ??
-            cell.simulationStatus?.application ??
             'Unknown'
           rows.push({ cell, label, assetId, application })
         }
