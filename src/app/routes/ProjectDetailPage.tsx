@@ -325,153 +325,159 @@ export function ProjectDetailPage() {
                 ({filteredCells.length})
               </span>
             </h2>
-
-            <div className="relative group w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
-              <input
-                value={stationSearch}
-                onChange={(e) => setStationSearch(e.target.value)}
-                placeholder="Search stations..."
-                className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all"
-              />
-            </div>
           </div>
 
-          <div
-            className="border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-xl"
-            style={{ backgroundColor: 'rgb(18, 24, 39)' }}
-          >
-            <div className="overflow-x-auto max-h-[520px] overflow-y-auto custom-scrollbar">
-              <table
-                className="min-w-full divide-y divide-gray-700 text-sm"
-                style={{ backgroundColor: 'rgb(18, 24, 39)' }}
-              >
-                <thead className="sticky top-0 z-10" style={{ backgroundColor: 'rgb(18, 24, 39)' }}>
-                  <tr className="text-left text-gray-400">
-                    <th
-                      className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
-                      onClick={() => toggleSort('station')}
-                    >
-                      Station <SortIcon column="station" />
-                    </th>
-                    <th
-                      className="py-3 px-3 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
-                      onClick={() => toggleSort('area')}
-                    >
-                      Area <SortIcon column="area" />
-                    </th>
-                    <th
-                      className="py-3 px-3 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
-                      onClick={() => toggleSort('simulator')}
-                    >
-                      Simulator <SortIcon column="simulator" />
-                    </th>
-                    <th
-                      className="py-3 px-3 text-sm font-semibold text-center cursor-pointer select-none hover:text-gray-200"
-                      onClick={() => toggleSort('completion')}
-                    >
-                      Status <SortIcon column="completion" />
-                    </th>
-                    <th
-                      className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap cursor-pointer select-none hover:text-gray-200"
-                      onClick={() => toggleSort('state')}
-                    >
-                      State <SortIcon column="state" />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody
-                  className="divide-y divide-gray-700 text-gray-200"
+          <div style={{ backgroundColor: 'rgb(32, 41, 55)' }} className="p-3 space-y-3">
+            <div className="flex justify-end">
+              <div className="relative group w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                <input
+                  value={stationSearch}
+                  onChange={(e) => setStationSearch(e.target.value)}
+                  placeholder="Search stations..."
+                  className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[rgb(31,41,55)] text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all"
+                />
+              </div>
+            </div>
+            <div
+              className="border border-gray-200 dark:border-white/10 overflow-hidden shadow-xl"
+              style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+            >
+              <div className="overflow-x-auto max-h-[520px] overflow-y-auto custom-scrollbar">
+                <table
+                  className="min-w-full divide-y divide-gray-700 text-sm"
                   style={{ backgroundColor: 'rgb(18, 24, 39)' }}
                 >
-                  {filteredCells.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <Target className="h-8 w-8 text-gray-200" />
-                          <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                            No station nodes found
-                          </div>
-                        </div>
-                      </td>
+                  <thead
+                    className="sticky top-0 z-10"
+                    style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+                  >
+                    <tr className="text-left text-gray-400">
+                      <th
+                        className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
+                        onClick={() => toggleSort('station')}
+                      >
+                        Station <SortIcon column="station" />
+                      </th>
+                      <th
+                        className="py-3 px-3 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
+                        onClick={() => toggleSort('area')}
+                      >
+                        Area <SortIcon column="area" />
+                      </th>
+                      <th
+                        className="py-3 px-3 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
+                        onClick={() => toggleSort('simulator')}
+                      >
+                        Simulator <SortIcon column="simulator" />
+                      </th>
+                      <th
+                        className="py-3 px-3 text-sm font-semibold text-center cursor-pointer select-none hover:text-gray-200"
+                        onClick={() => toggleSort('completion')}
+                      >
+                        Status <SortIcon column="completion" />
+                      </th>
+                      <th
+                        className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap cursor-pointer select-none hover:text-gray-200"
+                        onClick={() => toggleSort('state')}
+                      >
+                        State <SortIcon column="state" />
+                      </th>
                     </tr>
-                  ) : (
-                    sortedCells.map((cell) => {
-                      const stationLabel = getStationLabel(cell)
-                      const areaName = areas.find((a: Area) => a.id === cell.areaId)?.name || '-'
-                      const percent = cell.simulation?.percentComplete || 0
+                  </thead>
+                  <tbody
+                    className="divide-y divide-gray-700 text-gray-200"
+                    style={{ backgroundColor: 'rgb(18, 24, 39)' }}
+                  >
+                    {filteredCells.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <Target className="h-8 w-8 text-gray-200" />
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              No station nodes found
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedCells.map((cell) => {
+                        const stationLabel = getStationLabel(cell)
+                        const areaName = areas.find((a: Area) => a.id === cell.areaId)?.name || '-'
+                        const percent = cell.simulation?.percentComplete || 0
 
-                      return (
-                        <tr
-                          key={cell.id}
-                          onClick={() => navigate(`/cells/${encodeURIComponent(cell.id)}`)}
-                          className="group hover:bg-gray-800/60 transition-colors cursor-pointer"
-                        >
-                          <td className="py-4 px-3 pl-4 sm:pl-4 whitespace-nowrap">
-                            <Link
-                              to={`/cells/${encodeURIComponent(cell.id)}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="font-medium text-blue-400 hover:underline block truncate max-w-[220px]"
-                            >
-                              {stationLabel || '--'}
-                            </Link>
-                          </td>
-                          <td className="py-4 px-3 whitespace-nowrap">
-                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                              {areaName}
-                            </div>
-                          </td>
-                          <td className="py-4 px-3 whitespace-nowrap">
-                            {cell.assignedEngineer ? (
+                        return (
+                          <tr
+                            key={cell.id}
+                            onClick={() => navigate(`/cells/${encodeURIComponent(cell.id)}`)}
+                            className="group hover:bg-gray-800/60 transition-colors cursor-pointer"
+                          >
+                            <td className="py-4 px-3 pl-4 sm:pl-4 whitespace-nowrap">
                               <Link
-                                to={`/engineers?highlightEngineer=${encodeURIComponent(cell.assignedEngineer)}`}
+                                to={`/cells/${encodeURIComponent(cell.id)}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-xs font-semibold text-blue-400 hover:underline uppercase tracking-tight"
+                                className="font-medium text-blue-400 hover:underline block truncate max-w-[220px]"
                               >
-                                {cell.assignedEngineer}
+                                {stationLabel || '--'}
                               </Link>
-                            ) : (
-                              <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
-                                Unassigned
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-4 px-3 whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-3">
-                              <div className="w-24 h-1.5 rounded-full bg-gray-800 overflow-hidden">
-                                <div
-                                  className={cn(
-                                    'h-full rounded-full transition-all duration-1000',
-                                    percent >= 90
-                                      ? 'bg-emerald-500'
-                                      : percent >= 50
-                                        ? 'bg-indigo-500'
-                                        : 'bg-rose-500',
-                                  )}
-                                  style={{ width: `${percent}%` }}
-                                />
+                            </td>
+                            <td className="py-4 px-3 whitespace-nowrap">
+                              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                {areaName}
                               </div>
-                              <span className="text-xs font-black text-gray-200 tabular-nums w-10 text-right">
-                                {percent}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-3 whitespace-nowrap text-center">
-                            <span
-                              className={cn(
-                                'inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border',
-                                getCellStatusBadge(cell.status),
+                            </td>
+                            <td className="py-4 px-3 whitespace-nowrap">
+                              {cell.assignedEngineer ? (
+                                <Link
+                                  to={`/engineers?highlightEngineer=${encodeURIComponent(cell.assignedEngineer)}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-semibold text-blue-400 hover:underline uppercase tracking-tight"
+                                >
+                                  {cell.assignedEngineer}
+                                </Link>
+                              ) : (
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                                  Unassigned
+                                </span>
                               )}
-                            >
-                              {cell.status}
-                            </span>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
+                            </td>
+                            <td className="py-4 px-3 whitespace-nowrap">
+                              <div className="flex items-center justify-center gap-3">
+                                <div className="w-24 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      'h-full rounded-full transition-all duration-1000',
+                                      percent >= 90
+                                        ? 'bg-emerald-500'
+                                        : percent >= 50
+                                          ? 'bg-indigo-500'
+                                          : 'bg-rose-500',
+                                    )}
+                                    style={{ width: `${percent}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-black text-gray-200 tabular-nums w-10 text-right">
+                                  {percent}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-3 whitespace-nowrap text-center">
+                              <span
+                                className={cn(
+                                  'inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border',
+                                  getCellStatusBadge(cell.status),
+                                )}
+                              >
+                                {cell.status}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
