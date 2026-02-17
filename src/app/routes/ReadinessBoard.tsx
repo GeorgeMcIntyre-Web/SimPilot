@@ -458,17 +458,12 @@ function StationReadinessCard({ item }: StationReadinessCardProps) {
 
       {/* Header: Station & Progress */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="p-2 rounded-lg bg-gray-50 dark:bg-black/20 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-            <Target className="h-3 w-3" />
-          </div>
-          <div className="min-w-0">
-            <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-              {item.station.station}
-            </h4>
-            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
-              {item.projectName || 'Unassigned Node'}
-            </div>
+        <div className="min-w-0">
+          <h4 className="text-[11px] font-black text-gray-900 dark:text-white uppercase tracking-tight truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            {item.station.station}
+          </h4>
+          <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate">
+            {item.projectName || 'Unassigned Node'}
           </div>
         </div>
 
