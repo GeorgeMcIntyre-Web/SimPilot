@@ -31,7 +31,7 @@ const ProgressBar = ({ value }: { value: number }) => (
   </div>
 )
 
-const EngineerCell = ({ name, projects }: { name: string; projects: string }) => (
+const EngineerCell = ({ name }: { name: string }) => (
   <div className="flex items-center gap-3 min-w-0">
     <div className="h-9 w-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[10px] font-black shrink-0 border border-indigo-500/20">
       {name.slice(0, 2).toUpperCase()}
@@ -39,9 +39,6 @@ const EngineerCell = ({ name, projects }: { name: string; projects: string }) =>
     <div className="min-w-0">
       <div className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight truncate">
         {name}
-      </div>
-      <div className="text-xs font-black text-gray-400 uppercase tracking-widest truncate">
-        {projects || '—'}
       </div>
     </div>
   </div>
@@ -157,10 +154,10 @@ export function EngineersPage() {
     {
       header: (
         <span className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">
-          Engineer
+          Simulator
         </span>
       ),
-      accessor: (m) => <EngineerCell name={m.name} projects={m.projectNames} />,
+      accessor: (m) => <EngineerCell name={m.name} />,
     },
     {
       header: (
