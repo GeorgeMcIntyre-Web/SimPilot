@@ -876,7 +876,7 @@ function RobotSimulationPage() {
                             `/robot-simulation/${slug}?robot=${encodeURIComponent(selectedRow.label)}&station=${encodeURIComponent(selectedRow.cell.stationKey)}`,
                           )
                         }
-                        className="w-full text-left rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50/30 dark:bg-white/5 p-4 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-white/10 transition-all group"
+                        className="w-full text-left rounded-xl border border-gray-100 dark:border-white/5 bg-gray-60/30 dark:bg-white/5 p-4 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-white/10 transition-all group"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-[11px] font-black text-gray-600 dark:text-gray-300 uppercase tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
