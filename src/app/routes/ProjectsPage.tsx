@@ -50,7 +50,7 @@ export function ProjectsPage() {
               Dashboard
             </Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-gray-900 dark:text-gray-200">Projects Portfolio</span>
+            <span className="text-gray-900 dark:text-gray-200">Projects</span>
           </nav>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -290,7 +290,7 @@ export function ProjectsPage() {
                   <span>
                     {project.atRiskCellsCount > 0
                       ? `${project.atRiskCellsCount} Risks Identified`
-                      : 'Project Stable'}
+                      : 'Project Complete'}
                   </span>
                 </div>
                 <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />

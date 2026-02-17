@@ -212,7 +212,7 @@ export function DashboardPage() {
                 <select
                   value={areaSort}
                   onChange={(e) => setAreaSort(e.target.value as AreaSort)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
                 >
                   <option value="risk-desc">By Risk</option>
                   <option value="alpha">A-Z Name</option>
@@ -220,7 +220,7 @@ export function DashboardPage() {
                 <select
                   value={areaFilter}
                   onChange={(e) => setAreaFilter(e.target.value as AreaFilter)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/50 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-00 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
+                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer shadow-sm"
                 >
                   <option value="all">All Status</option>
                   <option value="with-risk">At Risk</option>
