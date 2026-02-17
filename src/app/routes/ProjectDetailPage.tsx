@@ -8,6 +8,9 @@ import {
   AlertTriangle,
   Search,
   Building2,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from 'lucide-react'
 import { cn } from '../../ui/lib/utils'
 import { StatCard } from '../../ui/components/StatCard'
@@ -32,6 +35,9 @@ export function ProjectDetailPage() {
 
   const [areaSearch, setAreaSearch] = useState('')
   const [stationSearch, setStationSearch] = useState('')
+  type SortKey = 'station' | 'area' | 'simulator' | 'completion' | 'state'
+  const [sortKey, setSortKey] = useState<SortKey>('station')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
   // Sidebar area search filter
   const normalizedAreaSearch = areaSearch.trim().toLowerCase()
@@ -63,6 +69,43 @@ export function ProjectDetailPage() {
     return result
   }, [cells, selectedAreaId, stationSearch])
 
+  const sortedCells = useMemo(() => {
+    const sortVal = (c: Cell) => {
+      if (sortKey === 'station') return getStationLabel(c).toLowerCase()
+      if (sortKey === 'area')
+        return (areas.find((a: Area) => a.id === c.areaId)?.name || '').toLowerCase()
+      if (sortKey === 'simulator') return (c.assignedEngineer || 'unassigned').toLowerCase()
+      if (sortKey === 'completion') return c.simulation?.percentComplete ?? -1
+      if (sortKey === 'state') return (c.status || '').toLowerCase()
+      return ''
+    }
+    return [...filteredCells].sort((a, b) => {
+      const va = sortVal(a)
+      const vb = sortVal(b)
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+  }, [filteredCells, sortKey, sortDir, areas])
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const SortIcon = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <ArrowUpDown className="inline h-3.5 w-3.5 ml-1 opacity-40" />
+    return sortDir === 'asc' ? (
+      <ArrowUp className="inline h-3.5 w-3.5 ml-1 text-blue-400" />
+    ) : (
+      <ArrowDown className="inline h-3.5 w-3.5 ml-1 text-blue-400" />
+    )
+  }
+
   if (!project || !projectMetrics) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -79,7 +122,7 @@ export function ProjectDetailPage() {
     )
   }
 
-  const getStationLabel = (c: Cell): string => {
+  function getStationLabel(c: Cell): string {
     if (c.code) return c.code
     if (c.name?.includes(' - ')) {
       const parts = c.name.split(' - ')
@@ -308,12 +351,35 @@ export function ProjectDetailPage() {
               >
                 <thead className="sticky top-0 z-10" style={{ backgroundColor: 'rgb(18, 24, 39)' }}>
                   <tr className="text-left text-gray-400">
-                    <th className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold">Station</th>
-                    <th className="py-3 px-3 text-sm font-semibold">Area</th>
-                    <th className="py-3 px-3 text-sm font-semibold">Simulator</th>
-                    <th className="py-3 px-3 text-sm font-semibold text-center">Status</th>
-                    <th className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap">
-                      State
+                    <th
+                      className="py-3 px-3 pl-4 sm:pl-4 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
+                      onClick={() => toggleSort('station')}
+                    >
+                      Station <SortIcon column="station" />
+                    </th>
+                    <th
+                      className="py-3 px-3 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
+                      onClick={() => toggleSort('area')}
+                    >
+                      Area <SortIcon column="area" />
+                    </th>
+                    <th
+                      className="py-3 px-3 text-sm font-semibold cursor-pointer select-none hover:text-gray-200"
+                      onClick={() => toggleSort('simulator')}
+                    >
+                      Simulator <SortIcon column="simulator" />
+                    </th>
+                    <th
+                      className="py-3 px-3 text-sm font-semibold text-center cursor-pointer select-none hover:text-gray-200"
+                      onClick={() => toggleSort('completion')}
+                    >
+                      Status <SortIcon column="completion" />
+                    </th>
+                    <th
+                      className="py-3 px-3 text-sm font-semibold text-center whitespace-nowrap cursor-pointer select-none hover:text-gray-200"
+                      onClick={() => toggleSort('state')}
+                    >
+                      State <SortIcon column="state" />
                     </th>
                   </tr>
                 </thead>
@@ -333,7 +399,7 @@ export function ProjectDetailPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredCells.map((cell) => {
+                    sortedCells.map((cell) => {
                       const stationLabel = getStationLabel(cell)
                       const areaName = areas.find((a: Area) => a.id === cell.areaId)?.name || '-'
                       const percent = cell.simulation?.percentComplete || 0
