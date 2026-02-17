@@ -212,37 +212,21 @@ export function EngineersPage() {
   }, [selectedEngineerName])
 
   const cellColumns: Column<Cell>[] = [
-    /* 
-   {
-      header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
-          Station Name
-        </span>
-      ),
-      accessor: (c) => (
-        <Link
-          to={`/projects/${c.projectId}/cells/${encodeURIComponent(c.id)}`}
-          className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-tight"
-        >
-          {c.name}
-        </Link>
-      ),
-    }, */
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Station
         </span>
       ),
       accessor: (c) => (
-        <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+        <span className="text-[12px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
           {c.code || '-'}
         </span>
       ),
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[12px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Area
         </span>
       ),
@@ -252,14 +236,14 @@ export function EngineersPage() {
           return (
             <Link
               to={`/projects/${c.projectId}`}
-              className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-widest"
+              className="text-[12px] font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 uppercase tracking-widest"
             >
               {areaId}
             </Link>
           )
         }
         return (
-          <span className="text-[9px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
+          <span className="text-[12px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-widest">
             {areaId}
           </span>
         )
@@ -267,7 +251,7 @@ export function EngineersPage() {
     },
     {
       header: (
-        <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+        <span className="text-[15px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
           Status
         </span>
       ),
