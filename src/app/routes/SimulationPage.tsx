@@ -117,7 +117,7 @@ export function SimulationPage() {
   if (state.isLoading) {
     return (
       <div className="space-y-8">
-        <SimulationPageHeader statusText="Syncing data..." />
+        <SimulationPageHeader />
         <LoadingState />
       </div>
     )
@@ -127,7 +127,7 @@ export function SimulationPage() {
   if (state.summary.totalStations === 0 && state.filters.program === null) {
     return (
       <div className="space-y-8">
-        <SimulationPageHeader statusText="Awaiting data" />
+        <SimulationPageHeader />
         <EmptyState
           title="No Simulation Data"
           message="Load simulation data from the Data Loader to see your simulation board."
