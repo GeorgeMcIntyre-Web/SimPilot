@@ -1,4 +1,4 @@
-// Dale's Today Panel
+// Simulation Today Panel
 // Shows shortlist of stations needing attention
 // Uses selectors to find stations with issues
 
@@ -15,7 +15,7 @@ import type { StationContext } from '../simulationStore'
 // TYPES
 // ============================================================================
 
-interface DaleTodayPanelProps {
+interface SimulationTodayPanelProps {
   onStationClick?: (station: StationContext) => void
   maxItems?: number
 }
@@ -100,7 +100,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function SimulationTodayPanel({ onStationClick, maxItems }: DaleTodayPanelProps) {
+export function SimulationTodayPanel({ onStationClick, maxItems }: SimulationTodayPanelProps) {
   const allAttentionItems = useStationsNeedingAttention()
   const attentionItems = maxItems ? allAttentionItems.slice(0, maxItems) : allAttentionItems
 
@@ -108,7 +108,7 @@ export function SimulationTodayPanel({ onStationClick, maxItems }: DaleTodayPane
     return (
       <div
         className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5"
-        data-testid="dale-today-panel-empty"
+        data-testid="simulation-today-panel-empty"
       >
         <div className="flex items-center gap-3">
           <div className="min-w-0">
@@ -128,7 +128,7 @@ export function SimulationTodayPanel({ onStationClick, maxItems }: DaleTodayPane
   return (
     <div
       className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col"
-      data-testid="dale-today-panel"
+      data-testid="simulation-today-panel"
     >
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/25 dark:to-orange-900/25 border-b border-amber-200 dark:border-amber-800">
