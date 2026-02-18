@@ -37,7 +37,6 @@ function SeverityIcon({ severity }: { severity: 'error' | 'warning' | 'info' }) 
   if (severity === 'warning') {
     return <AlertTriangle className="h-4 w-4 text-amber-500" />
   }
-
   return <Info className="h-4 w-4 text-blue-500" />
 }
 
