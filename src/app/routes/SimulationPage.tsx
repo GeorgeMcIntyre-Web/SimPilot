@@ -19,11 +19,7 @@ import { useSimulationPageState } from './useSimulationPageState'
 // HEADER
 // ============================================================================
 
-interface SimulationPageHeaderProps {
-  statusText?: string
-}
-
-function SimulationPageHeader({ statusText = 'Active Connection' }: SimulationPageHeaderProps) {
+function SimulationPageHeader() {
   return (
     <div className="flex flex-col gap-4">
       <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
@@ -40,20 +36,6 @@ function SimulationPageHeader({ statusText = 'Active Connection' }: SimulationPa
             <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               Simulation <span className="text-indigo-600 dark:text-indigo-400">Board</span>
             </h1>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <div>
-              <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
-                Sync Status
-              </div>
-              <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
-                {statusText}
-              </div>
-            </div>
           </div>
         </div>
       </div>

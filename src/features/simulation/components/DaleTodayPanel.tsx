@@ -2,7 +2,7 @@
 // Shows shortlist of stations needing attention
 // Uses selectors to find stations with issues
 
-import { AlertCircle, AlertTriangle, Info, ChevronRight, Sparkles } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Info, ChevronRight } from 'lucide-react'
 import { cn } from '../../../ui/lib/utils'
 import {
   useStationsNeedingAttention,
@@ -112,9 +112,6 @@ export function DaleTodayPanel({ onStationClick, maxItems }: DaleTodayPanelProps
         data-testid="dale-today-panel-empty"
       >
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300">
-            <Sparkles className="h-5 w-5" />
-          </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-sm text-gray-900 dark:text-white">All clear</h3>
             <p className="text-[13px] text-gray-600 dark:text-gray-300 truncate">
