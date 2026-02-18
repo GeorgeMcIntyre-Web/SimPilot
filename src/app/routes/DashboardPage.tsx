@@ -177,7 +177,7 @@ export function DashboardPage() {
             SimPilot
           </Link>
           <ChevronRight className="h-3 w-3 text-gray-300 dark:text-gray-700" />
-          <span className="text-gray-900 dark:text-gray-200">Dashboard</span>
+          <span className="text-gray-900 dark:text-gray-200">Projects</span>
         </nav>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">

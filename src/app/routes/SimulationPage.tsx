@@ -24,7 +24,7 @@ function SimulationPageHeader() {
     <div className="flex flex-col gap-4">
       <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
         <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
-          Dashboard
+          SimPilot
         </Link>
         <ChevronRight className="h-3 w-3" />
         <span className="text-gray-900 dark:text-gray-200">Simulation Board</span>
@@ -33,7 +33,7 @@ function SimulationPageHeader() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+            <h1 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
               Simulation <span className="text-indigo-600 dark:text-indigo-400">Board</span>
             </h1>
           </div>

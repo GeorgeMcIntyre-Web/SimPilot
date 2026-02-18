@@ -715,7 +715,7 @@ function RobotSimulationPage() {
       <div className="flex flex-col gap-4">
         <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
           <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
-            Dashboard
+            SimPilot
           </Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-gray-900 dark:text-gray-200">Robot Status</span>
