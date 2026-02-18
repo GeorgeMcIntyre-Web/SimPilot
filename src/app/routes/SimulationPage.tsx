@@ -2,10 +2,8 @@
 // Main simulation manager board for Dale
 // Shows hierarchy: Program → Plant → Unit → Line → Station
 
-import { useNavigate } from 'react-router-dom'
-import { Loader2, AlertCircle, LayoutGrid } from 'lucide-react'
-import { PageHeader } from '../../ui/components/PageHeader'
-import { PageHint } from '../../ui/components/PageHint'
+import { Link, useNavigate } from 'react-router-dom'
+import { Loader2, AlertCircle, ChevronRight } from 'lucide-react'
 import { EmptyState } from '../../ui/components/EmptyState'
 import {
   SimulationFiltersBar,
@@ -16,6 +14,52 @@ import {
   SummaryStats,
 } from '../../features/simulation'
 import { useSimulationPageState } from './useSimulationPageState'
+
+// ============================================================================
+// HEADER
+// ============================================================================
+
+interface SimulationPageHeaderProps {
+  statusText?: string
+}
+
+function SimulationPageHeader({ statusText = 'Active Connection' }: SimulationPageHeaderProps) {
+  return (
+    <div className="flex flex-col gap-4">
+      <nav className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+        <Link to="/dashboard" className="hover:text-indigo-600 transition-colors">
+          Dashboard
+        </Link>
+        <ChevronRight className="h-3 w-3" />
+        <span className="text-gray-900 dark:text-gray-200">Simulation Board</span>
+      </nav>
+
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter leading-none uppercase">
+              Simulation <span className="text-indigo-600 dark:text-indigo-400">Board</span>
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2 rounded-xl bg-white dark:bg-[rgb(31,41,55)] border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div>
+              <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest leading-none">
+                Sync Status
+              </div>
+              <div className="text-xs font-bold text-gray-900 dark:text-white mt-1">
+                {statusText}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ============================================================================
 // LOADING STATE
@@ -91,15 +135,7 @@ export function SimulationPage() {
   if (state.isLoading) {
     return (
       <div className="space-y-8">
-        <PageHeader
-          title="Simulation Board"
-          subtitle={
-            <PageHint
-              standardText="Manage simulations across all programs"
-              flowerText="Loading your simulation data..."
-            />
-          }
-        />
+        <SimulationPageHeader statusText="Syncing data..." />
         <LoadingState />
       </div>
     )
@@ -109,15 +145,7 @@ export function SimulationPage() {
   if (state.summary.totalStations === 0 && state.filters.program === null) {
     return (
       <div className="space-y-8">
-        <PageHeader
-          title="Simulation Board"
-          subtitle={
-            <PageHint
-              standardText="Manage simulations across all programs"
-              flowerText="Plant some data to see your simulation garden"
-            />
-          }
-        />
+        <SimulationPageHeader statusText="Awaiting data" />
         <EmptyState
           title="No Simulation Data"
           message="Load simulation data from the Data Loader to see your simulation board."
@@ -131,17 +159,7 @@ export function SimulationPage() {
   return (
     <div className="space-y-6" data-testid="simulation-page">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        <PageHeader
-          title={
-            <span className="flex items-center gap-2">
-              <LayoutGrid className="h-7 w-7 text-blue-500" />
-              Simulation Board
-            </span>
-          }
-          subtitle={<PageHint standardText="" flowerText="" />}
-        />
-      </div>
+      <SimulationPageHeader />
 
       {/* Error Banner */}
       <ErrorBanner errors={state.errors} />
