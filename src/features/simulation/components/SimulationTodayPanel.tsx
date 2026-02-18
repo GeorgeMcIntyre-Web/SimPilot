@@ -101,7 +101,7 @@ function AttentionItemRow({ item, onClick }: AttentionItemRowProps) {
 // MAIN COMPONENT
 // ============================================================================
 
-export function DaleTodayPanel({ onStationClick, maxItems }: DaleTodayPanelProps) {
+export function SimulationTodayPanel({ onStationClick, maxItems }: DaleTodayPanelProps) {
   const allAttentionItems = useStationsNeedingAttention()
   const attentionItems = maxItems ? allAttentionItems.slice(0, maxItems) : allAttentionItems
 

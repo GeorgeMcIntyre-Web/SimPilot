@@ -16,7 +16,7 @@ export {
   useStationByKey,
   useHierarchyTree,
   generateContextKey,
-  parseContextKey
+  parseContextKey,
 } from './simulationStore'
 
 export type {
@@ -26,7 +26,7 @@ export type {
   AssetCounts,
   SourcingCounts,
   HierarchyNode,
-  SimulationStoreState
+  SimulationStoreState,
 } from './simulationStore'
 
 // Selectors
@@ -46,7 +46,7 @@ export {
   getCompletionBarClass,
   COMPLETION_HIGH,
   COMPLETION_MID,
-  COMPLETION_LOW
+  COMPLETION_LOW,
 } from './simulationSelectors'
 
 export type {
@@ -54,17 +54,21 @@ export type {
   StationsSummary,
   SimulationFilters,
   LineAggregation,
-  CompletionTier
+  CompletionTier,
 } from './simulationSelectors'
 
 // Adapter
-export { useSimulationSync, transformToStationContexts, syncSimulationStore } from './simulationAdapter'
+export {
+  useSimulationSync,
+  transformToStationContexts,
+  syncSimulationStore,
+} from './simulationAdapter'
 
 // Components
 export { SimulationFiltersBar } from './components/SimulationFiltersBar'
 export { SimulationBoardGrid } from './components/SimulationBoardGrid'
 export { StationCard } from './components/StationCard'
-export { DaleTodayPanel } from './components/DaleTodayPanel'
+export { SimulationTodayPanel as DaleTodayPanel } from './components/SimulationTodayPanel'
 export { SimulationDetailDrawer } from './components/SimulationDetailDrawer'
 export { SimulationDetailPanel } from './components/SimulationDetailPanel'
 export { SummaryStats } from './components/SummaryStats'
