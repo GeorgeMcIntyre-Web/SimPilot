@@ -375,7 +375,6 @@ export function AssetDetailPage() {
                 <DetailItem label="Function" value={robotFunction} />
                 <DetailItem label="Technology" value={technologyCode} />
               </div>
-
               <div className="pt-4 border-t border-gray-50 dark:border-white/5">
                 <div className="grid grid-cols-2 gap-4">
                   <DetailItem label="Gun ID" value={gunId} />
