@@ -13,6 +13,8 @@ export interface BuildSemanticLayerInput {
   fileName: string
   sheetName: string
   headers: string[]
+  semanticArtifact?: string
+  runId?: string
 }
 
 function slugify(value: string): string {
@@ -161,6 +163,10 @@ export function buildSemanticLayerArtifact(input: BuildSemanticLayerInput): Sema
     domain: input.domain,
     fileName: input.fileName,
     sheetName: input.sheetName,
+    semanticArtifact:
+      input.semanticArtifact ??
+      `semantic:${input.domain}:${slugify(input.fileName)}:${slugify(input.sheetName)}`,
+    runId: input.runId,
     nodes: Array.from(nodeMap.values()),
     edges: Array.from(edgeMap.values()),
     report,
@@ -198,6 +204,8 @@ export function mergeSemanticLayerArtifacts(
     domain,
     fileName,
     sheetName,
+    semanticArtifact: `semantic:${domain}:${slugify(fileName)}:${slugify(sheetName)}`,
+    runId: artifacts[0].runId,
     nodes: Array.from(nodeMap.values()),
     edges: Array.from(edgeMap.values()),
     report: aggregateReports(reports),

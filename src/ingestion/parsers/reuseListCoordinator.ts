@@ -20,6 +20,13 @@ import {
   type WorkbookConfig,
   type SourceWorkbookId,
 } from '../excelIngestionTypes'
+import {
+  buildSemanticLayerArtifact,
+  enrichSemanticArtifactWithRelationships,
+  mergeSemanticLayerArtifacts,
+  type SemanticLayerArtifact,
+  type SemanticRelationshipRecord,
+} from '../semanticLayer'
 import { parseReuseListRisers } from './reuseListRisersParser'
 import { parseReuseListTipDressers } from './reuseListTipDressersParser'
 import { parseReuseListTMSWG } from './reuseListTMSWGParser'
@@ -68,6 +75,7 @@ export type ReuseCoordinatorOptions = {
 export type ReuseCoordinatorResult = {
   records: ReuseRecord[]
   errors: string[]
+  semanticLayer?: SemanticLayerArtifact
 }
 
 type WorkbookDescriptor = {
@@ -84,6 +92,7 @@ export async function loadAllReuseLists(
   options: ReuseCoordinatorOptions,
 ): Promise<ReuseCoordinatorResult> {
   const errors: string[] = []
+  const semanticArtifacts: SemanticLayerArtifact[] = []
   const allParsedRows: Array<{
     parsed: ParsedAssetRow
     workbookConfig: WorkbookConfig
@@ -106,6 +115,10 @@ export async function loadAllReuseLists(
       errors.push(...parseResult.parseErrors)
     }
 
+    if (parseResult.semanticLayer) {
+      semanticArtifacts.push(parseResult.semanticLayer)
+    }
+
     const workbookConfig = buildWorkbookConfig(wb)
 
     for (const parsed of parseResult.parsedRows) {
@@ -124,10 +137,12 @@ export async function loadAllReuseLists(
 
   // Apply precedence rules and deduplicate
   const dedupedRecords = applyPrecedenceAndDedupe(records, errors)
+  const semanticLayer = mergeSemanticLayerArtifacts('reuse-list', semanticArtifacts, 'reuse-list')
 
   return {
     records: dedupedRecords,
     errors,
+    semanticLayer,
   }
 }
 
@@ -209,7 +224,11 @@ async function discoverReuseWorkbooks(dataRoot: string): Promise<WorkbookDescrip
  */
 async function parseWorkbook(
   wb: WorkbookDescriptor,
-): Promise<{ parsedRows: ParsedAssetRow[]; parseErrors: string[] }> {
+): Promise<{
+  parsedRows: ParsedAssetRow[]
+  parseErrors: string[]
+  semanticLayer?: SemanticLayerArtifact
+}> {
   const parseErrors: string[] = []
 
   try {
@@ -227,6 +246,7 @@ async function parseWorkbook(
 
     const sheet = workbook.Sheets[sheetName]
     const rawRows = XLSX.utils.sheet_to_json(sheet) as Record<string, unknown>[]
+    const headers = extractHeaders(rawRows)
 
     let parsedRows: ParsedAssetRow[] = []
 
@@ -242,12 +262,68 @@ async function parseWorkbook(
       parsedRows = parseReuseListTMSWG(rawRows, workbookConfig, sheetName, wb.filename)
     }
 
-    return { parsedRows, parseErrors }
+    if (headers.length === 0) {
+      return { parsedRows, parseErrors }
+    }
+
+    const baseSemanticLayer = buildSemanticLayerArtifact({
+      domain: 'reuseList',
+      fileName: wb.filename,
+      sheetName,
+      headers,
+    })
+
+    const relationships = parsedRowsToRelationships(parsedRows)
+    const semanticLayer = enrichSemanticArtifactWithRelationships({
+      artifact: baseSemanticLayer,
+      relationships,
+      requiredFields: ['station', 'tool'],
+    })
+
+    return { parsedRows, parseErrors, semanticLayer }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     parseErrors.push(`Failed to parse ${wb.filename}: ${message}`)
     return { parsedRows: [], parseErrors }
   }
+}
+
+function extractHeaders(rawRows: Record<string, unknown>[]): string[] {
+  const headers: string[] = []
+  const seen = new Set<string>()
+  const sampleRows = rawRows.slice(0, 25)
+
+  for (const rawRow of sampleRows) {
+    for (const key of Object.keys(rawRow)) {
+      const header = key.trim()
+      if (header.length === 0) {
+        continue
+      }
+      if (seen.has(header)) {
+        continue
+      }
+      seen.add(header)
+      headers.push(header)
+    }
+  }
+
+  return headers
+}
+
+function parsedRowsToRelationships(parsedRows: ParsedAssetRow[]): SemanticRelationshipRecord[] {
+  const relationships: SemanticRelationshipRecord[] = []
+
+  for (const parsed of parsedRows) {
+    relationships.push({
+      area: parsed.oldArea,
+      station: parsed.targetStation || parsed.oldStation,
+      tool: parsed.name || parsed.partNumber,
+      robot: parsed.robotNumber,
+      rowIndex: parsed.sourceRowIndex,
+    })
+  }
+
+  return relationships
 }
 
 /**

@@ -1,7 +1,20 @@
-export type SemanticDomain = 'toolList' | 'simulationStatus'
+export type SemanticDomain = 'toolList' | 'simulationStatus' | 'robotEquipmentList' | 'reuseList'
 
-export type SemanticNodeType = 'file' | 'sheet' | 'header' | 'field'
-export type SemanticEdgeType = 'CONTAINS' | 'MAPS_TO'
+export type SemanticNodeType =
+  | 'file'
+  | 'sheet'
+  | 'header'
+  | 'field'
+  | 'area'
+  | 'station'
+  | 'robot'
+  | 'tool'
+export type SemanticEdgeType =
+  | 'CONTAINS'
+  | 'MAPS_TO'
+  | 'AREA_GROUPS_STATION'
+  | 'STATION_TO_ROBOT'
+  | 'STATION_TO_TOOL'
 export type SemanticMappingStatus = 'mapped' | 'unmapped' | 'ambiguous'
 export type SemanticAmbiguityKind =
   | 'AMBIGUOUS_HEADER'
@@ -73,6 +86,8 @@ export interface SemanticLayerArtifact {
   domain: SemanticDomain
   fileName: string
   sheetName: string
+  semanticArtifact?: string
+  runId?: string
   nodes: SemanticNode[]
   edges: SemanticEdge[]
   report: SemanticReport

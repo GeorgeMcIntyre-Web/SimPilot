@@ -19,6 +19,12 @@ import {
   inferAssembliesAreaName,
   normalizeStationCode,
 } from './normalizers'
+import {
+  buildSemanticLayerArtifact,
+  enrichSemanticArtifactWithRelationships,
+  type SemanticLayerArtifact,
+  type SemanticRelationshipRecord,
+} from './semanticLayer'
 
 // ============================================================================
 // TYPES
@@ -27,6 +33,7 @@ import {
 export interface RobotListResult {
   robots: Robot[]
   warnings: IngestionWarning[]
+  semanticLayer?: SemanticLayerArtifact
 }
 
 // ============================================================================
@@ -177,6 +184,17 @@ export async function parseRobotList(
     'APP',
   ])
 
+  const semanticHeaders = mergedHeaderRow.map((cell, index) =>
+    String(cell ?? `Column_${index}`).trim(),
+  )
+  const baseSemanticLayer = buildSemanticLayerArtifact({
+    domain: 'robotEquipmentList',
+    fileName,
+    sheetName,
+    headers: semanticHeaders,
+  })
+  const relationshipRecords: SemanticRelationshipRecord[] = []
+
   // Parse data rows
   // Start from the row after the primary header
   // Rows without valid station codes will be skipped automatically
@@ -220,6 +238,17 @@ export async function parseRobotList(
       getCellString(row, columnMap, 'LINE CODE') ||
       getCellString(row, columnMap, 'ASSEMBLY LINE')
 
+    const robotHint =
+      getCellString(row, columnMap, 'ROBO NO. NEW') ||
+      getCellString(row, columnMap, 'ROBOT ID') ||
+      getCellString(row, columnMap, 'ID') ||
+      getCellString(row, columnMap, 'ROBOT CAPTION') ||
+      getCellString(row, columnMap, 'ROBOTS TOTAL') ||
+      getCellString(row, columnMap, 'ROBOT') ||
+      getCellString(row, columnMap, 'ROBO NO. OLD') ||
+      getCellString(row, columnMap, 'ROBOT NAME') ||
+      getCellString(row, columnMap, 'NAME')
+
     // For Ford Robot Equipment List files, the "Area" header column actually contains
     // "Person Responsible" data, not area names. The real area comes from column 0 (forward-filled).
     // Also, due to partial matching in buildColumnMap, "AREA" might map to "Robot count per area"
@@ -257,6 +286,22 @@ export async function parseRobotList(
 
     // Skip rows without station - these are not actual robot entries
     if (!stationCode) {
+      if (robotHint || areaName || lineCode) {
+        warnings.push(
+          createRowSkippedWarning({
+            fileName,
+            sheetName,
+            rowIndex: i + 1,
+            reason: 'Missing station number for robot entry',
+          }),
+        )
+      }
+      relationshipRecords.push({
+        area: areaName,
+        station: null,
+        robot: robotHint,
+        rowIndex: i + 1,
+      })
       continue
     }
 
@@ -274,6 +319,12 @@ export async function parseRobotList(
     const robotNumber = roboNoNew || robotCaption
 
     if (!robotNumber) {
+      relationshipRecords.push({
+        area: areaName,
+        station: stationCode,
+        robot: null,
+        rowIndex: i + 1,
+      })
       warnings.push(
         createRowSkippedWarning({
           fileName,
@@ -403,6 +454,12 @@ export async function parseRobotList(
     }
 
     robots.push(robot)
+    relationshipRecords.push({
+      area: areaName,
+      station: stationCode,
+      robot: robotNumber,
+      rowIndex: i + 1,
+    })
   }
 
   if (robots.length === 0) {
@@ -415,8 +472,15 @@ export async function parseRobotList(
     )
   }
 
+  const semanticLayer = enrichSemanticArtifactWithRelationships({
+    artifact: baseSemanticLayer,
+    relationships: relationshipRecords,
+    requiredFields: ['station', 'robot'],
+  })
+
   return {
     robots,
     warnings,
+    semanticLayer,
   }
 }
